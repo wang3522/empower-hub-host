@@ -6,6 +6,7 @@ import dbus
 import time
 
 from ..utility.config import SystemConfig as HubConfig
+from ..utility.config import T_WAP_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -13,10 +14,11 @@ class WAP:
     device_id = None
     ssid = None
     password = None
+    config:T_WAP_CONFIG = None
         
     def __init__(self):
         c = HubConfig()
-        config = c.wap
+        config:T_WAP_CONFIG = c.get_config('wap')
         self.config = config
                         
         if config is None:
@@ -146,7 +148,7 @@ class WAP:
 
 def configure_wap_settings():
     config = HubConfig()
-    wap_config = config.wap
+    wap_config = config.get_config('wap')
     
     try:
         HS = WAP()

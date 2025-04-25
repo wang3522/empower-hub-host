@@ -4,6 +4,7 @@ import threading
 import json
 
 from ..utility.config import SystemConfig as HubConfig
+from ..utility.config import T_BLE_CONFIG
 from ..utility.cmd_interface import CMD_INTERFACE
 
 logger = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ class BLE:
     baudrate = None
     timeout = None
     serial_connection = None
-    config = None
+    config:T_BLE_CONFIG = None
     thread = None
     stop_event = None
 
@@ -25,7 +26,7 @@ class BLE:
                 cls._instance = super(BLE, cls).__new__(cls)
 
                 config = HubConfig()
-                cls._instance.config = config.ble
+                cls._instance.config = config.get_config('ble')
 
                 cls._instance.port = f"/dev/{cls._instance.config['uart']['device_id']}"
                 cls._instance.baudrate = cls._instance.config["uart"]["baudrate"]

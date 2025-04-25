@@ -4,7 +4,7 @@ import logging
 import dbus
 import time
 
-from ..utility.config import SystemConfig as HubConfig
+from ..utility.config import SystemConfig as HubConfig, T_WIFI_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -12,10 +12,11 @@ class WIFI:
     device_id = None
     ssid = None
     password = None
+    config:T_WIFI_CONFIG = None
         
     def __init__(self):
         c = HubConfig()
-        config = c.wifi
+        config = c.get_config('wifi')
         self.config = config
                         
         if config is None:
@@ -160,7 +161,7 @@ class WIFI:
 
 def configure_wifi_settings():
     config = HubConfig()
-    wifi_config = config.wifi
+    wifi_config = config.get_config('wifi')
     
     try:
         HS = WIFI()
