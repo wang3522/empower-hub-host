@@ -1,0 +1,14 @@
+[Unit]
+Description=Hub+ Iterface Service
+After=hub-startup.service
+
+[Service]
+EnvironmentFile=-/etc/hub/environmentfile
+Type=simple
+Restart=always
+ExecStart=/usr/bin/hub/HubInterfaces.py
+RemainAfterExit=no
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,12 @@
+[Unit]
+Description=Hub+ startup
+After=NetworkManager.service
+
+[Service]
+EnvironmentFile=-/etc/hub/environmentfile
+Type=simple
+ExecStart=/usr/bin/hub/hub-startup.sh
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target
