@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import logging
-import base64
 import dbus
 
 logger = logging.getLogger()
@@ -15,14 +14,14 @@ def configure_network(mode, action, ssid=None, password=None, apn=None, device_i
         obj = bus.get_object(dbus_interface, dbus_object)
         if action == 'enable' and ssid and password:
             logger.debug(f"Enabling WiFi with SSID: {ssid} and Password: {password}")
-            method = obj.get_dbus_method('configure', dbus_interface)
-            result = method(ssid, password)
-            logger.debug(f"WiFi configured successfully: {result}")
+            result = obj.get_dbus_method('configure', dbus_interface)(ssid, password, timeout=60)
+            logger.debug(f"WiFi configured: {result}")
+            result = obj.get_dbus_method('enable',dbus_interface)()
+            logger.debug(f"wifi enabled: {result}")
         elif action == 'disable':
             logger.debug("Disabling WiFi")
-            method = obj.get_dbus_method('disable')
-            result = method()
-            logger.debug(f"{dbus_interface}: {result}")
+            result = obj.get_dbus_method('disable')()
+            logger.debug(f"wifi disabled: {result}")
             
     elif mode == 'hotspot':
         if action == 'enable':
