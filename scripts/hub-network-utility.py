@@ -1,56 +1,38 @@
 #!/usr/bin/env python3
 import argparse
 import logging
-import base64
 import dbus
-
-from HubInterface.utility.config import SystemConfig as HubConfig
 
 logger = logging.getLogger()
 
-def perform_service_restart():
-    bus = dbus.SystemBus()
-    dbus_object = "/org/navico/HubInterface"
-    dbus_interface = "org.navico.HubInterface"
-    obj = bus.get_object(dbus_interface, dbus_object)
-    method = obj.get_dbus_method("wifi.restart")
-    result = method()
-    logger.debug(f"{dbus_interface}: {result}")
-    pass
-
 def configure_network(mode, action, ssid=None, password=None, apn=None, device_id=None):
-    config = HubConfig()
+    bus = dbus.SystemBus()
+    
     if mode == 'wifi':
+        dbus_object = "/org/navico/HubInterface/wifi"
+        dbus_interface = "org.navico.HubInterface.wifi"
+        obj = bus.get_object(dbus_interface, dbus_object)
         if action == 'enable' and ssid and password:
             logger.debug(f"Enabling WiFi with SSID: {ssid} and Password: {password}")
-            config.wifi['enable'] = True
-            config.wifi['ssid'] = ssid
-            config.wifi['password'] = base64.b64encode(password.encode("utf-8")).decode("utf-8")
+            result = obj.get_dbus_method('configure', dbus_interface)(ssid, password, timeout=60)
+            logger.debug(f"WiFi configured: {result}")
+            result = obj.get_dbus_method('enable',dbus_interface)()
+            logger.debug(f"wifi enabled: {result}")
         elif action == 'disable':
             logger.debug("Disabling WiFi")
-            config.wifi['enable'] = False
-        config.save_config()
-        perform_service_restart()
+            result = obj.get_dbus_method('disable')()
+            logger.debug(f"wifi disabled: {result}")
+            
     elif mode == 'hotspot':
         if action == 'enable':
             logger.debug(f"Enabling Hotspot.")
-            config.wap['enable'] = True
         elif action == 'disable':
             logger.debug("Disabling Hotspot")
-            config.wap['enable'] = False
-        config.save_config()
-        # perform_service_restart()
     elif mode == 'lte':
         if action == 'enable':
             logger.debug("Enabling LTE")
-            config.lte['enable'] = True
-            config.lte['apn'] = apn if apn else config.lte['apn']
-            config.lte['device_id'] = device_id if device_id else config.lte['device_id']
         elif action == 'disable':
             logger.debug("Disabling LTE")
-            config.lte['enable'] = False
-        config.save_config()
-        # perform_service_restart()
     else:
         logger.debug("Invalid mode. Please choose from 'wifi', 'hotspot', or 'lte'.")
 

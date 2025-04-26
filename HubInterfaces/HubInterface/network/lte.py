@@ -6,12 +6,12 @@ import time
 
 logger = logging.getLogger(__name__)
 
-from ..utility.config import SystemConfig as HubConfig
+from ..utility.config import SystemConfig as HubConfig, T_LTE_CONFIG
 
 class LTE:
     _instance = None
     apn = None
-    config = None
+    config:T_LTE_CONFIG = None
     port = None
     baudrate = None
     serial_connection = None
@@ -28,7 +28,7 @@ class LTE:
                 cls._instance = super(LTE, cls).__new__(cls)
                 
                 config = HubConfig()
-                cls._instance.config = config.lte
+                cls._instance.config = config.get_config('lte')
                 
                 cls._instance.port = f"/dev/{cls._instance.config['device_id']}"
                 cls._instance.apn = cls._instance.config['apn']

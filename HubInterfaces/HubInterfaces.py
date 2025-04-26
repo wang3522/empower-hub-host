@@ -18,18 +18,20 @@ from HubInterface.dbusService.server import DBusServer
 
 logger = logging.getLogger()
 
+
 def wifi_ap_setup():
     from HubInterface.network.wifi import configure_wifi_settings
     from HubInterface.network.ap import configure_wap_settings
-    
+
     wifi = configure_wifi_settings()
     ap = configure_wap_settings()
-    
+
     logger.debug(f"wifi: {wifi}, ap: {ap}")
-    
+
     gpio = GPIO()
     gpio.update_led(E_LED.WIFI, wifi)
     gpio.update_led(E_LED.AP, ap)
+
 
 def initialize_ble():
     try:
@@ -41,22 +43,24 @@ def initialize_ble():
     except Exception as error:
         logger.error(f"Error starting BLE: {error}")
         raise Exception("BLE not started.")
-    
+
+
 def initialize_lte():
     try:
         lte = LTE()
         lte.configure_network()
         lte.configure_gnss()
         lte.start_gnss()
-        
+
         gpio = GPIO()
         gpio.update_led(E_LED.LTE, True)
-        
+
         logger.info("LTE GNSS started.")
         return lte
     except Exception as error:
         logger.error(f"Error starting LTE GNSS: {error}")
         raise Exception("LTE GNSS not started.")
+
 
 def main_loop():
     try:
@@ -67,16 +71,17 @@ def main_loop():
     finally:
         logger.info("main loop stopped.")
 
+
 def main():
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-    
+
     gpio = None
     ble = None
     lte = None
     tb = None
     _config = None
     dbus_server = None
-    
+
     try:
         _config = HubConfig()
         gpio = GPIO()
@@ -84,15 +89,15 @@ def main():
         gpio.update_led(E_LED.POWER, True)
 
         wifi_ap_setup()
-        ble = initialize_ble() # [x]
+        ble = initialize_ble()  # [x]
         lte = initialize_lte()
-        
+
         tb = TB()
         tb.start()
-        
+
         dbus_server = DBusServer()
         dbus_server.start()
-        
+
         main_loop()
     finally:
         if ble:
@@ -108,6 +113,7 @@ def main():
             gpio.update_led(E_LED.AP, False)
             gpio.update_led(E_LED.LTE, False)
             gpio.stop()
+
 
 if __name__ == "__main__":
     try:
