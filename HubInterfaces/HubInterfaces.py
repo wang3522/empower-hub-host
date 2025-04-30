@@ -10,7 +10,7 @@ import traceback  # [x] debug
 from threading import Event
 
 from HubInterface.utility.gpio import GPIO, E_LED
-from HubInterface.bleService.ble import BLE
+from HubInterface.bleService.bleuart import BLE_UART
 from HubInterface.thingsBoardService.tb import TB
 from HubInterface.network.lte import LTE
 from HubInterface.utility.config import SystemConfig as HubConfig
@@ -35,14 +35,14 @@ def wifi_ap_setup():
 
 def initialize_ble():
     try:
-        ble = BLE()
-        ble.configure()
-        ble.start()
-        logger.info("BLE started.")
-        return ble
+        ble_uart = BLE_UART()
+        ble_uart.configure()
+        ble_uart.start()
+        logger.info("BLE uart started.")
+        return ble_uart
     except Exception as error:
-        logger.error(f"Error starting BLE: {error}")
-        raise Exception("BLE not started.")
+        logger.error(f"Error starting BLE UART: {error}")
+        raise Exception("BLE uart not started.")
 
 
 def initialize_lte():

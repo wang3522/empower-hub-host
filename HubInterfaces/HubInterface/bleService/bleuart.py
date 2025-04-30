@@ -9,7 +9,7 @@ from ..utility.cmd_interface import CMD_INTERFACE
 
 logger = logging.getLogger(__name__)
 
-class BLE:
+class BLE_UART:
     _instance = None
     port = None
     baudrate = None
@@ -22,8 +22,8 @@ class BLE:
     def __new__(cls):
         if cls._instance is None:
             try:
-                logger.info("Creating BLE instance.")
-                cls._instance = super(BLE, cls).__new__(cls)
+                logger.info("Creating BLE uart instance.")
+                cls._instance = super(BLE_UART, cls).__new__(cls)
 
                 config = HubConfig()
                 cls._instance.config = config.get_config('ble')
@@ -33,8 +33,8 @@ class BLE:
                 cls._instance.timeout = 1
 
             except Exception as error:
-                logger.error(f"Error creating BLE instance: {error}")
-                raise Exception("BLE not created.")
+                logger.error(f"Error creating BLE uart instance: {error}")
+                raise Exception("BLE uart not created.")
         return cls._instance
 
     def __del__(self):
@@ -100,7 +100,7 @@ class BLE:
         if self.serial_connection and self.serial_connection.isOpen():
             try:
                 self.serial_connection.write(data.encode())
-                logger.debug(f"Sent data to BLE: {data}")
+                logger.debug(f"Sent data to BLE UART: {data}")
             except Serial.SerialException:
                 logger.error(f"Error sending data to BLE UART: {Serial.SerialException}")
             except Exception as error:
@@ -109,10 +109,10 @@ class BLE:
             logger.error("BLE UART is not open")
 
     def stop(self):
-        logger.debug("Stopping BLE")
+        logger.debug("Stopping BLE UART")
         if self.stop_event:
             self.stop_event.set()
         if self.thread:
             self.thread.join()
         self._disconnect()
-        logger.debug("BLE stopped")
+        logger.debug("BLE UART stopped")
