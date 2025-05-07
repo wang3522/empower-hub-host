@@ -1,12 +1,12 @@
 [Unit]
-Description=Hub+ Iterface Service
+Description=Hub+ Core Service
 After=hub-startup.service
 
 [Service]
 EnvironmentFile=-/etc/hub/environmentfile
 Type=simple
 Restart=always
-ExecStart=/usr/bin/hub/HubInterfaces.py
+ExecStart=/usr/bin/hub/HubCore.py
 RemainAfterExit=no
 RestartSec=5
 

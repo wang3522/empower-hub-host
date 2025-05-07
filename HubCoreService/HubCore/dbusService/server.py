@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 class DBusServer(dbus.service.Object):
     bus = None
     loop = None
-    DBUS_OBJECT = "/org/navico/HubInterface"
-    DBUS_INTERFACE = "org.navico.HubInterface"
+    DBUS_OBJECT = "/org/navico/HubUtility"
+    DBUS_INTERFACE = "org.navico.HubUtility"
     DBUS_SERVER_VERSION = "1.0.0"
 
     def __init__(self):

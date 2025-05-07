@@ -41,7 +41,7 @@ The host system codebase is organized into the following directories:
 
 - **config**: Contains all host-related configuration files, such as network settings, environment files, and service configurations.
 - **CZoneCore**: Contains the C++ implementation of the CZone Core, including modules for CAN communication, D-Bus services, and core management.
-- **HubInterface**: Implements BLE, LTE, WiFi, ThingsBoard (TB), and LED services, along with D-Bus interfaces for communication.
+- **HubCoreService**: Implements BLE, LTE, WiFi, ThingsBoard (TB), and LED services, along with D-Bus interfaces for communication.
 - **scripts**: Contains standalone scripts, such as `hub-startup.sh`, used for initialization and setup tasks.
 - **service**: Contains systemd service files for managing the lifecycle of the Hub services.
 

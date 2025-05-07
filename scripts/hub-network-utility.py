@@ -9,8 +9,8 @@ def configure_network(mode, action, ssid=None, password=None, apn=None, device_i
     bus = dbus.SystemBus()
     
     if mode == 'wifi':
-        dbus_object = "/org/navico/HubInterface/wifi"
-        dbus_interface = "org.navico.HubInterface.wifi"
+        dbus_object = "/org/navico/HubUtility/wifi"
+        dbus_interface = "org.navico.HubUtility.wifi"
         obj = bus.get_object(dbus_interface, dbus_object)
         if action == 'enable' and ssid and password:
             logger.debug(f"Enabling WiFi with SSID: {ssid} and Password: {password}")
