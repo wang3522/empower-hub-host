@@ -30,10 +30,10 @@ The following services are configured for the host system:
    - Behavior: Automatically restarts on failure with a 5-second delay.
    - Service File: `/etc/systemd/system/hub-czone.service`
 
-2. **hub-interface**
-   - Description: Hub Interface Service.
+2. **hub-core**
+   - Description: Hub core Service.
    - Behavior: Automatically restarts on failure with a 5-second delay.
-   - Service File: `/etc/systemd/system/hub-interface.service`
+   - Service File: `/etc/systemd/system/hub-core.service`
 
 3. **hub-setup**
    - Description: Hub Setup Service.

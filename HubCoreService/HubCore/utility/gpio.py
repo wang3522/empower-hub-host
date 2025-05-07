@@ -39,7 +39,7 @@ class GPIO:
 
                 cls._instance.led_line = gpiod.request_lines(
                     "/dev/gpiochip0",
-                    consumer="hub-interface-led",
+                    consumer="hub-core-led",
                     config={
                         tuple([cls.GPIO_WIFI_AP_LED_LINE, cls.GPIO_POWER_LED_LINE, cls.GPIO_LTE_LED_LINE]): gpiod.LineSettings(
                             direction=Direction.OUTPUT, active_low=True
