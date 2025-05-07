@@ -1,5 +1,9 @@
 # Host System Architecture
 
+## System Architecture Diagram
+
+![System Architecture](./doc/architecture.png)
+
 ## Environment Variables
 The following environment variables are configured for the host system:
 
