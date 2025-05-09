@@ -1,0 +1,4 @@
+OVERRIDE_APP_SETTINGS_FILE = (
+    "/data/appsettings.json"  # OVERRIDE SETTINGS FILE ON CONNECT-1
+)
+DEFAULT_APP_SETTINGS_FILE = "/HubInterfaces/N2KClient/appsettings.json"  # DEFAULT SETTINGS FILE IN TB CLIENT REPO
