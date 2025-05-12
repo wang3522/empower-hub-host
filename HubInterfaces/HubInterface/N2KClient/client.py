@@ -14,7 +14,7 @@ from reactivex import operators as ops
 from gi.repository import GLib
 from time import sleep
 from N2KClient.util.settings_util import SettingsUtil
-from models.common_enums import DeviceType
+from models.common_enums import N2kDeviceType
 
 
 class N2KClient(dbus.service.Object):
@@ -90,7 +90,7 @@ class N2KClient(dbus.service.Object):
             device_id = device["id"]
             if device_id not in device_list_copy:
                 # Actually do JSON/ENUM mapping here here
-                device_type = DeviceType(device["type"])
+                device_type = N2kDeviceType(device["type"])
                 device_list_copy[device_id] = N2kDevice(device_type)
                 list_appended = True
 

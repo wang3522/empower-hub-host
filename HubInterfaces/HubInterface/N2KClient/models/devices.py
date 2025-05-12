@@ -1,13 +1,13 @@
 from typing import Any
-from models.common_enums import DeviceType
+from models.common_enums import N2kDeviceType
 from models.constants import Constants
 
 
 class N2kDevice:
-    type: DeviceType
+    type: N2kDeviceType
     channels: dict[str, Any]
 
-    def __init__(self, type: DeviceType):
+    def __init__(self, type: N2kDeviceType):
         self.type = type
         self.channels = {}
 

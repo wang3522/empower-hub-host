@@ -1,7 +1,6 @@
 from enum import Enum
 
-
-class DeviceType(str, Enum):
+class N2kDeviceType(str, Enum):
     DC = "dc"
     AC = "ac"
     TANK = "tank"
@@ -11,38 +10,6 @@ class DeviceType(str, Enum):
     GENERATOR = "generator"
     CIRCUIT = "circuit"
     HVAC = "hvac"
-
-class PressureType(Enum):
-    Atmospheric = 0
-    Water = 1
-    Steam = 2
-    CompressedAir = 3
-    Hydraulic = 4
-
-class TankType(Enum):
-    Fuel = 0
-    FreshWater = 1
-    WasteWater = 2
-    LiveWell = 3
-    Oil = 4
-    BlackWater = 5
-
-class TemperatureType(Enum):
-    Sea = 0
-    Outside = 1
-    Inside = 2
-    EngineRoom = 3
-    MainCabin = 4
-    LiveWell1 = 5
-    BaitWell = 6
-    Refrigeration = 7
-    HeatingSystem = 8
-    DewPoint = 9
-    WindChillApparent = 10
-    WindChillTheoretical = 11
-    HeadIndex = 12
-    Freezer = 13
-    ExhaustGas = 14
 
 class SwitchType(Enum):
     None = 0
@@ -79,17 +46,3 @@ class SwitchType(Enum):
     SequentialLong3 = 31
     SequentialLong4 = 32
     SequentialLong5 = 33
-
-class ACLine(Enum):
-    Line1 = 0
-    Line2 = 1
-    Line3 = 2
-
-class ACType(Enum):
-    Unknown = 0
-    Generator = 1    
-    ShorePower = 2
-    Inverter = 3
-    Parallel = 4
-    Charger = 5
-    Outlet = 6
