@@ -2,9 +2,9 @@ class Constants:
     n2k_service_name = "org.navico.CZoneCpp"
     n2k_object_path = "/org/navico/CZoneCpp"
     n2k_interface_name = "org.navico.CZoneCpp"
-    get_config_service_method_name = "getConfig"
-    get_state_service_method_name = "getState"
-    get_devices_service_method_name = "getDevices"
+    get_config_service_method_name = "GetConfig"
+    get_state_service_method_name = "GetState"
+    get_devices_service_method_name = "GetDevices"
 
     device = "device"
     id = "id"
