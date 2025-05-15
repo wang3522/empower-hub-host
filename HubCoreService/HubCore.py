@@ -9,19 +9,19 @@ import traceback  # [x] debug
 
 from threading import Event
 
-from HubInterface.utility.gpio import GPIO, E_LED
-from HubInterface.bleService.ble import BLE
-from HubInterface.thingsBoardService.tb import TB
-from HubInterface.network.lte import LTE
-from HubInterface.utility.config import SystemConfig as HubConfig
-from HubInterface.dbusService.server import DBusServer
+from HubCore.utility.gpio import GPIO, E_LED
+from HubCore.bleService.bleuart import BLE_UART
+from HubCore.thingsBoardService.tb import TB
+from HubCore.network.lte import LTE
+from HubCore.utility.config import SystemConfig as HubConfig
+from HubCore.dbusService.server import DBusServer
 
 logger = logging.getLogger()
 
 
 def wifi_ap_setup():
-    from HubInterface.network.wifi import configure_wifi_settings
-    from HubInterface.network.ap import configure_wap_settings
+    from HubCore.network.wifi import configure_wifi_settings
+    from HubCore.network.ap import configure_wap_settings
 
     wifi = configure_wifi_settings()
     ap = configure_wap_settings()
@@ -35,14 +35,14 @@ def wifi_ap_setup():
 
 def initialize_ble():
     try:
-        ble = BLE()
-        ble.configure()
-        ble.start()
-        logger.info("BLE started.")
-        return ble
+        ble_uart = BLE_UART()
+        ble_uart.configure()
+        ble_uart.start()
+        logger.info("BLE uart started.")
+        return ble_uart
     except Exception as error:
-        logger.error(f"Error starting BLE: {error}")
-        raise Exception("BLE not started.")
+        logger.error(f"Error starting BLE UART: {error}")
+        raise Exception("BLE uart not started.")
 
 
 def initialize_lte():
@@ -118,7 +118,7 @@ def main():
 if __name__ == "__main__":
     try:
         log_path = os.getenv("HUB_LOGDIR", "/var/log/hub")
-        LOG_FILENAME = os.path.join(log_path, "HubInterfaces.log")
+        LOG_FILENAME = os.path.join(log_path, "HubCore.log")
 
         log_level = os.getenv("HUB_LOG_LEVEL", "DEBUG")
 
@@ -135,16 +135,16 @@ if __name__ == "__main__":
 
         logger.setLevel(log_level)
 
-        logger.info("HubInterfaces application started.")
+        logger.info("HubCore application started.")
 
         sys.exit(main())
     except KeyboardInterrupt:
-        logger.info("HubInterfaces application stopped by user.")
+        logger.info("HubCore application stopped by user.")
         sys.exit(0)
     except Exception as error:
         logger.error(error)
         traceback.print_exc()  # [x] debug
         sys.exit(1)
     finally:
-        logger.info("HubInterfaces application stopped.")
+        logger.info("HubCore application stopped.")
         logger.info("")

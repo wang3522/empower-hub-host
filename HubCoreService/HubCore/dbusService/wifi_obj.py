@@ -7,8 +7,8 @@ from ..utility.cmd_interface import CMD_INTERFACE
 logger = logging.getLogger(__name__)
 
 class DBusWiFi(dbus.service.Object):
-    DBUS_OBJECT = "/org/navico/HubInterface/wifi"
-    DBUS_INTERFACE = "org.navico.HubInterface.wifi"
+    DBUS_OBJECT = "/org/navico/HubUtility/wifi"
+    DBUS_INTERFACE = "org.navico.HubUtility.wifi"
 
     def __init__(self, bus):
         bus_name = dbus.service.BusName(self.DBUS_INTERFACE, bus=bus)
