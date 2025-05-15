@@ -138,3 +138,9 @@ class N2KClient(dbus.service.Object):
             for disposable in self._disposable_list:
                 disposable.dispose()
             self._disposable_list = []
+
+    def get_devices(self):
+        return self._latest_devices
+
+    def get_devices_observable(self):
+        return self.devices
