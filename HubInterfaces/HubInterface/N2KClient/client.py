@@ -66,8 +66,8 @@ class N2KClient(dbus.service.Object):
         )
 
         # Threads
-        self._device_discovery_thread = threading.Thread(
-            target=self._discover_devices, name="__discover_devices"
+        self._get_devices_thread = threading.Thread(
+            target=self._get_devices, name="__get_devices"
         )
 
         self._get_state_thread = threading.Thread(
@@ -78,10 +78,10 @@ class N2KClient(dbus.service.Object):
         def update_lastest_devices(devices: dict[str, N2kDevice]):
             self._latest_devices = devices
             # Uncomment for demonstration purposes
-            # devices_json = {
-            #     device_id: device.to_dict() for device_id, device in devices.items()
-            # }
-            # self._logger.info(f"Latest devices: { json.dumps(devices_json, indent=2) }")
+            devices_json = {
+                device_id: device.to_dict() for device_id, device in devices.items()
+            }
+            self._logger.info(f"Latest devices: { json.dumps(devices_json, indent=2) }")
 
         self._disposable_list.append(self.devices.subscribe(update_lastest_devices))
 
@@ -91,7 +91,7 @@ class N2KClient(dbus.service.Object):
         config_json = self.getConfig()
         # parse config
 
-        self._device_discovery_thread.start()
+        self._get_devices_thread.start()
         self._get_state_thread.start()
 
     def __merge_device_list(self, device_json):
@@ -110,8 +110,8 @@ class N2KClient(dbus.service.Object):
             with self.lock:
                 self._devices.on_next(device_list_copy)
 
-    def _discover_devices(self):
-        self._logger.info("Starting Device Discovery thread")
+    def _get_devices(self):
+        self._logger.info("Starting Get Device thread")
         while True:
             try:
                 devices = self.getDevices()
