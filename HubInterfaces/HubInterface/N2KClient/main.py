@@ -3,7 +3,7 @@ from N2KClient.client import N2KClient
 
 
 class Main:
-    logger = logging.getLogger("DBUS N2k Client")
+    logger = logging.getLogger("DBUS N2k Client: Main")
 
     def __init__(self):
         self.logger.setLevel(logging.INFO)

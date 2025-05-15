@@ -21,14 +21,21 @@ class N2KClient(dbus.service.Object):
     _latest_devices: dict[str, N2kDevice]
     _disposable_list: List[rx.abc.DisposableBase]
     _get_state_timeout = SettingsUtil.get_setting(
-        Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, default_value=15
+        Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, default_value=1
     )
     _get_devices_timeout = SettingsUtil.get_setting(
-        Constants.WORKER_KEY, Constants.DEVICE_TIMEOUT_KEY, default_value=15
+        Constants.WORKER_KEY, Constants.DEVICE_TIMEOUT_KEY, default_value=1
     )
+    _logger = logging.getLogger("DBUS N2k Client")
 
     def __init__(self):
-        self._logger = logging.getLogger("N2KClient")
+        self._logger.setLevel(logging.INFO)
+        log_handler = logging.StreamHandler()
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        log_handler.setFormatter(formatter)
+        self._logger.addHandler(log_handler)
         self._disposable_list = []
 
         self._latest_devices = {}
@@ -70,6 +77,11 @@ class N2KClient(dbus.service.Object):
         # Handler to update the latest device list internally
         def update_lastest_devices(devices: dict[str, N2kDevice]):
             self._latest_devices = devices
+            # Uncomment for demonstration purposes
+            # devices_json = {
+            #     device_id: device.to_dict() for device_id, device in devices.items()
+            # }
+            # self._logger.info(f"Latest devices: { json.dumps(devices_json, indent=2) }")
 
         self._disposable_list.append(self.devices.subscribe(update_lastest_devices))
 
@@ -99,18 +111,18 @@ class N2KClient(dbus.service.Object):
                 self._devices.on_next(device_list_copy)
 
     def _discover_devices(self):
+        self._logger.info("Starting Device Discovery thread")
         while True:
             try:
-                self._logger.debug("Discovering devices")
-                x = self.getDevices()
-                self._logger.debug(f"Devices: {x}")
-                devices_json = json.loads(x)
+                devices = self.getDevices()
+                devices_json = json.loads(devices)
                 self.__merge_device_list(devices_json)
             except Exception as e:
-                self._logger.error(f"Error heading dbus device response: {e}")
+                self._logger.error(f"Error reading dbus device response: {e}")
             sleep(1)
 
     def _get_state(self):
+        self._logger.info("Starting Get State thread")
         while True:
             keys = self._latest_devices.keys()
             state_update = {}
@@ -121,7 +133,7 @@ class N2KClient(dbus.service.Object):
                 self._merge_state_update(state_update)
 
             except Exception as e:
-                self._logger.error("Error heading dbus state response")
+                self._logger.error(f"Error reading dbus state response: {e}")
             sleep(self._get_state_timeout)
 
     def _merge_state_update(self, state_updates: dict[str, dict[str, Any]]):
