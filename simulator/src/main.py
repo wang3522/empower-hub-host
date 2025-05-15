@@ -45,7 +45,7 @@ class N2KDBusSimulator(dbus.service.Object):
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetState(self, id: str):
         self.get_state_count += 1
-        if self.get_state_count < 10:
+        if self.get_state_count < 40:
             if id == "dc.1":
                 return '{"voltage": 12, "current": 2, "stateOfCharge": 75, "temperature": 23, "capacityRemaining": 1000}'
             elif id == "ac.1":
@@ -54,7 +54,7 @@ class N2KDBusSimulator(dbus.service.Object):
                 return '{"level": 200, "levelPercent": 87}'
             elif id == "engine.1":
                 return '{"engineState": "dead", "speed": 0, "oilPressure": 50, "oilTemperature": 80, "coolantTemperature": 90, "fuelLevel": 50, "engineHours": 1000}'
-        elif self.get_state_count < 20:
+        elif self.get_state_count < 60:
             if id == "dc.1":
                 return '{"voltage": 13.5, "current": 4.1, "stateOfCharge": 62, "temperature": 27, "capacityRemaining": 850}'
             elif id == "ac.1":
@@ -71,7 +71,7 @@ class N2KDBusSimulator(dbus.service.Object):
             elif id == "tank.1":
                 return '{"level": 100, "levelPercent": 43}'
             elif id == "engine.1":
-                return '{"engineState": "idle", "speed": 900, "oilPressure": 40, "oilTemperature": 70, "coolantTemperature": 80, "fuelLevel": 30, "engineHours": 1400}'
+                return '{"engineState": "crank", "speed": 900, "oilPressure": 40, "oilTemperature": 70, "coolantTemperature": 80, "fuelLevel": 30, "engineHours": 1400}'
 
 
 class Main:
