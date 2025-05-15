@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class N2kDeviceType(str, Enum):
     DC = "dc"
     AC = "ac"
@@ -11,8 +12,9 @@ class N2kDeviceType(str, Enum):
     CIRCUIT = "circuit"
     HVAC = "hvac"
 
+
 class SwitchType(Enum):
-    None = 0
+    Not_Set = 0
     LatchOn = 1
     LatchOff = 2
     OnOff = 3

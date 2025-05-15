@@ -1,0 +1,14 @@
+{
+  "version": "0.3.0",
+  "configurations": [
+    {
+      "name": "Debug Host Dbus Simulator",
+      "type": "debugpy",
+      "request": "launch",
+      "env": {},
+      "program": "${workspaceFolder}/src/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}

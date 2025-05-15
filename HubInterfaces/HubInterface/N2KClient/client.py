@@ -8,32 +8,32 @@ import reactivex as rx
 import json
 import copy
 
-from models.devices import N2kDevice
-from models.constants import Constants
+from N2KClient.models.devices import N2kDevice
+from N2KClient.models.constants import Constants
 from reactivex import operators as ops
 from gi.repository import GLib
 from time import sleep
 from N2KClient.util.settings_util import SettingsUtil
-from models.common_enums import N2kDeviceType
+from N2KClient.models.common_enums import N2kDeviceType
 
 
 class N2KClient(dbus.service.Object):
     _latest_devices: dict[str, N2kDevice]
     _disposable_list: List[rx.abc.DisposableBase]
     _get_state_timeout = SettingsUtil.get_setting(
-        Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, 15
+        Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, default_value=15
     )
     _get_devices_timeout = SettingsUtil.get_setting(
-        Constants.WORKER_KEY, Constants.DEVICE_TIMEOUT_KEY, 15
+        Constants.WORKER_KEY, Constants.DEVICE_TIMEOUT_KEY, default_value=15
     )
 
     def __init__(self):
         self._logger = logging.getLogger("N2KClient")
         self._disposable_list = []
 
-        self._latest_devices = dict[str, N2kDevice]
+        self._latest_devices = {}
 
-        self._devices = rx.subject.BehaviorSubject(List[N2kDevice])
+        self._devices = rx.subject.BehaviorSubject({})
 
         # Pipes
         self.devices = self._devices.pipe(ops.publish(), ops.ref_count())
@@ -101,11 +101,14 @@ class N2KClient(dbus.service.Object):
     def _discover_devices(self):
         while True:
             try:
-                devices_json = json.loads(self.getDevices())
+                self._logger.debug("Discovering devices")
+                x = self.getDevices()
+                self._logger.debug(f"Devices: {x}")
+                devices_json = json.loads(x)
                 self.__merge_device_list(devices_json)
             except Exception as e:
-                self._logger.error("Error handling dbus device response")
-            sleep(self._get_devices_timeout)
+                self._logger.error(f"Error heading dbus device response: {e}")
+            sleep(1)
 
     def _get_state(self):
         while True:

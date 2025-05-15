@@ -1,0 +1,4 @@
+pycairo
+PyGObject
+dbus-python
+reactivex

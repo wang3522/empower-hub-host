@@ -1,6 +1,6 @@
 from typing import Any
-from models.common_enums import N2kDeviceType
-from models.constants import Constants
+from N2KClient.models.common_enums import N2kDeviceType
+from N2KClient.models.constants import Constants
 
 
 class N2kDevice:
