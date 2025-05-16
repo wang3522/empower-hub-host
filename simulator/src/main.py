@@ -24,7 +24,7 @@ class N2KDBusSimulator(dbus.service.Object):
         self.device_list = [
             {"id": "dc.1", "type": "dc"},
             {"id": "tank.1", "type": "tank"},
-            {"id": "engine.1", "type": "engine"},
+            {"id": "ac.1", "type": "ac"},
         ]
         bus = dbus.SystemBus()
         bus.request_name(BUS_NAME)
@@ -34,8 +34,8 @@ class N2KDBusSimulator(dbus.service.Object):
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def GetDevices(self):
         self.get_devices_count += 1
-        if self.get_devices_count == 5:
-            self.device_list.append({"id": "ac.1", "type": "ac"})
+        if self.get_devices_count == 15:
+            self.device_list.append({"id": "engine.1", "type": "engine"})
         return json.dumps(self.device_list)
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
@@ -45,7 +45,7 @@ class N2KDBusSimulator(dbus.service.Object):
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetState(self, id: str):
         self.get_state_count += 1
-        if self.get_state_count < 40:
+        if self.get_state_count < 80:
             if id == "dc.1":
                 return '{"voltage": 12, "current": 2, "stateOfCharge": 75, "temperature": 23, "capacityRemaining": 1000}'
             elif id == "ac.1":
@@ -54,7 +54,7 @@ class N2KDBusSimulator(dbus.service.Object):
                 return '{"level": 200, "levelPercent": 87}'
             elif id == "engine.1":
                 return '{"engineState": "dead", "speed": 0, "oilPressure": 50, "oilTemperature": 80, "coolantTemperature": 90, "fuelLevel": 50, "engineHours": 1000}'
-        elif self.get_state_count < 60:
+        elif self.get_state_count < 120:
             if id == "dc.1":
                 return '{"voltage": 13.5, "current": 4.1, "stateOfCharge": 62, "temperature": 27, "capacityRemaining": 850}'
             elif id == "ac.1":
