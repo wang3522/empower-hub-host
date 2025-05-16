@@ -15,10 +15,13 @@ from gi.repository import GLib
 from time import sleep
 from N2KClient.util.settings_util import SettingsUtil
 from N2KClient.models.common_enums import N2kDeviceType
+from N2KClient.services.config_parser import ConfigParser
+from N2KClient.models.configuration.configuation import N2KConfiguration
 
 
 class N2KClient(dbus.service.Object):
     _latest_devices: dict[str, N2kDevice]
+    _latest_config: N2KConfiguration
     _disposable_list: List[rx.abc.DisposableBase]
     _get_state_timeout = SettingsUtil.get_setting(
         Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, default_value=1
@@ -41,9 +44,11 @@ class N2KClient(dbus.service.Object):
         self._latest_devices = {}
 
         self._devices = rx.subject.BehaviorSubject({})
+        self._config = rx.subject.BehaviorSubject(N2KConfiguration())
 
         # Pipes
         self.devices = self._devices.pipe(ops.publish(), ops.ref_count())
+        self.config = self._config.pipe(ops.publish(), ops.ref_count())
 
         # Initialize N2k dbus Interface
         self.bus = dbus.SystemBus()
@@ -73,6 +78,7 @@ class N2KClient(dbus.service.Object):
         self._get_state_thread = threading.Thread(
             target=self._get_state, name="__get_state"
         )
+        self.config_parser = ConfigParser()
 
         # Handler to update the latest device list internally
         def update_lastest_devices(devices: dict[str, N2kDevice]):
@@ -85,13 +91,19 @@ class N2KClient(dbus.service.Object):
                 f"Latest devices: { json.dumps(devices_json, indent=2) }\n\n"
             )
 
+        # Handler to update the latest config internally
+        def update_latest_config(config: N2KConfiguration):
+            self._latest_config = config
+
         self._disposable_list.append(self.devices.subscribe(update_lastest_devices))
+        self._disposable_list.append(self.config.subscribe(update_latest_config))
 
         self.lock = threading.Lock()
 
     def start(self):
         config_json = self.getConfig()
-        # parse config
+        config = self.config_parser.parse_config(config_json)
+        self._config.on_next(config)
 
         self._get_devices_thread.start()
         self._get_state_thread.start()
@@ -158,3 +170,6 @@ class N2KClient(dbus.service.Object):
 
     def get_devices_observable(self):
         return self.devices
+
+    def get_config(self):
+        return self._latest_config

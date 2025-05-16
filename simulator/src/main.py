@@ -40,7 +40,7 @@ class N2KDBusSimulator(dbus.service.Object):
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def GetConfig(self):
-        return "[]"
+        return "{}"
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetState(self, id: str):

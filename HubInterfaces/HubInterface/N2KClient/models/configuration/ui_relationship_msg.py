@@ -1,9 +1,10 @@
 from enum import Enum
 
+
 class ItemType(Enum):
-    None = 0
+    NotSet = 0
     FluidLevel = 1
-    Pressure = 2 
+    Pressure = 2
     Temperature = 3
     DcMeter = 4
     AcMeter = 5
@@ -12,9 +13,11 @@ class ItemType(Enum):
     Category = 8
     InverterCharger = 9
 
+
 class RelationshipType(Enum):
-    Normal = 0 
+    Normal = 0
     Duplicates = 1
+
 
 class UiRelationShipMsg:
     primary_type: ItemType

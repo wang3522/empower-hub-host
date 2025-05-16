@@ -28,7 +28,7 @@ class CategoryItem:
     index: int
 
 
-class CircuitLoad:
+class CircuitLoad(ConfigItem):
     channel_address: int
     fuse_level: float
     running_current: float

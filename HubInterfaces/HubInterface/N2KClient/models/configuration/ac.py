@@ -1,6 +1,5 @@
-from ..common_enums import ACLine, ACType
 from enum import Enum
-from .metering_device import MeteringDevice
+from N2KClient.models.configuration.metering_device import MeteringDevice
 
 
 class ACLine(Enum):
