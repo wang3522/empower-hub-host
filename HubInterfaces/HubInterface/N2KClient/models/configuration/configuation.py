@@ -15,21 +15,21 @@ from .ui_relationship_msg import UiRelationShipMsg
 
 
 class N2KConfiguration:
-    gnss: dict[int, GNSSDevice]
-    circuit: dict[int, Circuit]
-    dc: dict[int, DC]
-    ac: dict[int, AC]
-    tank: dict[int, Tank]
-    inverter_charger: dict[int, InverterChargerDevice]
-    device: dict[int, Device]
-    hvac: dict[int, HVACDevice]
-    audio_stereo: dict[int, AudioStereoDevice]
-    binary_logic_state: dict[int, BinaryLogicStates]
+    gnss: dict[str, GNSSDevice]
+    circuit: dict[str, Circuit]
+    dc: dict[str, DC]
+    ac: dict[str, AC]
+    tank: dict[str, Tank]
+    inverter_charger: dict[str, InverterChargerDevice]
+    device: dict[str, Device]
+    hvac: dict[str, HVACDevice]
+    audio_stereo: dict[str, AudioStereoDevice]
+    binary_logic_state: dict[str, BinaryLogicStates]
     ui_relationships: list[UiRelationShipMsg]
 
-    pressure: dict[int, Pressure]
-    mode: dict[int, Circuit]
-    engine: dict[int, EnginesDevice]
+    pressure: dict[str, Pressure]
+    mode: dict[str, Circuit]
+    engine: dict[str, EnginesDevice]
 
     def __init__(self):
         self.gnss = {}

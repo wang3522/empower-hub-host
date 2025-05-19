@@ -1,7 +1,6 @@
 import json
 from typing import Any
 from N2KClient.models.common_enums import N2kDeviceType
-from N2KClient.models.constants import Constants
 
 
 class N2kDevice:

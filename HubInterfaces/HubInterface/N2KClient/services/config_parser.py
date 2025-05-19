@@ -30,10 +30,13 @@ from N2KClient.models.configuration.engine import EnginesDevice, EngineType
 
 from N2KClient.models.configuration.instance import Instance
 from N2KClient.models.configuration.data_id import DataId
+from N2KClient.models.constants import Constants, JsonKeys, AttrNames
 
 
 class ConfigParser:
-    _logger = logging.getLogger("DBUS N2k Client: ConfigParser")
+    _logger = logging.getLogger(
+        f"{Constants.DBUS_N2K_CLIENT}: {Constants.Config_Parser}"
+    )
 
     def __init__(self):
         self._logger.setLevel(logging.INFO)
@@ -92,8 +95,8 @@ class ConfigParser:
         try:
             data_id = DataId()
             field_map = {
-                "enabled": "Enabled",
-                "id": "Id",
+                AttrNames.ENABLED: JsonKeys.ENABLED,
+                AttrNames.ID: JsonKeys.ID,
             }
             self._map_fields(data_id_json, data_id, field_map)
             return data_id
@@ -108,8 +111,8 @@ class ConfigParser:
         try:
             instance = Instance()
             field_map = {
-                "value:": "Value",
-                "valid": "Valid",
+                AttrNames.VALUE: JsonKeys.VALUE,
+                AttrNames.VALID: JsonKeys.VALID,
             }
             self._map_fields(instance_json, instance, field_map)
             return instance
@@ -125,13 +128,13 @@ class ConfigParser:
             gnss_device = GNSSDevice()
             # Map simple fields directly
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "is_external": "Is_external",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.IS_EXTERNAL: JsonKeys.IS_EXTERNAL,
             }
             self._map_fields(gnss_json, gnss_device, field_map)
             # Parse instance if present
-            instance_json = gnss_json.get("Instance")
+            instance_json = gnss_json.get(JsonKeys.INSTANCE)
             if instance_json is not None:
                 gnss_device.instance = self.parse_instance(instance_json)
             return gnss_device
@@ -147,21 +150,21 @@ class ConfigParser:
             circuit_load = CircuitLoad()
             # Map simple fields directly
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "channel_address": "ChannelAddress",
-                "fuse_level": "FuseLevel",
-                "running_current": "RunningCurrent",
-                "systems_on_current": "SystemsOnCurrent",
-                "force_acknowledge": "ForceAcknowledge",
-                "level": "Level",
-                "is_switched_module": "IsSwitchedModule",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.CHANNEL_ADDRESS: JsonKeys.CHANNEL_ADDRESS,
+                AttrNames.FUSE_LEVEL: JsonKeys.FUSE_LEVEL,
+                AttrNames.RUNNING_CURRENT: JsonKeys.RUNNING_CURRENT,
+                AttrNames.SYSTEMS_ON_CURRENT: JsonKeys.SYSTEMS_ON_CURRENT,
+                AttrNames.FORCE_ACKNOWLEDGE: JsonKeys.FORCE_ACKNOWLEDGE,
+                AttrNames.LEVEL: JsonKeys.LEVEL,
+                AttrNames.IS_SWITCHED_MODULE: JsonKeys.IS_SWITCHED_MODULE,
             }
             self._map_fields(circuit_load_json, circuit_load, field_map)
 
             # Handle enum fields
             enum_fields = {
-                "control_type": ("ControlType", ControlType),
+                AttrNames.CONTROL_TYPE: (JsonKeys.CONTROL_TYPE, ControlType),
             }
             self._map_enum_fields(circuit_load_json, circuit_load, enum_fields)
             return circuit_load
@@ -176,9 +179,9 @@ class ConfigParser:
         try:
             category = CategoryItem()
             field_map = {
-                "name_utf8": "NameUTF8",
-                "enabled": "Enabled",
-                "index": "Index",
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.ENABLED: JsonKeys.ENABLED,
+                AttrNames.INDEX: JsonKeys.INDEX,
             }
             self._map_fields(category_json, category, field_map)
             return category
@@ -194,33 +197,33 @@ class ConfigParser:
             circuit_device = Circuit()
             # Combine required and optional fields into a single field map
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "single_throw_id": "SingleThrowId",
-                "has_complement": "HasComplementary",
-                "display_categories": "DisplayCategories",
-                "min_level": "MinLevel",
-                "max_level": "MaxLevel",
-                "nonvisibile_circuit": "NonvisibleCircuit",
-                "dimstep": "DimStep",
-                "step": "Step",
-                "dimmable": "Dimmable",
-                "load_smooth_start": "LoadSmoothStart",
-                "sequential_states": "SequentialStates",
-                "control_id": "ControlId",
-                "dc_circuit": "DcCircuit",
-                "ac_circuit": "AcCircuit",
-                "primary_circuit_id": "PrimaryCircuitId",
-                "remote_visibility": "RemoteVisibility",
-                "switch_string": "SwitchString",
-                "systems_on_and": "SystemsOnAnd",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.SINGLE_THROW_ID: JsonKeys.SINGLE_THROW_ID,
+                AttrNames.HAS_COMPLEMENT: JsonKeys.HAS_COMPLEMENT,
+                AttrNames.DISPLAY_CATEGORIES: JsonKeys.DISPLAY_CATEGORIES,
+                AttrNames.MIN_LEVEL: JsonKeys.MIN_LEVEL,
+                AttrNames.MAX_LEVEL: JsonKeys.MAX_LEVEL,
+                AttrNames.NONVISIBLE_CIRCUIT: JsonKeys.NONVISIBLE_CIRCUIT,
+                AttrNames.DIMSTEP: JsonKeys.DIMSTEP,
+                AttrNames.STEP: JsonKeys.STEP,
+                AttrNames.DIMMABLE: JsonKeys.DIMMABLE,
+                AttrNames.LOAD_SMOOTH_START: JsonKeys.LOAD_SMOOTH_START,
+                AttrNames.SEQUENTIAL_STATES: JsonKeys.SEQUENTIAL_STATES,
+                AttrNames.CONTROL_ID: JsonKeys.CONTROL_ID,
+                AttrNames.DC_CIRCUIT: JsonKeys.DC_CIRCUIT,
+                AttrNames.AC_CIRCUIT: JsonKeys.AC_CIRCUIT,
+                AttrNames.PRIMARY_CIRCUIT_ID: JsonKeys.PRIMARY_CIRCUIT_ID,
+                AttrNames.REMOTE_VISIBILITY: JsonKeys.REMOTE_VISIBILITY,
+                AttrNames.SWITCH_STRING: JsonKeys.SWITCH_STRING,
+                AttrNames.SYSTEMS_ON_AND: JsonKeys.SYSTEMS_ON_AND,
             }
             self._map_fields(circuit_json, circuit_device, field_map)
 
             # Handle enum fields
             enum_fields = {
-                "circuit_type": ("CircuitType", CircuitType),
-                "switch_type": ("SwitchType", SwitchType),
+                AttrNames.CIRCUIT_TYPE: (JsonKeys.CIRCUIT_TYPE, CircuitType),
+                AttrNames.SWITCH_TYPE: (JsonKeys.SWITCH_STRING, SwitchType),
             }
             for attr, (json_key, enum_cls) in enum_fields.items():
                 value = circuit_json.get(json_key)
@@ -228,13 +231,18 @@ class ConfigParser:
                     setattr(circuit_device, attr, enum_cls(value))
 
             # Parse voltage_source if present
-            if (voltage_source := circuit_json.get("VoltageSource")) is not None:
+            if (
+                voltage_source := circuit_json.get(JsonKeys.VOLTAGE_SOURCE)
+            ) is not None:
                 circuit_device.voltage_source = self.parse_instance(voltage_source)
 
             # Parse circuit_loads and categories
             list_fields = {
-                "circuit_loads": ("CircuitLoads", self.parse_circuit_load),
-                "categories": ("Categories", self.parse_category),
+                AttrNames.CIRCUIT_LOADS: (
+                    JsonKeys.CIRCUIT_LOADS,
+                    self.parse_circuit_load,
+                ),
+                AttrNames.CATEGORIES: (JsonKeys.CATEGORIES, self.parse_category),
             }
             self._map_list_fields(circuit_json, circuit_device, list_fields)
 
@@ -252,17 +260,15 @@ class ConfigParser:
             # Map required fields directly
 
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "output": "Output",
-                "nominal_voltage": "NominalVoltage",
-                "address": "Address",
-                "warning_low": "WarningLow",
-                "warning_high": "WarningHigh",
-                "show_voltage": "ShowVoltage",
-                "show_current": "ShowCurrent",
-                "battery_capacity": "BatteryCapacity",
-                "battery_state_of_charge": "BatteryStateOfCharge",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.OUTPUT: JsonKeys.OUTPUT,
+                AttrNames.NOMINAL_VOLTAGE: JsonKeys.NOMINAL_VOLTAGE,
+                AttrNames.ADDRESS: JsonKeys.ADDRESS,
+                AttrNames.SHOW_VOLTAGE: JsonKeys.SHOW_VOLTAGE,
+                AttrNames.SHOW_CURRENT: JsonKeys.SHOW_CURRENT,
+                AttrNames.BATTERY_CAPACITY: JsonKeys.BATTERY_CAPACITY,
+                AttrNames.BATTERY_STATE_OF_CHARGE: JsonKeys.BATTERY_STATE_OF_CHARGE,
             }
 
             for attr, key in field_map.items():
@@ -271,7 +277,7 @@ class ConfigParser:
                     setattr(dc_device, attr, value)
 
             # Parse instance if present
-            instance_json = dc_json.get("Instance")
+            instance_json = dc_json.get(JsonKeys.INSTANCE)
             if instance_json is not None:
                 dc_device.instance = self.parse_instance(instance_json)
             return dc_device
@@ -287,28 +293,25 @@ class ConfigParser:
             ac_device = AC()
             # Map required fields directly
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "instance": "Instance",
-                "output": "Output",
-                "nominal_voltage": "NominalVoltage",
-                "address": "Address",
-                "warning_low": "WarningLow",
-                "warning_high": "WarningHigh",
-                "show_voltage": "ShowVoltage",
-                "show_current": "ShowCurrent",
-                "output": "Output",
-                "norminal_frequency": "NominalFrequency",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.OUTPUT: JsonKeys.OUTPUT,
+                AttrNames.NOMINAL_VOLTAGE: JsonKeys.NOMINAL_VOLTAGE,
+                AttrNames.ADDRESS: JsonKeys.ADDRESS,
+                AttrNames.SHOW_VOLTAGE: JsonKeys.SHOW_VOLTAGE,
+                AttrNames.SHOW_CURRENT: JsonKeys.SHOW_CURRENT,
+                AttrNames.OUTPUT: JsonKeys.OUTPUT,
+                AttrNames.NOMINAL_FREQUENCY: JsonKeys.NOMINAL_FREQUENCY,
             }
             self._map_fields(ac_json, ac_device, field_map)
 
             enum_fields = {
-                "line": ("Line", ACLine),
-                "ac_type": ("ACType", ACType),
+                AttrNames.LINE: (JsonKeys.LINE, ACLine),
+                AttrNames.AC_TYPE: (JsonKeys.AC_TYPE, ACType),
             }
             self._map_enum_fields(ac_json, ac_device, enum_fields)
             # Parse instance if present
-            instance_json = ac_json.get("Instance")
+            instance_json = ac_json.get(JsonKeys.INSTANCE)
             if instance_json is not None:
                 ac_device.instance = self.parse_instance(instance_json)
             return ac_device
@@ -324,28 +327,26 @@ class ConfigParser:
             tank_device = Tank()
             # Map required fields directly
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "instance": "Instance",
-                "circuit_id": "CircuitId",
-                "circuit_name": "circuitName",
-                "address": "Address",
-                "tank_capacity": "TankCapacity",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.CIRCUIT_NAME: JsonKeys.CIRCUIT_NAME,
+                AttrNames.ADDRESS: JsonKeys.ADDRESS,
+                AttrNames.TANK_CAPACITY: JsonKeys.TANK_CAPACITY,
             }
             self._map_fields(tank_json, tank_device, field_map)
 
             # Parse instance if present
-            instance_json = tank_json.get("Instance")
+            instance_json = tank_json.get(JsonKeys.INSTANCE)
             if instance_json is not None:
                 tank_device.instance = self.parse_instance(instance_json)
             # Parse circuit_id if present
-            circuit_id_json = tank_json.get("CircuitId")
+            circuit_id_json = tank_json.get(JsonKeys.CIRCUIT_ID)
             if circuit_id_json is not None:
                 tank_device.circuit_id = self.parse_data_id(circuit_id_json)
 
             enum_fields = {
-                "tank_type": ("TankType", TankType),
-                "switch_type": ("SwitchType", SwitchType),
+                AttrNames.TANK_TYPE: (JsonKeys.TANK_TYPE, TankType),
+                AttrNames.SWITCH_TYPE: (JsonKeys.SWITCH_TYPE, SwitchType),
             }
             self._map_enum_fields(tank_json, tank_device, enum_fields)
             return tank_device
@@ -360,12 +361,12 @@ class ConfigParser:
         Calculate the inverter charger instance from the configuration.
         """
         try:
-            inverter_instance: int = inverter_charger_json.get("InverterInstance")(
-                "Instance"
-            )
-            charger_instance: int = inverter_charger_json.get("ChargerInstance")(
-                "Instance"
-            )
+            inverter_instance: int = inverter_charger_json.get(
+                JsonKeys.INVERTER_INSTANCE
+            )(JsonKeys.INSTANCE)
+            charger_instance: int = inverter_charger_json.get(
+                JsonKeys.CHARGER_INSTANCE
+            )(JsonKeys.INSTANCE)
 
             return inverter_instance << 8 | charger_instance
 
@@ -383,26 +384,26 @@ class ConfigParser:
             inverter_charger_device = InverterChargerDevice()
             # Map required fields directly
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "model": "Model",
-                "type": "Type",
-                "sub_type": "SubType",
-                "position_column": "PositionColumn",
-                "position_row": "PositionRow",
-                "clustered": "Clustered",
-                "primary": "Primary",
-                "primary_phase": "PrimaryPhase",
-                "device_instance": "DeviceInstance",
-                "dipswitch": "Dipswitch",
-                "channel_index": "ChannelIndex",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.MODEL: JsonKeys.MODEL,
+                AttrNames.TYPE: JsonKeys.TYPE,
+                AttrNames.SUB_TYPE: JsonKeys.SUB_TYPE,
+                AttrNames.POSITION_COLUMN: JsonKeys.POSITION_COLUMN,
+                AttrNames.POSITION_ROW: JsonKeys.POSITION_ROW,
+                AttrNames.CLUSTERED: JsonKeys.CLUSTERED,
+                AttrNames.PRIMARY: JsonKeys.PRIMARY,
+                AttrNames.PRIMARY_PHASE: JsonKeys.PRIMARY_PHASE,
+                AttrNames.DEVICE_INSTANCE: JsonKeys.DEVICE_INSTANCE,
+                AttrNames.DIPSWITCH: JsonKeys.DIPSWITCH,
+                AttrNames.CHANNEL_INDEX: JsonKeys.CHANNEL_INDEX,
             }
             self._map_fields(inverter_charger_json, inverter_charger_device, field_map)
 
             # Parse instance-related fields if present
             instance_fields = {
-                "inverter_instance": "InverterInstance",
-                "charger_instance": "ChargerInstance",
+                AttrNames.INVERTER_INSTANCE: JsonKeys.INVERTER_INSTANCE,
+                AttrNames.CHARGER_INSTANCE: JsonKeys.CHARGER_INSTANCE,
             }
             for attr, key in instance_fields.items():
                 field_json = inverter_charger_json.get(key)
@@ -413,15 +414,15 @@ class ConfigParser:
 
             # Parse data id fields if present
             data_id_fields = {
-                "inverter_ac_id": "InverterACId",
-                "inverter_circuit_id": "InverterCircuitId",
-                "inverter_toggle_circuit_id": "InverterToggleCircuitId",
-                "charger_ac_id": "ChargerACId",
-                "charger_circuit_id": "ChargerCircuitId",
-                "charger_toggle_circuit_id": "ChargerToggleCircuitId",
-                "battery_bank_1_id": "BatteryBank1Id",
-                "battery_bank_2_id": "BatteryBank2Id",
-                "battery_bank_3_id": "BatteryBank3Id",
+                AttrNames.INVERTER_AC_ID: JsonKeys.INVERTER_AC_ID,
+                AttrNames.INVERTER_CIRCUIT_ID: JsonKeys.INVERTER_CIRCUIT_ID,
+                AttrNames.INVERTER_TOGGLE_CIRCUIT_ID: JsonKeys.INVERTER_TOGGLE_CIRCUIT_ID,
+                AttrNames.CHARGER_AC_ID: JsonKeys.CHARGER_AC_ID,
+                AttrNames.CHARGER_CIRCUIT_ID: JsonKeys.CHARGER_CIRCUIT_ID,
+                AttrNames.CHARGER_TOGGLE_CIRCUIT_ID: JsonKeys.CHARGER_TOGGLE_CIRCUIT_ID,
+                AttrNames.BATTERY_BANK_1_ID: JsonKeys.BATTERY_BANK_1_ID,
+                AttrNames.BATTERY_BANK_2_ID: JsonKeys.BATTERY_BANK_2_ID,
+                AttrNames.BATTERY_BANK_3_ID: JsonKeys.BATTERY_BANK_3_ID,
             }
             for attr, key in data_id_fields.items():
                 field_json = inverter_charger_json.get(key)
@@ -443,17 +444,17 @@ class ConfigParser:
             device = Device()
             # Map required fields directly
             field_map = {
-                "name_utf8": "NameUTF8",
-                "source_address": "SourceAddress",
-                "conflict": "Conflict",
-                "valid": "Valid",
-                "transient": "Transient",
-                "version": "Version",
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.SOURCE_ADDRESS: JsonKeys.SOURCE_ADDRESS,
+                AttrNames.CONFLICT: JsonKeys.CONFLICT,
+                AttrNames.VALID: JsonKeys.VALID,
+                AttrNames.TRANSIENT: JsonKeys.TRANSIENT,
+                AttrNames.VERSION: JsonKeys.VERSION,
             }
             self._map_fields(device_json, device, field_map)
 
             enum_fields = {
-                "device_type": ("DeviceType", DeviceType),
+                AttrNames.DEVICE_TYPE: (JsonKeys.DEVICE_TYPE, DeviceType),
             }
             # Handle enum fields
             for attr, (json_key, enum_cls) in enum_fields.items():
@@ -473,23 +474,23 @@ class ConfigParser:
             hvac_device = HVACDevice()
             # Map required fields directly
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "fan_speed_count": "FanSpeedCount",
-                "operating_modes_mask": "OperatingModesMask",
-                "model": "Model",
-                "setpoint_temperature_min": "SetpointTemperatureMin",
-                "setpoint_temperature_max": "SetpointTemperatureMax",
-                "fan_speed_off_modes_mask": "FanSpeedOffModesMask",
-                "fan_speed_auto_modes_mask": "FanSpeedAutoModesMask",
-                "fan_speed_manual_modes_mask": "FanSpeedManualModesMask",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.FAN_SPEED_COUNT: JsonKeys.FAN_SPEED_COUNT,
+                AttrNames.OPERATING_MODES_MASK: JsonKeys.OPERATING_MODES_MASK,
+                AttrNames.MODEL: JsonKeys.MODEL,
+                AttrNames.SETPOINT_TEMPERATURE_MAX: JsonKeys.SETPOINT_TEMPERATURE_MIN,
+                AttrNames.SETPOINT_TEMPERATURE_MAX: JsonKeys.SETPOINT_TEMPERATURE_MAX,
+                AttrNames.FAN_SPEED_OFF_MODES_MASK: JsonKeys.FAN_SPEED_OFF_MODES_MASK,
+                AttrNames.FAN_SPEED_AUTO_MODES_MASK: JsonKeys.FAN_SPEED_AUTO_MODES_MASK,
+                AttrNames.FAN_SPEED_MANUAL_MODES_MASK: JsonKeys.FAN_SPEED_MANUAL_MODES_MASK,
             }
             self._map_fields(hvac_json, hvac_device, field_map)
 
             # Handle instance fields
             instance_fields = {
-                "instance": "Instance",
-                "temperature_instance": "TemperatureInstance",
+                AttrNames.INSTANCE: JsonKeys.INSTANCE,
+                AttrNames.TEMPERATURE_INSTANCE: JsonKeys.TEMPERATURE_INSTANCE,
             }
             for attr, key in instance_fields.items():
                 field_json = hvac_json.get(key)
@@ -498,15 +499,15 @@ class ConfigParser:
 
             # Handle data id fields
             data_id_fields = {
-                "operating_mode_id": "OperatingModeId",
-                "fan_mode_id": "FanModeId",
-                "fan_speed_id": "FanSpeedId",
-                "setpoint_temperature_id": "SetpointTemperatureId",
-                "operating_mode_temperature_id": "OperatingModeTemperatureId",
-                "fan_mode_toggle_id": "FanModeToggleId",
-                "fan_speed_toggle_id": "FanSpeedToggleId",
-                "setpoint_temperature_toggle_id": "SetpointTemperatureToggleId",
-                "temperature_monitoring_id": "TemperatureMonitoringId",
+                AttrNames.OPERATING_MODE_ID: JsonKeys.OPERATING_MODE_ID,
+                AttrNames.FAN_MODE_ID: JsonKeys.FAN_MODE_ID,
+                AttrNames.FAN_SPEED_ID: JsonKeys.FAN_SPEED_ID,
+                AttrNames.SETPOINT_TEPERATURE_ID: JsonKeys.SETPOINT_TEPERATURE_ID,
+                AttrNames.OPERATING_MODE_TEMPERATURE_ID: JsonKeys.OPERATING_MODE_TEMPERATURE_ID,
+                AttrNames.FAN_MODE_TOGGLE_ID: JsonKeys.FAN_MODE_TOGGLE_ID,
+                AttrNames.FAN_SPEED_TOGGLE_ID: JsonKeys.FAN_SPEED_TOGGLE_ID,
+                AttrNames.SET_POINT_TEMPERATURE_TOGGLE_ID: JsonKeys.SET_POINT_TEMPERATURE_TOGGLE_ID,
+                AttrNames.TEMPERATURE_MONITORING_ID: JsonKeys.TEMPERATURE_MONITORING_ID,
             }
             for attr, key in data_id_fields.items():
                 field_json = hvac_json.get(key)
@@ -528,18 +529,18 @@ class ConfigParser:
             audio_stereo_device = AudioStereoDevice()
             # Map required fields directly
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "mute_enabled": "MuteEnabled",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.MUTE_ENABLED: JsonKeys.MUTE_ENABLED,
             }
             self._map_fields(audio_stereo_json, audio_stereo_device, field_map)
             # Parse instance if present
-            instance_json = audio_stereo_json.get("Instance")
+            instance_json = audio_stereo_json.get(JsonKeys.INSTANCE)
             if instance_json is not None:
                 audio_stereo_device.instance = self.parse_instance(instance_json)
             # Parse circuit_ids if present
             list_fields = {
-                "circuit_ids": "CircuitIds",
+                AttrNames.CIRCUIT_IDS: JsonKeys.CIRCUIT_IDS,
             }
             self._map_list_fields(audio_stereo_json, audio_stereo_device, list_fields)
 
@@ -558,9 +559,9 @@ class ConfigParser:
             binary_logic_state = BinaryLogicStates()
             # Map required fields directly
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "address": "Address",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.ADDRESS: JsonKeys.ADDRESS,
             }
             self._map_fields(binary_logic_state_json, binary_logic_state, field_map)
             return binary_logic_state
@@ -578,19 +579,22 @@ class ConfigParser:
             ui_relationship = UiRelationShipMsg()
             # Map required fields directly
             field_map = {
-                "primary_id": "PrimaryId",
-                "secondary_id": "SecondaryId",
-                "primary_config_address": "PrimaryConfigAddress",
-                "secondary_config_address": "SecondaryConfigAddress",
-                "primary_channel_index": "PrimaryChannelIndex",
-                "secondary_channel_index": "SecondaryChannelIndex",
+                AttrNames.PRIMARY_ID: JsonKeys.PRIMARY_ID,
+                AttrNames.SECONDARY_ID: JsonKeys.SECONDARY_ID,
+                AttrNames.PRIMARY_CONFIG_ADDRESS: JsonKeys.PRIMARY_CONFIG_ADDRESS,
+                AttrNames.SECONDARY_CONFIG_ADDRESS: JsonKeys.SECONDARY_CONFIG_ADDRESS,
+                AttrNames.PRIMARY_CHANNEL_INDEX: JsonKeys.PRIMARY_CHANNEL_INDEX,
+                AttrNames.SECONDARY_CHANNEL_INDEX: JsonKeys.SECONDARY_CHANNEL_INDEX,
             }
             self._map_fields(ui_relationship_json, ui_relationship, field_map)
             # Handle enum fields
             enum_fields = {
-                "primary_type": ("PrimaryType", ItemType),
-                "secondary_type": ("SecondaryType", ItemType),
-                "relationship_type": ("RelationshipType", RelationshipType),
+                AttrNames.PRIMARY_TYPE: (JsonKeys.PRIMARY_TYPE, ItemType),
+                AttrNames.SECONDARY_TYPE: (JsonKeys.SECONDARY_TYPE, ItemType),
+                AttrNames.RELATIONSHIP_TYPE: (
+                    JsonKeys.RELATIONSHIP_TYPE,
+                    RelationshipType,
+                ),
             }
             self._map_enum_fields(ui_relationship_json, ui_relationship, enum_fields)
             return ui_relationship
@@ -606,27 +610,26 @@ class ConfigParser:
             pressure = Pressure()
             # Map required fields directly
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "circuit_id": "CircuitId",
-                "circuit_name": "CircuitName",
-                "address": "Address",
-                "atmospheric_pressure": "AtmosphericPressure",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.CIRCUIT_NAME: JsonKeys.CIRCUIT_NAME,
+                AttrNames.ADDRESS: JsonKeys.ADDRESS,
+                AttrNames.ATMOSPHERIC_PRESSURE: JsonKeys.ATMOSPHERIC_PRESSURE,
             }
             self._map_fields(pressure_json, pressure, field_map)
             # Parse instance if present
-            instance_json = pressure_json.get("Instance")
+            instance_json = pressure_json.get(JsonKeys.INSTANCE)
             if instance_json is not None:
                 pressure.instance = self.parse_instance(instance_json)
             # parese enum fields
             enum_fields = {
-                "pressure_type": ("PressureType", PressureType),
-                "switch_type": ("SwitchType", SwitchType),
+                AttrNames.PRESSURE_TYPE: (JsonKeys.PRESSURE_TYPE, PressureType),
+                AttrNames.SWITCH_TYPE: (JsonKeys.SWITCH_TYPE, SwitchType),
             }
             self._map_enum_fields(pressure_json, pressure, enum_fields)
             # Parse data id fields if present
             data_id_fields = {
-                "circuit_id": "CircuitId",
+                AttrNames.CIRCUIT_ID: JsonKeys.CIRCUIT_ID,
             }
             for attr, key in data_id_fields.items():
                 field_json = pressure_json.get(key)
@@ -645,21 +648,21 @@ class ConfigParser:
             engine_device = EnginesDevice()
             # Map required fields directly
             field_map = {
-                "id": "Id",
-                "name": "NameUTF8",
-                "software_id": "SoftwareId",
-                "calibration_id": "CalibrationId",
-                "serial_number": "SerialNumber",
-                "ecu_serial_number": "EcuSerialNumber",
+                AttrNames.ID: JsonKeys.ID,
+                AttrNames.NAME: JsonKeys.NAME,
+                AttrNames.SOFTWARE_ID: JsonKeys.SOFTWARE_ID,
+                AttrNames.CALIBRATION_ID: JsonKeys.CALIBRATION_ID,
+                AttrNames.SERIAL_NUMBER: JsonKeys.SERIAL_NUMBER,
+                AttrNames.ECU_SERIAL_NUMBER: JsonKeys.ECU_SERIAL_NUMBER,
             }
             self._map_fields(engine_json, engine_device, field_map)
             # Parse instance if present
-            instance_json = engine_json.get("Instance")
+            instance_json = engine_json.get(JsonKeys.INSTANCE)
             if instance_json is not None:
                 engine_device.instance = self.parse_instance(instance_json)
             # Handle enum fields
             enum_fields = {
-                "engine_type": ("EngineType", EngineType),
+                AttrNames.ENGINE_TYPE: (JsonKeys.ENGINE_TYPE, EngineType),
             }
             self._map_enum_fields(engine_json, engine_device, enum_fields)
             return engine_device
@@ -677,95 +680,88 @@ class ConfigParser:
             config_json: dict[str, list[Any]] = json.loads(config_string)
 
             # GNSS
-            if "gnss" in config_json:
-                for gnss_json in config_json["gnss"]:
-                    gnss_id = f"gnss.{gnss_json['id']}"
+            if JsonKeys.GNSS in config_json:
+                for gnss_json in config_json[JsonKeys.GNSS]:
+                    gnss_id = f"{AttrNames.GNSS}.{gnss_json[JsonKeys.ID]}"
                     gnss_device = self.parse_gnss(gnss_json)
                     # Add the GNSS device to the configuration
                     n2k_configuration.gnss[gnss_id] = gnss_device
 
             # Circuit
-            if "circuit" in config_json:
-                for circuit_json in config_json["circuit"]:
-                    circuit_id = f"circuit.{circuit_json['ControlId']}"
+            if JsonKeys.CIRCUIT in config_json:
+                for circuit_json in config_json[JsonKeys.CIRCUIT]:
+                    circuit_id = (
+                        f"{AttrNames.CIRCUIT}.{circuit_json[JsonKeys.CONTROL_ID]}"
+                    )
                     circuit_device = self.parse_circuit(circuit_json)
                     # Add the Circuit device to the configuration
                     n2k_configuration.circuit[circuit_id] = circuit_device
 
             # DC
-            if "dc" in config_json:
-                for dc_json in config_json["dc"]:
-                    dc_id = f"dc.{dc_json['Instance']['Value']}"
+            if JsonKeys.DC in config_json:
+                for dc_json in config_json[JsonKeys.DC]:
+                    dc_id = (
+                        f"{AttrNames.DC}.{dc_json[JsonKeys.INSTANCE][JsonKeys.VALUE]}"
+                    )
                     dc_device = self.parse_dc(dc_json)
                     # Add the DC device to the configuration
                     n2k_configuration.dc[dc_id] = dc_device
 
             # AC
-            if "ac" in config_json:
-                for ac_json in config_json["ac"]:
-                    ac_id = f"ac.{ac_json['Instance']['Value']}"
+            if JsonKeys.AC in config_json:
+                for ac_json in config_json[JsonKeys.AC]:
+                    ac_id = (
+                        f"{AttrNames.AC}.{ac_json[JsonKeys.INSTANCE][JsonKeys.VALUE]}"
+                    )
                     ac_device = self.parse_ac(ac_json)
                     # Add the AC device to the configuration
                     n2k_configuration.ac[ac_id] = ac_device
 
             # Tank
-            if "tank" in config_json:
-                for tank_json in config_json["tank"]:
-                    tank_id = f"tank.{tank_json['Instance']['Value']}"
+            if JsonKeys.TANK in config_json:
+                for tank_json in config_json[JsonKeys.TANK]:
+                    tank_id = f"{AttrNames.TANK}.{tank_json[JsonKeys.INSTANCE][JsonKeys.VALUE]}"
                     tank_device = self.parse_tank(tank_json)
                     # Add the Tank device to the configuration
                     n2k_configuration.tank[tank_id] = tank_device
 
             # Inverter Charger
-            if "inverter_charger" in config_json:
-                for inverter_charger_json in config_json["inverter_charger"]:
+            if JsonKeys.INVERTER_CHARGER in config_json:
+                for inverter_charger_json in config_json[JsonKeys.INVERTER_CHARGER]:
                     inverter_charger_id = self.calculate_inverter_charger_instance(
                         inverter_charger_json
                     )
                     inverter_charger_device = self.parse_inverter_charger(
                         inverter_charger_json
                     )
+                    inverter_charger_device_id = (
+                        f"{AttrNames.INVERTER_CHARGER}.{inverter_charger_id}"
+                    )
                     # Add the Inverter Charger device to the configuration
-                    n2k_configuration.inverter_charger[inverter_charger_id] = (
+                    n2k_configuration.inverter_charger[inverter_charger_device_id] = (
                         inverter_charger_device
                     )
 
             # Device
-            if "device" in config_json:
-                for device_json in config_json["device"]:
-                    device_dipswitch = device_json["Dipswitch"]
+            if JsonKeys.DEVICE in config_json:
+                for device_json in config_json[JsonKeys.DEVICE]:
+                    device_id = f"{AttrNames.DEVICE}.{device_json[JsonKeys.DIPSWITCH]}"
                     device = self.parse_device(device_json)
                     # Add the Device to the configuration
-                    n2k_configuration.device[device_dipswitch] = device
+                    n2k_configuration.device[device_id] = device
 
             # HVAC
-            if "hvac" in config_json:
-                for hvac_json in config_json["hvac"]:
-                    hvac_id = f"hvac.{hvac_json['Instance']['Value']}"
-                    hvac_device = HVACDevice()
-                    # Map required fields directly
-                    field_map = {
-                        "id": "Id",
-                        "name": "NameUTF8",
-                        "address": "Address",
-                        "type": "Type",
-                        "sub_type": "SubType",
-                        "position_column": "PositionColumn",
-                        "position_row": "PositionRow",
-                        "clustered": "Clustered",
-                        "primary": "Primary",
-                        "primary_phase": "PrimaryPhase",
-                    }
-                    self._map_fields(hvac_json, hvac_device, field_map)
+            if JsonKeys.HVAC in config_json:
+                for hvac_json in config_json[JsonKeys.HVAC]:
+                    hvac_id = f"{AttrNames.HVAC}.{hvac_json[JsonKeys.INSTANCE][JsonKeys.VALUE]}"
+                    hvac_device = self.parse_hvac(hvac_json)
                     # Add the HVAC device to the configuration
                     n2k_configuration.hvac[hvac_id] = hvac_device
 
             # Audio Stereo
-            if "audio_stereo" in config_json:
-                for audio_stereo_json in config_json["audio_stereo"]:
-                    audio_stereo_id = (
-                        f"audio_stereo.{audio_stereo_json['Instance']['Value']}"
-                    )
+            if JsonKeys.AUDIO_STEREO in config_json:
+                for audio_stereo_json in config_json[JsonKeys.AUDIO_STEREO]:
+                    audio_stereo_id = f"{AttrNames.AUDIO_STEREO}.{audio_stereo_json[JsonKeys.INSTANCE][JsonKeys.VALUE]}"
                     audio_stereo_device = self.parse_audio_stereo(audio_stereo_json)
                     # Add the Audio Stereo device to the configuration
                     n2k_configuration.audio_stereo[audio_stereo_id] = (
@@ -773,11 +769,9 @@ class ConfigParser:
                     )
 
             # Binary Logic State
-            if "binary_logic_state" in config_json:
-                for binary_logic_state in config_json["binary_logic_state"]:
-                    binary_logic_state_id = (
-                        f"binary_logic_state.{binary_logic_state['Id']}"
-                    )
+            if JsonKeys.BINARY_LOGIC_STATE in config_json:
+                for binary_logic_state in config_json[JsonKeys.BINARY_LOGIC_STATE]:
+                    binary_logic_state_id = f"{AttrNames.BINARY_LOGIC_STATE}.{binary_logic_state[JsonKeys.ID]}"
                     binary_logic_state_device = self.parse_binary_logic_state(
                         binary_logic_state
                     )
@@ -787,31 +781,31 @@ class ConfigParser:
                     )
 
             # UI Relationships
-            if "ui_relationship" in config_json:
-                for ui_relationship_json in config_json["ui_relationship"]:
+            if JsonKeys.UI_RELATIONSHIP in config_json:
+                for ui_relationship_json in config_json[JsonKeys.UI_RELATIONSHIP]:
                     n2k_configuration.ui_relationships.append(
                         self.parse_ui_relationship(ui_relationship_json)
                     )
             # Pressure
-            if "pressure" in config_json:
-                for pressure in config_json["pressure"]:
-                    pressure_id = f"pressure.{pressure['Instance']['Value']}"
+            if JsonKeys.PRESSURE in config_json:
+                for pressure in config_json[JsonKeys.PRESSURE]:
+                    pressure_id = f"{AttrNames.PRESSURE}.{pressure[JsonKeys.INSTANCE][JsonKeys.VALUE]}"
                     pressure_device = self.parse_pressure(pressure)
                     # Add the Pressure device to the configuration
                     n2k_configuration.pressure[pressure_id] = pressure_device
 
             # Mode
-            if "mode" in config_json:
-                for mode in config_json["mode"]:
-                    mode_id = f"circuit.{circuit_json['ControlId']}"
+            if JsonKeys.MODE in config_json:
+                for mode in config_json[JsonKeys.MODE]:
+                    mode_id = f"{AttrNames.MODE}.{mode[JsonKeys.CONTROL_ID]}"
                     mode_device = self.parse_circuit(circuit_json)
                     # Add the Circuit device to the configuration
                     n2k_configuration.mode[mode_id] = mode_device
 
             # Engine
-            if "engine" in config_json:
-                for engine in config_json["engine"]:
-                    engine_id = f"engine.{engine['Instance']['Value']}"
+            if JsonKeys.ENGINE in config_json:
+                for engine in config_json[JsonKeys.ENGINE]:
+                    engine_id = f"{AttrNames.ENGINE}.{engine[JsonKeys.INSTANCE][JsonKeys.VALUE]}"
                     engine_device = self.parse_engine(engine)
                     # Add the Engine device to the configuration
                     n2k_configuration.engine[engine_id] = engine_device

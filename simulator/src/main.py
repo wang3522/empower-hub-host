@@ -22,9 +22,9 @@ class N2KDBusSimulator(dbus.service.Object):
         self.get_devices_count = 0
         self.get_state_count = 0
         self.device_list = [
-            {"id": "dc.1", "type": "dc"},
-            {"id": "tank.1", "type": "tank"},
-            {"id": "ac.1", "type": "ac"},
+            {"Id": "dc.1", "Type": "dc"},
+            {"Id": "tank.1", "Type": "tank"},
+            {"Id": "ac.1", "Type": "ac"},
         ]
         bus = dbus.SystemBus()
         bus.request_name(BUS_NAME)
@@ -35,7 +35,7 @@ class N2KDBusSimulator(dbus.service.Object):
     def GetDevices(self):
         self.get_devices_count += 1
         if self.get_devices_count == 15:
-            self.device_list.append({"id": "engine.1", "type": "engine"})
+            self.device_list.append({"Id": "engine.1", "Type": "Engine"})
         return json.dumps(self.device_list)
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")

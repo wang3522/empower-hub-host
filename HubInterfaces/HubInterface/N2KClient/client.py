@@ -9,7 +9,7 @@ import json
 import copy
 
 from N2KClient.models.devices import N2kDevice
-from N2KClient.models.constants import Constants
+from N2KClient.models.constants import Constants, JsonKeys, AttrNames
 from reactivex import operators as ops
 from gi.repository import GLib
 from time import sleep
@@ -29,7 +29,7 @@ class N2KClient(dbus.service.Object):
     _get_devices_timeout = SettingsUtil.get_setting(
         Constants.WORKER_KEY, Constants.DEVICE_TIMEOUT_KEY, default_value=1
     )
-    _logger = logging.getLogger("DBUS N2k Client")
+    _logger = logging.getLogger(Constants.DBUS_N2K_CLIENT)
 
     def __init__(self):
         self._logger.setLevel(logging.INFO)
@@ -53,21 +53,21 @@ class N2KClient(dbus.service.Object):
         # Initialize N2k dbus Interface
         self.bus = dbus.SystemBus()
         n2k_dbus_object = self.bus.get_object(
-            Constants.n2k_service_name, Constants.n2k_object_path
+            Constants.N2K_SERVICE_NAME, Constants.N2K_OBJECT_PATH
         )
         self.n2k_dbus_interface = dbus.Interface(
-            n2k_dbus_object, Constants.n2k_interface_name
+            n2k_dbus_object, Constants.N2K_INTERFACE_NAME
         )
 
         # Initialize N2k dbus Service Methods
         self.getConfig = self.n2k_dbus_interface.get_dbus_method(
-            Constants.get_config_service_method_name
+            Constants.GET_CONFIG_SERVICE_METHOD_NAME
         )
         self.getState = self.n2k_dbus_interface.get_dbus_method(
-            Constants.get_state_service_method_name
+            Constants.GET_STATE_SERVICE_METHOD_NAME
         )
         self.getDevices = self.n2k_dbus_interface.get_dbus_method(
-            Constants.get_devices_service_method_name
+            Constants.GET_DEVICES_SERVICE_METHOD_NAME
         )
 
         # Threads
@@ -113,10 +113,10 @@ class N2KClient(dbus.service.Object):
             device_list_copy = copy.deepcopy(self._latest_devices)
         list_appended = False
         for device in device_json:
-            device_id = device["id"]
+            device_id = device[JsonKeys.ID]
             if device_id not in device_list_copy:
                 # Actually do JSON/ENUM mapping here here
-                device_type = N2kDeviceType(device["type"])
+                device_type = N2kDeviceType(device[JsonKeys.TYPE])
                 device_list_copy[device_id] = N2kDevice(device_type)
                 list_appended = True
 
