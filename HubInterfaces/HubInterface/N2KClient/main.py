@@ -1,18 +1,13 @@
 import logging
 from N2KClient.client import N2KClient
+from N2KClient.util.logging import configure_logging
 
 
 class Main:
     logger = logging.getLogger("DBUS N2k Client: Main")
 
     def __init__(self):
-        self.logger.setLevel(logging.INFO)
-        log_handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        log_handler.setFormatter(formatter)
-        self.logger.addHandler(log_handler)
+        configure_logging()
 
     def run(self):
         self.logger.info("Starting N2K Client")

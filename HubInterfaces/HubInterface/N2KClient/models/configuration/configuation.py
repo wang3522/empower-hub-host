@@ -12,6 +12,7 @@ from .gnss import GNSSDevice
 from .engine import EnginesDevice
 from .binary_logic_state import BinaryLogicStates
 from .ui_relationship_msg import UiRelationShipMsg
+from ..constants import AttrNames
 
 
 class N2KConfiguration:
@@ -67,18 +68,18 @@ class N2KConfiguration:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "gnss": self.gnss,
-            "circuit": self.circuit,
-            "dc": self.dc,
-            "ac": self.ac,
-            "tank": self.tank,
-            "inverter_charger": self.inverter_charger,
-            "device": self.device,
-            "hvac": self.hvac,
-            "audio_stereo": self.audio_stereo,
-            "binary_logic_state": self.binary_logic_state,
-            "ui_relationships": self.ui_relationships,
-            "pressure": self.pressure,
-            "mode": self.mode,
-            "engine": self.engine,
+            AttrNames.GNSS: self.gnss,
+            AttrNames.CIRCUIT: self.circuit,
+            AttrNames.DC: self.dc,
+            AttrNames.AC: self.ac,
+            AttrNames.TANK: self.tank,
+            AttrNames.INVERTER_CHARGER: self.inverter_charger,
+            AttrNames.DEVICE: self.device,
+            AttrNames.HVAC: self.hvac,
+            AttrNames.AUDIO_STEREO: self.audio_stereo,
+            AttrNames.BINARY_LOGIC_STATE: self.binary_logic_state,
+            AttrNames.UI_RELATIONSHIP: self.ui_relationships,
+            AttrNames.PRESSURE: self.pressure,
+            AttrNames.MODE: self.mode,
+            AttrNames.ENGINE: self.engine,
         }

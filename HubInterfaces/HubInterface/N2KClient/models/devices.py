@@ -14,5 +14,5 @@ class N2kDevice:
     def to_dict(self) -> dict[str, Any]:
         return {"type": self.type.value, "channels": self.channels}
 
-    def to_json(self) -> str:
+    def to_json_string(self) -> str:
         return json.dumps(self.to_dict())

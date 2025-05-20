@@ -3,6 +3,7 @@ import threading
 from typing import Any, List
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
+import dbus.proxies
 import dbus.service
 import reactivex as rx
 import json
@@ -15,30 +16,38 @@ from gi.repository import GLib
 from time import sleep
 from N2KClient.util.settings_util import SettingsUtil
 from N2KClient.models.common_enums import N2kDeviceType
-from N2KClient.services.config_parser import ConfigParser
+from N2KClient.services.config_parser.config_parser import ConfigParser
 from N2KClient.models.configuration.configuation import N2KConfiguration
 
 
 class N2KClient(dbus.service.Object):
-    _latest_devices: dict[str, N2kDevice]
-    _latest_config: N2KConfiguration
+    _logger = logging.getLogger(Constants.DBUS_N2K_CLIENT)
     _disposable_list: List[rx.abc.DisposableBase]
+    _latest_devices: dict[str, N2kDevice]
+    _devices: rx.subject.BehaviorSubject
+    _config: rx.subject.BehaviorSubject
+    devices: rx.subject.BehaviorSubject
+    config: rx.subject.BehaviorSubject
+    bus: dbus.SystemBus
+    n2k_dbus_interface: dbus.Interface
+    n2k_dbus_object: dbus.proxies.ProxyObject
+    getConfig: dbus.proxies._ProxyMethod
+    getState: dbus.proxies._ProxyMethod
+    getDevices: dbus.proxies._ProxyMethod
+    _get_devices_thread: threading.Thread
+    _get_state_thread: threading.Thread
+    _latest_config: N2KConfiguration
+    _config_parser: ConfigParser
     _get_state_timeout = SettingsUtil.get_setting(
         Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, default_value=1
     )
     _get_devices_timeout = SettingsUtil.get_setting(
         Constants.WORKER_KEY, Constants.DEVICE_TIMEOUT_KEY, default_value=1
     )
-    _logger = logging.getLogger(Constants.DBUS_N2K_CLIENT)
+    _latest_config: N2KConfiguration
+    lock: threading.Lock
 
     def __init__(self):
-        self._logger.setLevel(logging.INFO)
-        log_handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        log_handler.setFormatter(formatter)
-        self._logger.addHandler(log_handler)
         self._disposable_list = []
 
         self._latest_devices = {}
@@ -78,7 +87,6 @@ class N2KClient(dbus.service.Object):
         self._get_state_thread = threading.Thread(
             target=self._get_state, name="__get_state"
         )
-        self.config_parser = ConfigParser()
 
         # Handler to update the latest device list internally
         def update_lastest_devices(devices: dict[str, N2kDevice]):
@@ -91,6 +99,8 @@ class N2KClient(dbus.service.Object):
                 f"Latest devices: { json.dumps(devices_json, indent=2) }\n\n"
             )
 
+        self._config_parser = ConfigParser()
+
         # Handler to update the latest config internally
         def update_latest_config(config: N2KConfiguration):
             self._latest_config = config
@@ -102,7 +112,7 @@ class N2KClient(dbus.service.Object):
 
     def start(self):
         config_json = self.getConfig()
-        config = self.config_parser.parse_config(config_json)
+        config = self._config_parser.parse_config(config_json)
         self._config.on_next(config)
 
         self._get_devices_thread.start()
