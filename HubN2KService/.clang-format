@@ -1,0 +1,7 @@
+UseTab: Never
+IndentWidth: 2
+ColumnLimit: 120
+AlwaysBreakTemplateDeclarations: Yes
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortLambdasOnASingleLine: All
