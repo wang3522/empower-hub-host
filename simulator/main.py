@@ -4,6 +4,7 @@ import dbus
 import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
+from simulator.models.config import TEST
 
 DBusGMainLoop(set_as_default=True)
 
@@ -35,7 +36,7 @@ class N2KDBusSimulator(dbus.service.Object):
     def GetDevices(self):
         self.get_devices_count += 1
         if self.get_devices_count == 15:
-            self.device_list.append({"Id": "engine.1", "Type": "Engine"})
+            self.device_list.append({"Id": "engine.1", "Type": "engine"})
         return json.dumps(self.device_list)
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")

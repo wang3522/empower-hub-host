@@ -89,7 +89,7 @@ class N2KClient(dbus.service.Object):
         )
 
         # Handler to update the latest device list internally
-        def update_lastest_devices(devices: dict[str, N2kDevice]):
+        def update_latest_devices(devices: dict[str, N2kDevice]):
             self._latest_devices = devices
             # Uncomment for demonstration purposes
             devices_json = {
@@ -104,8 +104,13 @@ class N2KClient(dbus.service.Object):
         # Handler to update the latest config internally
         def update_latest_config(config: N2KConfiguration):
             self._latest_config = config
+            if config is not None:
+                config_json = config.to_dict()
+                self._logger.info(
+                    f"Latest config: { json.dumps(config_json, indent=2) }\n\n"
+                )
 
-        self._disposable_list.append(self.devices.subscribe(update_lastest_devices))
+        self._disposable_list.append(self.devices.subscribe(update_latest_devices))
         self._disposable_list.append(self.config.subscribe(update_latest_config))
 
         self.lock = threading.Lock()
@@ -143,7 +148,7 @@ class N2KClient(dbus.service.Object):
                 self.__merge_device_list(devices_json)
             except Exception as e:
                 self._logger.error(f"Error reading dbus device response: {e}")
-            sleep(1)
+            sleep(self._get_devices_timeout)
 
     def _get_state(self):
         self._logger.info("Starting Get State thread")
