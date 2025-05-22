@@ -141,6 +141,7 @@ class ThingsBoardClient:
         to send to Thingsboard. If we are online, then we will send the attributes then update
         the last known attributes.
         """
+        self._logger.info("Starting attributes worker thread")
         while not self.attributes_thread_event.wait(0.5):
             try:
                 # Check to see if we have any pending items,
@@ -168,6 +169,7 @@ class ThingsBoardClient:
                 # all the time.
                 self._logger.error("Attributes worker ran into an error")
                 self._logger.error(error)
+        self._logger.debug("Closing attributes thread")
 
 
     def telemetry_worker(self):
