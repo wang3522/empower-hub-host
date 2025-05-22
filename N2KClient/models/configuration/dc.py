@@ -7,7 +7,7 @@ class DC(MeteringDevice):
     capacity: int
     show_state_of_charge: bool
     show_temperature: bool
-    show_time_remainig: bool
+    show_time_of_remaining: bool
 
     def to_dict(self) -> dict[str, str]:
         return {
@@ -15,7 +15,7 @@ class DC(MeteringDevice):
             AttrNames.CAPACITY: self.capacity,
             AttrNames.SHOW_STATE_OF_CHARGE: self.show_state_of_charge,
             AttrNames.SHOW_TEMPERATURE: self.show_temperature,
-            AttrNames.SHOW_TIME_REMAINING: self.show_time_remainig,
+            AttrNames.SHOW_TIME_OF_REMAINING: self.show_time_of_remaining,
         }
 
     def to_json_string(self) -> str:

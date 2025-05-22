@@ -1,5 +1,6 @@
 from typing import Any
 import logging
+from N2KClient.models.constants import JsonKeys
 
 
 def map_fields(source: dict[str, Any], target: object, field_map: dict) -> None:
@@ -42,3 +43,17 @@ def map_list_fields(source: dict[str, Any], target: object, field_map: dict) -> 
         value = source.get(key)
         if value is not None:
             setattr(target, attr, [parse_func(item) for item in value])
+
+
+def get_device_instance_value(
+    instance_json: dict[str, dict[str, Any]],
+) -> str | None:
+    """
+    Get the device instance value from the JSON object.
+    """
+    device_instace = instance_json.get(JsonKeys.INSTANCE, {})
+    device_instance_enabled = device_instace.get(JsonKeys.ENABLED, False)
+    device_instance_value = device_instace.get(JsonKeys.INSTANCE_, None)
+    if device_instance_enabled and device_instance_value is not None:
+        return device_instance_value
+    return None

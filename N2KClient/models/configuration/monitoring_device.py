@@ -12,7 +12,7 @@ class MonitoringDevice(ConfigItem):
     instance: Instance
     circuit_id: Optional[DataId]
     switch_type: SwitchType
-    circuit_name: Optional[str]
+    circuit_name_utf8: Optional[str]
     address: int
 
     def to_dict(self):
@@ -24,8 +24,9 @@ class MonitoringDevice(ConfigItem):
         }
         if self.circuit_id:
             fields["circuit_id"] = self.circuit_id.to_dict()
-        if self.circuit_name:
-            fields["circuit_name"] = self.circuit_name
+        if self.circuit_name_utf8:
+            fields["circuit_name_utf8"] = self.circuit_name_utf8
+        return fields
 
     def to_json_string(self):
         return json.dumps(self.to_dict())

@@ -10,7 +10,7 @@ class HVACDevice(ConfigItem):
     fan_mode_id: DataId
     fan_speed_id: DataId
     setpoint_temperature_id: DataId
-    operating_mode_temperature_id: DataId
+    operating_mode_toggle_id: DataId
     fan_mode_toggle_id: DataId
     fan_speed_toggle_id: DataId
     setpoint_temperature_toggle_id: DataId
@@ -48,7 +48,7 @@ class HVACDevice(ConfigItem):
             AttrNames.FAN_MODE_ID: self.fan_mode_id.to_dict(),
             AttrNames.FAN_SPEED_ID: self.fan_speed_id.to_dict(),
             AttrNames.SETPOINT_TEPERATURE_ID: self.setpoint_temperature_id.to_dict(),
-            AttrNames.OPERATING_MODE_TEMPERATURE_ID: self.operating_mode_temperature_id.to_dict(),
+            AttrNames.OPERATING_MODE_TOGGLE_ID: self.operating_mode_toggle_id.to_dict(),
             AttrNames.FAN_MODE_TOGGLE_ID: self.fan_mode_toggle_id.to_dict(),
             AttrNames.FAN_SPEED_TOGGLE_ID: self.fan_speed_toggle_id.to_dict(),
             AttrNames.SET_POINT_TEMPERATURE_TOGGLE_ID: self.setpoint_temperature_toggle_id.to_dict(),

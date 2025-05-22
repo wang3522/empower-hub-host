@@ -31,6 +31,7 @@ from N2KClient.services.config_parser.config_parser_helpers import (
     map_enum_fields,
     map_fields,
     map_list_fields,
+    get_device_instance_value,
 )
 
 
@@ -49,6 +50,9 @@ class ConfigParser:
                 JsonKeys.SEQUENTIAL_NAMES_UTF8,
                 self.parse_sequential_name,
             ),
+        }
+        self._audio_stereo_list_field_map = {
+            AttrNames.CIRCUIT_IDS: (JsonKeys.CIRCUIT_IDS, self.parse_data_id),
         }
 
     # Parse functions for different device types
@@ -311,10 +315,7 @@ class ConfigParser:
             map_fields(device_json, device, DEVICE_FIELD_MAP)
 
             # Handle enum fields
-            for attr, (json_key, enum_cls) in DEVICE_FIELD_MAP.items():
-                value = device_json.get(json_key)
-                if value is not None:
-                    setattr(device, attr, enum_cls(value))
+            map_enum_fields(self._logger, device_json, device, DEVICE_ENUM_FIELD_MAP)
             return device
         except Exception as e:
             self._logger.error(f"Failed to parse Device: {e}")
@@ -362,7 +363,9 @@ class ConfigParser:
                 audio_stereo_device.instance = self.parse_instance(instance_json)
             # Parse circuit_ids if present
             map_list_fields(
-                audio_stereo_json, audio_stereo_device, AUDIO_STEREO_LIST_FIELD_MAP
+                audio_stereo_json,
+                audio_stereo_device,
+                self._audio_stereo_list_field_map,
             )
 
             return audio_stereo_device
@@ -490,34 +493,26 @@ class ConfigParser:
             # DC
             if JsonKeys.DC in config_json:
                 for dc_json in config_json[JsonKeys.DC]:
-                    dc_instance = dc_json.get(JsonKeys.INSTANCE)
+                    dc_instance = get_device_instance_value(dc_json)
                     if dc_instance is not None:
-                        dc_instance_value = dc_instance.get(JsonKeys.VALUE)
-                        if dc_instance_value is not None:
-                            device_id = f"{AttrNames.DC}.{dc_instance_value}"
-                            n2k_configuration.dc[device_id] = self.parse_dc(dc_json)
+                        device_id = f"{AttrNames.DC}.{dc_instance}"
+                        n2k_configuration.dc[device_id] = self.parse_dc(dc_json)
 
             # AC
             if JsonKeys.AC in config_json:
                 for ac_json in config_json[JsonKeys.AC]:
-                    ac_instance = ac_json.get(JsonKeys.INSTANCE)
+                    ac_instance = get_device_instance_value(ac_json)
                     if ac_instance is not None:
-                        ac_instance_value = ac_instance.get(JsonKeys.VALUE)
-                        if ac_instance_value is not None:
-                            device_id = f"{AttrNames.AC}.{ac_instance_value}"
-                            n2k_configuration.ac[device_id] = self.parse_ac(ac_json)
+                        device_id = f"{AttrNames.AC}.{ac_instance}"
+                        n2k_configuration.ac[device_id] = self.parse_ac(ac_json)
 
             # Tank
             if JsonKeys.TANK in config_json:
                 for tank_json in config_json[JsonKeys.TANK]:
-                    tank_instance = tank_json.get(JsonKeys.INSTANCE)
+                    tank_instance = get_device_instance_value(tank_json)
                     if tank_instance is not None:
-                        tank_instance_value = tank_instance.get(JsonKeys.VALUE)
-                        if tank_instance_value is not None:
-                            device_id = f"{AttrNames.TANK}.{tank_instance_value}"
-                            n2k_configuration.tank[device_id] = self.parse_tank(
-                                tank_json
-                            )
+                        device_id = f"{AttrNames.TANK}.{tank_instance}"
+                        n2k_configuration.tank[device_id] = self.parse_tank(tank_json)
 
             # Inverter Charger
             if JsonKeys.INVERTER_CHARGER in config_json:
@@ -548,29 +543,26 @@ class ConfigParser:
             # HVAC
             if JsonKeys.HVAC in config_json:
                 for hvac_json in config_json[JsonKeys.HVAC]:
-                    hvac_instance = hvac_json.get(JsonKeys.INSTANCE)
+                    hvac_instance = get_device_instance_value(hvac_json)
+                    self._logger.debug(f"hvac_instance: {hvac_instance}")
                     if hvac_instance is not None:
-                        hvac_instance_value = hvac_instance.get(JsonKeys.VALUE)
-                        if hvac_instance_value is not None:
-                            device_id = f"{AttrNames.HVAC}.{hvac_instance_value}"
-                            n2k_configuration.hvac[device_id] = self.parse_hvac(
-                                hvac_json
-                            )
+                        self._logger.debug("HERE hvac")
+                        device_id = f"{AttrNames.HVAC}.{hvac_instance}"
+                        n2k_configuration.hvac[device_id] = self.parse_hvac(hvac_json)
 
             # Audio Stereo
             if JsonKeys.AUDIO_STEREO in config_json:
                 for audio_stereo_json in config_json[JsonKeys.AUDIO_STEREO]:
-                    audio_stereo_instance = audio_stereo_json.get(JsonKeys.INSTANCE)
+                    audio_stereo_instance = get_device_instance_value(audio_stereo_json)
+                    self._logger.debug(
+                        f"audio_stereo_instance: {audio_stereo_instance}"
+                    )
                     if audio_stereo_instance is not None:
-                        audio_stereo_instance_value = audio_stereo_instance.get(
-                            JsonKeys.VALUE
-                        )
-                        if audio_stereo_instance_value is not None:
-                            device_id = f"{AttrNames.AUDIO_STEREO}.{audio_stereo_instance_value}"
+                        device_id = f"{AttrNames.AUDIO_STEREO}.{audio_stereo_instance}"
 
-                            n2k_configuration.audio_stereo[device_id] = (
-                                self.parse_audio_stereo(audio_stereo_json)
-                            )
+                        n2k_configuration.audio_stereo[device_id] = (
+                            self.parse_audio_stereo(audio_stereo_json)
+                        )
 
             # Binary Logic State
             if JsonKeys.BINARY_LOGIC_STATE in config_json:
@@ -594,17 +586,13 @@ class ConfigParser:
             # Pressure
             if JsonKeys.PRESSURE in config_json:
                 for pressure_json in config_json[JsonKeys.PRESSURE]:
-                    pressure_instance = pressure_json.get(JsonKeys.INSTANCE)
+                    pressure_instance = get_device_instance_value(pressure_json)
                     if pressure_instance is not None:
-                        pressure_instance_value = pressure_instance.get(JsonKeys.VALUE)
-                        if pressure_instance_value is not None:
-                            device_id = (
-                                f"{AttrNames.PRESSURE}.{pressure_instance_value}"
-                            )
-                            # Add the Pressure device to the configuration
-                            n2k_configuration.pressure[device_id] = self.parse_pressure(
-                                pressure_json
-                            )
+                        device_id = f"{AttrNames.PRESSURE}.{pressure_instance}"
+                        # Add the Pressure device to the configuration
+                        n2k_configuration.pressure[device_id] = self.parse_pressure(
+                            pressure_json
+                        )
 
             # Mode
             if JsonKeys.MODE in config_json:

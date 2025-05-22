@@ -30,6 +30,7 @@ class AC(MeteringDevice):
 
     def to_dict(self) -> dict[str, str]:
         return {
+            **super().to_dict(),
             AttrNames.LINE: self.line.value,
             AttrNames.OUTPUT: self.output,
             AttrNames.NOMINAL_FREQUENCY: self.nominal_frequency,
