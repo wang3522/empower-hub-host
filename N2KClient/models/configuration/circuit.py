@@ -1,10 +1,13 @@
+import json
 from .config_item import ConfigItem
 from .data_id import DataId
 from .instance import Instance
 from ..common_enums import SwitchType
+from .sequential_name import SequentialName
 
 from typing import Optional
 from enum import Enum
+from ..constants import AttrNames
 
 
 class CircuitType(Enum):
@@ -27,6 +30,16 @@ class CategoryItem:
     enabled: bool
     index: int
 
+    def to_dict(self) -> dict[str, str]:
+        return {
+            AttrNames.NAMEUTF8: self.name_utf8,
+            AttrNames.ENABLED: self.enabled,
+            AttrNames.INDEX: self.index,
+        }
+
+    def to_json_string(self) -> str:
+        return json.dumps(self.to_dict())
+
 
 class CircuitLoad(ConfigItem):
     channel_address: int
@@ -41,7 +54,7 @@ class CircuitLoad(ConfigItem):
 
 class Circuit(ConfigItem):
     single_throw_id: DataId
-    sequential_names_utf8: list[str]
+    sequential_names_utf8: list[SequentialName]
     has_complement: bool
     display_categories: int
     voltage_source: Optional[Instance]
@@ -49,7 +62,7 @@ class Circuit(ConfigItem):
     switch_type: SwitchType
     min_level: int
     max_level: int
-    nonvisibile_circuit: bool
+    non_visible_circuit: Optional[bool]
     dimstep: int
     step: int
     dimmable: bool
@@ -64,4 +77,83 @@ class Circuit(ConfigItem):
     primary_circuit_id: Optional[int]
     remote_visibility: Optional[int]
     switch_string: Optional[str]
-    system_on_and: Optional[bool]
+    systems_on_and: Optional[bool]
+
+    def __init__(self):
+        super().__init__()
+        self.single_throw_id = None
+        self.sequential_names_utf8 = None
+        self.has_complement = None
+        self.display_categories = None
+        self.voltage_source = None
+        self.circuit_type = None
+        self.switch_type = None
+        self.min_level = None
+        self.max_level = None
+        self.non_visible_circuit = None
+        self.dimstep = None
+        self.step = None
+        self.dimmable = None
+        self.load_smooth_start = None
+        self.sequential_states = None
+        self.control_id = None
+        self.circuit_loads = None
+        self.categories = None
+        self.dc_circuit = None
+        self.ac_circuit = None
+        self.primary_circuit_id = None
+        self.remote_visibility = None
+        self.switch_string = None
+        self.systems_on_and = None
+
+    def to_dict(self) -> dict[str, str]:
+        fields = {
+            AttrNames.SINGLE_THROW_ID: self.single_throw_id.to_dict(),
+            AttrNames.SEQUENTIAL_NAMES_UTF8: [
+                name.to_dict() for name in self.sequential_names_utf8
+            ],
+            AttrNames.HAS_COMPLEMENT: self.has_complement,
+            AttrNames.DISPLAY_CATEGORIES: self.display_categories,
+            AttrNames.CIRCUIT_TYPE: self.circuit_type.value,
+            AttrNames.SWITCH_TYPE: self.switch_type.value,
+            AttrNames.MIN_LEVEL: self.min_level,
+            AttrNames.MAX_LEVEL: self.max_level,
+            AttrNames.NONVISIBLE_CIRCUIT: self.non_visible_circuit,
+            AttrNames.DIMSTEP: self.dimstep,
+            AttrNames.STEP: self.step,
+            AttrNames.DIMMABLE: self.dimmable,
+            AttrNames.LOAD_SMOOTH_START: self.load_smooth_start,
+            AttrNames.SEQUENTIAL_STATES: self.sequential_states,
+            AttrNames.CONTROL_ID: self.control_id,
+        }
+
+        if self.voltage_source:
+            fields[AttrNames.VOLTAGE_SOURCE] = self.voltage_source.to_dict()
+        if self.circuit_loads:
+            fields[AttrNames.CIRCUIT_LOADS] = [
+                load.to_dict() for load in self.circuit_loads
+            ]
+        if self.categories:
+            fields[AttrNames.CATEGORIES] = [
+                category.to_dict() for category in self.categories
+            ]
+        if self.dc_circuit is not None:
+            fields[AttrNames.DC_CIRCUIT] = self.dc_circuit
+        if self.ac_circuit is not None:
+            fields[AttrNames.AC_CIRCUIT] = self.ac_circuit
+        if self.primary_circuit_id is not None:
+            fields[AttrNames.PRIMARY_CIRCUIT_ID] = self.primary_circuit_id
+        if self.remote_visibility is not None:
+            fields[AttrNames.REMOTE_VISIBILITY] = self.remote_visibility
+        if self.switch_string is not None:
+            fields[AttrNames.SWITCH_STRING] = self.switch_string
+        if self.systems_on_and is not None:
+            fields[AttrNames.SYSTEMS_ON_AND] = self.systems_on_and
+
+        return {
+            **super().to_dict(),
+            **fields,
+        }
+
+    def to_json_string(self) -> str:
+        return json.dumps(self.to_dict())

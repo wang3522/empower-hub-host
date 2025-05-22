@@ -1,5 +1,7 @@
+import json
 from .monitoring_device import MonitoringDevice
 from enum import Enum
+from ..constants import AttrNames
 
 
 class PressureType(Enum):
@@ -13,3 +15,13 @@ class PressureType(Enum):
 class Pressure(MonitoringDevice):
     pressure_type: PressureType
     atmospheric_pressure: bool
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            **super().to_dict(),
+            AttrNames.PRESSURE_TYPE: self.pressure_type.value,
+            AttrNames.ATMOSPHERIC_PRESSURE: self.atmospheric_pressure,
+        }
+
+    def to_json_string(self) -> str:
+        return json.dumps(self.to_dict())

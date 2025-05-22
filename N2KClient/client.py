@@ -92,12 +92,12 @@ class N2KClient(dbus.service.Object):
         def update_latest_devices(devices: dict[str, N2kDevice]):
             self._latest_devices = devices
             # Uncomment for demonstration purposes
-            devices_json = {
-                device_id: device.to_dict() for device_id, device in devices.items()
-            }
-            self._logger.info(
-                f"Latest devices: { json.dumps(devices_json, indent=2) }\n\n"
-            )
+            # devices_json = {
+            #     device_id: device.to_dict() for device_id, device in devices.items()
+            # }
+            # self._logger.info(
+            #     f"Latest devices: { json.dumps(devices_json, indent=2) }\n\n"
+            # )
 
         self._config_parser = ConfigParser()
 

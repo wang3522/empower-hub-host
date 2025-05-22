@@ -18,7 +18,7 @@ from N2KClient.models.constants import AttrNames, JsonKeys
 
 CIRCUIT_LOAD_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.CHANNEL_ADDRESS: JsonKeys.CHANNEL_ADDRESS,
     AttrNames.FUSE_LEVEL: JsonKeys.FUSE_LEVEL,
     AttrNames.RUNNING_CURRENT: JsonKeys.RUNNING_CURRENT,
@@ -37,24 +37,30 @@ DATA_ID_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
 }
 
-INSTANCE_FIELD_MAP = {AttrNames.VALUE: JsonKeys.VALUE, AttrNames.VALID: JsonKeys.VALID}
+INSTANCE_FIELD_MAP = {
+    AttrNames.ENABLED: JsonKeys.ENABLED,
+    AttrNames.INSTANCE_: JsonKeys.INSTANCE_,
+}
+
+SEQUENTIAL_NAMES_FIELD_MAP = {
+    AttrNames.NAME: JsonKeys.NAME,
+}
 
 GNSS_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.IS_EXTERNAL: JsonKeys.IS_EXTERNAL,
 }
 
 CATEGORY_FIELD_MAP = {
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.ENABLED: JsonKeys.ENABLED,
     AttrNames.INDEX: JsonKeys.INDEX,
 }
 
 CIRCUIT_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
-    AttrNames.SINGLE_THROW_ID: JsonKeys.SINGLE_THROW_ID,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.HAS_COMPLEMENT: JsonKeys.HAS_COMPLEMENT,
     AttrNames.DISPLAY_CATEGORIES: JsonKeys.DISPLAY_CATEGORIES,
     AttrNames.MIN_LEVEL: JsonKeys.MIN_LEVEL,
@@ -72,29 +78,30 @@ CIRCUIT_FIELD_MAP = {
     AttrNames.REMOTE_VISIBILITY: JsonKeys.REMOTE_VISIBILITY,
     AttrNames.SWITCH_STRING: JsonKeys.SWITCH_STRING,
     AttrNames.SYSTEMS_ON_AND: JsonKeys.SYSTEMS_ON_AND,
+    AttrNames.SINGLE_THROW_ID: JsonKeys.SINGLE_THROW_ID,
 }
 
 CIRCUIT_ENUM_FIELD_MAP = {
     AttrNames.CIRCUIT_TYPE: (JsonKeys.CIRCUIT_TYPE, CircuitType),
-    AttrNames.SWITCH_TYPE: (JsonKeys.SWITCH_STRING, SwitchType),
+    AttrNames.SWITCH_TYPE: (JsonKeys.SWITCH_TYPE, SwitchType),
 }
 
 
 DC_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.OUTPUT: JsonKeys.OUTPUT,
     AttrNames.NOMINAL_VOLTAGE: JsonKeys.NOMINAL_VOLTAGE,
     AttrNames.ADDRESS: JsonKeys.ADDRESS,
     AttrNames.SHOW_VOLTAGE: JsonKeys.SHOW_VOLTAGE,
     AttrNames.SHOW_CURRENT: JsonKeys.SHOW_CURRENT,
-    AttrNames.BATTERY_CAPACITY: JsonKeys.BATTERY_CAPACITY,
-    AttrNames.BATTERY_STATE_OF_CHARGE: JsonKeys.BATTERY_STATE_OF_CHARGE,
+    AttrNames.CAPACITY: JsonKeys.CAPACITY,
+    AttrNames.SHOW_STATE_OF_CHARGE: JsonKeys.SHOW_STATE_OF_CHARGE,
 }
 
 AC_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.OUTPUT: JsonKeys.OUTPUT,
     AttrNames.NOMINAL_VOLTAGE: JsonKeys.NOMINAL_VOLTAGE,
     AttrNames.ADDRESS: JsonKeys.ADDRESS,
@@ -112,7 +119,7 @@ AC_EMUM_FIELD_MAP = {
 
 TANK_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.CIRCUIT_NAME: JsonKeys.CIRCUIT_NAME,
     AttrNames.ADDRESS: JsonKeys.ADDRESS,
     AttrNames.TANK_CAPACITY: JsonKeys.TANK_CAPACITY,
@@ -125,7 +132,7 @@ TANK_ENUM_FIELD_MAP = {
 
 INVERTER_CHARGER_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.MODEL: JsonKeys.MODEL,
     AttrNames.TYPE: JsonKeys.TYPE,
     AttrNames.SUB_TYPE: JsonKeys.SUB_TYPE,
@@ -135,8 +142,6 @@ INVERTER_CHARGER_FIELD_MAP = {
     AttrNames.PRIMARY: JsonKeys.PRIMARY,
     AttrNames.PRIMARY_PHASE: JsonKeys.PRIMARY_PHASE,
     AttrNames.DEVICE_INSTANCE: JsonKeys.DEVICE_INSTANCE,
-    AttrNames.DIPSWITCH: JsonKeys.DIPSWITCH,
-    AttrNames.CHANNEL_INDEX: JsonKeys.CHANNEL_INDEX,
 }
 
 INVERTER_CHARGER_DATA_ID_FIELD_MAP = {
@@ -157,7 +162,7 @@ INVERTER_CHARGER_INSTANCE_FIELD_MAP = {
 }
 
 DEVICE_FIELD_MAP = {
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.SOURCE_ADDRESS: JsonKeys.SOURCE_ADDRESS,
     AttrNames.CONFLICT: JsonKeys.CONFLICT,
     AttrNames.VALID: JsonKeys.VALID,
@@ -171,7 +176,7 @@ DEVICE_ENUM_FIELD_MAP = {
 
 HVAC_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.FAN_SPEED_COUNT: JsonKeys.FAN_SPEED_COUNT,
     AttrNames.OPERATING_MODES_MASK: JsonKeys.OPERATING_MODES_MASK,
     AttrNames.MODEL: JsonKeys.MODEL,
@@ -202,7 +207,7 @@ HVAC_DATA_ID_FIELD_MAP = {
 
 AUDIO_STEREO_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.MUTE_ENABLED: JsonKeys.MUTE_ENABLED,
 }
 
@@ -212,7 +217,7 @@ AUDIO_STEREO_LIST_FIELD_MAP = {
 
 BINARY_LOGIC_STATE_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.ADDRESS: JsonKeys.ADDRESS,
 }
 
@@ -236,7 +241,7 @@ UI_RELATIONSHIPS_ENUM_FIELD_MAP = {
 
 PRESSURE_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.CIRCUIT_NAME: JsonKeys.CIRCUIT_NAME,
     AttrNames.ADDRESS: JsonKeys.ADDRESS,
     AttrNames.ATMOSPHERIC_PRESSURE: JsonKeys.ATMOSPHERIC_PRESSURE,
@@ -253,7 +258,7 @@ PRESSURE_DATA_ID_FIELD_MAP = {
 
 ENGINE_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
-    AttrNames.NAME: JsonKeys.NAME,
+    AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
     AttrNames.SOFTWARE_ID: JsonKeys.SOFTWARE_ID,
     AttrNames.CALIBRATION_ID: JsonKeys.CALIBRATION_ID,
     AttrNames.SERIAL_NUMBER: JsonKeys.SERIAL_NUMBER,

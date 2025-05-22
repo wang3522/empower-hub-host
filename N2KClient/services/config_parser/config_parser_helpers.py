@@ -1,7 +1,8 @@
 from typing import Any
+import logging
 
 
-def map_fields(self, source: dict[str, Any], target: object, field_map: dict) -> None:
+def map_fields(source: dict[str, Any], target: object, field_map: dict) -> None:
     """
     Map fields from source dictionary to target object.
     """
@@ -13,21 +14,26 @@ def map_fields(self, source: dict[str, Any], target: object, field_map: dict) ->
 
 # Map enum fields from source dictionary to target object
 def map_enum_fields(
-    self, source: dict[str, Any], target: object, field_map: dict
+    logger: logging.Logger, source: dict[str, Any], target: object, field_map: dict
 ) -> None:
     """
     Map enum fields from source dictionary to target object.
+    Skips None, empty string, and invalid enum values to avoid ValueError.
     """
     for attr, (key, enum_cls) in field_map.items():
         value = source.get(key)
-        if value is not None:
-            setattr(target, attr, enum_cls(value))
+        if value not in (None, ""):
+            try:
+                setattr(target, attr, enum_cls(value))
+            except ValueError:
+                logger.warning(
+                    f"Invalid value '{value}' for enum '{enum_cls.__name__}' in field '{key}'. Skipping."
+                )
+                pass
 
 
 # Map list fields from source dictionary to target object
-def map_list_fields(
-    self, source: dict[str, Any], target: object, field_map: dict
-) -> None:
+def map_list_fields(source: dict[str, Any], target: object, field_map: dict) -> None:
     """
     Map list fields from source dictionary to target object, using a parsing function for each item.
     field_map: {attr_name: (json_key, parse_func)}

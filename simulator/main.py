@@ -4,7 +4,7 @@ import dbus
 import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
-from simulator.models.config import TEST
+from simulator.models.config import CONFIG_JSON_STRING
 
 DBusGMainLoop(set_as_default=True)
 
@@ -41,7 +41,7 @@ class N2KDBusSimulator(dbus.service.Object):
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def GetConfig(self):
-        return "{}"
+        return CONFIG_JSON_STRING
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetState(self, id: str):

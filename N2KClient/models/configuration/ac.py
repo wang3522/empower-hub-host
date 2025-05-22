@@ -1,5 +1,7 @@
 from enum import Enum
+import json
 from N2KClient.models.configuration.metering_device import MeteringDevice
+from ..constants import AttrNames
 
 
 class ACLine(Enum):
@@ -25,3 +27,14 @@ class AC(MeteringDevice):
     nominal_frequency: int
 
     ac_type: ACType
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            AttrNames.LINE: self.line.value,
+            AttrNames.OUTPUT: self.output,
+            AttrNames.NOMINAL_FREQUENCY: self.nominal_frequency,
+            AttrNames.AC_TYPE: self.ac_type.value,
+        }
+
+    def to_json_string(self) -> str:
+        return json.dumps(self.to_dict())

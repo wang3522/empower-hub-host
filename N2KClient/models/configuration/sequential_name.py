@@ -2,14 +2,12 @@ import json
 from ..constants import AttrNames
 
 
-class DataId:
-    enabled: bool
-    id: int
+class SequentialName:
+    name: str
 
     def to_dict(self) -> dict[str, str]:
         return {
-            AttrNames.ENABLED: self.enabled,
-            AttrNames.ID: self.id,
+            AttrNames.NAME: self.name,
         }
 
     def to_json_string(self) -> str:

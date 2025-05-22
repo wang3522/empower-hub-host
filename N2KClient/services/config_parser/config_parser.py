@@ -22,11 +22,10 @@ from N2KClient.models.configuration.ui_relationship_msg import (
 )
 from N2KClient.models.configuration.pressure import Pressure
 from N2KClient.models.configuration.engine import EnginesDevice
-
+from N2KClient.models.configuration.sequential_name import SequentialName
 from N2KClient.models.configuration.instance import Instance
 from N2KClient.models.configuration.data_id import DataId
 from N2KClient.models.constants import Constants, JsonKeys, AttrNames
-
 from N2KClient.services.config_parser.field_maps import *
 from N2KClient.services.config_parser.config_parser_helpers import (
     map_enum_fields,
@@ -46,9 +45,28 @@ class ConfigParser:
         self._circuit_list_field_map = {
             AttrNames.CIRCUIT_LOADS: (JsonKeys.CIRCUIT_LOADS, self.parse_circuit_load),
             AttrNames.CATEGORIES: (JsonKeys.CATEGORIES, self.parse_category),
+            AttrNames.SEQUENTIAL_NAMES_UTF8: (
+                JsonKeys.SEQUENTIAL_NAMES_UTF8,
+                self.parse_sequential_name,
+            ),
         }
 
     # Parse functions for different device types
+    def parse_sequential_name(
+        self, sequential_name_json: dict[str, str]
+    ) -> SequentialName:
+        """
+        Parse the sequential name from the configuration.
+        """
+        try:
+            sequential_name = SequentialName()
+            map_fields(
+                sequential_name_json, sequential_name, SEQUENTIAL_NAMES_FIELD_MAP
+            )
+            return sequential_name
+        except Exception as e:
+            self._logger.error(f"Failed to parse sequential name: {e}")
+            raise
 
     def parse_data_id(self, data_id_json: dict[str, Any]) -> DataId:
         """
@@ -130,14 +148,19 @@ class ConfigParser:
             map_fields(circuit_json, circuit_device, CIRCUIT_FIELD_MAP)
 
             # Handle enum fields
-            map_enum_fields(circuit_json, circuit_device, CIRCUIT_ENUM_FIELD_MAP)
+            map_enum_fields(
+                self._logger, circuit_json, circuit_device, CIRCUIT_ENUM_FIELD_MAP
+            )
 
-            # Parse voltage_source if present
-            if (
-                voltage_source := circuit_json.get(JsonKeys.VOLTAGE_SOURCE)
-            ) is not None:
-                circuit_device.voltage_source = self.parse_instance(voltage_source)
+            voltage_source_json = circuit_json.get(JsonKeys.VOLTAGE_SOURCE)
+            if voltage_source_json is not None:
+                circuit_device.voltage_source = self.parse_instance(voltage_source_json)
 
+            single_throw_id_json = circuit_json.get(JsonKeys.SINGLE_THROW_ID)
+            if single_throw_id_json is not None:
+                circuit_device.single_throw_id = self.parse_data_id(
+                    single_throw_id_json
+                )
             # Parse circuit_loads and categories
             map_list_fields(circuit_json, circuit_device, self._circuit_list_field_map)
 
@@ -173,7 +196,7 @@ class ConfigParser:
             ac_device = AC()
             # Map required fields directly
             map_fields(ac_json, ac_device, AC_FIELD_MAP)
-            map_enum_fields(ac_json, ac_device, AC_EMUM_FIELD_MAP)
+            map_enum_fields(self._logger, ac_json, ac_device, AC_EMUM_FIELD_MAP)
             # Parse instance if present
             instance_json = ac_json.get(JsonKeys.INSTANCE)
             if instance_json is not None:
@@ -201,7 +224,7 @@ class ConfigParser:
             if circuit_id_json is not None:
                 tank_device.circuit_id = self.parse_data_id(circuit_id_json)
 
-            map_enum_fields(tank_json, tank_device, TANK_ENUM_FIELD_MAP)
+            map_enum_fields(self._logger, tank_json, tank_device, TANK_ENUM_FIELD_MAP)
             return tank_device
         except Exception as e:
             self._logger.error(f"Failed to parse Tank device: {e}")
@@ -209,19 +232,33 @@ class ConfigParser:
 
     def calculate_inverter_charger_instance(
         self, inverter_charger_json: dict[str, Any]
-    ) -> int:
+    ) -> int | None:
         """
         Calculate the inverter charger instance from the configuration.
+        Returns the combined instance if both inverter and charger are enabled and present, else None.
         """
         try:
-            inverter_instance: int = inverter_charger_json.get(
-                JsonKeys.INVERTER_INSTANCE
-            )(JsonKeys.INSTANCE)
-            charger_instance: int = inverter_charger_json.get(
-                JsonKeys.CHARGER_INSTANCE
-            )(JsonKeys.INSTANCE)
+            inverter_instance_json = inverter_charger_json.get(
+                JsonKeys.INVERTER_INSTANCE, {}
+            )
+            charger_instance_json = inverter_charger_json.get(
+                JsonKeys.CHARGER_INSTANCE, {}
+            )
 
-            return inverter_instance << 8 | charger_instance
+            inverter_enabled = inverter_instance_json.get(JsonKeys.ENABLED, False)
+            charger_enabled = charger_instance_json.get(JsonKeys.ENABLED, False)
+            inverter_instance = inverter_instance_json.get(JsonKeys.INSTANCE_, None)
+            charger_instance = charger_instance_json.get(JsonKeys.INSTANCE_, None)
+
+            if (
+                inverter_instance is not None
+                and inverter_enabled
+                and charger_instance is not None
+                and charger_enabled
+            ):
+                return (inverter_instance << 8) | charger_instance
+
+            return None
 
         except Exception as e:
             self._logger.error(f"Failed to calculate Inverter Charger instance: {e}")
@@ -252,7 +289,7 @@ class ConfigParser:
                     )
 
             # Parse data id fields if present
-            for attr, key in INVERTER_CHARGER_FIELD_MAP.items():
+            for attr, key in INVERTER_CHARGER_DATA_ID_FIELD_MAP.items():
                 field_json = inverter_charger_json.get(key)
                 if field_json is not None:
                     setattr(
@@ -366,7 +403,10 @@ class ConfigParser:
             )
             # Handle enum fields
             map_enum_fields(
-                ui_relationship_json, ui_relationship, UI_RELATIONSHIPS_ENUM_FIELD_MAP
+                self._logger,
+                ui_relationship_json,
+                ui_relationship,
+                UI_RELATIONSHIPS_ENUM_FIELD_MAP,
             )
             return ui_relationship
         except Exception as e:
@@ -386,7 +426,9 @@ class ConfigParser:
             if instance_json is not None:
                 pressure.instance = self.parse_instance(instance_json)
             # Parse enum fields
-            map_enum_fields(pressure_json, pressure, PRESSURE_ENUM_FIELD_MAP)
+            map_enum_fields(
+                self._logger, pressure_json, pressure, PRESSURE_ENUM_FIELD_MAP
+            )
             # Parse data id fields if present
             for attr, key in PRESSURE_DATA_ID_FIELD_MAP.items():
                 field_json = pressure_json.get(key)
@@ -410,7 +452,9 @@ class ConfigParser:
             if instance_json is not None:
                 engine_device.instance = self.parse_instance(instance_json)
             # Handle enum fields
-            map_enum_fields(engine_json, engine_device, ENGINE_ENUM_FIELD_MAP)
+            map_enum_fields(
+                self._logger, engine_json, engine_device, ENGINE_ENUM_FIELD_MAP
+            )
             return engine_device
         except Exception as e:
             self._logger.error(f"Failed to parse Engine device: {e}")
@@ -481,13 +525,14 @@ class ConfigParser:
                     inverter_charger_instance = (
                         self.calculate_inverter_charger_instance(inverter_charger_json)
                     )
-                    inverter_charger_device_id = (
-                        f"{AttrNames.INVERTER_CHARGER}.{inverter_charger_instance}"
-                    )
-                    # Add the Inverter Charger device to the configuration
-                    n2k_configuration.inverter_charger[inverter_charger_device_id] = (
-                        self.parse_inverter_charger(inverter_charger_json)
-                    )
+                    if inverter_charger_instance is not None:
+                        inverter_charger_device_id = (
+                            f"{AttrNames.INVERTER_CHARGER}.{inverter_charger_instance}"
+                        )
+                        # Add the Inverter Charger device to the configuration
+                        n2k_configuration.inverter_charger[
+                            inverter_charger_device_id
+                        ] = self.parse_inverter_charger(inverter_charger_json)
 
             # Device
             if JsonKeys.DEVICE in config_json:
@@ -582,6 +627,8 @@ class ConfigParser:
                             n2k_configuration.engine[device_id] = self.parse_engine(
                                 engine
                             )
+
+            return n2k_configuration
 
         except Exception as e:
             self._logger.error(f"Failed to parse config: {e}")

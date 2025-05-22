@@ -1,3 +1,4 @@
+import json
 from typing import Any
 from .dc import DC
 from .ac import AC
@@ -68,18 +69,33 @@ class N2KConfiguration:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            AttrNames.GNSS: self.gnss,
-            AttrNames.CIRCUIT: self.circuit,
-            AttrNames.DC: self.dc,
-            AttrNames.AC: self.ac,
-            AttrNames.TANK: self.tank,
-            AttrNames.INVERTER_CHARGER: self.inverter_charger,
-            AttrNames.DEVICE: self.device,
-            AttrNames.HVAC: self.hvac,
-            AttrNames.AUDIO_STEREO: self.audio_stereo,
-            AttrNames.BINARY_LOGIC_STATE: self.binary_logic_state,
-            AttrNames.UI_RELATIONSHIP: self.ui_relationships,
-            AttrNames.PRESSURE: self.pressure,
-            AttrNames.MODE: self.mode,
-            AttrNames.ENGINE: self.engine,
+            AttrNames.GNSS: [gnss.to_dict() for gnss in self.gnss.values()],
+            AttrNames.CIRCUIT: [circuit.to_dict() for circuit in self.circuit.values()],
+            AttrNames.DC: [dc.to_dict() for dc in self.dc.values()],
+            AttrNames.AC: [ac.to_dict() for ac in self.ac.values()],
+            AttrNames.TANK: [tank.to_dict() for tank in self.tank.values()],
+            AttrNames.INVERTER_CHARGER: [
+                inverter_charger.to_dict()
+                for inverter_charger in self.inverter_charger.values()
+            ],
+            AttrNames.DEVICE: [device.to_dict() for device in self.device.values()],
+            AttrNames.HVAC: [hvac.to_dict() for hvac in self.hvac.values()],
+            AttrNames.AUDIO_STEREO: [
+                audio_stereo.to_dict() for audio_stereo in self.audio_stereo.values()
+            ],
+            AttrNames.BINARY_LOGIC_STATE: [
+                binary_logic_state.to_dict()
+                for binary_logic_state in self.binary_logic_state.values()
+            ],
+            AttrNames.UI_RELATIONSHIP: [
+                ui_relationship.to_dict() for ui_relationship in self.ui_relationships
+            ],
+            AttrNames.PRESSURE: [
+                pressure.to_dict() for pressure in self.pressure.values()
+            ],
+            AttrNames.MODE: [mode.to_dict() for mode in self.mode.values()],
+            AttrNames.ENGINE: [engine.to_dict() for engine in self.engine.values()],
         }
+
+    def to_json_string(self) -> str:
+        return json.dumps(self.to_dict())
