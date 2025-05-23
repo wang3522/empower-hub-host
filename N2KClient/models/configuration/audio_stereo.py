@@ -11,14 +11,22 @@ class AudioStereoDevice(ConfigItem):
     circuit_ids: list[DataId]
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            **super().to_dict(),
-            AttrNames.INSTANCE: self.instance.to_dict(),
-            AttrNames.MUTE_ENABLED: self.mute_enabled,
-            AttrNames.CIRCUIT_IDS: [
-                circuit_id.to_dict() for circuit_id in self.circuit_ids
-            ],
-        }
+        try:
+            return {
+                **super().to_dict(),
+                AttrNames.INSTANCE: self.instance.to_dict(),
+                AttrNames.MUTE_ENABLED: self.mute_enabled,
+                AttrNames.CIRCUIT_IDS: [
+                    circuit_id.to_dict() for circuit_id in self.circuit_ids
+                ],
+            }
+        except Exception as e:
+            print(f"Error serializing AudioStereoDevice to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing AudioStereoDevice to JSON: {e}")
+            return "{}"

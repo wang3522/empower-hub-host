@@ -43,22 +43,31 @@ class Device:
     transient: bool
     version: Optional[str]
 
+    def __init__(self):
+        self.version = None
+
     def to_dict(self) -> dict[str, str]:
-        fields = {
-            AttrNames.NAMEUTF8: self.name_utf8,
-            AttrNames.SOURCE_ADDRESS: self.source_address,
-            AttrNames.CONFLICT: self.conflict,
-            AttrNames.DEVICE_TYPE: self.device_type.value,
-            AttrNames.VALID: self.valid,
-            AttrNames.TRANSIENT: self.transient,
-        }
-
-        if self.version is not None:
-            fields[AttrNames.VERSION] = self.version
-
-        return {
-            **fields,
-        }
+        try:
+            fields = {
+                AttrNames.NAMEUTF8: self.name_utf8,
+                AttrNames.SOURCE_ADDRESS: self.source_address,
+                AttrNames.CONFLICT: self.conflict,
+                AttrNames.DEVICE_TYPE: self.device_type.value,
+                AttrNames.VALID: self.valid,
+                AttrNames.TRANSIENT: self.transient,
+            }
+            if self.version is not None:
+                fields[AttrNames.VERSION] = self.version
+            return {
+                **fields,
+            }
+        except Exception as e:
+            print(f"Error serializing Device to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing Device to JSON: {e}")
+            return "{}"

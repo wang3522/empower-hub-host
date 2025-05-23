@@ -7,10 +7,18 @@ class Instance:
     instance_: int
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            AttrNames.ENABLED: self.enabled,
-            AttrNames.INSTANCE_: self.instance_,
-        }
+        try:
+            return {
+                AttrNames.ENABLED: self.enabled,
+                AttrNames.INSTANCE_: self.instance_,
+            }
+        except Exception as e:
+            print(f"Error serializing Instance to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing Instance to JSON: {e}")
+            return "{}"

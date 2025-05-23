@@ -28,29 +28,37 @@ class InverterChargerDevice(ConfigItem):
     device_instance: int
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            **super().to_dict(),
-            AttrNames.MODEL: self.model,
-            AttrNames.TYPE: self.type,
-            AttrNames.SUB_TYPE: self.sub_type,
-            AttrNames.INVERTER_INSTANCE: self.inverter_instance.to_dict(),
-            AttrNames.INVERTER_AC_ID: self.inverter_ac_id.to_dict(),
-            AttrNames.INVERTER_CIRCUIT_ID: self.inverter_circuit_id.to_dict(),
-            AttrNames.INVERTER_TOGGLE_CIRCUIT_ID: self.inverter_toggle_circuit_id.to_dict(),
-            AttrNames.CHARGER_INSTANCE: self.charger_instance.to_dict(),
-            AttrNames.CHARGER_AC_ID: self.charger_ac_id.to_dict(),
-            AttrNames.CHARGER_CIRCUIT_ID: self.charger_circuit_id.to_dict(),
-            AttrNames.CHARGER_TOGGLE_CIRCUIT_ID: self.charger_toggle_circuit_id.to_dict(),
-            AttrNames.BATTERY_BANK_1_ID: self.battery_bank_1_id.to_dict(),
-            AttrNames.BATTERY_BANK_2_ID: self.battery_bank_2_id.to_dict(),
-            AttrNames.BATTERY_BANK_3_ID: self.battery_bank_3_id.to_dict(),
-            AttrNames.POSITION_COLUMN: self.position_column,
-            AttrNames.POSITION_ROW: self.position_row,
-            AttrNames.CLUSTERED: self.clustered,
-            AttrNames.PRIMARY: self.primary,
-            AttrNames.PRIMARY_PHASE: self.primary_phase,
-            AttrNames.DEVICE_INSTANCE: self.device_instance,
-        }
+        try:
+            return {
+                **super().to_dict(),
+                AttrNames.MODEL: self.model,
+                AttrNames.TYPE: self.type,
+                AttrNames.SUB_TYPE: self.sub_type,
+                AttrNames.INVERTER_INSTANCE: self.inverter_instance.to_dict(),
+                AttrNames.INVERTER_AC_ID: self.inverter_ac_id.to_dict(),
+                AttrNames.INVERTER_CIRCUIT_ID: self.inverter_circuit_id.to_dict(),
+                AttrNames.INVERTER_TOGGLE_CIRCUIT_ID: self.inverter_toggle_circuit_id.to_dict(),
+                AttrNames.CHARGER_INSTANCE: self.charger_instance.to_dict(),
+                AttrNames.CHARGER_AC_ID: self.charger_ac_id.to_dict(),
+                AttrNames.CHARGER_CIRCUIT_ID: self.charger_circuit_id.to_dict(),
+                AttrNames.CHARGER_TOGGLE_CIRCUIT_ID: self.charger_toggle_circuit_id.to_dict(),
+                AttrNames.BATTERY_BANK_1_ID: self.battery_bank_1_id.to_dict(),
+                AttrNames.BATTERY_BANK_2_ID: self.battery_bank_2_id.to_dict(),
+                AttrNames.BATTERY_BANK_3_ID: self.battery_bank_3_id.to_dict(),
+                AttrNames.POSITION_COLUMN: self.position_column,
+                AttrNames.POSITION_ROW: self.position_row,
+                AttrNames.CLUSTERED: self.clustered,
+                AttrNames.PRIMARY: self.primary,
+                AttrNames.PRIMARY_PHASE: self.primary_phase,
+                AttrNames.DEVICE_INSTANCE: self.device_instance,
+            }
+        except Exception as e:
+            print(f"Error serializing InverterChargerDevice to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing InverterChargerDevice to JSON: {e}")
+            return "{}"

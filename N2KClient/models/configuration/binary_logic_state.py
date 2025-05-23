@@ -7,10 +7,18 @@ class BinaryLogicStates(ConfigItem):
     address: int
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            **super().to_dict(),
-            AttrNames.ADDRESS: self.address,
-        }
+        try:
+            return {
+                **super().to_dict(),
+                AttrNames.ADDRESS: self.address,
+            }
+        except Exception as e:
+            print(f"Error serializing BinaryLogicStates to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing BinaryLogicStates to JSON: {e}")
+            return "{}"

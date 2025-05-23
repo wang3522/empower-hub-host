@@ -124,7 +124,12 @@ class ConfigParser:
             map_fields(circuit_load_json, circuit_load, CIRCUIT_LOAD_FIELD_MAP)
 
             # Handle enum fields
-            map_fields(circuit_load_json, circuit_load, CIRCUIT_LOAD_ENUM_FIELD_MAP)
+            map_enum_fields(
+                self._logger,
+                circuit_load_json,
+                circuit_load,
+                CIRCUIT_LOAD_ENUM_FIELD_MAP,
+            )
             return circuit_load
         except Exception as e:
             self._logger.error(f"Failed to parse CircuitLoad: {e}")
@@ -544,9 +549,7 @@ class ConfigParser:
             if JsonKeys.HVAC in config_json:
                 for hvac_json in config_json[JsonKeys.HVAC]:
                     hvac_instance = get_device_instance_value(hvac_json)
-                    self._logger.debug(f"hvac_instance: {hvac_instance}")
                     if hvac_instance is not None:
-                        self._logger.debug("HERE hvac")
                         device_id = f"{AttrNames.HVAC}.{hvac_instance}"
                         n2k_configuration.hvac[device_id] = self.parse_hvac(hvac_json)
 
@@ -554,9 +557,6 @@ class ConfigParser:
             if JsonKeys.AUDIO_STEREO in config_json:
                 for audio_stereo_json in config_json[JsonKeys.AUDIO_STEREO]:
                     audio_stereo_instance = get_device_instance_value(audio_stereo_json)
-                    self._logger.debug(
-                        f"audio_stereo_instance: {audio_stereo_instance}"
-                    )
                     if audio_stereo_instance is not None:
                         device_id = f"{AttrNames.AUDIO_STEREO}.{audio_stereo_instance}"
 
@@ -607,14 +607,11 @@ class ConfigParser:
             # Engine
             if JsonKeys.ENGINE in config_json:
                 for engine in config_json[JsonKeys.ENGINE]:
-                    engine_instance = engine.get(JsonKeys.INSTANCE)
-                    if engine_instance is not None:
-                        engine_instance_value = engine_instance.get(JsonKeys.VALUE)
-                        if engine_instance_value is not None:
-                            device_id = f"{AttrNames.ENGINE}.{engine_instance_value}"
-                            n2k_configuration.engine[device_id] = self.parse_engine(
-                                engine
-                            )
+                    self._logger.debug(f"Engine: {engine}")
+                    engine_instance_value = get_device_instance_value(engine)
+                    if engine_instance_value is not None:
+                        device_id = f"{AttrNames.ENGINE}.{engine_instance_value}"
+                        n2k_configuration.engine[device_id] = self.parse_engine(engine)
 
             return n2k_configuration
 

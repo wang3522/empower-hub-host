@@ -68,34 +68,46 @@ class N2KConfiguration:
         self.engine.clear()
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            AttrNames.GNSS: [gnss.to_dict() for gnss in self.gnss.values()],
-            AttrNames.CIRCUIT: [circuit.to_dict() for circuit in self.circuit.values()],
-            AttrNames.DC: [dc.to_dict() for dc in self.dc.values()],
-            AttrNames.AC: [ac.to_dict() for ac in self.ac.values()],
-            AttrNames.TANK: [tank.to_dict() for tank in self.tank.values()],
-            AttrNames.INVERTER_CHARGER: [
-                inverter_charger.to_dict()
-                for inverter_charger in self.inverter_charger.values()
-            ],
-            AttrNames.DEVICE: [device.to_dict() for device in self.device.values()],
-            AttrNames.HVAC: [hvac.to_dict() for hvac in self.hvac.values()],
-            AttrNames.AUDIO_STEREO: [
-                audio_stereo.to_dict() for audio_stereo in self.audio_stereo.values()
-            ],
-            AttrNames.BINARY_LOGIC_STATE: [
-                binary_logic_state.to_dict()
-                for binary_logic_state in self.binary_logic_state.values()
-            ],
-            AttrNames.UI_RELATIONSHIP: [
-                ui_relationship.to_dict() for ui_relationship in self.ui_relationships
-            ],
-            AttrNames.PRESSURE: [
-                pressure.to_dict() for pressure in self.pressure.values()
-            ],
-            AttrNames.MODE: [mode.to_dict() for mode in self.mode.values()],
-            AttrNames.ENGINE: [engine.to_dict() for engine in self.engine.values()],
-        }
+        try:
+            return {
+                AttrNames.GNSS: [gnss.to_dict() for gnss in self.gnss.values()],
+                AttrNames.CIRCUIT: [
+                    circuit.to_dict() for circuit in self.circuit.values()
+                ],
+                AttrNames.DC: [dc.to_dict() for dc in self.dc.values()],
+                AttrNames.AC: [ac.to_dict() for ac in self.ac.values()],
+                AttrNames.TANK: [tank.to_dict() for tank in self.tank.values()],
+                AttrNames.INVERTER_CHARGER: [
+                    inverter_charger.to_dict()
+                    for inverter_charger in self.inverter_charger.values()
+                ],
+                AttrNames.DEVICE: [device.to_dict() for device in self.device.values()],
+                AttrNames.HVAC: [hvac.to_dict() for hvac in self.hvac.values()],
+                AttrNames.AUDIO_STEREO: [
+                    audio_stereo.to_dict()
+                    for audio_stereo in self.audio_stereo.values()
+                ],
+                AttrNames.BINARY_LOGIC_STATE: [
+                    binary_logic_state.to_dict()
+                    for binary_logic_state in self.binary_logic_state.values()
+                ],
+                AttrNames.UI_RELATIONSHIP: [
+                    ui_relationship.to_dict()
+                    for ui_relationship in self.ui_relationships
+                ],
+                AttrNames.PRESSURE: [
+                    pressure.to_dict() for pressure in self.pressure.values()
+                ],
+                AttrNames.MODE: [mode.to_dict() for mode in self.mode.values()],
+                AttrNames.ENGINE: [engine.to_dict() for engine in self.engine.values()],
+            }
+        except Exception as e:
+            print(f"Error serializing N2KConfiguration to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing N2KConfiguration to JSON: {e}")
+            return "{}"

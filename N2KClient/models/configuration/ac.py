@@ -29,13 +29,21 @@ class AC(MeteringDevice):
     ac_type: ACType
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            **super().to_dict(),
-            AttrNames.LINE: self.line.value,
-            AttrNames.OUTPUT: self.output,
-            AttrNames.NOMINAL_FREQUENCY: self.nominal_frequency,
-            AttrNames.AC_TYPE: self.ac_type.value,
-        }
+        try:
+            return {
+                **super().to_dict(),
+                AttrNames.LINE: self.line.value,
+                AttrNames.OUTPUT: self.output,
+                AttrNames.NOMINAL_FREQUENCY: self.nominal_frequency,
+                AttrNames.AC_TYPE: self.ac_type.value,
+            }
+        except Exception as e:
+            print(f"Error serializing AC to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing AC to JSON: {e}")
+            return "{}"

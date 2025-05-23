@@ -35,17 +35,25 @@ class UiRelationShipMsg:
     secondary_channel_index: int
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            AttrNames.PRIMARY_TYPE: self.primary_type.value,
-            AttrNames.SECONDARY_TYPE: self.secondary_type.value,
-            AttrNames.PRIMARY_ID: self.primary_id,
-            AttrNames.SECONDARY_ID: self.secondary_id,
-            AttrNames.RELATIONSHIP_TYPE: self.relationship_type.value,
-            AttrNames.PRIMARY_CONFIG_ADDRESS: self.primary_config_address,
-            AttrNames.SECONDARY_CONFIG_ADDRESS: self.secondary_config_address,
-            AttrNames.PRIMARY_CHANNEL_INDEX: self.primary_channel_index,
-            AttrNames.SECONDARY_CHANNEL_INDEX: self.secondary_channel_index,
-        }
+        try:
+            return {
+                AttrNames.PRIMARY_TYPE: self.primary_type.value,
+                AttrNames.SECONDARY_TYPE: self.secondary_type.value,
+                AttrNames.PRIMARY_ID: self.primary_id,
+                AttrNames.SECONDARY_ID: self.secondary_id,
+                AttrNames.RELATIONSHIP_TYPE: self.relationship_type.value,
+                AttrNames.PRIMARY_CONFIG_ADDRESS: self.primary_config_address,
+                AttrNames.SECONDARY_CONFIG_ADDRESS: self.secondary_config_address,
+                AttrNames.PRIMARY_CHANNEL_INDEX: self.primary_channel_index,
+                AttrNames.SECONDARY_CHANNEL_INDEX: self.secondary_channel_index,
+            }
+        except Exception as e:
+            print(f"Error serializing UiRelationShipMsg to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing UiRelationShipMsg to JSON: {e}")
+            return "{}"

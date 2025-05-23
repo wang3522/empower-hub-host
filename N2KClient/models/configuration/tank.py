@@ -18,11 +18,19 @@ class Tank(MonitoringDevice):
     tank_capacity: float
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            **super().to_dict(),
-            AttrNames.TANK_TYPE: self.tank_type.value,
-            AttrNames.TANK_CAPACITY: self.tank_capacity,
-        }
+        try:
+            return {
+                **super().to_dict(),
+                AttrNames.TANK_TYPE: self.tank_type.value,
+                AttrNames.TANK_CAPACITY: self.tank_capacity,
+            }
+        except Exception as e:
+            print(f"Error serializing Tank to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing Tank to JSON: {e}")
+            return "{}"

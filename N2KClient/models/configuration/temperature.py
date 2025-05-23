@@ -27,11 +27,19 @@ class Temperature(MonitoringDevice):
     temperature_type: TemperatureType
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            **super().to_dict(),
-            AttrNames.HIGH_TEMPERATURE: self.high_temperature,
-            AttrNames.TEMPERATURE_TYPE: self.temperature_type.value,
-        }
+        try:
+            return {
+                **super().to_dict(),
+                AttrNames.HIGH_TEMPERATURE: self.high_temperature,
+                AttrNames.TEMPERATURE_TYPE: self.temperature_type.value,
+            }
+        except Exception as e:
+            print(f"Error serializing Temperature to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing Temperature to JSON: {e}")
+            return "{}"

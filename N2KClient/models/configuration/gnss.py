@@ -9,11 +9,19 @@ class GNSSDevice(ConfigItem):
     is_external: bool
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            **super().to_dict(),
-            AttrNames.INSTANCE: self.instance.to_dict(),
-            AttrNames.IS_EXTERNAL: self.is_external,
-        }
+        try:
+            return {
+                **super().to_dict(),
+                AttrNames.INSTANCE: self.instance.to_dict(),
+                AttrNames.IS_EXTERNAL: self.is_external,
+            }
+        except Exception as e:
+            print(f"Error serializing GNSSDevice to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing GNSSDevice to JSON: {e}")
+            return "{}"

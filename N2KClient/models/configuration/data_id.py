@@ -7,10 +7,18 @@ class DataId:
     id: int
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            AttrNames.ENABLED: self.enabled,
-            AttrNames.ID: self.id,
-        }
+        try:
+            return {
+                AttrNames.ENABLED: self.enabled,
+                AttrNames.ID: self.id,
+            }
+        except Exception as e:
+            print(f"Error serializing DataId to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing DataId to JSON: {e}")
+            return "{}"

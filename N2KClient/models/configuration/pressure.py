@@ -17,11 +17,19 @@ class Pressure(MonitoringDevice):
     atmospheric_pressure: bool
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            **super().to_dict(),
-            AttrNames.PRESSURE_TYPE: self.pressure_type.value,
-            AttrNames.ATMOSPHERIC_PRESSURE: self.atmospheric_pressure,
-        }
+        try:
+            return {
+                **super().to_dict(),
+                AttrNames.PRESSURE_TYPE: self.pressure_type.value,
+                AttrNames.ATMOSPHERIC_PRESSURE: self.atmospheric_pressure,
+            }
+        except Exception as e:
+            print(f"Error serializing Pressure to dict: {e}")
+            return {}
 
     def to_json_string(self) -> str:
-        return json.dumps(self.to_dict())
+        try:
+            return json.dumps(self.to_dict())
+        except Exception as e:
+            print(f"Error serializing Pressure to JSON: {e}")
+            return "{}"
