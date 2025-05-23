@@ -1,4 +1,0 @@
-HUB_LOG_LEVEL=DEBUG
-HUB_CONFIGDIR=/etc/hub
-HUB_LOGDIR=/var/log/hub
-HUB_NET_CONFIG=/etc/hub/network-config.json
