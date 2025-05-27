@@ -10,7 +10,7 @@
         "TB_PORT": "{YOUR TB HOST PORT}",
         "TB_ACCESS_TOKEN": "{YOUR ACCESS TOKEN}",
       },
-      "program": "${workspaceFolder}/HubCoreService/HubCore/thingsboardClient/mqtt_client.py",
+      "program": "${workspaceFolder}/HubCoreService/HubCore/thingsboardClient/main.py",
       "console": "integratedTerminal",
       "justMyCode": false
     }
