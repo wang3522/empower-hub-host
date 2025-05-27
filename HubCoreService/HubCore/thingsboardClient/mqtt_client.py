@@ -701,6 +701,7 @@ class ThingsBoardClient:
             self._logger.error(error)
 
 if __name__ == "__main__":
+    #pylint: disable=ungrouped-imports
     from tb_utils.tb_client_logger import configure_logging
     configure_logging()
     # Example usage

@@ -13,3 +13,4 @@ class Constants:
     CONFIG_CHECKSUM_KEY = "configuration.checksum"
     TB_ACCESS_TOKEN_PATH = "/data/tb_access_token"
     SN_PATH = "/data/factory/serial_number"
+    TB_CONSENTS_PATH = "/data/tb_consents/"
