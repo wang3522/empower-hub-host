@@ -16,6 +16,8 @@ class SyncService:
     Thingsboard Client singleton class to connect to sync and store values from
     the thingsboard attribute that need to persist locally via file and synced
     again after reconnecting.
+
+    Currently will only do shared attributes from thingsboard.
     """
     _logger = logging.getLogger(__name__)
 
@@ -57,20 +59,31 @@ class SyncService:
         self._initialized = False
         self._attributes.clear()
 
-    def get_attributes(self):
+    def get_attribute_dictionary(self):
         """
         Get the attributes stored in the SyncService.
         """
         return self._attributes
 
-    def get_attribute_value(self, key: str):
+    def get_attribute_subject(self, key):
         """
-        Get a specific attribute from the SyncService.
+        Get a specific attribute subject from the SyncService.
         Will return None if the attribute does not exist.
         """
         if key not in self._attributes:
             self._logger.error("Attribute '%s' not found in SyncService.", key)
+            return None
         return self._attributes.get(key, None)
+
+    def get_attribute_value(self, key: str):
+        """
+        Get a specific attribute value from the SyncService.
+        Will return None if the attribute does not exist.
+        """
+        result = self.get_attribute_subject(key)
+        if result is not None:
+            return result.value
+        return None
 
     def _update_value(self, value: typing.Optional[dict[str, any]]):
         """
@@ -91,7 +104,7 @@ class SyncService:
                 self._attributes[key] = rx.subject.BehaviorSubject(val)
                 self._logger.info("Created new BehaviorSubject for attribute '%s'.", key)
 
-    def subscribe_to_attribute(self, key: str, shared: bool = False):
+    def subscribe_to_attribute(self, key: str):
         """
         Subscribe to an attribute in the SyncService.
         If the attribute does not exist, it will be created.
