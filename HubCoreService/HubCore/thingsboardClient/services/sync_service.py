@@ -1,6 +1,7 @@
 """
 SyncService class for Thingsboard Client
 """
+import json
 import logging
 import os
 import sys
@@ -51,9 +52,37 @@ class SyncService:
             self._logger.info("Reading files for attributes...")
             files = os.listdir(Constants.TB_CONSENTS_PATH)
             files_and_paths = [(os.path.join(Constants.TB_CONSENTS_PATH, f), f) for f in files
-                    if os.path.isfile(os.path.join(Constants.TB_CONSENTS_PATH, f))
+                    # Only include files that are JSON and exist in the path
+                    if (
+                        os.path.isfile(os.path.join(Constants.TB_CONSENTS_PATH, f))
+                        and f.endswith('.json')
+                    )
                 ]
             print("FILES AND PATHS:", files_and_paths)
+            for file_path, file_name in files_and_paths:
+                try:
+                    attribute_name = file_name[0:-5]  # Remove .json extension
+                    print("Attribute name:", attribute_name)
+                    with open(file_path, 'r', encoding="utf-8") as file:
+                        json_data = json.load(file)
+                        if json_data and "value" in json_data:
+                            value = json_data.get("value", None)
+                            if attribute_name not in self._attributes.keys():
+                                # Create a BehaviorSubject for the attribute
+                                self._logger.info("Creating BehaviorSubject for attribute '%s' with '%s'",
+                                    attribute_name,
+                                    str(value)
+                                )
+                                self._attributes[attribute_name] = rx.subject.BehaviorSubject(value)
+                            else:
+                                self._logger.info("Attribute '%s' already exists, skipping creation.", attribute_name)
+                                self._attributes[attribute_name].on_next(value)
+                            self.subscribe_to_attribute(attribute_name)
+                except Exception as e:
+                    self._logger.error("Error extracting attribute name from file %s: %s", file_name, e)
+                    if len(file_name) > 5 and file_name.endswith('.json'):
+                        self.subscribe_to_attribute(file_name[0:-5])  # Fallback to subscribe to attribute name
+                    continue
         except FileNotFoundError as e:
             self._logger.error("Directory %s not found: %s", Constants.TB_CONSENTS_PATH, e)
             self._logger.info("Creating directory %s...", Constants.TB_CONSENTS_PATH)
@@ -127,10 +156,25 @@ class SyncService:
                         val
                     )
                     self._attributes[key].on_next(val)
+                    self._update_file(key, val)
             else:
-                self._logger.warning("%s not found or attribute %s is none", key, str(val))
-                self._attributes[key] = rx.subject.BehaviorSubject(val)
-                self._logger.info("Created new BehaviorSubject for attribute '%s'.", key)
+                if key != "shared": # Shared key is just another dictionary for shared attributes
+                    self._logger.warning("%s not found, creating new entry with %s", key, str(val))
+                    self._attributes[key] = rx.subject.BehaviorSubject(val)
+                    self._logger.info("Created new BehaviorSubject for attribute '%s'.", key)
+
+    def _update_file(self, key: str, value: typing.Any):
+        """
+        Update the file for the attribute with the given key.
+        This method will create a new file if it does not exist.
+        """
+        file_path = os.path.join(Constants.TB_CONSENTS_PATH, f"{key}.json")
+        try:
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(json.dumps({"value": value}, ensure_ascii=False, indent=2))
+            self._logger.info("Updated file for attribute '%s' with value '%s'.", key, str(value))
+        except Exception as e:
+            self._logger.error("Error updating file for attribute '%s': %s", key, e)
 
     def subscribe_to_attribute(self, key: str):
         """
@@ -140,10 +184,11 @@ class SyncService:
         if key not in self._attributes:
             self._logger.info("Creating new BehaviorSubject for attribute '%s'.", key)
             self._attributes[key] = rx.subject.BehaviorSubject(None)
-            attribute_subscription = self._mqtt_client.subscribe_attribute(key, None)
-            self._disposables.append(attribute_subscription.subscribe(self._update_value))
         else:
-            self._logger.info("Attribute '%s' already exists, subscription exists", key)
+            self._logger.info("Attribute '%s' already exists", key)
+        self._logger.info("Thingsboard subscribing to attribute '%s'.", key)
+        attribute_subscription = self._mqtt_client.subscribe_attribute(key, None)
+        self._disposables.append(attribute_subscription.subscribe(self._update_value))
 
     def reconnect_sync(self):
         """
