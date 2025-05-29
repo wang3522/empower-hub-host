@@ -17,7 +17,7 @@ from time import sleep
 from N2KClient.util.settings_util import SettingsUtil
 from N2KClient.models.common_enums import N2kDeviceType
 from N2KClient.services.config_parser.config_parser import ConfigParser
-from N2KClient.models.configuration.configuation import N2KConfiguration
+from N2KClient.models.n2k_configuration.n2k_configuation import N2kConfiguration
 
 
 class N2KClient(dbus.service.Object):
@@ -36,7 +36,7 @@ class N2KClient(dbus.service.Object):
     getDevices: dbus.proxies._ProxyMethod
     _get_devices_thread: threading.Thread
     _get_state_thread: threading.Thread
-    _latest_config: N2KConfiguration
+    _latest_config: N2kConfiguration
     _config_parser: ConfigParser
     _get_state_timeout = SettingsUtil.get_setting(
         Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, default_value=1
@@ -44,7 +44,7 @@ class N2KClient(dbus.service.Object):
     _get_devices_timeout = SettingsUtil.get_setting(
         Constants.WORKER_KEY, Constants.DEVICE_TIMEOUT_KEY, default_value=1
     )
-    _latest_config: N2KConfiguration
+    _latest_config: N2kConfiguration
     lock: threading.Lock
 
     def __init__(self):
@@ -53,7 +53,7 @@ class N2KClient(dbus.service.Object):
         self._latest_devices = {}
 
         self._devices = rx.subject.BehaviorSubject({})
-        self._config = rx.subject.BehaviorSubject(N2KConfiguration())
+        self._config = rx.subject.BehaviorSubject(N2kConfiguration())
 
         # Pipes
         self.devices = self._devices.pipe(ops.publish(), ops.ref_count())
@@ -102,7 +102,7 @@ class N2KClient(dbus.service.Object):
         self._config_parser = ConfigParser()
 
         # Handler to update the latest config internally
-        def update_latest_config(config: N2KConfiguration):
+        def update_latest_config(config: N2kConfiguration):
             self._latest_config = config
             if config is not None:
                 config_json = config.to_dict()

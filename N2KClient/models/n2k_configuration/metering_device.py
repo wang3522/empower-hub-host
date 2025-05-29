@@ -18,7 +18,7 @@ class MeteringDevice(ConfigItem):
         try:
             return {
                 **super().to_dict(),
-                AttrNames.INSTANCE_: self.instance.to_dict(),
+                AttrNames.INSTANCE: self.instance.to_dict(),
                 AttrNames.OUTPUT: self.output,
                 AttrNames.NOMINAL_VOLTAGE: self.nominal_voltage,
                 AttrNames.ADDRESS: self.address,

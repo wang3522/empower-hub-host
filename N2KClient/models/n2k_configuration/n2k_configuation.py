@@ -11,23 +11,27 @@ from .circuit import Circuit
 from .device import Device
 from .gnss import GNSSDevice
 from .engine import EnginesDevice
-from .binary_logic_state import BinaryLogicStates
+from .binary_logic_state import BinaryLogicState
 from .ui_relationship_msg import UiRelationShipMsg
 from ..constants import AttrNames
+from .category_item import CategoryItem
+from .ac_meter import ACMeter
 
 
-class N2KConfiguration:
+class N2kConfiguration:
     gnss: dict[str, GNSSDevice]
     circuit: dict[str, Circuit]
+    hidden_circuit: dict[str, Circuit]
     dc: dict[str, DC]
-    ac: dict[str, AC]
+    ac: dict[str, ACMeter]
     tank: dict[str, Tank]
     inverter_charger: dict[str, InverterChargerDevice]
     device: dict[str, Device]
     hvac: dict[str, HVACDevice]
     audio_stereo: dict[str, AudioStereoDevice]
-    binary_logic_state: dict[str, BinaryLogicStates]
+    binary_logic_state: dict[str, BinaryLogicState]
     ui_relationships: list[UiRelationShipMsg]
+    category: list[CategoryItem]
 
     pressure: dict[str, Pressure]
     mode: dict[str, Circuit]
@@ -36,6 +40,7 @@ class N2KConfiguration:
     def __init__(self):
         self.gnss = {}
         self.circuit = {}
+        self.hidden_circuit = {}
         self.dc = {}
         self.ac = {}
         self.tank = {}
@@ -49,10 +54,12 @@ class N2KConfiguration:
         self.pressure = {}
         self.mode = {}
         self.engine = {}
+        self.category = []
 
     def __del__(self):
         self.gnss.clear()
         self.circuit.clear()
+        self.hidden_circuit.clear()
         self.dc.clear()
         self.ac.clear()
         self.tank.clear()
@@ -66,6 +73,7 @@ class N2KConfiguration:
         self.pressure.clear()
         self.mode.clear()
         self.engine.clear()
+        self.category = []
 
     def to_dict(self) -> dict[str, Any]:
         try:
@@ -73,6 +81,9 @@ class N2KConfiguration:
                 AttrNames.GNSS: [gnss.to_dict() for gnss in self.gnss.values()],
                 AttrNames.CIRCUIT: [
                     circuit.to_dict() for circuit in self.circuit.values()
+                ],
+                AttrNames.HIDDEN_CIRCUIT: [
+                    circuit.to_dict() for circuit in self.hidden_circuit.values()
                 ],
                 AttrNames.DC: [dc.to_dict() for dc in self.dc.values()],
                 AttrNames.AC: [ac.to_dict() for ac in self.ac.values()],
@@ -100,14 +111,15 @@ class N2KConfiguration:
                 ],
                 AttrNames.MODE: [mode.to_dict() for mode in self.mode.values()],
                 AttrNames.ENGINE: [engine.to_dict() for engine in self.engine.values()],
+                AttrNames.CATEGORY: [category.to_dict() for category in self.category],
             }
         except Exception as e:
-            print(f"Error serializing N2KConfiguration to dict: {e}")
+            print(f"Error serializing HostConfiguration: to dict: {e}")
             return {}
 
     def to_json_string(self) -> str:
         try:
             return json.dumps(self.to_dict())
         except Exception as e:
-            print(f"Error serializing N2KConfiguration to JSON: {e}")
+            print(f"Error serializing HostConfiguration: to JSON: {e}")
             return "{}"

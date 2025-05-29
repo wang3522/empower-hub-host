@@ -48,3 +48,92 @@ class SwitchType(Enum):
     SequentialLong3 = 31
     SequentialLong4 = 32
     SequentialLong5 = 33
+
+
+class Unit(str, Enum):
+    NONE = "none"
+    PERCENT = "percent"
+
+    PRESSURE_KILOPASCAL = "pressure:kilopascal"
+    PRESSURE_POUND_PER_SQUARE_INCH = "pressure:psi"
+    PRESSURE_INCH_OF_MERCURY = "pressure:hg"
+    PRESSURE_BAR = "pressure:bar"
+    PRESSURE_PASCAL = "pressure:pa"
+
+    TEMPERATURE_FAHRENHEIT = "temperature:fahrenheit"
+    TEMPERATURE_CELSIUS = "temperature:celsius"
+    TEMPERATURE_KELVIN = "temperature:kelvin"
+
+    ENERGY_AMP = "energy:amp"
+    ENERGY_VOLT = "energy:volt"
+    ENERGY_WATT = "energy:watt"
+    ENERGY_KILOWATT = "energy:kilowatt"
+    ENERGY_AMP_HOURS = "energy:ampHours"
+
+    VOLUME_LITRE = "volume:liter"
+    VOLUME_GALLON = "volume:gallon"
+
+    TIME_SECOND = "time:second"
+    TIME_MINUTE = "time:minute"
+    TIME_HOUR = "time:hour"
+
+    TIMESTAMP_EPOCH = "timestamp:epoch"
+    TIMESTAMP_ISO = "timestamp:iso"
+
+    SIGNAL_DECIBEL = "signal:dB"
+    SIGNAL_DECIBEL_MILLIWATT = "signal:dBm"
+
+    LINEAR_SPEED_KILOMETERS_PER_HOUR = "linearSpeed:kph"
+    LINEAR_SPEED_MILES_PER_HOUR = "linearSpeed:mph"
+    LINEAR_SPEED_KNOT = "linearSpeed:knot"
+    LINEAR_SPEED_METERS_PER_SECOND = "linearSpeed:metersPerSecond"
+
+    ROTATIONAL_SPEED_REVOLUTIONS_PER_MINUTE = "rotationalSpeed:rpm"
+
+    FREQUENCY_HERTZ = "frequency:hertz"
+
+    GEOJSON_POINT = "geojson:point"
+    GEOJSON_POLYGON = "geojson:polygon"
+
+    DISTANCE_FEET = "distance:feet"
+    DISTANCE_METER = "distance:meter"
+    DISTANCE_MILE = "distance:mile"
+    DISTANCE_KILOMETER = "distance:km"
+    DISTANCE_NAUTICAL_MILE = "distance:nmi"
+
+    FUEL_RATE_CUBIC_METER_PER_HOUR = "fuelRate:cubicMeterPerHour"
+
+
+class ChannelType(str, Enum):
+    UNKNOWN = "unknown"
+    BOOLEAN = "boolean"
+    NUMBER = "number"
+    STRING = "string"
+    POINT = "point"
+    POLYGON = "polygon"
+
+
+class ThingType(str, Enum):
+    GENERIC_CIRCUIT = "genericCircuit"
+    UNKNOWN = "unknown"
+    LIGHT = "light"
+    BILGE_PUMP = "bilgePump"
+    PUMP = "pump"
+    BATTERY = "battery"
+    MARINE_ENGINE = "marineEngine"
+    CLIMATE = "climate"
+    AUDIO = "audio"
+    LOCATION = "location"
+    WATER_TANK = "waterTank"
+    FUEL_TANK = "fuelTank"
+    SHORE_POWER = "shorePower"
+    INVERTER = "inverter"
+    CHARGER = "charger"
+    HUB = "hub"
+    GNSS = "gnss"
+
+
+class WaterTankType(str, Enum):
+    BLACKWATER = "blackWater"
+    WASTEWATER = "wasteWater"
+    FRESHWATER = "freshWater"

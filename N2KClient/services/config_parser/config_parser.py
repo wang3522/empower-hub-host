@@ -2,29 +2,29 @@ import json
 import logging
 from typing import Any
 
-from N2KClient.models.configuration.configuation import N2KConfiguration
-from N2KClient.models.configuration.gnss import GNSSDevice
-from N2KClient.models.configuration.circuit import (
+from N2KClient.models.n2k_configuration.n2k_configuation import N2kConfiguration
+from N2KClient.models.n2k_configuration.gnss import GNSSDevice
+from N2KClient.models.n2k_configuration.circuit import (
     Circuit,
     CircuitLoad,
     CategoryItem,
 )
-from N2KClient.models.configuration.dc import DC
-from N2KClient.models.configuration.ac import AC
-from N2KClient.models.configuration.tank import Tank
-from N2KClient.models.configuration.inverter_charger import InverterChargerDevice
-from N2KClient.models.configuration.device import Device
-from N2KClient.models.configuration.hvac import HVACDevice
-from N2KClient.models.configuration.audio_stereo import AudioStereoDevice
-from N2KClient.models.configuration.binary_logic_state import BinaryLogicStates
-from N2KClient.models.configuration.ui_relationship_msg import (
+from N2KClient.models.n2k_configuration.dc import DC
+from N2KClient.models.n2k_configuration.ac import AC, ACLine
+from N2KClient.models.n2k_configuration.tank import Tank
+from N2KClient.models.n2k_configuration.inverter_charger import InverterChargerDevice
+from N2KClient.models.n2k_configuration.device import Device
+from N2KClient.models.n2k_configuration.hvac import HVACDevice
+from N2KClient.models.n2k_configuration.audio_stereo import AudioStereoDevice
+from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicStates
+from N2KClient.models.n2k_configuration.ui_relationship_msg import (
     UiRelationShipMsg,
 )
-from N2KClient.models.configuration.pressure import Pressure
-from N2KClient.models.configuration.engine import EnginesDevice
-from N2KClient.models.configuration.sequential_name import SequentialName
-from N2KClient.models.configuration.instance import Instance
-from N2KClient.models.configuration.data_id import DataId
+from N2KClient.models.n2k_configuration.pressure import Pressure
+from N2KClient.models.n2k_configuration.engine import EnginesDevice
+from N2KClient.models.n2k_configuration.sequential_name import SequentialName
+from N2KClient.models.n2k_configuration.instance import Instance
+from N2KClient.models.n2k_configuration.data_id import DataId
 from N2KClient.models.constants import Constants, JsonKeys, AttrNames
 from N2KClient.services.config_parser.field_maps import *
 from N2KClient.services.config_parser.config_parser_helpers import (
@@ -33,16 +33,17 @@ from N2KClient.services.config_parser.config_parser_helpers import (
     map_list_fields,
     get_device_instance_value,
 )
+from N2KClient.models.n2k_configuration.ac_meter import ACMeter
 
 
 class ConfigParser:
-    _config: N2KConfiguration
+    _config: N2kConfiguration
     _logger = logging.getLogger(
         f"{Constants.DBUS_N2K_CLIENT}: {Constants.Config_Parser}"
     )
 
     def __init__(self):
-        self._config = N2KConfiguration()
+        self._config = ()
         self._circuit_list_field_map = {
             AttrNames.CIRCUIT_LOADS: (JsonKeys.CIRCUIT_LOADS, self.parse_circuit_load),
             AttrNames.CATEGORIES: (JsonKeys.CATEGORIES, self.parse_category),
@@ -468,12 +469,25 @@ class ConfigParser:
             self._logger.error(f"Failed to parse Engine device: {e}")
             raise
 
-    def parse_config(self, config_string: str) -> N2KConfiguration:
+    def parse_categories(self, categories_json: dict[str, Any]) -> list[CategoryItem]:
+        """
+        Parse the Categories from the configuration.
+        """
+        try:
+            category_item = CategoryItem()
+            # Map required fields directly
+            map_fields(categories_json, category_item, CATEGORY_FIELD_MAP)
+            return category_item
+        except Exception as e:
+            self._logger.error(f"Failed to parse Categories: {e}")
+            raise
+
+    def parse_config(self, config_string: str) -> N2kConfiguration:
         """
         Parse the configuration string and return a N2KConfiguration object.
         """
         try:
-            n2k_configuration = N2KConfiguration()
+            n2k_configuration = N2kConfiguration()
             # Parse the configuration string
             config_json: dict[str, list[Any]] = json.loads(config_string)
 
@@ -495,6 +509,15 @@ class ConfigParser:
                             circuit_json
                         )
 
+            if JsonKeys.NONVISIBLE_CIRCUIT in config_json:
+                for circuit_json in config_json[JsonKeys.NONVISIBLE_CIRCUIT]:
+                    circuit_id = circuit_json.get(JsonKeys.ID)
+                    if circuit_id is not None:
+                        device_id = f"{AttrNames.CIRCUIT}.{circuit_id}"
+                        n2k_configuration.circuit[device_id] = self.parse_circuit(
+                            circuit_json
+                        )
+
             # DC
             if JsonKeys.DC in config_json:
                 for dc_json in config_json[JsonKeys.DC]:
@@ -509,7 +532,15 @@ class ConfigParser:
                     ac_instance = get_device_instance_value(ac_json)
                     if ac_instance is not None:
                         device_id = f"{AttrNames.AC}.{ac_instance}"
-                        n2k_configuration.ac[device_id] = self.parse_ac(ac_json)
+                        ac_line = self.parse_ac(ac_json)
+                        if not device_id in n2k_configuration.ac:
+                            n2k_configuration.ac[device_id] = ACMeter()
+                        if ac_line.line == ACLine.Line1:
+                            n2k_configuration.ac[device_id].line[1] = ac_line
+                        elif ac_line.line == ACLine.Line2:
+                            n2k_configuration.ac[device_id].line[2] = ac_line
+                        elif ac_line.line == ACLine.Line3:
+                            n2k_configuration.ac[device_id].line[3] = ac_line
 
             # Tank
             if JsonKeys.TANK in config_json:
@@ -583,6 +614,17 @@ class ConfigParser:
                         n2k_configuration.ui_relationships.append(
                             self.parse_ui_relationship(ui_relationship_json)
                         )
+
+            # Categories
+            if JsonKeys.CATEGORIES in config_json:
+                for category_json in config_json[JsonKeys.CATEGORIES]:
+                    if JsonKeys.ITEMS in category_json:
+                        category_json_items = category_json[JsonKeys.ITEMS]
+                        for category_item in category_json_items:
+                            n2k_configuration.category.append(
+                                self.parse_categories(category_item)
+                            )
+
             # Pressure
             if JsonKeys.PRESSURE in config_json:
                 for pressure_json in config_json[JsonKeys.PRESSURE]:
@@ -607,7 +649,6 @@ class ConfigParser:
             # Engine
             if JsonKeys.ENGINE in config_json:
                 for engine in config_json[JsonKeys.ENGINE]:
-                    self._logger.debug(f"Engine: {engine}")
                     engine_instance_value = get_device_instance_value(engine)
                     if engine_instance_value is not None:
                         device_id = f"{AttrNames.ENGINE}.{engine_instance_value}"
