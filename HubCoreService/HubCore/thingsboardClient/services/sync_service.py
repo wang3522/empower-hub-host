@@ -30,6 +30,7 @@ class SyncService:
     _mqtt_client = ThingsBoardClient()
 
     _attributes: dict[str, rx.subject.BehaviorSubject] = {}
+    _connection_disposable: rx.disposable.Disposable = None
     _disposables: list[rx.disposable.Disposable] = []
 
     _last_connected_value = False
@@ -95,8 +96,7 @@ class SyncService:
                 self._logger.info("Connected to Thingsboard, syncing attributes...")
                 self.reconnect_sync()
             self._last_connected_value = connected_value
-        disposable = self._mqtt_client.is_connected.subscribe(connection_callback)
-        self._disposables.append(disposable)
+        self._connection_disposable = self._mqtt_client.is_connected.subscribe(connection_callback)
 
     def __del__(self):
         """
@@ -110,6 +110,10 @@ class SyncService:
         self._instance = None
         self._initialized = False
         self._attributes.clear()
+        self._connection_disposable.dispose()
+        for disposable in self._disposables:
+            if disposable is not None:
+                disposable.dispose()
 
     def get_attribute_dictionary(self):
         """
@@ -199,7 +203,14 @@ class SyncService:
             self._logger.warning("No attributes to resubscribe to, skipping reconnection.")
             return
         self._logger.info("Reconnecting to Thingsboard and syncing attributes...")
+        for disposable in self._disposables:
+            if disposable is not None:
+                disposable.dispose()
+        self._disposables.clear()
         keys = list(self._attributes.keys())
+        for key in keys:
+            self.subscribe_to_attribute(key)
+        self._logger.info("Requesting attributes state for keys: %s", keys)
         subject = rx.subject.BehaviorSubject(None)
         subject.subscribe(self._update_value)
         self._mqtt_client.request_attributes_state(subject=subject, shared_attributes=keys)
