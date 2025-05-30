@@ -16,7 +16,7 @@ from N2KClient.models.n2k_configuration.inverter_charger import InverterChargerD
 from N2KClient.models.n2k_configuration.device import Device
 from N2KClient.models.n2k_configuration.hvac import HVACDevice
 from N2KClient.models.n2k_configuration.audio_stereo import AudioStereoDevice
-from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicStates
+from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicState
 from N2KClient.models.n2k_configuration.ui_relationship_msg import (
     UiRelationShipMsg,
 )
@@ -381,12 +381,12 @@ class ConfigParser:
 
     def parse_binary_logic_state(
         self, binary_logic_state_json: dict[str, Any]
-    ) -> BinaryLogicStates:
+    ) -> BinaryLogicState:
         """
         Parse the Binary Logic State object from the configuration.
         """
         try:
-            binary_logic_state = BinaryLogicStates()
+            binary_logic_state = BinaryLogicState()
             # Map required fields directly
             map_fields(
                 binary_logic_state_json,
