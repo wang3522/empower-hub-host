@@ -257,9 +257,8 @@ class ConfigParser:
 
             inverter_enabled = inverter_instance_json.get(JsonKeys.ENABLED, False)
             charger_enabled = charger_instance_json.get(JsonKeys.ENABLED, False)
-            inverter_instance = inverter_instance_json.get(JsonKeys.INSTANCE_, None)
-            charger_instance = charger_instance_json.get(JsonKeys.INSTANCE_, None)
-
+            inverter_instance = inverter_instance_json.get(JsonKeys.INSTANCE, None)
+            charger_instance = charger_instance_json.get(JsonKeys.INSTANCE, None)
             if (
                 inverter_instance is not None
                 and inverter_enabled
@@ -305,7 +304,9 @@ class ConfigParser:
                     setattr(
                         inverter_charger_device, attr, self.parse_data_id(field_json)
                     )
-
+            self._logger.debug(
+                f"Parsed Inverter Charger device: {inverter_charger_device.to_json_string()}"
+            )
             return inverter_charger_device
         except Exception as e:
             self._logger.error(f"Failed to parse Inverter Charger device: {e}")

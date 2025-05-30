@@ -34,7 +34,7 @@ class Thing(ABC):
     def to_config_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
-            "type": self,
+            "type": self.type.value,
             "name": self.name,
             "metadata": self.metadata,
             "categories": self.categories,

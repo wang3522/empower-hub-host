@@ -15,11 +15,12 @@ class Channel:
         name: str,
         type: ChannelType,
         unit: Unit,
-        tags=None,
+        tags: list[str],
+        read_only: bool,
     ):
         self.id = id
         self.name = name
-        self.read_only = False
+        self.read_only = read_only
         self.type = type
         self.tags = tags or []
         self.unit = unit

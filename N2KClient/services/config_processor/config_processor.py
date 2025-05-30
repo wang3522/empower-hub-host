@@ -47,12 +47,12 @@ from N2KClient.models.empower_system.circuit_power_switch import CircuitPowerSwi
 
 
 class ConfigProcessor:
-    _things = list[Thing]
+    _things: list[Thing]
 
     # Keep ACMeters associated with Inverters and DCMeters associated with chargers.
     # When creating ACMeters, DCMeters, check that they are not already part of a COMBI
-    _acMeter_inverter_instances = list[str]
-    _dcMeter_charger_instances = list[str]
+    _acMeter_inverter_instances: list[str]
+    _dcMeter_charger_instances: list[str]
 
     # Keep track of IC Status. Shorepower Component Status for Combi Shorepower is same as Combi Component Status.
     # Shorepower connected logic changes for shorepower depending on if it is associated with Combi
@@ -61,10 +61,12 @@ class ConfigProcessor:
     # Mark associated circuits whose status is tracked by other component
     # i.e. shorepower circuit, so that these are not created as duplicate, independant circuits
     # when we create all circuit things
-    _associated_circuit_instances = list[str]
+    _associated_circuit_instances: list[str]
 
     def __init__(self):
         self._things = []
+        self._acMeter_inverter_instances = []
+        self._dcMeter_charger_instances = []
 
     # ###################################################
     #     Devices
@@ -180,15 +182,16 @@ class ConfigProcessor:
             )
         inverter_thing = CombiInverter(
             inverter_charger=inverter_charger,
-            ac_line1=ac_meter.line[1] if 1 in ac_meter.line else None,
-            ac_line2=ac_meter.line[2] if 2 in ac_meter.line else None,
-            ac_line3=ac_meter.line[3] if 3 in ac_meter.line else None,
+            ac_line1=ac_meter.line[1] if ac_meter and 1 in ac_meter.line else None,
+            ac_line2=ac_meter.line[2] if ac_meter and 2 in ac_meter.line else None,
+            ac_line3=ac_meter.line[3] if ac_meter and 3 in ac_meter.line else None,
             categories=categories,
             status_ac_line=inverter_associated_ac_line,
             inverter_circuit=inverter_visible_circuit,
         )
         self._things.append(inverter_thing)
-        self._acMeter_inverter_instances.append(ac_meter.line[1].instance.instance)
+        if ac_meter is not None:
+            self._acMeter_inverter_instances.append(ac_meter.line[1].instance.instance)
 
     def process_chargers(
         self,
@@ -208,8 +211,8 @@ class ConfigProcessor:
                 ),
                 None,
             )
-
-            self._dcMeter_charger_instances.append(dc_meter1.instance.instance)
+            if dc_meter1 is not None:
+                self._dcMeter_charger_instances.append(dc_meter1.instance.instance)
 
         dc_meter2 = None
         if inverter_charger.battery_bank_2_id.enabled is not None:
@@ -221,8 +224,8 @@ class ConfigProcessor:
                 ),
                 None,
             )
-
-            self._dcMeter_charger_instances.append(dc_meter2.instance.instance)
+            if dc_meter2 is not None:
+                self._dcMeter_charger_instances.append(dc_meter2.instance.instance)
 
         dc_meter3 = None
         if inverter_charger.battery_bank_3_id.enabled is not None:
@@ -234,8 +237,8 @@ class ConfigProcessor:
                 ),
                 None,
             )
-
-            self._dcMeter_charger_instances.append(dc_meter3.instance.instance)
+            if dc_meter3 is not None:
+                self._dcMeter_charger_instances.append(dc_meter3.instance.instance)
 
         charger_thing = CombiCharger(
             inverter_charger=inverter_charger,
@@ -270,7 +273,7 @@ class ConfigProcessor:
     def process_inverter_chargers(self, config: N2kConfiguration) -> None:
         # For each inverter/charger we will create both an inverter and
         # charger thing.
-        for inverter_charger in config.inverter_charger.values():
+        for id, inverter_charger in config.inverter_charger.items():
             categories = get_category_list(
                 ItemType.InverterCharger,
                 inverter_charger.id,
@@ -282,11 +285,7 @@ class ConfigProcessor:
                 inverter_charger,
                 categories,
             )
-            self.process_chargers(
-                inverter_charger,
-                config,
-                categories,
-            )
+            self.process_chargers(inverter_charger, config, categories)
 
     # ###################################################
     #     DC Meters
@@ -326,7 +325,7 @@ class ConfigProcessor:
     def process_gnss(self, config: N2kConfiguration) -> None:
         for gnss in config.gnss.values():
             gnss_thing = GNSS(
-                gnss=config.gnss,
+                gnss,
             )
             self._things.append(gnss_thing)
 
@@ -338,6 +337,7 @@ class ConfigProcessor:
             if ac_meter.line[1].instance.instance in self._acMeter_inverter_instances:
                 continue
 
+            ic_associated_line = None
             if ac_meter.line[1].instance.instance in self._ic_component_status:
                 component_status, ic_associated_line = self._ic_component_status[
                     ac_meter.line[1].instance.instance
@@ -354,7 +354,9 @@ class ConfigProcessor:
                             config,
                         )
                     )
-                )
+                    is not None
+                ),
+                None,
             )
 
             if circuit is not None:
@@ -442,6 +444,7 @@ class ConfigProcessor:
                     tank.id,
                     config,
                 )
+
                 if circuit is not None:
                     link = create_link(
                         ThingType.PUMP, ThingType.WATER_TANK, circuit.control_id
@@ -454,7 +457,6 @@ class ConfigProcessor:
                     tank_thing = FreshWaterTank(
                         tank=tank,
                         links=links,
-                        circuit=circuit,
                     )
                     self._things.append(tank_thing)
 
@@ -462,7 +464,6 @@ class ConfigProcessor:
                     tank_thing = WasteWaterTank(
                         tank=tank,
                         links=links,
-                        circuit=circuit,
                     )
                     self._things.append(tank_thing)
 
@@ -470,7 +471,6 @@ class ConfigProcessor:
                     tank_thing = BlackWaterTank(
                         tank=tank,
                         links=links,
-                        circuit=circuit,
                     )
                     self._things.append(tank_thing)
 

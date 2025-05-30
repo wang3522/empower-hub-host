@@ -11,6 +11,7 @@ from N2KClient.models.common_enums import ThingType
 from N2KClient.models.empower_system.link import Link
 from N2KClient.models.constants import Constants
 from N2KClient.models.n2k_configuration.circuit import Circuit
+from N2KClient.models.n2k_configuration.inverter_charger import InverterChargerDevice
 
 
 def get_category_list(
@@ -238,3 +239,15 @@ def get_child_circuits(id: int, config: N2kConfiguration) -> list[Circuit]:
                 if child_circuit is not None:
                     child_circuits.append(child_circuit)
     return child_circuits
+
+
+def calculate_inverter_charger_instance(inverter_charger: InverterChargerDevice):
+    """
+    Given an inveter/charger, calculate its instance number from the instances
+    of the inverter and charger separately.
+    """
+
+    return (
+        inverter_charger.inverter_instance.instance << 8
+        | inverter_charger.charger_instance.instance
+    )

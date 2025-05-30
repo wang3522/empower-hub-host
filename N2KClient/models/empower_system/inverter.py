@@ -7,6 +7,9 @@ from .channel import Channel, ChannelType
 from N2KClient.models.common_enums import Unit
 from N2KClient.models.constants import Constants
 from N2KClient.models.n2k_configuration.inverter_charger import InverterChargerDevice
+from N2KClient.services.config_processor.config_processor_helpers import (
+    calculate_inverter_charger_instance,
+)
 
 
 class InverterBase(Thing):
@@ -270,7 +273,6 @@ class CombiInverter(InverterBase):
     def __init__(
         self,
         inverter_charger: InverterChargerDevice,
-        inverter_charger_instance: str,
         ac_line1: AC,
         ac_line2: AC,
         ac_line3: AC,
@@ -283,8 +285,8 @@ class CombiInverter(InverterBase):
 
         InverterBase.__init__(
             self,
-            id=inverter_charger_instance,
-            name=ac_line1.name_utf8,
+            id=calculate_inverter_charger_instance(inverter_charger),
+            name=ac_line1.name_utf8 if ac_line1 else inverter_charger.name_utf8,
             ac_line1=ac_line1,
             ac_line2=ac_line2,
             ac_line3=ac_line3,
@@ -311,5 +313,15 @@ class CombiInverter(InverterBase):
                 type=ChannelType.STRING,
                 unit=Unit.NONE,
                 tags=[f"{Constants.empower}:{Constants.inverter}.{Constants.state}"],
+            ),
+            Channel(
+                id="cs",
+                name="Component Status",
+                type=ChannelType.STRING,
+                unit=Unit.NONE,
+                read_only=False,
+                tags=[
+                    f"{Constants.empower}:{Constants.inverter}.{Constants.componentStatus}"
+                ],
             ),
         ]

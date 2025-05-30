@@ -4,7 +4,7 @@ from N2KClient.models.n2k_configuration.inverter_charger import InverterChargerD
 from N2KClient.models.n2k_configuration.ac import AC
 from N2KClient.models.n2k_configuration.dc import DC
 from N2KClient.models.n2k_configuration.circuit import Circuit
-from ..common_enums import ThingType
+from ..common_enums import ChannelType, ThingType, Unit
 from ..constants import Constants
 from .channel import Channel
 from N2KClient.models.empower_system.ac_meter import ACMeterThingBase
@@ -36,6 +36,40 @@ class TankBase(Thing):
             self.metadata[
                 f"{Constants.empower}:{Constants.tank}.{Constants.capacity}"
             ] = tank.tank_capacity
+
+        channels = []
+        channels.extend(
+            [
+                Channel(
+                    id="cs",
+                    name="Component Status",
+                    type=ChannelType.STRING,
+                    unit=Unit.NONE,
+                    read_only=False,
+                    tags=[
+                        f"{Constants.empower}:{Constants.tank}.{Constants.componentStatus}"
+                    ],
+                ),
+                Channel(
+                    id="levelAbsolute",
+                    name="Level Absolute",
+                    read_only=True,
+                    type=ChannelType.NUMBER,
+                    unit=Unit.VOLUME_LITRE,
+                    tags=[f"{Constants.empower}:{Constants.tank}.levelAbsolute"],
+                ),
+                Channel(
+                    id="levelPercent",
+                    name="Level Percent",
+                    read_only=True,
+                    type=ChannelType.NUMBER,
+                    unit=Unit.PERCENT,
+                    tags=[f"{Constants.empower}:{Constants.tank}.levelPercent"],
+                ),
+            ]
+        )
+        for channel in channels:
+            self._define_channel(channel)
 
 
 class FuelTank(TankBase):

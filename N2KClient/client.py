@@ -17,7 +17,9 @@ from time import sleep
 from N2KClient.util.settings_util import SettingsUtil
 from N2KClient.models.common_enums import N2kDeviceType
 from N2KClient.services.config_parser.config_parser import ConfigParser
+from N2KClient.services.config_processor.config_processor import ConfigProcessor
 from N2KClient.models.n2k_configuration.n2k_configuation import N2kConfiguration
+from N2KClient.models.empower_system.empower_system import EmpowerSystem
 
 
 class N2KClient(dbus.service.Object):
@@ -26,6 +28,7 @@ class N2KClient(dbus.service.Object):
     _latest_devices: dict[str, N2kDevice]
     _devices: rx.subject.BehaviorSubject
     _config: rx.subject.BehaviorSubject
+    _empower_system: rx.subject.BehaviorSubject
     devices: rx.subject.BehaviorSubject
     config: rx.subject.BehaviorSubject
     bus: dbus.SystemBus
@@ -37,7 +40,9 @@ class N2KClient(dbus.service.Object):
     _get_devices_thread: threading.Thread
     _get_state_thread: threading.Thread
     _latest_config: N2kConfiguration
+    _latest_empower_system: EmpowerSystem
     _config_parser: ConfigParser
+    _config_processor: ConfigProcessor
     _get_state_timeout = SettingsUtil.get_setting(
         Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, default_value=1
     )
@@ -54,10 +59,12 @@ class N2KClient(dbus.service.Object):
 
         self._devices = rx.subject.BehaviorSubject({})
         self._config = rx.subject.BehaviorSubject(N2kConfiguration())
+        self._empower_system = rx.subject.BehaviorSubject(EmpowerSystem(None))
 
         # Pipes
         self.devices = self._devices.pipe(ops.publish(), ops.ref_count())
         self.config = self._config.pipe(ops.publish(), ops.ref_count())
+        self.empower_system = self._empower_system.pipe(ops.publish(), ops.ref_count())
 
         # Initialize N2k dbus Interface
         self.bus = dbus.SystemBus()
@@ -100,6 +107,7 @@ class N2KClient(dbus.service.Object):
             # )
 
         self._config_parser = ConfigParser()
+        self._config_processor = ConfigProcessor()
 
         # Handler to update the latest config internally
         def update_latest_config(config: N2kConfiguration):
@@ -110,15 +118,31 @@ class N2KClient(dbus.service.Object):
                     f"Latest config: { json.dumps(config_json, indent=2) }\n\n"
                 )
 
+        def update_latest_empower_system(empower_system: EmpowerSystem):
+            self._latest_empower_system = empower_system
+            if empower_system is not None:
+                empower_system_json = empower_system.to_config_dict()
+                self._logger.info(
+                    f"Latest empower system: { json.dumps(empower_system_json, indent=2) }\n\n"
+                )
+
         self._disposable_list.append(self.devices.subscribe(update_latest_devices))
         self._disposable_list.append(self.config.subscribe(update_latest_config))
+        self._disposable_list.append(
+            self._empower_system.subscribe(update_latest_empower_system)
+        )
 
         self.lock = threading.Lock()
 
     def start(self):
+        # Raw Czone Config
         config_json = self.getConfig()
-        config = self._config_parser.parse_config(config_json)
-        self._config.on_next(config)
+        raw_config = self._config_parser.parse_config(config_json)
+        self._config.on_next(raw_config)
+
+        # Empower System
+        processed_config = self._config_processor.build_empower_system(raw_config)
+        self._empower_system.on_next(processed_config)
 
         self._get_devices_thread.start()
         self._get_state_thread.start()
@@ -188,3 +212,12 @@ class N2KClient(dbus.service.Object):
 
     def get_config(self):
         return self._latest_config
+
+    def get_config_observable(self):
+        return self.config
+
+    def get_empower_system(self):
+        return self._latest_empower_system
+
+    def get_empower_system_observable(self):
+        return self.empower_system
