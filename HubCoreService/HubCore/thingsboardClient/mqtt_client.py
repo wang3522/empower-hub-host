@@ -18,7 +18,6 @@ import reactivex as rx
 from reactivex import operators as ops
 from tb_device_mqtt import TBDeviceMqttClient
 #pylint: disable=import-error
-from tb_utils.tb_client_logger import configure_logging
 from tb_utils.constants import Constants
 from tb_utils.utility import (
     ConnectionStatus,
@@ -217,7 +216,11 @@ class ThingsBoardClient:
         # Stop the telemetry thread
         self.telemetry_thread_event.set()
         # Stop the attributes thread
-        self.attributes_thread_event.set()
+        try:
+            self.attributes_thread_event.set()
+        except Exception as error:
+            self._logger.error("Failed to stop attributes thread")
+            self._logger.error(error)
         # Disconnect from mqtt if we are connected
         # when the destructor is called
         if self._is_connected:
@@ -698,6 +701,8 @@ class ThingsBoardClient:
             self._logger.error(error)
 
 if __name__ == "__main__":
+    #pylint: disable=ungrouped-imports
+    from tb_utils.tb_client_logger import configure_logging
     configure_logging()
     # Example usage
     outside_client = ThingsBoardClient()
