@@ -1,0 +1,4 @@
+reactivex==4.0.4
+tb-mqtt-client==1.13.5
+setuptools==80.8.0
+reactivex==4.0.4

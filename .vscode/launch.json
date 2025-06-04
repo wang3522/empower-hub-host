@@ -1,0 +1,18 @@
+{
+  "version": "0.3.0",
+  "configurations": [
+    {
+      "name": "Debug ThingsBoard",
+      "type": "debugpy",
+      "request": "launch",
+      "env": {
+        "TB_HOST": "{YOUR TB HOST ENDPOINT}",
+        "TB_PORT": "{YOUR TB HOST PORT}",
+        "TB_ACCESS_TOKEN": "{YOUR ACCESS TOKEN}",
+      },
+      "program": "${workspaceFolder}/HubCoreService/HubCore/thingsboardClient/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}
