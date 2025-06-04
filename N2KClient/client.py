@@ -233,11 +233,11 @@ class N2KClient(dbus.service.Object):
         return self.empower_system
 
     # Factory Metadata
-    def get_factory_metadata_observable(self):
-        return self.factory_metadata
-
     def get_factory_metadata(self):
         return self._latest_factory_metadata
+
+    def get_factory_metadata_observable(self):
+        return self.factory_metadata
 
     def start(self):
         self._scan_factory_metadata()
