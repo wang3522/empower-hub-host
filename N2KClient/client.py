@@ -239,6 +239,13 @@ class N2KClient(dbus.service.Object):
     def get_factory_metadata_observable(self):
         return self.factory_metadata
 
+    # Engine List
+    def get_engine_list(self):
+        return self._engine_list
+
+    def get_engine_list_observable(self):
+        return self.engine_list
+
     def start(self):
         self._scan_factory_metadata()
         self._get_configuration()
