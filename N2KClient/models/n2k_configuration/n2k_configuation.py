@@ -10,15 +10,16 @@ from .audio_stereo import AudioStereoDevice
 from .circuit import Circuit
 from .device import Device
 from .gnss import GNSSDevice
-from .engine import EnginesDevice
 from .binary_logic_state import BinaryLogicState
 from .ui_relationship_msg import UiRelationShipMsg
 from ..constants import AttrNames
 from .category_item import CategoryItem
 from .ac_meter import ACMeter
+from .config_metadata import ConfigMetadata
 
 
 class N2kConfiguration:
+    metadata: ConfigMetadata
     gnss: dict[str, GNSSDevice]
     circuit: dict[str, Circuit]
     hidden_circuit: dict[str, Circuit]
@@ -35,7 +36,8 @@ class N2kConfiguration:
 
     pressure: dict[str, Pressure]
     mode: dict[str, Circuit]
-    engine: dict[str, EnginesDevice]
+
+    config_metadata: ConfigMetadata
 
     def __init__(self):
         self.gnss = {}
@@ -53,8 +55,8 @@ class N2kConfiguration:
 
         self.pressure = {}
         self.mode = {}
-        self.engine = {}
         self.category = []
+        self.config_metadata = ConfigMetadata()
 
     def __del__(self):
         self.gnss.clear()
@@ -72,8 +74,8 @@ class N2kConfiguration:
 
         self.pressure.clear()
         self.mode.clear()
-        self.engine.clear()
         self.category = []
+        self.config_metadata
 
     def to_dict(self) -> dict[str, Any]:
         try:
@@ -110,8 +112,8 @@ class N2kConfiguration:
                     pressure.to_dict() for pressure in self.pressure.values()
                 ],
                 AttrNames.MODE: [mode.to_dict() for mode in self.mode.values()],
-                AttrNames.ENGINE: [engine.to_dict() for engine in self.engine.values()],
                 AttrNames.CATEGORY: [category.to_dict() for category in self.category],
+                AttrNames.CONFIG_METADATA: self.config_metadata.to_dict(),
             }
         except Exception as e:
             print(f"Error serializing HostConfiguration: to dict: {e}")

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from N2KClient.models.constants import Constants
 from N2KClient.models.empower_system.channel import Channel
 from .thing import Thing

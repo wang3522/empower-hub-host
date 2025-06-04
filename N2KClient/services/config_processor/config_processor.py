@@ -44,6 +44,9 @@ from N2KClient.models.empower_system.light import CircuitLight
 from N2KClient.models.empower_system.bilge_pump import CircuitBilgePump
 from N2KClient.models.empower_system.pump import CircuitWaterPump
 from N2KClient.models.empower_system.circuit_power_switch import CircuitPowerSwitch
+from N2KClient.models.empower_system.engine_list import EngineList
+from N2KClient.models.n2k_configuration.engine_configuration import EngineConfiguration
+from N2KClient.models.empower_system.marine_engines import MarineEngine
 
 
 class ConfigProcessor:
@@ -544,14 +547,27 @@ class ConfigProcessor:
             self.process_circuits(config)
 
             # Config metadata?
-            system = EmpowerSystem(None)
+            system = EmpowerSystem(config.config_metadata)
             [system.add_thing(thing) for thing in self._things]
+
+            return system
 
         except Exception as error:
             logger.error(error)
             raise
 
-        system = EmpowerSystem(None)
-        [system.add_thing(thing) for thing in self._things]
+    def build_engine_list(self, config: EngineConfiguration):
+        logger = logging.getLogger("Engine Config Processor")
+        engines: list[Thing] = []
+        try:
+            for device in config.devices.values():
+                thing = MarineEngine(device)
+                engines.append(thing)
 
-        return system
+        except Exception as error:
+            logger.error(error)
+            raise
+        engine_list = EngineList(should_reset=config.should_reset)
+        [engine_list.add_engine(engine) for engine in engines]
+
+        return engine_list

@@ -70,26 +70,28 @@ class Battery(Thing):
             )
         if battery.show_current:
             channels.extend(
-                Channel(
-                    id="current",
-                    name="Current",
-                    read_only=True,
-                    type=ChannelType.NUMBER,
-                    unit=Unit.ENERGY_AMP,
-                    tags=[
-                        f"{Constants.empower}:{Constants.battery}.{Constants.current}"
-                    ],
-                ),
-                Channel(
-                    id="status",
-                    name="Status",
-                    read_only=True,
-                    type=ChannelType.STRING,
-                    unit=Unit.NONE,
-                    tags=[
-                        f"{Constants.empower}:{Constants.battery}.{Constants.status}"
-                    ],
-                ),
+                [
+                    Channel(
+                        id="current",
+                        name="Current",
+                        read_only=True,
+                        type=ChannelType.NUMBER,
+                        unit=Unit.ENERGY_AMP,
+                        tags=[
+                            f"{Constants.empower}:{Constants.battery}.{Constants.current}"
+                        ],
+                    ),
+                    Channel(
+                        id="status",
+                        name="Status",
+                        read_only=True,
+                        type=ChannelType.STRING,
+                        unit=Unit.NONE,
+                        tags=[
+                            f"{Constants.empower}:{Constants.battery}.{Constants.status}"
+                        ],
+                    ),
+                ]
             )
         if battery.show_temperature:
             channels.append(

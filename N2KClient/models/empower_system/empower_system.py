@@ -1,8 +1,8 @@
 import logging
 from typing import Union
 from .thing import Thing
-from .n2k_configuration_metadata import N2kConfigurationMetadata
 from ..constants import Constants
+from N2KClient.models.n2k_configuration.config_metadata import ConfigMetadata
 
 
 class EmpowerSystem:
@@ -10,7 +10,7 @@ class EmpowerSystem:
     logger: logging.Logger
     metadata: dict[str, Union[str, int, float, bool]]
 
-    def __init__(self, config_metadata: N2kConfigurationMetadata):
+    def __init__(self, config_metadata: ConfigMetadata):
         self.things = {}
         self.metadata = {}
         if config_metadata is not None:

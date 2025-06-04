@@ -1,5 +1,4 @@
 from typing import Optional
-from .thing import Thing
 from N2KClient.models.common_enums import ThingType
 from N2KClient.models.n2k_configuration.ac import AC
 from N2KClient.models.n2k_configuration.circuit import Circuit

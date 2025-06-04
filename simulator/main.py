@@ -40,7 +40,7 @@ class N2KDBusSimulator(dbus.service.Object):
         return json.dumps(self.device_list)
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
-    def GetConfig(self):
+    def GetConfigAll(self):
         return CONFIG_JSON_STRING
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
@@ -73,6 +73,24 @@ class N2KDBusSimulator(dbus.service.Object):
                 return '{"level": 100, "levelPercent": 43}'
             elif id == "engine.1":
                 return '{"engineState": "crank", "speed": 900, "oilPressure": 40, "oilTemperature": 70, "coolantTemperature": 80, "fuelLevel": 30, "engineHours": 1400}'
+
+    @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
+    def GetConfig(self, type: str):
+        if type == "Engines":
+            return '{"Engines":[{"DisplayType":41,"Id":0,"NameUTF8":"Starboard Engine","Instance":{"Enabled":true,"Instance":0},"SoftwareId":"Software_Id_0","CalibrationId":"CalibrationId_0","SerialNumber":"","ECUSerialNumber":"","EngineType":1}]}'
+
+    @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
+    def GetSetting(self, type: str):
+        if type == "FactoryData":
+            return '{"FactoryDataSettings":{"SerialNumber":"1234567890","RTFirmwareVersion":"1.0.0","MenderArtifactInfo":"1.2.3"}}'
+
+        elif type == "Config":
+            return '{"ConfigId":726930,"ConfigVersion":0,"ConfigFileVersion":6,"ConfigName":"test-bench-qa-ui-rel"}'
+
+    @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
+    def GetCategories(self):
+        # Fill in below with categories
+        return '{"Items":[{"NameUTF8":"Pumps","Index":12},{"NameUTF8":"Lighting","Index":10},{"NameUTF8":"Vessel Critical","Index":1},{"NameUTF8":"Electronics","Index":3},{"NameUTF8":"Power","Index":14},{"NameUTF8":"Navigation","Index":2},{"NameUTF8":"Communications","Index":5},{"NameUTF8":"Refrigeration","Index":15},{"NameUTF8":"Entertainment","Index":16},{"NameUTF8":"Accessories","Index":6},{"NameUTF8":"Fans/Ventilation","Index":9},{"NameUTF8":"House/Habitat"},{"NameUTF8":"Engine Management","Index":8},{"NameUTF8":"Vessel Management","Index":11},{"NameUTF8":"Propulsion Management","Index":13},{"NameUTF8":"24-Hour Circuits","Index":4},{"NameUTF8":"Indicators and Alarms","Index":7},{"NameUTF8":"Climate","Index":17},{"NameUTF8":"Appliances","Index":18},{"NameUTF8":"Shore Fuse","Index":28},{"NameUTF8":"Bilge Pumps","Index":29},{"NameUTF8":"Audio","Index":23},{"NameUTF8":"Fuel","Index":24},{"NameUTF8":"Water Tanks","Index":25},{"Index":26},{"Index":27},{"NameUTF8":"Other","Index":19}]}'
 
 
 class Main:
