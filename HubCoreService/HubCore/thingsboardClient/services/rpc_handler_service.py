@@ -1,0 +1,344 @@
+"""
+RPC Handler Service for ThingsBoard Client
+"""
+import base64
+import logging
+import os
+import sys
+from typing import Any, Dict, Optional, Union
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+#pylint: disable=import-error, wrong-import-position
+from mqtt_client import ThingsBoardClient
+from tb_utils.constants import Constants
+
+class ControlResult:
+    successful: bool
+    error: str
+
+    def __init__(self, successful: bool, error: str):
+        self.successful = successful
+        self.error = error
+
+    def to_json(self):
+        if self.successful:
+            return {"successful": self.successful}
+        else:
+            return {
+                "successful": self.successful,
+                "error": self.error,
+            }
+
+class RpcHandlerService:
+    """
+    ThingsBoard Client class to handle RPC requests.
+    This class is responsible for handling RPC the different commands available via RPC.
+    """
+    _logger = logging.getLogger(__name__)
+
+    thingsboard_client: ThingsBoardClient
+
+    _stdout = ""
+    _stdin = ""
+    _stderr = ""
+
+    def __init__(self):
+        self.thingsboard_client = ThingsBoardClient()
+        self.register_rpc_callbacks()
+
+    def __getCommandStatus_rpc_handler(self, body: dict[str, any]):
+        self._logger.info(f"Received getCommandStatus command: {body}")
+        return {
+            "data": [
+                {
+                    "stdout": self._stdout.read().decode(),
+                    "stderr": self._stderr.read().decode(),
+                }
+            ],
+            "done": True,
+        }
+
+    def register_rpc_callbacks(self):
+        """
+        Register the rpc related commands to the thingsboard client.
+        """
+        self.thingsboard_client.set_rpc_handler(
+            "getCommandStatus", self.__getCommandStatus_rpc_handler
+        )
+        self.thingsboard_client.set_rpc_handler("setValue", self.__setValue_rpc_handler)
+        self.thingsboard_client.set_rpc_handler("control", self.__control_rpc_handler)
+        self.thingsboard_client.set_rpc_handler(
+            "writeConfig", self.__write_config_rpc_handler
+        )
+        self.thingsboard_client.set_rpc_handler(
+            "refreshAlarms", self.__refreshAlarms_rpc_handler
+        )
+        self.thingsboard_client.set_rpc_handler(
+            "clearEngineConfiguration", self.__clearEngineConfiguration_rpc_handler
+        )
+        self.thingsboard_client.set_rpc_handler(
+            "acknowledgeAlarm", self.__acknowledge_alarm_handler
+        )
+        self.thingsboard_client.set_rpc_handler(
+            "factoryReset", self.__factory_reset_rpc_handler
+        )
+
+    def __refreshAlarms_rpc_handler(self, body: dict[str, any]):
+        self._logger.info(f"Received refreshAlarm command")
+        result = self._refresh_alarms()
+        return result.to_json()
+
+    def _refresh_alarms(self):
+        try:
+            reason = None
+            # TODO: Replace with actual refresh logic
+            # successful, reason = self.n2k_client.refresh_active_alarms()
+            successful = True
+            return ControlResult(successful, reason)
+        except Exception as error:
+            self._logger.error("Failed to refresh alarms")
+            self._logger.error(error)
+            return ControlResult(
+                False, reason if reason is not None else "Failed to refresh alarms"
+            )
+        
+    def __clearEngineConfiguration_rpc_handler(self, body: dict[str, any]):
+        self._logger.info(f"Received clearEngineConfiguration command")
+        result = self._scan_engine_config(should_clear=True)
+        return result.to_json()
+
+    def _scan_engine_config(self, should_clear: bool):
+        self._logger.info(f"Scanning Marine Engine Config")
+        try:
+            reason = None
+            # TODO: Replace with actual scan logic
+            # successful, reason = self.n2k_client.scan_marine_engines(
+            #     should_clear=should_clear
+            # )
+            successful = True 
+            return ControlResult(successful, reason)
+        except Exception as error:
+            self._logger.error("Failed to scan engine config")
+            self._logger.error(error)
+            return ControlResult(
+                False,
+                (
+                    reason
+                    if reason is not None
+                    else "Failed to clear engine configuration"
+                ),
+            )
+
+    def __setValue_rpc_handler(self, body: dict[str, any]):
+        self._logger.info(f"Received control command: {body}")
+        # data = list(body.keys())[0].split('/')
+        data = body.split("/")
+        key = data[0]
+        state = data[1]
+        self._logger.info(f"key: {key}, value: {state}")
+        # TODO: Rework to get the things in a better way.
+        # for thing_id in self._latest_cloud_config.things:
+        #     thing = self._latest_cloud_config.things[thing_id]
+        #     for channel_id in thing.channels:
+        #         if channel_id == key:
+        #             channel = thing.channels[channel_id]
+        #             # TODO: Add thing and channel to control component
+        #             # self.__control_component(thing, channel, state)
+        #             self.__control_component(state)
+        #             return
+        return
+
+    def __acknowledge_alarm_handler(self, body: dict[str, any]):
+        self._logger.info(f"Received acknowledge alarm command: {body}")
+        try:
+            if not "alarmId" in body:
+                raise Exception(f"Invalid acknowledge command: alarmId is missing")
+
+            alarm_id_segments = str(body["alarmId"]).split(".")
+
+            if len(alarm_id_segments) < 2 or not (alarm_id_segments[1]).isdigit():
+                raise Exception(
+                    f"Invalid acknowledge command: alarmId is not of the format alarm.###"
+                )
+
+            alarm_id = int(alarm_id_segments[1])
+            # TODO: Get last state attributes from the n2k_client or similar
+            # if alarm_id not in self.last_state_attrs[Constants.ActiveAlarms]:
+            #     raise Exception(f"Active alarms with ID {alarm_id} not found")
+
+            result = self._acknowledge_alarm(alarm_id)
+            return result.to_json()
+
+        except Exception as error:
+            self._logger.error("Failed to acknowledge command")
+            self._logger.error(error)
+            response = ControlResult(False, str(error))
+            return response.to_json()
+
+    def _acknowledge_alarm(self, alarm_id: int) -> ControlResult:
+        self._logger.info(f"Acknowledging alarm with id - ({alarm_id})")
+
+        try:
+            # successful = self.n2k_client.acknowledge_alarm(alarm_id)
+            successful = True  # TODO: Replace with actual acknowledge logic
+            return ControlResult(successful, None)
+
+        except Exception as error:
+            self._logger.error("Failed to acknowledge alarm")
+            self._logger.error(error)
+            return ControlResult(False, "Failed to acknowledge alarm")
+
+    def __control_rpc_handler(self, body: dict[str, any]):
+        self._logger.info(f"Received control command: {body}")
+        try:
+            if not "thingId" in body:
+                raise Exception("Invalid control command: thingId is missing")
+
+            if not "attributeId" in body:
+                raise Exception("Invalid control command: attributeId is missing")
+
+            if not "state" in body:
+                raise Exception("Invalid control command: state is missing")
+
+            thing_id = body["thingId"]
+            attribute_id = body["attributeId"]
+            state = body["state"]
+
+            # TODO: Rework things to get the things in a better way. 
+            # if not thing_id in self._latest_cloud_config.things:
+            #     raise Exception(f"Thing with ID {thing_id} not found")
+
+            # thing = self._latest_cloud_config.things[thing_id]
+
+            # if not attribute_id in thing.channels:
+            #     raise Exception(f"Attribute with ID {attribute_id} not found")
+
+            # attribute = thing.channels[attribute_id]
+
+            # TODO: Add thing and attribute to control component
+            # result = self.__control_component(thing, attribute, state)
+            result = self.__control_component(state)
+
+            return result.to_json()
+
+        except Exception as error:
+            self._logger.error("Failed to process control command")
+            self._logger.error(error)
+            response = ControlResult(False, str(error))
+            return response.to_json()
+
+    def __control_component(
+        self,
+        # thing: Thing,
+        # attribute: Channel,
+        state: Union[int, bool],
+    ) -> ControlResult:
+        # self._logger.info(
+        #     f"Controlling {thing.name} ({thing.id}) attribute {attribute.name} ({attribute.id}) to {state}"
+        # )
+        self._logger.info(f"Controlling component with state: {state}")
+
+        try:
+            # TODO: Implement the control logic for the controlling components
+            # if (
+            #     isinstance(thing, CircuitThing)
+            #     and attribute.id == Constants.powerChannel
+            # ):
+            #     desired_on = False
+            #     if state == 1 or state == True:
+            #         desired_on = True
+
+            #     successful = self.n2k_client.set_circuit_state(
+            #         thing.circuit_runtime_id, desired_on
+            #     )
+            #     return ControlResult(successful, None)
+
+            # elif isinstance(thing, Battery) and attribute.id == Constants.enabled:
+            #     if thing.battery_circuit_id is not None:
+            #         successful = self.n2k_client.set_circuit_state(
+            #             thing.battery_circuit_id, state
+            #         )
+            #         return ControlResult(successful, None)
+            #     else:
+            #         self._logger.error("No circuit found for Battery")
+            #         return ControlResult(False, "No circuit found for Battery")
+
+            # elif (
+            #     isinstance(thing, CombiMasterCharger)
+            #     or isinstance(thing, AcMeterCharger)
+            # ) and attribute.id == Constants.chargerEnable:
+            #     if thing.charger_circuit_id is not None:
+            #         successful = self.n2k_client.set_circuit_state(
+            #             thing.charger_circuit_id, state
+            #         )
+            #         return ControlResult(successful, None)
+            #     else:
+            #         self._logger.error("No circuit found for Charger")
+            #         return ControlResult(False, "No circuit found for Charger")
+
+            # elif (
+            #     isinstance(thing, CombiMasterInverter)
+            #     or isinstance(thing, AcMeterInverter)
+            # ) and attribute.id == Constants.inverterEnable:
+            #     if thing.inverter_circuit_id is not None:
+            #         successful = self.n2k_client.set_circuit_state(
+            #             thing.inverter_circuit_id, state
+            #         )
+            #         return ControlResult(successful, None)
+            #     else:
+            #         self._logger.error("No circuit found for Inverter")
+            #         return ControlResult(False, "No circuit found for Inverter")
+
+            self._logger.error("Failed to control component")
+            return ControlResult(False, "Invalid control Request")
+        except Exception as error:
+            self._logger.error("Failed to control component")
+            self._logger.error(error)
+            return ControlResult(False, "Failed to control Request")
+
+    def __write_config_rpc_handler(self, body: dict[str, any]):
+        self._logger.info(f"Received write config command: {body}")
+        try:
+            if not "data" in body:
+                raise Exception("Data is missing")
+
+            data_as_base64 = body["data"]
+            file_data = base64.b64decode(data_as_base64)
+
+            # TODO: Write config file to the device
+            # self.n2k_client.write_config(file_data)
+
+            return {"successful": True}
+        except Exception as error:
+            self._logger.error("Failed to process write config command")
+            self._logger.error(error)
+            return {"successful": False, "error": error}
+
+    def factory_reset_from_device(self):
+        """
+        Function to call the factory reset handler from local
+        This will happen when user holds the reset button on the device
+        Call the factory reset rpc handler function since TB flow
+        should be the same
+        """
+        self.__factory_reset_rpc_handler(body={})
+
+    def __factory_reset_rpc_handler(self, body: dict[str, any]):
+        """
+        Callback handler when the factory reset command comes through rpc
+        The device will remove its ble auth key
+        and delete the persistent data.
+        """
+        self._logger.info("Received reset command: %s", body)
+
+        try:
+            # Remove BT Access token if it exists
+            if os.path.exists(Constants.BLE_SECRET_AUTH_KEY_PATH):
+                self._logger.info("Removing BT ACCESS token file")
+                os.remove(Constants.BLE_SECRET_AUTH_KEY_PATH)
+            else:
+                self._logger.info("No BT ACCESS token file found")
+            return ControlResult(successful=True, error="").to_json()
+        except Exception as error:
+            self._logger.error("Encounted an error trying to do factory reset")
+            self._logger.error(error)
+            return ControlResult(successful=False, error=str(error)).to_json()
