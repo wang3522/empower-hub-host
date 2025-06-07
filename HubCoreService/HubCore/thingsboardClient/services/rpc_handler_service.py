@@ -12,6 +12,11 @@ from mqtt_client import ThingsBoardClient
 from tb_utils.constants import Constants
 
 class ControlResult:
+    """
+    Class to represent the result of a control operation.
+    Its a convenience class to return the result of a control operation
+    to the RPC handler.
+    """
     successful: bool
     error: str
 
@@ -20,6 +25,10 @@ class ControlResult:
         self.error = error
 
     def to_json(self):
+        """
+        Convert the ControlResult to a JSON serializable dictionary.
+        If successful, only the successful key is returned.
+        """
         if self.successful:
             return {"successful": self.successful}
         else:
@@ -46,7 +55,7 @@ class RpcHandlerService:
         self.register_rpc_callbacks()
 
     def __getCommandStatus_rpc_handler(self, body: dict[str, any]):
-        self._logger.info(f"Received getCommandStatus command: {body}")
+        self._logger.info("Received getCommandStatus command: %s", body)
         return {
             "data": [
                 {
@@ -83,7 +92,7 @@ class RpcHandlerService:
         )
 
     def __refreshAlarms_rpc_handler(self, body: dict[str, any]):
-        self._logger.info(f"Received refreshAlarm command")
+        self._logger.info("Received refreshAlarm command")
         result = self._refresh_alarms()
         return result.to_json()
 
@@ -100,21 +109,21 @@ class RpcHandlerService:
             return ControlResult(
                 False, reason if reason is not None else "Failed to refresh alarms"
             )
-        
+
     def __clearEngineConfiguration_rpc_handler(self, body: dict[str, any]):
-        self._logger.info(f"Received clearEngineConfiguration command")
+        self._logger.info("Received clearEngineConfiguration command")
         result = self._scan_engine_config(should_clear=True)
         return result.to_json()
 
     def _scan_engine_config(self, should_clear: bool):
-        self._logger.info(f"Scanning Marine Engine Config")
+        self._logger.info("Scanning Marine Engine Config")
         try:
             reason = None
             # TODO: Replace with actual scan logic
             # successful, reason = self.n2k_client.scan_marine_engines(
             #     should_clear=should_clear
             # )
-            successful = True 
+            successful = True
             return ControlResult(successful, reason)
         except Exception as error:
             self._logger.error("Failed to scan engine config")
@@ -129,7 +138,7 @@ class RpcHandlerService:
             )
 
     def __setValue_rpc_handler(self, body: dict[str, any]):
-        self._logger.info(f"Received control command: {body}")
+        self._logger.info("Received control command: %s", body)
         # data = list(body.keys())[0].split('/')
         data = body.split("/")
         key = data[0]
@@ -148,16 +157,16 @@ class RpcHandlerService:
         return
 
     def __acknowledge_alarm_handler(self, body: dict[str, any]):
-        self._logger.info(f"Received acknowledge alarm command: {body}")
+        self._logger.info("Received acknowledge alarm command: %s", body)
         try:
             if not "alarmId" in body:
-                raise Exception(f"Invalid acknowledge command: alarmId is missing")
+                raise Exception("Invalid acknowledge command: alarmId is missing")
 
             alarm_id_segments = str(body["alarmId"]).split(".")
 
             if len(alarm_id_segments) < 2 or not (alarm_id_segments[1]).isdigit():
                 raise Exception(
-                    f"Invalid acknowledge command: alarmId is not of the format alarm.###"
+                    "Invalid acknowledge command: alarmId is not of the format alarm.###"
                 )
 
             alarm_id = int(alarm_id_segments[1])
@@ -175,11 +184,12 @@ class RpcHandlerService:
             return response.to_json()
 
     def _acknowledge_alarm(self, alarm_id: int) -> ControlResult:
-        self._logger.info(f"Acknowledging alarm with id - ({alarm_id})")
+        self._logger.info("Acknowledging alarm with id - (%d})", alarm_id)
 
         try:
+            # TODO: Replace with actual acknowledge logic
             # successful = self.n2k_client.acknowledge_alarm(alarm_id)
-            successful = True  # TODO: Replace with actual acknowledge logic
+            successful = True
             return ControlResult(successful, None)
 
         except Exception as error:
@@ -188,7 +198,7 @@ class RpcHandlerService:
             return ControlResult(False, "Failed to acknowledge alarm")
 
     def __control_rpc_handler(self, body: dict[str, any]):
-        self._logger.info(f"Received control command: {body}")
+        self._logger.info("Received control command: %s", body)
         try:
             if not "thingId" in body:
                 raise Exception("Invalid control command: thingId is missing")
@@ -296,7 +306,7 @@ class RpcHandlerService:
             return ControlResult(False, "Failed to control Request")
 
     def __write_config_rpc_handler(self, body: dict[str, any]):
-        self._logger.info(f"Received write config command: {body}")
+        self._logger.info("Received write config command: %s", body)
         try:
             if not "data" in body:
                 raise Exception("Data is missing")
