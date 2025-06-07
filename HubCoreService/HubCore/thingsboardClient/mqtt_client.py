@@ -418,6 +418,7 @@ class ThingsBoardClient:
                     "Requesting attributes from cloud to check for changes %s",
                     json.dumps(not_cached)
                 )
+                #TODO: Check to see if the requested value is config, grab checksum instead to compare
                 # Request the attributes from Thingsboard and update
                 # the attributes with the new values.
                 self.request_then_update_attributes(
