@@ -46,6 +46,8 @@ class ThingsBoardClient:
     telemetry_thread_event: threading.Event
     attributes_thread: threading.Thread
     attributes_thread_event: threading.Event
+    connect_thread: threading.Thread = None
+    connect_thread_event: threading.Event = None
     # Get the max queue size from appsettings.json
     queue_size = 3000
     telemetry_chunk_size = 100
@@ -226,13 +228,31 @@ class ThingsBoardClient:
         if self._is_connected:
             self._client.disconnect()
 
+        self.connect_thread_event.set()
+        self.connect_thread = None
+
     # TODO Add some sort of backoff retry logic to this
     def connect(self):
         """
         Connect to Thingsboard.
         """
-        self._client.connect(callback=self.__on_connect, tls=True)
-        self._logger.info("Initiating connection to ThingsBoard...")
+        if self.connect_thread is not None and self.connect_thread.is_alive():
+            self._logger.info("Connect thread is already running, skipping connect")
+            return
+        self.connect_thread_event = threading.Event()
+        self.connect_thread = threading.Thread(
+            target=self._start_connect_thread, name="Thingsboard Connect"
+        )
+        self.connect_thread.start()
+
+    def _start_connect_thread(self):
+        while not self.connect_thread_event.wait(5) and not self._is_connected_internal.value:
+            try:
+                self._logger.info("Connecting to thingsboard...")
+                self._client.connect(callback=self.__on_connect, tls=True)
+            except OSError as error:
+                self._logger.error("Failed to connect to Thingsboard")
+                self._logger.error(error)
 
     def disconnect(self):
         """
@@ -240,6 +260,8 @@ class ThingsBoardClient:
         """
         self._client.disconnect()
         self._logger.info("Disconnecting from ThingsBoard...")
+        self.connect_thread_event.set()
+        self.connect_thread = None
 
     def request_state_and_update_cloud(self):
         """
