@@ -11,8 +11,7 @@ import threading
 
 import reactivex as rx
 from reactivex import operators as ops
-# TODO: Create the filter patterns
-from modules.config import (
+from config import (
     telemetry_filter_patterns,
     location_filter_pattern,
     bilge_pump_power_filter_pattern,
