@@ -4,6 +4,7 @@ from typing import Any, Optional
 class FactoryMetadata:
     serial_number: Optional[str] = None
     rt_firmware_version: Optional[str] = None
+    # TODO Update this to whatever system_version we decide to use
     mender_artifact_info: Optional[str] = None
 
     def __init__(self):

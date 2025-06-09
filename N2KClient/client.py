@@ -139,6 +139,19 @@ class N2KClient(dbus.service.Object):
             target=self._get_state, name="__get_state"
         )
 
+    def _log_config_item(self, config_type: str, config_obj: Any):
+        if config_obj is not None:
+            # Prefer to_config_dict if available, else to_dict, else as-is
+            if hasattr(config_obj, "to_config_dict"):
+                config_dict = config_obj.to_config_dict()
+            elif hasattr(config_obj, "to_dict"):
+                config_dict = config_obj.to_dict()
+            else:
+                config_dict = config_obj
+            self._logger.info(
+                f"Latest {config_type}: { json.dumps(config_dict, indent=2) }\n\n"
+            )
+
         # Handler to update the latest device list internally
         def update_latest_devices(devices: dict[str, N2kDevice]):
             self._latest_devices = devices
@@ -156,41 +169,23 @@ class N2KClient(dbus.service.Object):
         # Handler to update the latest config internally
         def update_latest_config(config: N2kConfiguration):
             self._latest_config = config
-            if config is not None:
-                config_json = config.to_dict()
-                self._logger.info(
-                    f"Latest config: { json.dumps(config_json, indent=2) }\n\n"
-                )
+            self._log_config_item("config", config)
 
         def update_latest_empower_system(empower_system: EmpowerSystem):
             self._latest_empower_system = empower_system
-            if empower_system is not None:
-                empower_system_json = empower_system.to_config_dict()
-                self._logger.info(
-                    f"Latest empower system: { json.dumps(empower_system_json, indent=2) }\n\n"
-                )
+            self._log_config_item("empower system", empower_system)
 
         def update_latest_engine_config(config: EngineConfiguration):
             self._latest_engine_config = config
-            if config is not None:
-                config_json = config.to_dict()
-                print(f"Latest engine config: {config_json}")
+            self._log_config_item("engine config", config)
 
         def update_latest_engine_list(engine_list: EngineList):
             self._latest_engine_list = engine_list
-            if engine_list is not None:
-                engine_list_json = engine_list.to_config_dict()
-                self._logger.info(
-                    f"Latest engine list: { json.dumps(engine_list_json, indent=2) }\n\n"
-                )
+            self._log_config_item("engine list", engine_list)
 
         def update_latest_factory_metadata(factory_metadata: FactoryMetadata):
             self._latest_factory_metadata = factory_metadata
-            if factory_metadata is not None:
-                factory_metadata_json = factory_metadata.to_dict()
-                self._logger.info(
-                    f"Latest factory metadata: { json.dumps(factory_metadata_json, indent=2) }\n\n"
-                )
+            self._log_config_item("factory metadata", factory_metadata)
 
         self._disposable_list.append(self.devices.subscribe(update_latest_devices))
         self._disposable_list.append(self.config.subscribe(update_latest_config))

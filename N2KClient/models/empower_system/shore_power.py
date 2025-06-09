@@ -31,9 +31,8 @@ class ShorePower(ACMeterThingBase):
         )
 
         if circuit is not None:
-            # Enabled channel defined here
+            # TODO ENabled channel
             pass
-
         channels = []
         channels.extend(
             [

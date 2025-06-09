@@ -9,7 +9,7 @@ class GNSS(Thing):
     def __init__(
         self,
         gnss: GNSSDevice,
-        categories: list[str] = [],
+        categories: list[str] = [Constants.location],
     ):
         Thing.__init__(
             self,
