@@ -28,9 +28,6 @@ class Thing(ABC):
         channel_full_id = f"{self.id}.{channel.id}"
         self.channels[channel_full_id] = channel
 
-    def _define_outside_(self, link: Link):
-        self.links.append(link)
-
     def to_config_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,

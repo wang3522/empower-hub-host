@@ -9,7 +9,7 @@ import reactivex as rx
 import json
 import copy
 
-from N2KClient.models.devices import N2kDevice
+from N2KClient.models.devices import N2kDevice, N2kDevices
 from N2KClient.models.constants import Constants, JsonKeys, AttrNames
 from reactivex import operators as ops
 from gi.repository import GLib
@@ -25,12 +25,13 @@ from N2KClient.models.n2k_configuration.engine_configuration import (
 )
 from N2KClient.models.empower_system.engine_list import EngineList
 from N2KClient.models.n2k_configuration.factory_metadata import FactoryMetadata
+from datetime import datetime
 
 
 class N2KClient(dbus.service.Object):
     _logger = logging.getLogger(Constants.DBUS_N2K_CLIENT)
     _disposable_list: List[rx.abc.DisposableBase]
-    _latest_devices: dict[str, N2kDevice]
+    _latest_devices: N2kDevices
 
     _devices: rx.subject.BehaviorSubject
     _config: rx.subject.BehaviorSubject
@@ -140,7 +141,7 @@ class N2KClient(dbus.service.Object):
         )
 
         # Handler to update the latest device list internally
-        def update_latest_devices(devices: dict[str, N2kDevice]):
+        def update_latest_devices(devices: N2kDevices):
             self._latest_devices = devices
             # Uncomment for demonstration purposes
             # devices_json = {
@@ -256,16 +257,16 @@ class N2KClient(dbus.service.Object):
     def __merge_device_list(self, device_json):
         with self.lock:
             device_list_copy = copy.deepcopy(self._latest_devices)
-        list_appended = False
+        list_updated = False
         for device in device_json:
             device_id = device[JsonKeys.ID]
-            if device_id not in device_list_copy:
+            if device_id not in device_list_copy.devices:
                 # Actually do JSON/ENUM mapping here here
                 device_type = N2kDeviceType(device[JsonKeys.TYPE])
-                device_list_copy[device_id] = N2kDevice(device_type)
-                list_appended = True
+                device_list_copy.add(device_id, N2kDevice(device_type))
+                list_updated = True
 
-        if list_appended:
+        if list_updated:
             with self.lock:
                 self._devices.on_next(device_list_copy)
 
@@ -308,7 +309,9 @@ class N2KClient(dbus.service.Object):
             self._config.on_next(raw_config)
 
             # Empower System
-            processed_config = self._config_processor.build_empower_system(raw_config)
+            processed_config = self._config_processor.build_empower_system(
+                raw_config, self._latest_devices
+            )
             self._empower_system.on_next(processed_config)
         except Exception as e:
             self._logger.error(f"Error reading dbus Get Config response: {e}")
@@ -378,7 +381,16 @@ class N2KClient(dbus.service.Object):
             device_list_copy = copy.deepcopy(self._latest_devices)
         for id, state_update in state_updates.items():
             for channel_id in state_update.keys():
-                device_list_copy[id].channels[channel_id] = state_update[channel_id]
+                if (
+                    device_list_copy.devices[id].channels[channel_id]
+                    != state_update[channel_id]
+                ):
+                    device_list_copy.devices[id].channels[channel_id] = state_update[
+                        channel_id
+                    ]
+                    device_list_copy.devices[id].channel_last_updated[
+                        channel_id
+                    ] = datetime.now().timestamp()
         with self.lock:
             self._devices.on_next(device_list_copy)
 
