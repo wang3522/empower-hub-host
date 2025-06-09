@@ -1,4 +1,8 @@
-import copy
+"""
+Empower Service for handling telemetry, state, and alarms in a ThingsBoard environment.
+This service sends the state that is received from the N2K client and publishes it
+to the Thingsboard cloud.
+"""
 import os
 import re
 import json
@@ -11,17 +15,20 @@ import threading
 
 import reactivex as rx
 from reactivex import operators as ops
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from config import (
     telemetry_filter_patterns,
     location_filter_pattern,
     bilge_pump_power_filter_pattern,
 )
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from dict_diff import dict_diff
 from tb_utils.constants import Constants
 from mqtt_client import ThingsBoardClient
 
 class EmpowerService:
+    """
+    EmpowerService class for handling telemetry, state, and alarms in a ThingsBoard environment.
+    """
     _logger: logging.Logger = logging.getLogger("EmpowerService")
 
     thingsboard_client: ThingsBoardClient
@@ -86,9 +93,9 @@ class EmpowerService:
             def send_state_dependent_telemetry(state_dependent_changes: dict):
                 state_dependent_telemetry_to_send = {}
                 telemetry_timestamp = None
-                for id, value in list(state_dependent_changes.items()):
-                    if re.match(bilge_pump_power_filter_pattern, id):
-                        state_dependent_telemetry_to_send[id] = value
+                for id_name, value in list(state_dependent_changes.items()):
+                    if re.match(bilge_pump_power_filter_pattern, id_name):
+                        state_dependent_telemetry_to_send[id_name] = value
                         # Confirm that entry is a dictionary and has the timestamp attribtue
                         if isinstance(value, dict) and Constants.ts in value:
                             # Set the telemetry timestamp to the value we got from state
@@ -124,7 +131,7 @@ class EmpowerService:
                         attrs_to_send = diff_attrs
 
                 if attrs_to_send:
-                    self._logger.debug(f"{log_message} {json.dumps(attrs_to_send)}")
+                    self._logger.debug("%s %s", log_message, json.dumps(attrs_to_send))
                     return attrs_to_send
                 return None
 
@@ -165,15 +172,15 @@ class EmpowerService:
 
         # def _publish_alarm_timeseries(alarms: list[Alarm]):
         def _publish_alarm_timeseries(alarms: list):
-            dict = {}
+            telemetry_dict = {}
             for alarm in alarms:
-                dict[alarm.id] = alarm.to_dict()
-            if dict:
+                telemetry_dict[alarm.id] = alarm.to_dict()
+            if telemetry_dict:
                 self._logger.debug(
-                    "Publishing alarms timeseries data %s", json.dumps(dict)
+                    "Publishing alarms timeseries data %s", json.dumps(telemetry_dict)
                 )
                 self.thingsboard_client.send_telemetry(
-                    dict
+                    telemetry_dict
                 )
 
         # TODO: Handle alarm logic
@@ -400,7 +407,7 @@ class EmpowerService:
         self._logger.info("Configuration")
 
         self._logger.info("Things (%s found)", system.things.__len__())
-        for [id, thing] in system.things.items():
+        for [id_name, thing] in system.things.items():
             self._logger.info(
                 "    ├╴ %s (ID=%s, Type=%s)", thing.name, thing.id, thing.type
             )
@@ -442,11 +449,11 @@ class EmpowerService:
     # def __print_active_alarms(self, alarm_list: AlarmList):
     def __print_active_alarms(self, alarm_list: dict):
         self._logger.info("Active Alarms (%s found)", alarm_list.alarm.__len__())
-        for [id, alarm] in alarm_list.alarm.items():
+        for [alarm_id, alarm] in alarm_list.alarm.items():
             self._logger.info(
                 "    ├╴ %s (ID=%s, Severity=%s, State=%s)",
                 alarm.name,
-                id,
+                alarm_id,
                 alarm.severity,
                 alarm.current_state,
             )
