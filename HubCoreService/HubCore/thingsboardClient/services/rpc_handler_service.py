@@ -213,7 +213,7 @@ class RpcHandlerService:
             attribute_id = body["attributeId"]
             state = body["state"]
 
-            # TODO: Rework things to get the things in a better way. 
+            # TODO: Rework things to get the things in a better way.
             # if not thing_id in self._latest_cloud_config.things:
             #     raise Exception(f"Thing with ID {thing_id} not found")
 

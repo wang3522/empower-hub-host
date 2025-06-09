@@ -231,7 +231,6 @@ class ThingsBoardClient:
         self.connect_thread_event.set()
         self.connect_thread = None
 
-    # TODO Add some sort of backoff retry logic to this
     def connect(self):
         """
         Connect to Thingsboard.
