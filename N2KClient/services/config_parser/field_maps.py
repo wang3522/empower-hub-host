@@ -1,16 +1,16 @@
 from N2KClient.models.common_enums import SwitchType
-from N2KClient.models.configuration.ac import ACLine, ACType
-from N2KClient.models.configuration.circuit import (
+from N2KClient.models.n2k_configuration.ac import ACLine, ACType
+from N2KClient.models.n2k_configuration.circuit import (
     CircuitType,
     ControlType,
 )
-from N2KClient.models.configuration.device import DeviceType
-from N2KClient.models.configuration.engine import EngineType
-from N2KClient.models.configuration.pressure import (
+from N2KClient.models.n2k_configuration.device import DeviceType
+from N2KClient.models.n2k_configuration.engine import EngineType
+from N2KClient.models.n2k_configuration.pressure import (
     PressureType,
 )
-from N2KClient.models.configuration.tank import TankType
-from N2KClient.models.configuration.ui_relationship_msg import (
+from N2KClient.models.n2k_configuration.tank import TankType
+from N2KClient.models.n2k_configuration.ui_relationship_msg import (
     ItemType,
     RelationshipType,
 )
@@ -39,7 +39,7 @@ DATA_ID_FIELD_MAP = {
 
 INSTANCE_FIELD_MAP = {
     AttrNames.ENABLED: JsonKeys.ENABLED,
-    AttrNames.INSTANCE_: JsonKeys.INSTANCE_,
+    AttrNames.INSTANCE: JsonKeys.INSTANCE,
 }
 
 SEQUENTIAL_NAMES_FIELD_MAP = {
@@ -170,6 +170,7 @@ DEVICE_FIELD_MAP = {
     AttrNames.VALID: JsonKeys.VALID,
     AttrNames.TRANSIENT: JsonKeys.TRANSIENT,
     AttrNames.VERSION: JsonKeys.VERSION,
+    AttrNames.DIPSWITCH: JsonKeys.DIPSWITCH,
 }
 
 DEVICE_ENUM_FIELD_MAP = {
@@ -265,4 +266,17 @@ ENGINE_FIELD_MAP = {
 
 ENGINE_ENUM_FIELD_MAP = {
     AttrNames.ENGINE_TYPE: (JsonKeys.ENGINE_TYPE, EngineType),
+}
+
+CONFIG_METADATA_FIELD_MAP = {
+    AttrNames.CONFIG_ID: JsonKeys.CONFIG_ID,
+    AttrNames.CONFIG_NAME: JsonKeys.CONFIG_NAME,
+    AttrNames.CONFIG_FILE_VERSION: JsonKeys.CONFIG_FILE_VERSION,
+    AttrNames.CONFIG_VERSION: JsonKeys.CONFIG_VERSION,
+}
+
+FACTORY_METADATA_FIELD_MAP = {
+    AttrNames.SERIAL_NUMBER: JsonKeys.SERIAL_NUMBER,
+    AttrNames.RT_FIRMWARE_VERSION: JsonKeys.RT_FIRMWARE_VERSION,
+    AttrNames.MENDER_ARTIFACT_INFO: JsonKeys.MENDER_ARTIFACT_INFO,
 }

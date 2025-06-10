@@ -25,7 +25,7 @@ class MonitoringDevice(ConfigItem):
         try:
             fields = {
                 **super().to_dict(),
-                AttrNames.INSTANCE_: self.instance.to_dict(),
+                AttrNames.INSTANCE: self.instance.to_dict(),
                 AttrNames.SWITCH_TYPE: self.switch_type.value,
                 AttrNames.ADDRESS: self.address,
             }

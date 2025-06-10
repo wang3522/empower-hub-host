@@ -2,29 +2,29 @@ import json
 import logging
 from typing import Any
 
-from N2KClient.models.configuration.configuation import N2KConfiguration
-from N2KClient.models.configuration.gnss import GNSSDevice
-from N2KClient.models.configuration.circuit import (
+from N2KClient.models.n2k_configuration.n2k_configuation import N2kConfiguration
+from N2KClient.models.n2k_configuration.gnss import GNSSDevice
+from N2KClient.models.n2k_configuration.circuit import (
     Circuit,
     CircuitLoad,
     CategoryItem,
 )
-from N2KClient.models.configuration.dc import DC
-from N2KClient.models.configuration.ac import AC
-from N2KClient.models.configuration.tank import Tank
-from N2KClient.models.configuration.inverter_charger import InverterChargerDevice
-from N2KClient.models.configuration.device import Device
-from N2KClient.models.configuration.hvac import HVACDevice
-from N2KClient.models.configuration.audio_stereo import AudioStereoDevice
-from N2KClient.models.configuration.binary_logic_state import BinaryLogicStates
-from N2KClient.models.configuration.ui_relationship_msg import (
+from N2KClient.models.n2k_configuration.dc import DC
+from N2KClient.models.n2k_configuration.ac import AC, ACLine
+from N2KClient.models.n2k_configuration.tank import Tank
+from N2KClient.models.n2k_configuration.inverter_charger import InverterChargerDevice
+from N2KClient.models.n2k_configuration.device import Device
+from N2KClient.models.n2k_configuration.hvac import HVACDevice
+from N2KClient.models.n2k_configuration.audio_stereo import AudioStereoDevice
+from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicState
+from N2KClient.models.n2k_configuration.ui_relationship_msg import (
     UiRelationShipMsg,
 )
-from N2KClient.models.configuration.pressure import Pressure
-from N2KClient.models.configuration.engine import EnginesDevice
-from N2KClient.models.configuration.sequential_name import SequentialName
-from N2KClient.models.configuration.instance import Instance
-from N2KClient.models.configuration.data_id import DataId
+from N2KClient.models.n2k_configuration.pressure import Pressure
+from N2KClient.models.n2k_configuration.engine import EngineDevice
+from N2KClient.models.n2k_configuration.sequential_name import SequentialName
+from N2KClient.models.n2k_configuration.instance import Instance
+from N2KClient.models.n2k_configuration.data_id import DataId
 from N2KClient.models.constants import Constants, JsonKeys, AttrNames
 from N2KClient.services.config_parser.field_maps import *
 from N2KClient.services.config_parser.config_parser_helpers import (
@@ -33,16 +33,18 @@ from N2KClient.services.config_parser.config_parser_helpers import (
     map_list_fields,
     get_device_instance_value,
 )
+from N2KClient.models.n2k_configuration.ac_meter import ACMeter
+from N2KClient.models.n2k_configuration.engine_configuration import EngineConfiguration
+from N2KClient.models.n2k_configuration.config_metadata import ConfigMetadata
+from N2KClient.models.n2k_configuration.factory_metadata import FactoryMetadata
 
 
 class ConfigParser:
-    _config: N2KConfiguration
     _logger = logging.getLogger(
         f"{Constants.DBUS_N2K_CLIENT}: {Constants.Config_Parser}"
     )
 
     def __init__(self):
-        self._config = N2KConfiguration()
         self._circuit_list_field_map = {
             AttrNames.CIRCUIT_LOADS: (JsonKeys.CIRCUIT_LOADS, self.parse_circuit_load),
             AttrNames.CATEGORIES: (JsonKeys.CATEGORIES, self.parse_category),
@@ -256,9 +258,8 @@ class ConfigParser:
 
             inverter_enabled = inverter_instance_json.get(JsonKeys.ENABLED, False)
             charger_enabled = charger_instance_json.get(JsonKeys.ENABLED, False)
-            inverter_instance = inverter_instance_json.get(JsonKeys.INSTANCE_, None)
-            charger_instance = charger_instance_json.get(JsonKeys.INSTANCE_, None)
-
+            inverter_instance = inverter_instance_json.get(JsonKeys.INSTANCE, None)
+            charger_instance = charger_instance_json.get(JsonKeys.INSTANCE, None)
             if (
                 inverter_instance is not None
                 and inverter_enabled
@@ -304,7 +305,6 @@ class ConfigParser:
                     setattr(
                         inverter_charger_device, attr, self.parse_data_id(field_json)
                     )
-
             return inverter_charger_device
         except Exception as e:
             self._logger.error(f"Failed to parse Inverter Charger device: {e}")
@@ -380,12 +380,12 @@ class ConfigParser:
 
     def parse_binary_logic_state(
         self, binary_logic_state_json: dict[str, Any]
-    ) -> BinaryLogicStates:
+    ) -> BinaryLogicState:
         """
         Parse the Binary Logic State object from the configuration.
         """
         try:
-            binary_logic_state = BinaryLogicStates()
+            binary_logic_state = BinaryLogicState()
             # Map required fields directly
             map_fields(
                 binary_logic_state_json,
@@ -447,12 +447,12 @@ class ConfigParser:
             self._logger.error(f"Failed to parse Pressure: {e}")
             raise
 
-    def parse_engine(self, engine_json: dict[str, Any]) -> EnginesDevice:
+    def parse_engine(self, engine_json: dict[str, Any]) -> EngineDevice:
         """
         Parse the Engine device from the configuration.
         """
         try:
-            engine_device = EnginesDevice()
+            engine_device = EngineDevice()
             # Map required fields directly
             map_fields(engine_json, engine_device, ENGINE_FIELD_MAP)
             # Parse instance if present
@@ -468,14 +468,65 @@ class ConfigParser:
             self._logger.error(f"Failed to parse Engine device: {e}")
             raise
 
-    def parse_config(self, config_string: str) -> N2KConfiguration:
+    def parse_factory_metadata(
+        self, factory_metadata_json: dict[str, Any]
+    ) -> FactoryMetadata:
+        """
+        Parse the FactoryMetadata object from the configuration.
+        """
+        try:
+            factory_metadata = FactoryMetadata()
+            if Constants.FactoryDataSettings in factory_metadata_json:
+                factory_metadata_value = factory_metadata_json[
+                    Constants.FactoryDataSettings
+                ]
+                map_fields(
+                    factory_metadata_value, factory_metadata, FACTORY_METADATA_FIELD_MAP
+                )
+            return factory_metadata
+        except Exception as e:
+            self._logger.error(f"Failed to parse factory metadata: {e}")
+            raise
+
+    def parse_config_metadata(
+        self, config_metadata_json: dict[str, Any]
+    ) -> ConfigMetadata:
+        try:
+            config_metadata = ConfigMetadata()
+            map_fields(config_metadata_json, config_metadata, CONFIG_METADATA_FIELD_MAP)
+            return config_metadata
+        except Exception as e:
+            self._logger.error(f"Failed to parse configuration metadata: {e}")
+            raise
+
+    def parse_categories(self, categories_json: dict[str, Any]) -> list[CategoryItem]:
+        """
+        Parse the Categories from the configuration.
+        """
+        try:
+            category_item = CategoryItem()
+            # Map required fields directly
+            map_fields(categories_json, category_item, CATEGORY_FIELD_MAP)
+            return category_item
+        except Exception as e:
+            self._logger.error(f"Failed to parse Categories: {e}")
+            raise
+
+    def parse_config(
+        self,
+        config_string: str,
+        categories_str: str,
+        config_metadata_str: str,
+    ) -> N2kConfiguration:
         """
         Parse the configuration string and return a N2KConfiguration object.
         """
         try:
-            n2k_configuration = N2KConfiguration()
+            n2k_configuration = N2kConfiguration()
             # Parse the configuration string
             config_json: dict[str, list[Any]] = json.loads(config_string)
+            categories_json = json.loads(categories_str)
+            config_metadata_json = json.loads(config_metadata_str)
 
             # GNSS
             if JsonKeys.GNSS in config_json:
@@ -486,8 +537,17 @@ class ConfigParser:
                         n2k_configuration.gnss[device_id] = self.parse_gnss(gnss_json)
 
             # Circuit
-            if JsonKeys.CIRCUIT in config_json:
-                for circuit_json in config_json[JsonKeys.CIRCUIT]:
+            if JsonKeys.CIRCUITS in config_json:
+                for circuit_json in config_json[JsonKeys.CIRCUITS]:
+                    circuit_id = circuit_json.get(JsonKeys.ID)
+                    if circuit_id is not None:
+                        device_id = f"{AttrNames.CIRCUIT}.{circuit_id}"
+                        n2k_configuration.circuit[device_id] = self.parse_circuit(
+                            circuit_json
+                        )
+
+            if JsonKeys.NONVISIBLE_CIRCUITS in config_json:
+                for circuit_json in config_json[JsonKeys.NONVISIBLE_CIRCUITS]:
                     circuit_id = circuit_json.get(JsonKeys.ID)
                     if circuit_id is not None:
                         device_id = f"{AttrNames.CIRCUIT}.{circuit_id}"
@@ -496,32 +556,40 @@ class ConfigParser:
                         )
 
             # DC
-            if JsonKeys.DC in config_json:
-                for dc_json in config_json[JsonKeys.DC]:
+            if JsonKeys.DCS in config_json:
+                for dc_json in config_json[JsonKeys.DCS]:
                     dc_instance = get_device_instance_value(dc_json)
                     if dc_instance is not None:
                         device_id = f"{AttrNames.DC}.{dc_instance}"
                         n2k_configuration.dc[device_id] = self.parse_dc(dc_json)
 
             # AC
-            if JsonKeys.AC in config_json:
-                for ac_json in config_json[JsonKeys.AC]:
+            if JsonKeys.ACS in config_json:
+                for ac_json in config_json[JsonKeys.ACS]:
                     ac_instance = get_device_instance_value(ac_json)
                     if ac_instance is not None:
                         device_id = f"{AttrNames.AC}.{ac_instance}"
-                        n2k_configuration.ac[device_id] = self.parse_ac(ac_json)
+                        ac_line = self.parse_ac(ac_json)
+                        if not device_id in n2k_configuration.ac:
+                            n2k_configuration.ac[device_id] = ACMeter()
+                        if ac_line.line == ACLine.Line1:
+                            n2k_configuration.ac[device_id].line[1] = ac_line
+                        elif ac_line.line == ACLine.Line2:
+                            n2k_configuration.ac[device_id].line[2] = ac_line
+                        elif ac_line.line == ACLine.Line3:
+                            n2k_configuration.ac[device_id].line[3] = ac_line
 
             # Tank
-            if JsonKeys.TANK in config_json:
-                for tank_json in config_json[JsonKeys.TANK]:
+            if JsonKeys.TANKS in config_json:
+                for tank_json in config_json[JsonKeys.TANKS]:
                     tank_instance = get_device_instance_value(tank_json)
                     if tank_instance is not None:
                         device_id = f"{AttrNames.TANK}.{tank_instance}"
                         n2k_configuration.tank[device_id] = self.parse_tank(tank_json)
 
             # Inverter Charger
-            if JsonKeys.INVERTER_CHARGER in config_json:
-                for inverter_charger_json in config_json[JsonKeys.INVERTER_CHARGER]:
+            if JsonKeys.INVERTER_CHARGERS in config_json:
+                for inverter_charger_json in config_json[JsonKeys.INVERTER_CHARGERS]:
                     inverter_charger_instance = (
                         self.calculate_inverter_charger_instance(inverter_charger_json)
                     )
@@ -535,8 +603,8 @@ class ConfigParser:
                         ] = self.parse_inverter_charger(inverter_charger_json)
 
             # Device
-            if JsonKeys.DEVICE in config_json:
-                for device_json in config_json[JsonKeys.DEVICE]:
+            if JsonKeys.DEVICES in config_json:
+                for device_json in config_json[JsonKeys.DEVICES]:
                     device_dipswitch = device_json.get(JsonKeys.DIPSWITCH)
                     if device_dipswitch is not None:
                         device_id = f"{AttrNames.DEVICE}.{device_dipswitch}"
@@ -546,16 +614,16 @@ class ConfigParser:
                         )
 
             # HVAC
-            if JsonKeys.HVAC in config_json:
-                for hvac_json in config_json[JsonKeys.HVAC]:
+            if JsonKeys.HVACS in config_json:
+                for hvac_json in config_json[JsonKeys.HVACS]:
                     hvac_instance = get_device_instance_value(hvac_json)
                     if hvac_instance is not None:
                         device_id = f"{AttrNames.HVAC}.{hvac_instance}"
                         n2k_configuration.hvac[device_id] = self.parse_hvac(hvac_json)
 
             # Audio Stereo
-            if JsonKeys.AUDIO_STEREO in config_json:
-                for audio_stereo_json in config_json[JsonKeys.AUDIO_STEREO]:
+            if JsonKeys.AUDIO_STEREOS in config_json:
+                for audio_stereo_json in config_json[JsonKeys.AUDIO_STEREOS]:
                     audio_stereo_instance = get_device_instance_value(audio_stereo_json)
                     if audio_stereo_instance is not None:
                         device_id = f"{AttrNames.AUDIO_STEREO}.{audio_stereo_instance}"
@@ -565,8 +633,10 @@ class ConfigParser:
                         )
 
             # Binary Logic State
-            if JsonKeys.BINARY_LOGIC_STATE in config_json:
-                for binary_logic_state_json in config_json[JsonKeys.BINARY_LOGIC_STATE]:
+            if JsonKeys.BINARY_LOGIC_STATES in config_json:
+                for binary_logic_state_json in config_json[
+                    JsonKeys.BINARY_LOGIC_STATES
+                ]:
                     binary_logic_state_id = binary_logic_state_json.get(JsonKeys.ID)
                     if binary_logic_state_id is not None:
                         device_id = (
@@ -576,16 +646,16 @@ class ConfigParser:
                             self.parse_binary_logic_state(binary_logic_state_json)
                         )
             # UI Relationships
-            if JsonKeys.UI_RELATIONSHIP in config_json:
-                for ui_relationship_json in config_json[JsonKeys.UI_RELATIONSHIP]:
+            if JsonKeys.UI_RELATIONSHIPS in config_json:
+                for ui_relationship_json in config_json[JsonKeys.UI_RELATIONSHIPS]:
                     ui_relationship_id = ui_relationship_json.get(JsonKeys.ID)
                     if ui_relationship_id is not None:
                         n2k_configuration.ui_relationships.append(
                             self.parse_ui_relationship(ui_relationship_json)
                         )
             # Pressure
-            if JsonKeys.PRESSURE in config_json:
-                for pressure_json in config_json[JsonKeys.PRESSURE]:
+            if JsonKeys.PRESSURES in config_json:
+                for pressure_json in config_json[JsonKeys.PRESSURES]:
                     pressure_instance = get_device_instance_value(pressure_json)
                     if pressure_instance is not None:
                         device_id = f"{AttrNames.PRESSURE}.{pressure_instance}"
@@ -595,8 +665,8 @@ class ConfigParser:
                         )
 
             # Mode
-            if JsonKeys.MODE in config_json:
-                for mode_json in config_json[JsonKeys.MODE]:
+            if JsonKeys.MODES in config_json:
+                for mode_json in config_json[JsonKeys.MODES]:
                     mode_id = mode_json.get(JsonKeys.ID)
                     if mode_id is not None:
                         device_id = f"{AttrNames.MODE}.{mode_id}"
@@ -604,17 +674,43 @@ class ConfigParser:
                             mode_json
                         )
 
-            # Engine
-            if JsonKeys.ENGINE in config_json:
-                for engine in config_json[JsonKeys.ENGINE]:
-                    self._logger.debug(f"Engine: {engine}")
-                    engine_instance_value = get_device_instance_value(engine)
-                    if engine_instance_value is not None:
-                        device_id = f"{AttrNames.ENGINE}.{engine_instance_value}"
-                        n2k_configuration.engine[device_id] = self.parse_engine(engine)
+            # Categories
+            if JsonKeys.Items in categories_json:
+                for category_json in categories_json[JsonKeys.Items]:
+                    n2k_configuration.category.append(
+                        self.parse_categories(category_json)
+                    )
+
+            # Config Metadata
+            n2k_configuration.config_metadata = self.parse_config_metadata(
+                config_metadata_json
+            )
 
             return n2k_configuration
 
         except Exception as e:
             self._logger.error(f"Failed to parse config: {e}")
+            raise
+
+    def parse_engine_configuration(
+        self, config_string: str, engine_configuration: EngineConfiguration
+    ) -> EngineConfiguration:
+        try:
+            # Parse the configuration string
+            config_json: dict[str, list[Any]] = json.loads(config_string)
+
+            # Engine
+            if JsonKeys.ENGINES in config_json:
+                for engine in config_json[JsonKeys.ENGINES]:
+                    engine_instance_value = get_device_instance_value(engine)
+                    if engine_instance_value is not None:
+                        device_id = f"{AttrNames.ENGINE}.{engine_instance_value}"
+                        engine_configuration.devices[device_id] = self.parse_engine(
+                            engine
+                        )
+
+            return engine_configuration
+
+        except Exception as e:
+            self._logger.error(f"Failed to parse engine config: {e}")
             raise
