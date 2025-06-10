@@ -139,19 +139,6 @@ class N2KClient(dbus.service.Object):
             target=self._get_state, name="__get_state"
         )
 
-    def _log_config_item(self, config_type: str, config_obj: Any):
-        if config_obj is not None:
-            # Prefer to_config_dict if available, else to_dict, else as-is
-            if hasattr(config_obj, "to_config_dict"):
-                config_dict = config_obj.to_config_dict()
-            elif hasattr(config_obj, "to_dict"):
-                config_dict = config_obj.to_dict()
-            else:
-                config_dict = config_obj
-            self._logger.info(
-                f"Latest {config_type}: { json.dumps(config_dict, indent=2) }\n\n"
-            )
-
         # Handler to update the latest device list internally
         def update_latest_devices(devices: dict[str, N2kDevice]):
             self._latest_devices = devices
@@ -203,6 +190,19 @@ class N2KClient(dbus.service.Object):
         )
 
         self.lock = threading.Lock()
+
+    def _log_config_item(self, config_type: str, config_obj: Any):
+        if config_obj is not None:
+            # Prefer to_config_dict if available, else to_dict, else as-is
+            if hasattr(config_obj, "to_config_dict"):
+                config_dict = config_obj.to_config_dict()
+            elif hasattr(config_obj, "to_dict"):
+                config_dict = config_obj.to_dict()
+            else:
+                config_dict = config_obj
+            self._logger.info(
+                f"Latest {config_type}: { json.dumps(config_dict, indent=2) }\n\n"
+            )
 
     # GETTERS
 
