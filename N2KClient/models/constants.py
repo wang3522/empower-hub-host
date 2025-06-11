@@ -14,6 +14,7 @@ class JsonKeys:
     HVACS = "HVACs"
     AUDIO_STEREOS = "AudioStereos"
     BINARY_LOGIC_STATES = "BinaryLogicStates"
+    BINARY_LOGIC_STATE = "BinaryLogicState"
     UI_RELATIONSHIPS = "UiRelationships"
     PRESSURES = "Pressures"
     MODES = "Modes"

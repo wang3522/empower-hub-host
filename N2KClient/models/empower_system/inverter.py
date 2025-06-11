@@ -16,37 +16,10 @@ from N2KClient.models.devices import (
     MobileChannelMapping,
     N2kDevices,
 )
-
-
-class MappingUtils:
-    """
-    Utility functions for working with mobile channel mappings.
-    This class centralizes common mapping logic for Thing classes.
-    """
-
-    @staticmethod
-    def get_value_or_default(values: dict, key: str, default=None):
-        """Extract a value from a values dict, handling the Valid/Value nested structure."""
-        v = values.get(key)
-        if isinstance(v, dict) and v.get("Valid", False):
-            return v.get("Value", default)
-        return default
-
-    @staticmethod
-    def most_recent_valid(
-        values: dict, last_updated: dict, labels: list
-    ) -> Optional[tuple]:
-        """
-        Returns (timestamp, label, value) for the most recent valid value among the given labels.
-        """
-        most_recent = None
-        for label in labels:
-            value = MappingUtils.get_value_or_default(values, label, None)
-            ts = last_updated.get(label, 0)
-            if value is not None:
-                if (most_recent is None) or (ts > most_recent[0]):
-                    most_recent = (ts, label, value)
-        return most_recent
+from N2KClient.models.empower_system.mapping_utility import (
+    MappingUtils,
+    RegisterMappingUtility,
+)
 
 
 class InverterBase(Thing):
@@ -269,74 +242,13 @@ class InverterBase(Thing):
         """
         Register mobile channel mappings for a specified AC line.
         """
-
-        ac_meter_device = n2k_devices.devices.get(f"{JsonKeys.AC}.{AC.instance}.{line}")
-
-        if not ac_meter_device:
-            return
-
-        # TODO add filtering/rounding to transform
-        # Current
-        mapping = MobileChannelMapping(
-            mobile_key=f"{self.id}l{line}c",
-            channel_sources=[
-                ChannelSource(
-                    label=f"Current",
-                    device_key=f"{JsonKeys.AC}.{ac.instance.instance}.{line}",
-                    channel_key="Current",
-                )
-            ],
-            transform=lambda c, _: MappingUtils.get_value_or_default(
-                c, "Current", None
-            ),
+        # Use the centralized RegisterMappingUtility to register all AC line mappings
+        RegisterMappingUtility.register_ac_line_mappings(
+            n2k_devices=n2k_devices,
+            ac=ac,
+            line=line,
+            mobile_key_prefix=self.id,
         )
-        n2k_devices.add_mobile_channel_mapping(mapping)
-
-        # Voltage
-        mapping = MobileChannelMapping(
-            mobile_key=f"{self.id}l{line}v",
-            channel_sources=[
-                ChannelSource(
-                    label=f"Voltage",
-                    device_key=f"{JsonKeys.AC}.{ac.instance.instance}.{line}",
-                    channel_key="Voltage",
-                )
-            ],
-            transform=lambda v, _: MappingUtils.get_value_or_default(
-                v, "Voltage", None
-            ),
-        )
-        n2k_devices.add_mobile_channel_mapping(mapping)
-
-        # Frequency
-        mapping = MobileChannelMapping(
-            mobile_key=f"{self.id}l{line}v",
-            channel_sources=[
-                ChannelSource(
-                    label=f"Frequency",
-                    device_key=f"{JsonKeys.AC}.{ac.instance.instance}.{line}",
-                    channel_key="Frequency",
-                )
-            ],
-            transform=lambda f, _: MappingUtils.get_value_or_default(
-                f, "Frequency", None
-            ),
-        )
-        n2k_devices.add_mobile_channel_mapping(mapping)
-
-        # Power
-        mapping = MobileChannelMapping(
-            mobile_key=f"{self.id}l{line}p",
-            channel_sources=[
-                ChannelSource(
-                    label=f"Power",
-                    device_key=f"{JsonKeys.AC}.{ac.instance.instance}.{line}",
-                    channel_key="Power",
-                )
-            ],
-            transform=lambda p, _: MappingUtils.get_value_or_default(p, "Power", None),
-        )
-        n2k_devices.add_mobile_channel_mapping(mapping)
 
 
 class AcMeterInverter(InverterBase):
@@ -346,6 +258,7 @@ class AcMeterInverter(InverterBase):
         ac_line1: AC,
         ac_line2: AC,
         ac_line3: AC,
+        n2k_devices: N2kDevice,
         categories: list[str],
         circuit: Circuit,
     ):
@@ -354,7 +267,7 @@ class AcMeterInverter(InverterBase):
             self.inverter_circuit_id = circuit.control_id
         InverterBase.__init__(
             self,
-            id=ac_line1.instance.instance_,
+            id=ac_line1.instance.instance,
             name=ac_line1.name_utf8,
             ac_line1=ac_line1,
             ac_line2=ac_line2,
@@ -385,6 +298,13 @@ class AcMeterInverter(InverterBase):
                         f"{Constants.empower}:{Constants.inverter}.{Constants.enabled}"
                     ],
                 )
+            )
+
+            RegisterMappingUtility.register_inverter_enable_mapping(
+                n2k_devices=n2k_devices,
+                thing_id=self.id,
+                instance=None,
+                inverter_circuit_id=self.inverter_circuit_id,
             )
 
 
@@ -432,6 +352,10 @@ class CombiInverter(InverterBase):
             )
         )
 
+        RegisterMappingUtility.register_inverter_state_mapping(
+            n2k_devices=n2k_devices, thing_id=self.id, instance=self.instance
+        )
+
         self._define_channel(
             Channel(
                 id="cs",
@@ -458,105 +382,9 @@ class CombiInverter(InverterBase):
                     ],
                 )
             )
-
-        # Register mobile channel mappings if n2k_devices is provided
-        if n2k_devices:
-            self.register_mobile_channel_mappings(n2k_devices)
-
-    def register_mobile_channel_mappings(self, n2k_devices: N2kDevices):
-        """
-        Register all mobile channel mappings for this inverter with the N2kDevices manager.
-        """
-        inverter_charger_device = n2k_devices.devices.get(
-            f"{JsonKeys.INVERTER_CHARGER}.{self.instance}"
-        )
-
-        if not inverter_charger_device:
-            return
-
-        # Register enable mapping
-        self._register_enable_mapping(n2k_devices)
-
-        # Register state mapping
-        self._register_state_mapping(n2k_devices)
-
-    def _register_enable_mapping(self, n2k_devices: N2kDevices):
-        """Register the enable channel mapping"""
-
-        def inverter_enable_transform(
-            values: dict, last_updated: dict
-        ) -> Optional[int]:
-            most_recent = MappingUtils.most_recent_valid(
-                values, last_updated, ["inverter_enable", "circuit_power"]
+            RegisterMappingUtility.register_inverter_enable_mapping(
+                n2k_devices=n2k_devices,
+                thing_id=self.id,
+                instance=self.instance,
+                inverter_circuit_id=self.inverter_circuit_id,
             )
-            if not most_recent:
-                return None
-            _, label, value = most_recent
-            if label == "circuit_power":
-                return 1 if value == 100 else 0
-            if label == "inverter_enable":
-                return 1 if value else 0
-            return None
-
-        mapping = MobileChannelMapping(
-            mobile_key=f"{self.id}.enable",
-            channel_sources=[
-                ChannelSource(
-                    label="inverter_enable",
-                    device_key=f"{JsonKeys.INVERTER_CHARGER}.{self.instance}",
-                    channel_key="InverterEnable",
-                )
-            ],
-            transform=inverter_enable_transform,
-        )
-
-        if self.inverter_circuit_id is not None:
-            mapping.channel_sources.append(
-                ChannelSource(
-                    label="circuit_power",
-                    device_key=f"{JsonKeys.CIRCUIT}.{self.inverter_circuit_id}",
-                    channel_key="Level",
-                )
-            )
-        n2k_devices.add_mobile_channel_mapping(mapping)
-
-    def _register_state_mapping(self, n2k_devices: N2kDevices):
-        """Register the inverter state channel mapping"""
-
-        def inverter_state_transform(values: dict, last_updated: dict) -> Optional[str]:
-            inverter_state_value = MappingUtils.get_value_or_default(
-                values, "inverter_state", None
-            )
-            if inverter_state_value is not None:
-                return self._map_inverter_state(inverter_state_value)
-            return None
-
-        mapping = MobileChannelMapping(
-            mobile_key=f"{self.id}.is",
-            channel_sources=[
-                ChannelSource(
-                    label="inverter_state",
-                    device_key=f"{JsonKeys.INVERTER_CHARGER}.{self.instance}",
-                    channel_key="InverterState",
-                )
-            ],
-            transform=inverter_state_transform,
-        )
-        n2k_devices.add_mobile_channel_mapping(mapping)
-
-    def _map_inverter_state(self, state: str) -> str:
-        """Map inverter state values to mobile-friendly strings"""
-        return {
-            JsonKeys.INVERTING: "inverting",
-            JsonKeys.AC_PASSTHRU: "acPassthrough",
-            JsonKeys.LOAD_SENSE: "loadSense",
-            JsonKeys.FAULT: "fault",
-            JsonKeys.DISABLED: "disabled",
-            JsonKeys.CHARGING: "charging",
-            JsonKeys.ENERGY_SAVING: "energySaving",
-            JsonKeys.ENERGY_SAVING2: "energySaving",
-            JsonKeys.SUPPORTING: "supporting",
-            JsonKeys.SUPPORTING2: "supporting",
-            JsonKeys.ERROR: "error",
-            JsonKeys.DATA_NOT_AVAILABLE: "unknown",
-        }.get(state, "unknown")

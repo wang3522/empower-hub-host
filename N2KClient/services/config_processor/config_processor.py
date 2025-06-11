@@ -355,7 +355,9 @@ class ConfigProcessor:
     # ###################################################
     #     AC Meters
     # ###################################################
-    def process_ac_meters(self, config: N2kConfiguration) -> None:
+    def process_ac_meters(
+        self, config: N2kConfiguration, n2k_devices: N2kDevices
+    ) -> None:
         for ac_meter in config.ac.values():
             if ac_meter.line[1].instance.instance in self._acMeter_inverter_instances:
                 continue
@@ -426,6 +428,7 @@ class ConfigProcessor:
                     ac_meter.line[1] if 1 in ac_meter.line else None,
                     ac_meter.line[2] if 2 in ac_meter.line else None,
                     ac_meter.line[3] if 3 in ac_meter.line else None,
+                    n2k_devices=n2k_devices,
                     categories=categories,
                     circuit=circuit,
                     ic_associated_line=ic_associated_line,
@@ -437,6 +440,7 @@ class ConfigProcessor:
                     ac_meter.line[1] if 1 in ac_meter.line else None,
                     ac_meter.line[2] if 2 in ac_meter.line else None,
                     ac_meter.line[3] if 3 in ac_meter.line else None,
+                    n2k_devices=n2k_devices,
                     categories=categories,
                     circuit=circuit,
                 )
@@ -445,6 +449,7 @@ class ConfigProcessor:
                     ac_meter.line[1] if 1 in ac_meter.line else None,
                     ac_meter.line[2] if 2 in ac_meter.line else None,
                     ac_meter.line[3] if 3 in ac_meter.line else None,
+                    n2k_devices=n2k_devices,
                     categories=categories,
                     circuit=circuit,
                 )

@@ -379,18 +379,17 @@ class N2KClient(dbus.service.Object):
     def _merge_state_update(self, state_updates: dict[str, dict[str, Any]]):
         with self.lock:
             device_list_copy = copy.deepcopy(self._latest_devices)
+
         for id, state_update in state_updates.items():
-            for channel_id in state_update.keys():
-                if (
-                    device_list_copy.devices[id].channels[channel_id]
-                    != state_update[channel_id]
-                ):
-                    device_list_copy.devices[id].channels[channel_id] = state_update[
-                        channel_id
-                    ]
-                    device_list_copy.devices[id].channel_last_updated[
-                        channel_id
-                    ] = datetime.now().timestamp()
+            if id not in device_list_copy.devices:
+                continue
+
+            for channel_id, value in state_update.items():
+                # Use the update_channel method to update values and immediately update mappings
+                device_list_copy.update_channel(
+                    id, channel_id, value, datetime.now().timestamp()
+                )
+
         with self.lock:
             self._devices.on_next(device_list_copy)
 

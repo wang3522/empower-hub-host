@@ -1,7 +1,10 @@
 from N2KClient.models.constants import Constants, JsonKeys
 from N2KClient.models.devices import ChannelSource, MobileChannelMapping, N2kDevices
 from N2KClient.models.empower_system.channel import Channel
-from N2KClient.models.empower_system.inverter import MappingUtils
+from N2KClient.models.empower_system.mapping_utility import (
+    MappingUtils,
+    RegisterMappingUtility,
+)
 from .thing import Thing
 from N2KClient.models.common_enums import ChannelType, ThingType, Unit
 from N2KClient.models.n2k_configuration.gnss import GNSSDevice
@@ -71,54 +74,20 @@ class GNSS(Thing):
         gnss_device = n2k_devices.devices.get(f"{JsonKeys.GNSS}.{self.instance}")
         if not gnss_device:
             return
-        self._register_fix_type_mapping(n2k_devices)
-        self._register_location_mapping(n2k_devices)
 
-    def _register_fix_type_mapping(self, n2k_devices: N2kDevices):
-
-        def fix_type_transform(values: dict, last_updated: dict):
-            fix_type_value = MappingUtils.get_value_or_default(values, "ft", None)
-            return fix_type_value
-
-        mapping = MobileChannelMapping(
+        # Register fix type mapping using the centralized utility
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices=n2k_devices,
             mobile_key=f"{self.id}.ft",
-            channel_sources=[
-                ChannelSource(
-                    label="fix_type",
-                    device_key=f"{JsonKeys.GNSS}.{self.instance}",
-                    channel_key="FixType",
-                )
-            ],
-            transform=fix_type_transform,
+            device_key=f"{JsonKeys.GNSS}.{self.instance}",
+            channel_key="FixType",
+            label="Fix Type",
         )
-        n2k_devices.add_mobile_channel_mapping(mapping)
 
-    def _register_location_mapping(self, n2k_devices: N2kDevices):
-        def location_transform(values: dict, last_updated: dict):
-            lat_value = MappingUtils.get_value_or_default(values, "lat", None)
-            long_value = MappingUtils.get_value_or_default(values, "long", None)
-            sog_value = MappingUtils.get_value_or_default(values, "sog", None)
-            return LocationState(lat_value, long_value, sog_value)
-
-        mapping = MobileChannelMapping(
-            mobile_key=f"{self.id}.loc",
-            channel_sources=[
-                ChannelSource(
-                    label="lat",
-                    device_key=f"{JsonKeys.GNSS}.{self.instance}",
-                    channel_key="LatitudeDeg",
-                ),
-                ChannelSource(
-                    label="long",
-                    device_key=f"{JsonKeys.GNSS}.{self.instance}",
-                    channel_key="LongitudeDeg",
-                ),
-                ChannelSource(
-                    label="sog",
-                    device_key=f"{JsonKeys.GNSS}.{self.instance}",
-                    channel_key="SOG",
-                ),
-            ],
-            transform=location_transform,
+        # Register location mapping using the centralized utility
+        RegisterMappingUtility.register_location_mapping(
+            n2k_devices=n2k_devices,
+            thing_id=self.id,
+            device_key=f"{JsonKeys.GNSS}.{self.instance}",
+            location_state_class=LocationState,
         )
-        n2k_devices.add_mobile_channel_mapping(mapping)
