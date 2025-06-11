@@ -1,10 +1,13 @@
 #pragma once
 
 #include <DevelopmentLib/Utils/tSettings.h>
-#include <boost/json.hpp>
 #include <mutex>
 
 #include "utils/common.h"
+#include "utils/logger.h"
+#include "utils/json.hpp"
+
+using json = nlohmann::json;
 
 class CzoneSettings {
 public:
@@ -58,7 +61,7 @@ private:
   std::mutex m_filemutex;
   std::mutex m_settingsmutex;
 
-  boost::json::object m_settings;
+  json m_settings;
   std::string m_settingFilePath;
   bool m_insecure;
 
@@ -87,4 +90,39 @@ private:
   std::string _getRTFirmwareVersion();
   std::string _getHostArtifactInfo();
   std::string _getEuropaHardwareVersions();
+
+  template <typename T>
+  inline void GetJsonValue(const std::string &item, T &ret) {
+    try {
+      if (!m_settings[item].is_null()) {
+        ret = m_settings[item];
+      }
+    } catch (const std::exception &e) {
+      BOOST_LOG_TRIVIAL(warning) << "CZoneSettings::GetJsonValue exception:" << e.what();
+    }
+  }
+
+  std::string GetJsonValueString(const std::string &item) {
+    std::string ret("");
+    GetJsonValue<std::string>(item, ret);
+    return ret;
+  }
+
+  int GetJsonValueInt(const std::string &item) {
+    int ret = 0;
+    GetJsonValue<int>(item, ret);
+    return ret;
+  }
+
+  float GetJsonValueFloat(const std::string &item) {
+    float ret = 0.0f;
+    GetJsonValue<float>(item, ret);
+    return ret;
+  }
+
+  bool GetJsonValueBoolen(const std::string &item) {
+    bool ret = false;
+    GetJsonValue<bool>(item, ret);
+    return ret;
+  }
 };

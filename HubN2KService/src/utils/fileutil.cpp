@@ -5,7 +5,7 @@
 namespace fs = std::filesystem;
 
 std::string getCzoneConfigPath() {
-  std::string pathStr = "/etc/hub/czonedata/";
+  std::string pathStr = "/data/hub/config/czonedata";
   const char *HUB_CONFIGDIR = std::getenv("HUB_CZONE_CONFIGDIR");
   if (HUB_CONFIGDIR != nullptr) {
     pathStr = std::string(HUB_CONFIGDIR);
@@ -28,7 +28,7 @@ std::string getCzoneConfigPath() {
 }
 
 std::string getLogPath() {
-  std::string pathStr = "/var/log/hub";
+  std::string pathStr = "/data/hub/log";
   const char *LOG_PATH = std::getenv("HUB_LOGDIR");
 
   if (LOG_PATH != nullptr) {

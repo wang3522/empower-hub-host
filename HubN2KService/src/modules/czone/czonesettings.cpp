@@ -1,11 +1,9 @@
 #include "modules/czone/czonesettings.h"
 #include "utils/common.h"
 #include "utils/fileutil.h"
-#include "utils/jsonutil.h"
-#include "utils/logger.h"
+#include <fstream>
 #include <iostream>
 #include <sstream>
-#include <fstream>
 
 CzoneSettings &CzoneSettings::getInstance() {
   static CzoneSettings _instance;
@@ -25,14 +23,9 @@ CzoneSettings::CzoneSettings() : m_settingsversion(3) {
     load_factory = true;
   } else {
     try {
-      boost::json::error_code err;
-      m_settings = boost::json::parse(data, err).as_object();
-      if (err) {
-        BOOST_LOG_TRIVIAL(error) << "CzoneSettings: failed to parse json with error, " << err.message();
-        load_factory = true;
-      }
+      m_settings = json::parse(data);
 
-      if (!m_settings.contains("SettingsVersion") || m_settings["SettingsVersion"].as_int64() != m_settingsversion) {
+      if (GetJsonValueInt("SettingsVersion") != m_settingsversion) {
         BOOST_LOG_TRIVIAL(warning) << "CzoneSettings: setting version mistmatch, reset to factory";
         load_factory = true;
       }
@@ -44,30 +37,33 @@ CzoneSettings::CzoneSettings() : m_settingsversion(3) {
 
   if (load_factory) {
     factoryReset();
+    if (!loadFromFile(data, m_settingFilePath)) {
+      BOOST_LOG_TRIVIAL(warning) << "CzoneSettings: failed to load file, " << CzoneSystemConstants::CZ_SETTINGS_FILE;
+      return;
+    }
   }
 
   m_insecure = false;
-  m_dipswitch = static_cast<uint8_t>(getJsonVal<int>(m_settings, "Dipswitch", 0));
-  m_sourceaddress = static_cast<uint8_t>(getJsonVal<int>(m_settings, "SourceAddress", 0));
+  m_dipswitch = GetJsonValueInt("Dipswitch");
+  m_sourceaddress = GetJsonValueInt("SourceAddress");
 
-  m_t_czonesettings.SetValue(tSetting(eSettingTimeOffset, getJsonVal<int>(m_settings, "TimeOffset", 0)));
-  m_t_czonesettings.SetValue(tSetting(eSettingDepthOffset, getJsonVal<float>(m_settings, "DepthOffset", 0.0)));
-  m_t_czonesettings.SetValue(
-      tSetting(eSettingMagneticVariation, getJsonVal<float>(m_settings, "MagneticVariation", 0.0)));
+  m_t_czonesettings.SetValue(tSetting(eSettingTimeOffset, GetJsonValueInt("TimeOffset")));
+  m_t_czonesettings.SetValue(tSetting(eSettingDepthOffset, GetJsonValueFloat("DepthOffset")));
+  m_t_czonesettings.SetValue(tSetting(eSettingMagneticVariation, GetJsonValueFloat("MagneticVariation")));
 
   for (auto i = 0; i < eNumUnitTypes; i++) {
     auto key = "Units" + std::to_string(i);
-    m_t_czonesettings.SetValue(tSetting(tUnitTypes(i), getJsonVal<int>(m_settings, key, 0)));
+    m_t_czonesettings.SetValue(tSetting(tUnitTypes(i), GetJsonValueInt("Units" + std::to_string(i))));
   }
 
-  m_serialnumber = getJsonVal<std::string>(m_settings, "SerialNumber", "");
-  m_factoryICCID = getJsonVal<std::string>(m_settings, "FactoryICCID", "");
-  m_factoryIMEI = getJsonVal<std::string>(m_settings, "FactoryIMEI", "");
+  m_serialnumber = GetJsonValueString("SerialNumber");
+  m_factoryICCID =  GetJsonValueString("FactoryICCID");
+  m_factoryIMEI = GetJsonValueString("FactoryIMEI");
   m_RTFirmwareVersion = getRTFirmwareVersion();
-  m_hardwareVersions = getJsonVal<std::string>(m_settings, "EuropaHardwareVersions", "");
-  m_enable_batterycharger = getJsonVal<bool>(m_settings, "EnableBatteryCharger", false);
+  m_hardwareVersions = GetJsonValueString("EuropaHardwareVersions");
+  m_enable_batterycharger = GetJsonValueBoolen("EnableBatteryCharger");
 
-  BOOST_LOG_TRIVIAL(debug) << "CzoneSettings::CzoneSettings::m_serialnumber " << m_serialnumber;    // [x] debug
+  BOOST_LOG_TRIVIAL(debug) << "CzoneSettings::CzoneSettings::m_serialnumber " << m_serialnumber; // [x] debug
 }
 
 CzoneSettings::~CzoneSettings() {}
@@ -190,27 +186,27 @@ int32_t CzoneSettings::getUnits(const tUnitTypes unitType) {
   return boost::any_cast<int32_t>(m_t_czonesettings.Setting(unitType).Value);
 }
 std::string CzoneSettings::getConfigurationPath() {
-  return getCzoneConfigPath() + getJsonVal<std::string>(m_settings, "ConfigurationPath", "default.zcf");
+  return getCzoneConfigPath() + GetJsonValueString("ConfigurationPath");
 }
 std::string CzoneSettings::getCircuitsLogPath() {
-  return getLogPath() + getJsonVal<std::string>(m_settings, "CircuitsLog", "");
+  return getLogPath() + GetJsonValueString("CircuitsLog");
 }
 std::string CzoneSettings::getMonitoringLogPath() {
-  return getLogPath() + getJsonVal<std::string>(m_settings, "MonitoringLog", "");
+  return getLogPath() + GetJsonValueString("MonitoringLog");
 }
 std::string CzoneSettings::getAlarmsLogPath() {
-  return getLogPath() + getJsonVal<std::string>(m_settings, "AlarmsLog", "");
+  return getLogPath() + GetJsonValueString("AlarmsLog");
 }
 std::string CzoneSettings::getAlarmCustomizedDescriptionPath() {
-  return getCzoneConfigPath() + getJsonVal<std::string>(m_settings, "AlarmCustomizedDescription", "");
+  return getCzoneConfigPath() + GetJsonValueString("AlarmCustomizedDescription");
 }
 std::string CzoneSettings::getAlarmDescriptionPath() {
-  return getCzoneConfigPath() + getJsonVal<std::string>(m_settings, "AlarmDescription", "");
+  return getCzoneConfigPath() + GetJsonValueString("AlarmDescription");
 }
 
 void CzoneSettings::saveSettings() {
   BOOST_LOG_TRIVIAL(info) << "CZoneSettings: saving czone settings to file";
-  saveToFile(boost::json::serialize(m_settings), m_settingFilePath);
+  saveToFile(m_settings.dump(), m_settingFilePath);
 }
 
 std::string CzoneSettings::_getCpuHostId() {
@@ -271,9 +267,9 @@ void CzoneSettings::factoryReset() {
   m_settings["AlarmsLog"] = std::string("log_alarm.bin");
   m_settings["AlarmCustomizedDescription"] = std::string("alarmcustomized.json");
   m_settings["AlarmDescription"] = std::string("alarm_desc.bin");
-  m_settings["DataDirectory"] = std::string("/etc/hub/czonedata/data");
-  m_settings["CertDirectory"] = std::string("/etc/hub/czonedata/Certs");
-  m_settings["KeyDirectory"] = std::string("/etc/hub/czonedata/Certs");
+  m_settings["DataDirectory"] = std::string("/data/hub/config/data");
+  m_settings["CertDirectory"] = std::string("/data/hub/config/Certs");
+  m_settings["KeyDirectory"] = std::string("/data/hub/config/Certs");
   m_settings["SerialNumber"] = _getSerialNumber();
   m_settings["FactoryICCID"] = _getFactoryICCID();
   m_settings["FactoryIMEI"] = _getFactoryIMEI();

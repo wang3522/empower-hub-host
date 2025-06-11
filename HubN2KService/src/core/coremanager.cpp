@@ -39,8 +39,6 @@ CoreManager &CoreManager::getInstance() {
   return _instance;
 }
 
-int intHandler(int value) { return value * 2; }
-
 void CoreManager::start() {
   if (m_running.load()) {
     BOOST_LOG_TRIVIAL(error) << "CoreManager is already running!";
@@ -87,24 +85,9 @@ void CoreManager::start() {
 
   // dbus init and register method
   m_dbusService->initialize();
-  m_dbusService->registerService("processInt", "Manager", intHandler);
-  m_dbusService->registerService("debug", "czone", [ptr = czoneInterface]() -> std::vector<std::string> {
-    // [x] debug
 
-    std::vector<std::string> result;
-    auto r1 = ptr->getCategories(CategoryRequest::eCategoryType::eCategoriesAll);
-    for (const auto &category : r1._items) {
-      result.push_back(category.get_nameUTF8());
-    }
+  czoneInterface->registerDbus(m_dbusService);
 
-    result.push_back("-- Alarms --");
-    auto r2 = ptr->getConfig(ConfigRequest(ConfigRequest::eAlarms));
-    for (const auto &al: r2._alarms) {
-      result.push_back(std::to_string(al.get_uniqueId()) + " | " + al.get_name());
-    }
-
-    return result;
-  });
   m_dbusService->run();
 
   m_running.store(true);
