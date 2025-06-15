@@ -38,9 +38,46 @@
         </form>
         <div id="connect-status" class="mt-3"></div>
     </div>
+    <div class="card p-4 mt-4">
+        <h3 class="text-center">Upload config file for hub+</h3>
+        <form id="upload-form" enctype="multipart/form-data" onsubmit="uploadConfigFile(event)">
+            <div class="mb-3">
+                <label for="config-file" class="form-label">Select config file:</label>
+                <input type="file" id="config-file" name="config-file" class="form-control" accept=".json" required />
+            </div>
+            <button type="submit" class="btn btn-success">Upload Config</button>
+        </form>
+        <div id="upload-status" class="mt-3"></div>
+    </div>
 </div>
 
 <script>
+    async function uploadConfigFile(event) {
+        event.preventDefault();
+        const form = document.getElementById('upload-form');
+        const formData = new FormData(form);
+        const fileInput = document.getElementById('config-file');
+        const statusEl = document.getElementById('upload-status');
+        statusEl.innerHTML = '';
+
+        if (!fileInput.files.length) {
+            statusEl.innerHTML = `<div class="alert alert-warning">Please select a file to upload.</div>`;
+            return;
+        }
+
+        const res = await fetch('/upload_config', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await res.json();
+        if (data.error) {
+            statusEl.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+        } else {
+            statusEl.innerHTML = `<div class="alert alert-success">Config file uploaded successfully!</div>`;
+        }
+    }
+
     async function fetchCurrentSSID() {
         const res = await fetch('/current_ssid');
         const data = await res.json();
@@ -48,11 +85,13 @@
     }
 
 async function scanNetworks() {
-        const res = await fetch('/scan');
-        const data = await res.json();
         const resultEl = document.getElementById('scan-result');
         const ssidSelect = document.getElementById('ssid');
         ssidSelect.innerHTML = '';
+        resultEl.innerHTML = `<div class="d-flex align-items-center"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Scanning...</div>`;
+
+        const res = await fetch('/scan');
+        const data = await res.json();
         resultEl.innerHTML = '';
 
         if (data.error) {
@@ -75,6 +114,8 @@ async function scanNetworks() {
         e.preventDefault();
         const ssid = document.getElementById('ssid').value;
         const password = document.getElementById('password').value;
+        const statusEl = document.getElementById('connect-status');
+        statusEl.innerHTML = `<div class="d-flex align-items-center"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Connecting...</div>`;
 
         const res = await fetch('/connect', {
             method: 'POST',
@@ -83,7 +124,7 @@ async function scanNetworks() {
         });
 
         const data = await res.json();
-        const statusEl = document.getElementById('connect-status');
+        statusEl.innerHTML = '';
         if (data.error) {
             statusEl.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
         } else {

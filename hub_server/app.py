@@ -8,6 +8,7 @@ from flask import Flask, render_template, request, jsonify
 app = Flask(__name__)
 
 ROOT_PASSWORD = "PASSWORD_HERE"
+UPLOAD_CONFIG_PATH = "./uploads"
 
 def run_command(command):
     try:
@@ -73,6 +74,25 @@ def connect():
         return jsonify({"error": "SSID and password are required"})
     result = connect_to_wifi(ssid, password)
     return jsonify(result)
+
+@app.route('/upload_config', methods=['POST'])
+def upload_config():
+    print(request)
+    print("request.files:", request.files)
+    print("request.form:", request.form)
+    if 'config-file' not in request.files:
+        return jsonify({"error": "No file part in the request"}), 400
+    file = request.files['config-file']
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
+
+    os.makedirs(UPLOAD_CONFIG_PATH, exist_ok=True)
+    save_path = os.path.join(UPLOAD_CONFIG_PATH, file.filename)
+    try:
+        file.save(save_path)
+        return jsonify({"success": True, "filename": file.filename})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
