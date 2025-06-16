@@ -1,3 +1,4 @@
+from N2KClient.models.devices import N2kDevices
 from .thing import Thing
 from N2KClient.models.n2k_configuration.circuit import Circuit
 from ..common_enums import ChannelType, ThingType, Unit
@@ -6,6 +7,9 @@ from .channel import Channel
 from .link import Link
 from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicState
 from N2KClient.models.n2k_configuration.category_item import CategoryItem
+from N2KClient.models.empower_system.mapping_utility import (
+    RegisterMappingUtility,
+)
 
 
 def get_enabled_categories(categories: list[CategoryItem]):
@@ -20,6 +24,7 @@ class CircuitThing(Thing):
         type: ThingType,
         circuit: Circuit,
         links: list[Link],
+        n2k_devices=N2kDevices,
         bls: BinaryLogicState = None,
     ):
         Thing.__init__(
@@ -67,6 +72,9 @@ class CircuitThing(Thing):
                     tags=[f"{Constants.empower}:{type.value}.level"],
                 )
             )
+            RegisterMappingUtility.register_circuit_level_mapping(
+                n2k_devices, self.id, circuit.control_id
+            )
         else:
             channels.append(
                 Channel(
@@ -78,5 +86,12 @@ class CircuitThing(Thing):
                     tags=[f"{Constants.empower}:{type.value}.power"],
                 )
             )
+            RegisterMappingUtility.register_circuit_power_mapping(
+                n2k_devices, self.id, circuit.control_id
+            )
         for channel in channels:
             self._define_channel(channel)
+
+        RegisterMappingUtility.register_circuit_mappings(
+            n2k_devices, self.id, circuit.control_id
+        )

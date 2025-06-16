@@ -1,3 +1,4 @@
+from N2KClient.models.devices import N2kDevices
 from .thing import Thing
 from ..common_enums import ChannelType, ThingType, Unit
 from ..constants import Constants
@@ -5,6 +6,7 @@ from .channel import Channel
 from .link import Link
 from N2KClient.models.n2k_configuration.tank import Tank
 from ..common_enums import WaterTankType
+from N2KClient.models.empower_system.mapping_utility import RegisterMappingUtility
 
 
 class TankBase(Thing):
@@ -13,6 +15,7 @@ class TankBase(Thing):
         self,
         type: ThingType,
         tank: Tank,
+        n2k_devices: N2kDevices,
         categories: list[str] = [],
         links: list[Link] = [],
     ):
@@ -64,6 +67,10 @@ class TankBase(Thing):
         )
         for channel in channels:
             self._define_channel(channel)
+
+        RegisterMappingUtility.register_tanks_mappings(
+            n2k_devices, self.id, tank.instance.instance
+        )
 
 
 class FuelTank(TankBase):

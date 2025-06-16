@@ -2,7 +2,6 @@ from typing import Optional
 
 from N2KClient.models.devices import ChannelSource, MobileChannelMapping, N2kDevices
 from N2KClient.models.empower_system.mapping_utility import (
-    MappingUtils,
     RegisterMappingUtility,
 )
 from .thing import Thing

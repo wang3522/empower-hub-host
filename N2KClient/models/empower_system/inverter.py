@@ -5,19 +5,13 @@ from N2KClient.models.n2k_configuration.circuit import Circuit, SwitchType
 from N2KClient.models.common_enums import ThingType
 from .channel import Channel, ChannelType
 from N2KClient.models.common_enums import Unit
-from N2KClient.models.constants import Constants, JsonKeys
+from N2KClient.models.constants import Constants
 from N2KClient.models.n2k_configuration.inverter_charger import InverterChargerDevice
-from N2KClient.services.config_processor.config_processor_helpers import (
-    calculate_inverter_charger_instance,
-)
 from N2KClient.models.devices import (
     N2kDevice,
-    ChannelSource,
-    MobileChannelMapping,
     N2kDevices,
 )
 from N2KClient.models.empower_system.mapping_utility import (
-    MappingUtils,
     RegisterMappingUtility,
 )
 
@@ -285,6 +279,13 @@ class AcMeterInverter(InverterBase):
                 tags=[f"{Constants.empower}:{Constants.inverter}.{Constants.state}"],
             )
         )
+        RegisterMappingUtility.register_ac_meter_inverter_state_mapping(
+            n2k_devices=n2k_devices,
+            thing_id=self.id,
+            ac_line1=ac_line1,
+            ac_line2=ac_line2,
+            ac_line3=ac_line3,
+        )
 
         if circuit is not None:
             self._define_channel(
@@ -303,7 +304,7 @@ class AcMeterInverter(InverterBase):
             RegisterMappingUtility.register_inverter_enable_mapping(
                 n2k_devices=n2k_devices,
                 thing_id=self.id,
-                instance=None,
+                instance=ac_line1.instance.instance,
                 inverter_circuit_id=self.inverter_circuit_id,
             )
 

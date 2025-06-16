@@ -48,7 +48,11 @@ class RegisterMappingUtility:
     Utility class for registering common mappings used across different Thing classes.
     """
 
-    # Common state mappings
+    #############################################################################
+    # STATE MAPPING CONSTANTS
+    #############################################################################
+
+    # Inverter state mapping dictionary
     INVERTER_STATE_MAPPING = {
         JsonKeys.INVERTING: "inverting",
         JsonKeys.AC_PASSTHRU: "acPassthrough",
@@ -64,6 +68,7 @@ class RegisterMappingUtility:
         JsonKeys.DATA_NOT_AVAILABLE: "unknown",
     }
 
+    # Charger state mapping dictionary
     CHARGER_STATE_MAPPING = {
         JsonKeys.ABSORPTION: "absorption",
         JsonKeys.BULK: "bulk",
@@ -76,6 +81,10 @@ class RegisterMappingUtility:
         JsonKeys.FAULT: "fault",
         JsonKeys.DISABLED: "disabled",
     }
+
+    #############################################################################
+    # AC COMPONENT MAPPING METHODS
+    #############################################################################
 
     @staticmethod
     def register_ac_line_mappings(
@@ -158,119 +167,6 @@ class RegisterMappingUtility:
             )
 
     @staticmethod
-    def register_dc_line_mappings(
-        n2k_devices: N2kDevices,
-        dc: DC,
-        mobile_key_prefix: str,
-        line: Optional[int] = None,
-    ):
-        """
-        Register standard DC line mobile channel mappings (voltage, current).
-
-        Args:
-            n2k_devices: The N2kDevices object to register the mappings with
-            dc: The DC configuration
-            mobile_key_prefix: The prefix to use for the mobile key (usually the thing's ID)
-            line: Optional line number, used in some components like chargers
-        """
-        # Check if the device exists
-        dc_meter_device = n2k_devices.devices.get(
-            f"{JsonKeys.DC}.{dc.instance.instance}"
-        )
-        if not dc_meter_device:
-            return
-
-        # Define the key prefix based on whether a line is provided
-        key_suffix = f".dc.{line}" if line is not None else ""
-
-        # Voltage
-        RegisterMappingUtility.register_simple_mapping(
-            n2k_devices,
-            mobile_key=f"{mobile_key_prefix}{key_suffix}.voltage",
-            device_key=f"{JsonKeys.DC}.{dc.instance.instance}",
-            channel_key="Voltage",
-            label="Voltage",
-        )
-
-        # Current
-        RegisterMappingUtility.register_simple_mapping(
-            n2k_devices,
-            mobile_key=f"{mobile_key_prefix}{key_suffix}.current",
-            device_key=f"{JsonKeys.DC}.{dc.instance.instance}",
-            channel_key="Current",
-            label="Current",
-        )
-
-    @staticmethod
-    def register_simple_mapping(
-        n2k_devices: N2kDevices,
-        mobile_key: str,
-        device_key: str,
-        channel_key: str,
-        label: str,
-    ):
-        """
-        Register a simple channel mapping that applies to both AC and DC channels.
-
-        Args:
-            n2k_devices: The N2kDevices object to register the mapping with
-            mobile_key: The mobile key for the mapping
-            device_key: The device key
-            channel_key: The channel key
-            label: The label for the channel source
-        """
-        mapping = MobileChannelMapping(
-            mobile_key=mobile_key,
-            channel_sources=[
-                ChannelSource(
-                    label=label,
-                    device_key=device_key,
-                    channel_key=channel_key,
-                )
-            ],
-            transform=lambda v, _: MappingUtils.get_value_or_default(v, label, None),
-        )
-        n2k_devices.add_mobile_channel_mapping(mapping)
-
-    @staticmethod
-    def register_enable_mapping(
-        n2k_devices: N2kDevices,
-        thing_id: str,
-        circuit_id: int,
-    ):
-        """
-        Register an enable/disable mapping for components that have enable controls.
-
-        Args:
-            n2k_devices: The N2kDevices object to register the mappings with
-            thing_id: The ID of the Thing
-            circuit_id: The ID of the circuit that controls enable/disable
-            device_key_prefix: The prefix for the device key (default: JsonKeys.CIRCUIT)
-            channel_key: The channel key to read (default: "Level")
-        """
-
-        def enable_transform(values: dict, last_updated: dict) -> Optional[bool]:
-            enable_value = MappingUtils.get_value_or_default(
-                values, "circuit_power", None
-            )
-            if enable_value is not None:
-                return enable_value > 0
-            return None
-
-        mapping = MobileChannelMapping(
-            mobile_key=f"{thing_id}.enabled",
-            channel_sources=[
-                ChannelSource(
-                    label="circuit_power",
-                    device_key=f"{JsonKeys.CIRCUIT}.{circuit_id}",
-                    channel_key="Level",
-                )
-            ],
-            transform=enable_transform,
-        )
-        n2k_devices.add_mobile_channel_mapping(mapping)
-
-    @staticmethod
     def register_ac_meter_component_status_mapping(
         n2k_devices: N2kDevices,
         mobile_key_prefix: str,
@@ -338,6 +234,7 @@ class RegisterMappingUtility:
         )
         n2k_devices.add_mobile_channel_mapping(mapping)
 
+    # TODO Fix BLS value for shorepower connected state, see what is reported from dbus server test with Krushit. Old logic may not apply
     @staticmethod
     def register_shorepower_connected_mappings(
         n2k_devices: N2kDevices,
@@ -548,6 +445,122 @@ class RegisterMappingUtility:
         # Add the final combined mapping
         n2k_devices.add_mobile_channel_mapping(connected_mapping)
 
+    #############################################################################
+    # DC COMPONENT MAPPING METHODS
+    #############################################################################
+
+    @staticmethod
+    def register_dc_line_mappings(
+        n2k_devices: N2kDevices,
+        dc: DC,
+        mobile_key_prefix: str,
+        line: Optional[int] = None,
+    ):
+        # Check if the device exists
+        dc_meter_device = n2k_devices.devices.get(
+            f"{JsonKeys.DC}.{dc.instance.instance}"
+        )
+        if not dc_meter_device:
+            return
+
+        # Define the key prefix based on whether a line is provided
+        key_suffix = f".dc.{line}" if line is not None else ""
+
+        # Voltage
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{mobile_key_prefix}{key_suffix}.voltage",
+            device_key=f"{JsonKeys.DC}.{dc.instance.instance}",
+            channel_key="Voltage",
+            label="Voltage",
+        )
+
+        # Current
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{mobile_key_prefix}{key_suffix}.current",
+            device_key=f"{JsonKeys.DC}.{dc.instance.instance}",
+            channel_key="Current",
+            label="Current",
+        )
+
+    #############################################################################
+    # CORE MAPPING UTILITIES
+    #############################################################################
+
+    @staticmethod
+    def register_simple_mapping(
+        n2k_devices: N2kDevices,
+        mobile_key: str,
+        device_key: str,
+        channel_key: str,
+        label: str,
+    ):
+        """
+        Register a simple channel mapping that applies to both AC and DC channels.
+
+        Args:
+            n2k_devices: The N2kDevices object to register the mapping with
+            mobile_key: The mobile key for the mapping
+            device_key: The device key
+            channel_key: The channel key
+            label: The label for the channel source
+        """
+        mapping = MobileChannelMapping(
+            mobile_key=mobile_key,
+            channel_sources=[
+                ChannelSource(
+                    label=label,
+                    device_key=device_key,
+                    channel_key=channel_key,
+                )
+            ],
+            transform=lambda v, _: MappingUtils.get_value_or_default(v, label, None),
+        )
+        n2k_devices.add_mobile_channel_mapping(mapping)
+
+    @staticmethod
+    def register_enable_mapping(
+        n2k_devices: N2kDevices,
+        thing_id: str,
+        circuit_id: int,
+    ):
+        """
+        Register an enable/disable mapping for components that have enable controls.
+
+        Args:
+            n2k_devices: The N2kDevices object to register the mappings with
+            thing_id: The ID of the Thing
+            circuit_id: The ID of the circuit that controls enable/disable
+            device_key_prefix: The prefix for the device key (default: JsonKeys.CIRCUIT)
+            channel_key: The channel key to read (default: "Level")
+        """
+
+        def enable_transform(values: dict, last_updated: dict) -> Optional[bool]:
+            enable_value = MappingUtils.get_value_or_default(
+                values, "circuit_power", None
+            )
+            if enable_value is not None:
+                return enable_value > 0
+            return None
+
+        mapping = MobileChannelMapping(
+            mobile_key=f"{thing_id}.enabled",
+            channel_sources=[
+                ChannelSource(
+                    label="circuit_power",
+                    device_key=f"{JsonKeys.CIRCUIT}.{circuit_id}",
+                    channel_key="Level",
+                )
+            ],
+            transform=enable_transform,
+        )
+        n2k_devices.add_mobile_channel_mapping(mapping)
+
+    #############################################################################
+    # LOCATION MAPPING METHODS
+    #############################################################################
+
     @staticmethod
     def register_location_mapping(
         n2k_devices: N2kDevices,
@@ -594,89 +607,9 @@ class RegisterMappingUtility:
         )
         n2k_devices.add_mobile_channel_mapping(mapping)
 
-    @staticmethod
-    def register_state_mapping(
-        n2k_devices: N2kDevices,
-        thing_id: str,
-        device_key: str,
-        channel_key: str,
-        mobile_key: str,
-        state_mapping: dict,
-        label: str = "state",
-    ):
-        """
-        Register a state mapping that transforms state values into user-friendly strings.
-
-        Args:
-            n2k_devices: The N2kDevices object to register the mappings with
-            thing_id: The ID of the Thing
-            device_key: The device key (e.g., JsonKeys.INVERTER_CHARGER.{instance})
-            channel_key: The channel key to read (e.g., "InverterState")
-            mobile_key: The suffix for the mobile key (e.g., "is" for inverter state)
-            state_mapping: Dictionary mapping state values to user-friendly strings
-            label: The label for the channel source
-        """
-
-        def state_transform(values: dict, last_updated: dict) -> Optional[str]:
-            state_value = MappingUtils.get_value_or_default(values, label, None)
-            if state_value is not None:
-                return state_mapping.get(state_value, "unknown")
-            return None
-
-        mapping = MobileChannelMapping(
-            mobile_key=f"{thing_id}.{mobile_key}",
-            channel_sources=[
-                ChannelSource(
-                    label=label,
-                    device_key=device_key,
-                    channel_key=channel_key,
-                )
-            ],
-            transform=state_transform,
-        )
-        n2k_devices.add_mobile_channel_mapping(mapping)
-
-    @staticmethod
-    def register_charger_state_mapping(
-        n2k_devices: N2kDevices, instance: int, thing_id: str
-    ):
-        """Register the state channel mapping"""
-
-        def map_charger_state(self, state: str) -> str:
-            """Map charger state values to mobile-friendly strings"""
-            return {
-                JsonKeys.ABSORPTION: "absorption",
-                JsonKeys.BULK: "bulk",
-                JsonKeys.CONSTANTVI: "constantVI",
-                JsonKeys.NOTCHARGING: "notCharging",
-                JsonKeys.EQUALIZE: "equalize",
-                JsonKeys.OVERCHARGE: "overcharge",
-                JsonKeys.FLOAT: "float",
-                JsonKeys.NOFLOAT: "noFloat",
-                JsonKeys.FAULT: "fault",
-                JsonKeys.DISABLED: "disabled",
-            }.get(state, "unknown")
-
-        def charger_state_transform(values: dict, last_updated: dict) -> Optional[str]:
-            charger_state_value = MappingUtils.get_value_or_default(
-                values, "charger_state", None
-            )
-            if charger_state_value is not None:
-                return map_charger_state(charger_state_value)
-            return None
-
-        mapping = MobileChannelMapping(
-            mobile_key=f"{thing_id}.cst",
-            channel_sources=[
-                ChannelSource(
-                    label="charger_state",
-                    device_key=f"{JsonKeys.INVERTER_CHARGER}.{instance}",
-                    channel_key="ChargerState",
-                )
-            ],
-            transform=charger_state_transform,
-        )
-        n2k_devices.add_mobile_channel_mapping(mapping)
+    #############################################################################
+    # CHARGER MAPPING METHODS
+    #############################################################################
 
     @staticmethod
     def register_charger_enable_mapping(
@@ -721,6 +654,111 @@ class RegisterMappingUtility:
                 )
             )
         n2k_devices.add_mobile_channel_mapping(mapping)
+
+    @staticmethod
+    def register_charger_state_mapping(
+        n2k_devices: N2kDevices, thing_id: str, instance: int
+    ):
+        """
+        Register a charger state mapping that transforms state values into user-friendly strings.
+
+        Args:
+            n2k_devices: The N2kDevices object to register the mappings with
+            thing_id: The ID of the Thing
+            instance: The instance ID of the charger
+            mobile_key: The suffix for the mobile key (default: "cst" for charger state)
+        """
+
+        def charger_state_transform(values: dict, last_updated: dict) -> Optional[str]:
+            state_value = MappingUtils.get_value_or_default(
+                values, "charger_state", None
+            )
+            if state_value is not None:
+                return RegisterMappingUtility.CHARGER_STATE_MAPPING.get(
+                    state_value, "unknown"
+                )
+            return None
+
+        mapping = MobileChannelMapping(
+            mobile_key=f"{thing_id}.cst",
+            channel_sources=[
+                ChannelSource(
+                    label="charger_state",
+                    device_key=f"{JsonKeys.INVERTER_CHARGER}.{instance}",
+                    channel_key="ChargerState",
+                )
+            ],
+            transform=charger_state_transform,
+        )
+        n2k_devices.add_mobile_channel_mapping(mapping)
+
+    def register_ac_meter_charger_state_mapping(
+        n2k_devices: N2kDevices,
+        thing_id: str,
+        ac_line1: AC,
+        ac_line2: AC,
+        ac_line3: AC,
+    ):
+
+        channel_sources = []
+
+        if ac_line1 is not None:
+            channel_sources.append(
+                ChannelSource(
+                    label="line1_connected",
+                    device_key=f"{JsonKeys.AC}.{ac_line1.instance.instance}",
+                    channel_key="line1.ComponentStatus",
+                )
+            )
+        if ac_line2 is not None:
+            channel_sources.append(
+                ChannelSource(
+                    label="line2_connected",
+                    device_key=f"{JsonKeys.AC}.{ac_line2.instance.instance}",
+                    channel_key="line2.ComponentStatus",
+                )
+            )
+        if ac_line3 is not None:
+            channel_sources.append(
+                ChannelSource(
+                    label="line3_connected",
+                    device_key=f"{JsonKeys.AC}.{ac_line3.instance.instance}",
+                    channel_key="line3.ComponentStatus",
+                )
+            )
+
+    def ac_meter_charger_state_transform(
+        values: dict, last_updated: dict
+    ) -> Optional[bool]:
+        # Check if any line is connected
+        line1_connected = MappingUtils.get_value_or_default(
+            values, "line1_connected", False
+        )
+        line2_connected = MappingUtils.get_value_or_default(
+            values, "line2_connected", False
+        )
+        line3_connected = MappingUtils.get_value_or_default(
+            values, "line3_connected", False
+        )
+
+        ac_lines_connected = line1_connected or line2_connected or line3_connected
+
+        if ac_lines_connected:
+            return "charging"
+        else:
+            return "disabled"
+
+    connected_mapping = MobileChannelMapping(
+        mobile_key=f"{thing_id}.cst",
+        channel_sources=channel_sources,
+        transform=ac_meter_charger_state_transform,
+    )
+
+    n2k_devices.add_mobile_channel_mapping(connected_mapping)
+
+    #############################################################################
+    # INVERTER MAPPING METHODS
+    #############################################################################
 
     @staticmethod
     def register_inverter_enable_mapping(
@@ -775,41 +813,11 @@ class RegisterMappingUtility:
             )
         n2k_devices.add_mobile_channel_mapping(mapping)
 
-    # Common state mappings for reuse
-    INVERTER_STATE_MAPPING = {
-        JsonKeys.INVERTING: "inverting",
-        JsonKeys.AC_PASSTHRU: "acPassthrough",
-        JsonKeys.LOAD_SENSE: "loadSense",
-        JsonKeys.FAULT: "fault",
-        JsonKeys.DISABLED: "disabled",
-        JsonKeys.CHARGING: "charging",
-        JsonKeys.ENERGY_SAVING: "energySaving",
-        JsonKeys.ENERGY_SAVING2: "energySaving",
-        JsonKeys.SUPPORTING: "supporting",
-        JsonKeys.SUPPORTING2: "supporting",
-        JsonKeys.ERROR: "error",
-        JsonKeys.DATA_NOT_AVAILABLE: "unknown",
-    }
-
-    CHARGER_STATE_MAPPING = {
-        JsonKeys.ABSORPTION: "absorption",
-        JsonKeys.BULK: "bulk",
-        JsonKeys.CONSTANTVI: "constantVI",
-        JsonKeys.NOTCHARGING: "notCharging",
-        JsonKeys.EQUALIZE: "equalize",
-        JsonKeys.OVERCHARGE: "overcharge",
-        JsonKeys.FLOAT: "float",
-        JsonKeys.NOFLOAT: "noFloat",
-        JsonKeys.FAULT: "fault",
-        JsonKeys.DISABLED: "disabled",
-    }
-
     @staticmethod
     def register_inverter_state_mapping(
         n2k_devices: N2kDevices,
         thing_id: str,
         instance: int,
-        mobile_key: str = "is",
     ):
         """
         Register an inverter state mapping that transforms state values into user-friendly strings.
@@ -832,7 +840,7 @@ class RegisterMappingUtility:
             return None
 
         mapping = MobileChannelMapping(
-            mobile_key=f"{thing_id}.{mobile_key}",
+            mobile_key=f"{thing_id}.is",
             channel_sources=[
                 ChannelSource(
                     label="inverter_state",
@@ -844,47 +852,7 @@ class RegisterMappingUtility:
         )
         n2k_devices.add_mobile_channel_mapping(mapping)
 
-    @staticmethod
-    def register_charger_state_mapping(
-        n2k_devices: N2kDevices,
-        thing_id: str,
-        instance: int,
-        mobile_key: str = "cst",
-    ):
-        """
-        Register a charger state mapping that transforms state values into user-friendly strings.
-
-        Args:
-            n2k_devices: The N2kDevices object to register the mappings with
-            thing_id: The ID of the Thing
-            instance: The instance ID of the charger
-            mobile_key: The suffix for the mobile key (default: "cst" for charger state)
-        """
-
-        def charger_state_transform(values: dict, last_updated: dict) -> Optional[str]:
-            state_value = MappingUtils.get_value_or_default(
-                values, "charger_state", None
-            )
-            if state_value is not None:
-                return RegisterMappingUtility.CHARGER_STATE_MAPPING.get(
-                    state_value, "unknown"
-                )
-            return None
-
-        mapping = MobileChannelMapping(
-            mobile_key=f"{thing_id}.{mobile_key}",
-            channel_sources=[
-                ChannelSource(
-                    label="charger_state",
-                    device_key=f"{JsonKeys.INVERTER_CHARGER}.{instance}",
-                    channel_key="ChargerState",
-                )
-            ],
-            transform=charger_state_transform,
-        )
-        n2k_devices.add_mobile_channel_mapping(mapping)
-
-    def register_ac_meter_inverter_connected(
+    def register_ac_meter_inverter_state_mapping(
         n2k_devices: N2kDevices,
         thing_id: str,
         ac_line1: Optional[AC],
@@ -947,3 +915,181 @@ class RegisterMappingUtility:
         )
 
         n2k_devices.add_mobile_channel_mapping(connected_mapping)
+
+    #############################################################################
+    # TANK MAPPING METHODS
+    #############################################################################
+
+    def register_tanks_mappings(n2k_devices: N2kDevices, thing_id: str, instance: int):
+        # Level Absolute
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.levelAbsolute",
+            device_key=f"{JsonKeys.TANK}.{instance}",
+            channel_key="LevelAbsolute",
+            label="LevelAbsolute",
+        )
+
+        # Level Percent
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.levelPercent",
+            device_key=f"{JsonKeys.TANK}.{instance}",
+            channel_key="LevelPercent",
+            label="LevelPercent",
+        )
+
+        # Component Status
+
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.cs",
+            device_key=f"{JsonKeys.TANK}.{instance}",
+            channel_key="ComponentStatus",
+            label="ComponentStatus",
+        )
+
+    #############################################################################
+    # CLIMATE MAPPING METHODS
+    #############################################################################
+
+    def register_climate_mappings(
+        n2k_devices: N2kDevices, thing_id: str, instance: int
+    ):
+        # Component Status
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.cs",
+            device_key=f"{JsonKeys.HVAC}.{instance}",
+            channel_key="ComponentStatus",
+            label="ComponentStatus",
+        )
+
+        # Mode
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.mode",
+            device_key=f"{JsonKeys.HVAC}.{instance}",
+            channel_key="Mode",
+            label="Mode",
+        )
+
+        # Set Point
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.sp",
+            device_key=f"{JsonKeys.HVAC}.{instance}",
+            channel_key="SetPoint",
+            label="SetPoint",
+        )
+        # Ambient Temperature
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.at",
+            device_key=f"{JsonKeys.HVAC}.{instance}",
+            channel_key="AmbientTemperature",
+            label="AmbientTemperature",
+        )
+
+        # Fan Speed
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.fs",
+            device_key=f"{JsonKeys.HVAC}.{instance}",
+            channel_key="FanSpeed",
+            label="FanSpeed",
+        )
+
+        # Fan Mode
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.fm",
+            device_key=f"{JsonKeys.HVAC}.{instance}",
+            channel_key="FanMode",
+            label="FanMode",
+        )
+
+    #############################################################################
+    # CIRCUIT MAPPING METHODS
+    #############################################################################
+
+    def register_circuit_mappings(
+        n2k_devices: N2kDevices, thing_id: str, instance: int
+    ):
+        # Current
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.c",
+            device_key=f"{JsonKeys.CIRCUIT}.{instance}",
+            channel_key="Current",
+            label="Current",
+        )
+
+        # Component Status
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.cs",
+            device_key=f"{JsonKeys.CIRCUIT}.{instance}",
+            channel_key="ComponentStatus",
+            label="ComponentStatus",
+        )
+
+    # TODO fix the bls value determination logic. I think there is some other mapping I am missing
+    def register_circuit_power_mapping(
+        n2k_devices: N2kDevices,
+        thing_id: str,
+        instance: int,
+        bls: BinaryLogicState,
+    ):
+        def power_transform(values: dict, last_updated: dict) -> Optional[bool]:
+            level_value = MappingUtils.get_value_or_default(
+                values, "circuit_level", None
+            )
+
+            bls_power_state = MappingUtils.get_value_or_default(
+                values, "bls_power_state", None
+            )
+
+            bls_timestamp = last_updated.get("bls_power_state", 0)
+
+            level_timestamp = last_updated.get("circuit_level", 0)
+            if level_timestamp > bls_timestamp:
+                return level_value > 0
+            else:
+                return bls_power_state > 0
+
+        channel_sources = []
+        if bls is not None:
+            # Add BLS state source
+            channel_sources.append(
+                ChannelSource(
+                    label="bls_power_state",
+                    device_key=f"{JsonKeys.BINARY_LOGIC_STATE}.{bls.address}",
+                    channel_key="State",
+                )
+            )
+        channel_sources.append(
+            ChannelSource(
+                label="circuit_power",
+                device_key=f"{JsonKeys.CIRCUIT}.{instance}",
+                channel_key="Level",
+            )
+        )
+
+        mapping = MobileChannelMapping(
+            mobile_key=f"{thing_id}.p",
+            channel_sources=channel_sources,
+            transform=power_transform,
+        )
+        n2k_devices.add_mobile_channel_mapping(mapping)
+
+    def register_circuit_level_mapping(
+        n2k_devices: N2kDevices, thing_id: str, instance: int
+    ):
+        RegisterMappingUtility.register_simple_mapping(
+            n2k_devices,
+            mobile_key=f"{thing_id}.lvl",
+            device_key=f"{JsonKeys.CIRCUIT}.{instance}",
+            channel_key="Level",
+            label="Level",
+        )

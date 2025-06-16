@@ -1,14 +1,19 @@
+from N2KClient.models.devices import N2kDevices
 from .thing import Thing
 from ..common_enums import ChannelType, ThingType, Unit
 from ..constants import Constants
 from .channel import Channel
 from N2KClient.models.n2k_configuration.hvac import HVACDevice
+from N2KClient.models.empower_system.mapping_utility import (
+    RegisterMappingUtility,
+)
 
 
 class Climate(Thing):
     def __init__(
         self,
         hvac: HVACDevice,
+        n2k_devices: N2kDevices,
         categories: list[str] = [],
     ):
         Thing.__init__(
@@ -78,3 +83,9 @@ class Climate(Thing):
         )
         for channel in channels:
             self._define_channel(channel)
+
+        RegisterMappingUtility.register_climate_mappings(
+            n2k_devices=n2k_devices,
+            thing_id=self.id,
+            instance=hvac.instance.instance,
+        )

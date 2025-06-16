@@ -241,12 +241,45 @@ class ACMeterCharger(ACMeterThingBase):
         ac_line1: AC,
         ac_line2: AC,
         ac_line3: AC,
+        n2k_devices: N2kDevices,
         categories: list[str],
         circuit: Optional[Circuit] = None,
     ):
-        if circuit is not None:
-            self.charger_circuit = circuit.control_id
-
+        channels = []
         ACMeterThingBase.__init__(
             self, ThingType.CHARGER, ac_line1, ac_line2, ac_line3, categories
         )
+        channels.append(
+            Channel(
+                id="ce",
+                name="Charger Enabled",
+                read_only=(circuit.switch_type == 0 if circuit is not None else True),
+                type=ChannelType.NUMBER,
+                unit=Unit.NONE,
+                tags=[f"{Constants.empower}:{Constants.charger}.{Constants.enabled}"],
+            )
+        )
+        RegisterMappingUtility.register_charger_enable_mapping(
+            n2k_devices, ac_line1.instance.instance, circuit.control_id
+        )
+
+        channels.append(
+            Channel(
+                id="cst",
+                name="Charger Status",
+                read_only=True,
+                type=ChannelType.STRING,
+                unit=Unit.NONE,
+                tags=[f"{Constants.empower}:{Constants.charger}.{Constants.status}"],
+            )
+        )
+        RegisterMappingUtility.register_ac_meter_charger_state_mapping(
+            n2k_devices=n2k_devices,
+            thing_id=ac_line1.instance.instance,
+            ac_line1=ac_line1,
+            ac_line2=ac_line2,
+            ac_line3=ac_line3,
+        )
+
+        for channel in channels:
+            self._define_channel(channel)
