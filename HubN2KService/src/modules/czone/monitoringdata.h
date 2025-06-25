@@ -4,7 +4,331 @@
 #include <string>
 #include <unordered_map>
 
+#include "modules/czone/configdata.h"
+
 namespace N2KMonitoring {
+
+class ValueSystemOnState {
+public:
+  enum eSystemOnState : int { StateOff = 0, StateOn = 1, StateOnTimer = 2 };
+  bool Valid;
+  eSystemOnState Value;
+};
+
+class ValueU32 {
+public:
+  bool Valid;
+  uint32_t Value;
+};
+
+class ValueS32 {
+public:
+  bool Valid;
+  int32_t Value;
+};
+
+class ValueF {
+public:
+  bool Valid;
+  float Value;
+};
+
+class ValueBool {
+public:
+  bool Valid;
+  bool Value;
+};
+
+class ValueDouble {
+public:
+  bool Valid;
+  double Value;
+};
+
+class ValueTankType {
+public:
+  bool Valid;
+  MonitoringType::eTankType Value;
+};
+
+class ValueFaultState {
+public:
+  enum eFaultState {
+    None = 0,
+    ConfigurationConflict = 1,
+    DipswitchConflict = 2,
+    EepromFailure = 3,
+    NoCZoneNetwork = 4,
+    LowRunCurrent = 5,
+    OverCurrent = 6,
+    ShortCircuit = 7,
+    MissingCommander = 8,
+    MissingModeCommander = 9,
+    ReverseCurrent = 10,
+    CurrentCalibration = 11,
+  };
+
+  bool Valid;
+  eFaultState Value;
+};
+
+class ValueSourceAvailable {
+public:
+  enum eSourceAvailable : int {
+    SourceInvalid = 0,
+    SourceUnAvailable = 1,
+    SourceAvailable = 2,
+  };
+
+  bool Valid;
+  eSourceAvailable Value;
+};
+
+class ValueEngineState {
+public:
+  enum eEngineState {
+    Dead = 0,
+    Stall = 1,
+    Crank = 2,
+    Run = 3,
+    PowerOff = 4,
+  };
+
+  enum EngineInstance {
+    StarboardEngine = 0,
+    Port = 1,
+    StarboardInnerEngine = 2,
+    PortInnerEngine = 3,
+    EngineCount = 4,
+  };
+
+  bool Valid;
+  eEngineState Value;
+};
+
+class ValueHVACOperatingMode {
+public:
+  enum eHVACOperatingMode {
+    NoChange = 0,
+    Off = 1,
+    Moisture = 2,
+    Auto = 3,
+    Heat = 4,
+    Cool = 5,
+    AutoAux = 6,
+    Aux = 7,
+    FanOnly = 8,
+    Pet = 10,
+  };
+
+  bool Valid;
+  eHVACOperatingMode Value;
+};
+
+class ValueAwningState {
+public:
+  enum eAwningState {
+    AwningNoPower = 0,
+    AwningParked = 1,
+    AwningTiltedLeft = 2,
+    AwningTiltedLeftRight = 3,
+    AwningTiltedRight = 4,
+    AwningOpenUnknown = 5,
+    AwningOpenFull = 6,
+    AwningMoving = 7,
+  };
+
+  bool Valid;
+  eAwningState Value;
+};
+
+class ValueGeneratorState {
+public:
+  enum eGeneratorState {
+    GeneratorOff = 0,
+    GeneratorOn = 1,
+    GeneratorUnknown = 2,
+  };
+
+  bool Valid;
+  eGeneratorState Value;
+};
+
+class ValueInverterChargerEnabled {
+public:
+  enum eInverterChargerEnabled {
+    Off = 0,
+    On = 1,
+    Error = 2,
+    Unavailable = 3,
+  };
+
+  bool Valid;
+  eInverterChargerEnabled Value;
+};
+
+class ValueInverterState {
+public:
+  enum eInverterState {
+    Inverting = 0,
+    ACPassthru = 1,
+    LoadSense = 2,
+    Fault = 3,
+    Disabled = 4,
+    Charging = 5,
+    EnergySaving = 6,
+    Supporting = 7,
+    EnergySaving2 = 12,
+    Supporting2 = 13,
+    Error = 14,
+    DataNotAvailable = 15,
+  };
+
+  bool Valid;
+  eInverterState Value;
+};
+
+class ValueChargerState {
+public:
+  enum eChargerState {
+    NotCharging = 0,
+    Bulk = 1,
+    Absorption = 2,
+    Overcharge = 3,
+    Equalize = 4,
+    Float = 5,
+    NoFloat = 6,
+    ConstantVI = 7,
+    Disabled = 8,
+    Fault = 9,
+  };
+
+  bool Valid;
+  eChargerState Value;
+};
+
+class ValueTyreStatus {
+public:
+  enum eTyreStatus {
+    Ok = 0,
+    Leak = 1,
+    Error = 2,
+  };
+
+  bool Valid;
+  eTyreStatus Value;
+};
+
+class ValueTyreLimitStatus {
+public:
+  enum eTyreLimitStatus {
+    ExtremeOverPressure = 0,
+    OverPressure = 1,
+    NoAlarm = 2,
+    LowPressure = 3,
+    ExtremeLowPressure = 4,
+    NA = 5,
+    Error = 6,
+  };
+
+  bool Valid;
+  eTyreLimitStatus Value;
+};
+
+class ValueAudioStatus {
+public:
+  enum eAudioStatus {
+    AudioStatusInitialising = 0,
+    AudioStatusReady = 1,
+    AudioStatusUnknown = 2,
+  };
+
+  bool Valid;
+  eAudioStatus Value;
+};
+
+class ValueAudioSource {
+public:
+  enum eAudioSource {
+    VesselAlarm = 0,
+    AM = 1,
+    FM = 2,
+    Weather = 3,
+    DAB = 4,
+    AUX = 5,
+    USB = 6,
+    CD = 7,
+    MP3 = 8,
+    AppleiOS = 9,
+    Android = 10,
+    Bluetooth = 11,
+    SiriusXM = 12,
+    Pandora = 13,
+    Spotify = 14,
+    Slacker = 15,
+    Songza = 16,
+    AppleRadio = 17,
+    LastFM = 18,
+    Ethernet = 19,
+    VideoMP4 = 20,
+    VideoDVD = 21,
+    VideoBlueRay = 22,
+    HDMI = 23,
+    Video = 24,
+    NoSource = 25,
+  };
+
+  bool Valid;
+  eAudioSource Value;
+};
+
+class ValueContactorOnState {
+public:
+  enum eContactorOnState {
+    ContactorOff = 0x0,
+    ContactorOn = 0x01,
+    ContactorAvailable = 0x02,
+    ContactorUnAvailable = 0x04,
+    ContactorFault = 0x08,
+    ContactorOverride = 0x10,
+    ContactorStarting = 0x20,
+  };
+
+  bool Valid;
+  eContactorOnState Value;
+};
+
+class ValueGNSSMethod {
+public:
+  enum eGNSSMethod {
+    NoFix = 0,
+    StandardFix = 1,
+    DifferentialFix = 2,
+    PreciseFix = 3,
+    RtkInt = 4,
+    RtkFloat = 5,
+    Estimated = 6,
+    Manual = 7,
+    Simulator = 8,
+    Error = 14,
+    Null = 15,
+  };
+
+  bool Valid;
+  eGNSSMethod Value;
+};
+
+class ValueGNSSFixType {
+public:
+  enum eGNSSFixType {
+    FixNA = 0,
+    Fix2D = 2,
+    Fix3D = 3,
+  };
+
+  bool Valid;
+  eGNSSFixType Value;
+};
 
 class Circuit;
 class Tank;
@@ -24,33 +348,299 @@ class GNSS;
 class MonitoringKeyValue;
 class BinaryLogicState;
 class NetworkStatus;
+class SnapshotInstanceIdMap;
+class ACLine;
 
 class SnapshotInstanceIdMap {
 public:
   SnapshotInstanceIdMap() = default;
   ~SnapshotInstanceIdMap() = default;
 
-private:
-  std::unordered_map<int, std::shared_ptr<Circuit>> m_circuits;
-  std::unordered_map<int, std::shared_ptr<Circuit>> m_modes;
-  std::unordered_map<int, std::shared_ptr<Tank>> m_tanks;
-  std::unordered_map<int, std::shared_ptr<Engine>> m_engines;
-  std::unordered_map<int, std::shared_ptr<AC>> m_ac;
-  std::unordered_map<int, std::shared_ptr<DC>> m_dc;
-  std::unordered_map<int, std::shared_ptr<Temperature>> m_temperatures;
-  std::unordered_map<int, std::shared_ptr<Pressure>> m_pressures;
-  std::unordered_map<int, std::shared_ptr<HVAC>> m_hvacs;
-  std::unordered_map<int, std::shared_ptr<ZipdeeAwning>> m_awnings;
-  std::unordered_map<int, std::shared_ptr<ThirdPartyGenerator>> m_thirdPartyGenerators;
-  std::unordered_map<int, std::shared_ptr<InverterCharger>> m_inverterChargers;
-  std::unordered_map<int, std::shared_ptr<TyrePressure>> m_tyrepressures;
-  std::unordered_map<int, std::shared_ptr<AudioStereo>> m_audioStereos;
-  std::unordered_map<int, std::shared_ptr<ACMainContactor>> m_acMainContactors;
-  std::unordered_map<int, std::shared_ptr<GNSS>> m_gnss;
-  std::unordered_map<int, std::shared_ptr<MonitoringKeyValue>> m_monitoringKeyValue;
-  std::unordered_map<int, std::shared_ptr<BinaryLogicState>> m_binaryLogicState;
-  std::shared_ptr<NetworkStatus> m_networkStatus;
-  std::string m_timeStamp;
+  std::unordered_map<uint32_t, std::shared_ptr<Circuit>> m_Circuits;
+  std::unordered_map<uint32_t, std::shared_ptr<Circuit>> m_Modes;
+  std::unordered_map<uint32_t, std::shared_ptr<Tank>> m_Tanks;
+  std::unordered_map<uint32_t, std::shared_ptr<Engine>> m_Engines;
+  std::unordered_map<uint32_t, std::shared_ptr<AC>> m_AC;
+  std::unordered_map<uint32_t, std::shared_ptr<DC>> m_DC;
+  std::unordered_map<uint32_t, std::shared_ptr<Temperature>> m_Temperatures;
+  std::unordered_map<uint32_t, std::shared_ptr<Pressure>> m_Pressures;
+  std::unordered_map<uint32_t, std::shared_ptr<HVAC>> m_Hvacs;
+  std::unordered_map<uint32_t, std::shared_ptr<ZipdeeAwning>> m_Awnings;
+  std::unordered_map<uint32_t, std::shared_ptr<ThirdPartyGenerator>> m_ThirdPartyGenerators;
+  std::unordered_map<uint32_t, std::shared_ptr<InverterCharger>> m_InverterChargers;
+  std::unordered_map<uint32_t, std::shared_ptr<TyrePressure>> m_Tyrepressures;
+  std::unordered_map<uint32_t, std::shared_ptr<AudioStereo>> m_AudioStereos;
+  std::unordered_map<uint32_t, std::shared_ptr<ACMainContactor>> m_ACMainContactors;
+  std::unordered_map<uint32_t, std::shared_ptr<GNSS>> m_GNSS;
+  std::unordered_map<uint32_t, std::shared_ptr<MonitoringKeyValue>> m_MonitoringKeyValue;
+  std::unordered_map<uint32_t, std::shared_ptr<BinaryLogicState>> m_BinaryLogicState;
+  std::shared_ptr<NetworkStatus> m_NetworkStatus;
+  std::string m_TimeStamp;
+};
+
+class Circuit {
+public:
+  int Id;
+  ValueSystemOnState SystemsOn;
+  ValueU32 Level;
+  ValueF Current;
+  ValueFaultState Fault;
+  ValueU32 OnCount;
+  ValueU32 OnTime;
+  ValueU32 SequentialState;
+  ValueU32 ModesSystemOn;
+  ValueSourceAvailable ACSourceAvailable;
+  ValueBool IsOffline;
+};
+
+class Tank {
+public:
+  uint32_t Instance;
+  ValueU32 LevelPercent;
+  ValueU32 Level;
+  ValueU32 Capacity;
+  ValueTankType TankType;
+};
+
+class Engine {
+public:
+  uint32_t Instance;
+  ValueU32 Speed; // SC <unit: RPM, gain: 1> --> DP <unit: RPM, gain: 1> i.e. value: 1000 means 1000RPM * 1 = 1000RPM
+  ValueF BoostPressure;  // SC <unit: kPa, gain: 0.01> --> DP <unit: kPa, gain: 0.01> i.e. value: 8836 means 8836 * 0.01
+                         // = 88.36kPa = 12.82PSI
+  ValueS32 Trim;         // Not implemented
+  ValueU32 OilPressure;  // SC <unit: kPa, gain: 0.01> --> DP <unit: kPa, gain: 0.01> i.e. value: 34172 means 34712 *
+                         // 0.01 = 341.72kPa = 49.56PSI
+  ValueF OilTemperature; // SC <unit:degrees C, gain: 1> --> DP <unit:degrees C, gain: 1> i.e. value:100 means 100
+                         // degress C = 212 degress F
+  ValueF Temperature;    // SC <unit:degrees C, gain: 1> --> DP <unit:degrees C, gain: 1> (Sea water temperature) i.e.
+                         // value:-50 means -50 degress C
+  ValueF AlternatorPotential; // SC <unit: volts, gain: 0.001> --> DP <unit: volts, gain: 0.001> i.e. value: 13461 means
+                              // 13461 * 0.001 = 13.461V
+  ValueF FuelRate;            // Not implemented
+  ValueU32 TotalEngineHours;  // SC <unit: minutes, gain: 1> --> DP <unit: minutes, gain: 1> i.e. value: 586828 means
+                              // 586828 minutes = 9780 hours
+  ValueF CoolantPressure;     // SC <unit: kPa, gain: 0.01> --> DP <unit: kPa, gain: 0.01> i.e. value: 8836 means 8836 *
+                              // 0.01 = 88.36kPa = 12.82PSI
+  ValueF CoolantTemperature;  // SC <unit:degrees C, gain: 1> --> DP <unit:degrees C, gain: 1> i.e. value:63 means 63
+                              // degress C
+  ValueF FuelPressure;        // Not implemented
+  ValueU32 DiscreteStatus1;   // Not implemented
+  ValueU32 DiscreteStatus2;   // Not implemented
+  ValueS32 PercentEngineLoad; // Not implemented
+  ValueS32 PercentEngineTorque; // Not implemented
+  ValueEngineState EngineState; // SC <unit:enum 0-5, gain: 1> --> DP <unit:enum eEngineState>
+  ValueU32 ActiveEnginesId;
+
+  enum DiscreteStatus1Mask {
+    None1 = 0,
+    CheckEngine = 1,
+    OverTemperature = 2,
+    LowOilPressure = 4,
+    LowOilLevel = 8,
+    LowFuelPressure = 16,
+    LowSystemVoltage = 32,
+    LowCoolantLevel = 64,
+    WaterFlow = 128,
+    WaterInFuel = 256,
+    ChargeIndicator = 512,
+    PreheatIndicator = 1024,
+    HighBoostPressure = 2048,
+    RevLimitExceeded = 4096,
+    EGRSystem = 8192,
+    ThrottlePositionSensor = 16384,
+    EngineEmergencyStopMode = 32768,
+  };
+};
+
+class AC {
+public:
+  uint32_t Instance;
+  std::unordered_map<uint32_t, ACLine> AClines;
+};
+
+class ACLine {
+public:
+  uint32_t Instance;
+  MeteringDevice::eACLine Line;
+  ValueF Voltage;
+  ValueF Current;
+  ValueF Frequency;
+  ValueF Power;
+};
+
+class DC {
+public:
+  uint32_t Instance;
+  ValueF Voltage;
+  ValueF Current;
+  ValueF Temperature;
+  ValueS32 StateOfCharge;
+  ValueF CapacityRemaining;
+  ValueU32 TimeRemaining; // minutes, current <= 0.0A
+  ValueU32 TimeToCharge;  // minutes, current > 0.0A
+  ValueU32 TimeRemainingOrToCharge;
+};
+
+class Temperature {
+public:
+  uint32_t Instance;
+  ValueF Temperature;
+};
+
+class Pressure {
+public:
+  uint32_t Instance;
+  ValueF Pressure;
+};
+
+class HVAC {
+public:
+  uint32_t Instance = 1;
+  ValueHVACOperatingMode OperationMode;
+  ValueU32 FanMode;                 // tbc
+  ValueU32 FanSpeed;                // Values from 1 to 125 = 1% to 125%. Auto 126
+  ValueF EnvironmentSetTemperature; // Celcius
+  ValueF EnvironmentTemperature;    // Celcius
+};
+
+class ZipdeeAwning {
+public:
+  uint32_t Instance;
+  ValueAwningState State;
+};
+
+class ThirdPartyGenerator {
+public:
+  uint32_t Instance;
+  ValueU32 OnTime; // seconds
+  ValueGeneratorState Status;
+};
+
+class InverterCharger {
+public:
+  uint32_t Instance; // Note in InverterInstance << 8 | ChargerInstance
+  ValueU32 InverterInstance;
+  ValueU32 ChargerInstance;
+  ValueInverterChargerEnabled InverterEnable;
+  ValueInverterState InverterState;
+  ValueInverterChargerEnabled ChargerEnable;
+  ValueChargerState ChargerState;
+};
+
+class TyrePressure {
+public:
+  uint32_t Instance;
+  ValueF Pressure;
+  ValueF Temperature;
+  ValueTyreStatus Status;
+  ValueTyreLimitStatus LimitStatus;
+};
+
+class AudioStereo {
+public:
+  uint32_t Instance;
+  ValueBool Power;
+  ValueBool Mute;
+  ValueAudioStatus AudioStatus;
+  ValueAudioSource SourceMode;
+  ValueU32 Volume;
+};
+
+class ACMainContactor {
+public:
+  uint32_t SystemStateId;
+  ValueContactorOnState ACContactorSystemsState;
+  ValueBool ACContactorSourceAvailable;
+  ValueBool ReversePolarity;
+  ValueBool ACContactorAutoChangeOver;
+  ValueBool ManualOverride;
+};
+
+class GNSS {
+public:
+  uint32_t Instance;
+  ValueF Latitude;          // Radians, +/- North/South
+  ValueF Longitude;         // Radians, +/- East/West
+  ValueF Cog;               // Radians, True
+  ValueF Sog;               // m/s
+  ValueF MagneticVariation; // Radians
+  std::string UTCDateTime;  // ISO 8601 - YYYY-MM-DDThh:mm:ss.s
+  ValueU32 TimeOffset;      // Offset minutes
+  ValueU32 SatellitesInFix;
+  ValueS32 BestOfFourSatellitesSNR; // dB
+  ValueGNSSMethod Method;
+  ValueGNSSFixType FixType;
+  ValueF Hdop;              // unitless, lower is better
+  ValueF Pdop;              // unitless, lower is better
+  ValueF Vdop;              // unitless, lower is better
+  ValueDouble LatitudeDeg;  // Degrees
+  ValueDouble LongitudeDeg; // Degrees
+};
+
+class MonitoringKeyValue {
+public:
+  bool Valid;
+  float Value;
+  bool LimitValid;
+  float Min;
+  float Max;
+  float WarnLow;
+  float WarnHigh;
+};
+
+class BinaryLogicState {
+public:
+  uint32_t Dipswitch;
+  uint32_t Instance;
+  ValueU32 States;
+};
+
+class NetworkStatus {
+public:
+  std::string EthernetStatus;
+  bool EthernetInternetConnectivity;
+  std::string EthernetIp;
+  std::string EthernetId;
+  std::string WifiStatus;
+  bool WifiInternetConnectivity;
+  std::string WifiIp;
+  std::string WifiSsid;
+  std::string WifiSecurity;
+  std::string WifiType;
+  int32_t WifiChannel;
+  int32_t WifiSignalStrengthDbm;
+  std::string HotspotStatus;
+  std::string HotspotIp;
+  std::string HotspotSsid;
+  std::string HotspotPassword;
+  std::string HotspotSecurity;
+  std::string HotspotType;
+  int32_t HotspotChannel;
+  std::string CellularStatus;
+  bool CelllularInternetConnectivity;
+  std::string CellularIp;
+  std::string CellularOperator;
+  std::string CellularType;
+  int32_t CellularSignalStrengthDbm;
+  std::string CellularSimIccid;
+  std::string CellularSimEid;
+  std::string CellularSimImsi;
+};
+
+class HealthStatus {
+  enum eHealth {
+    HealthOk = 0x0,
+    HealthBad = 0x02,
+    HealthNone = 0x03,
+  };
+
+  eHealth ServiceThread;
+  eHealth NetworkThread;
+  eHealth SCThread;
+  eHealth GNSSThread;
+  eHealth GNSSLatLon;
+  eHealth GNSSFix;
 };
 
 }; // namespace N2KMonitoring

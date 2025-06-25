@@ -32,6 +32,8 @@ endif()
 
 # Include the CZoneLib dependency
 include(./cmake/czonelib.cmake)
+include(./cmake/versioning.cmake)
+
 
 pkg_check_modules(SDBUSCPP REQUIRED sdbus-c++)
 if(SDBUSCPP_FOUND)
@@ -53,13 +55,13 @@ set(SOURCES
     src/modules/czone/monitoringdata.cpp
     src/modules/dbus/dbusservice.cpp
     src/modules/n2k/canservice.cpp
-    src/utils/logger.cpp
     src/utils/fileutil.cpp
+    src/utils/logger.cpp
     src/main.cpp
 )
 
 # Add the executable
-add_executable(${APPLICATION_NAME} ${SOURCES})
+add_executable(${APPLICATION_NAME} ${SOURCES} ${${APP_NAME}_VERSION_SOURCE})
 
 # Link libraries
 target_link_libraries(${APPLICATION_NAME}
@@ -82,7 +84,14 @@ set_target_properties(${APPLICATION_NAME}
   CXX_STANDARD 20
   CXX_STANDARD_REQUIRED ON
   CXX_EXTENSIONS OFF
+  VERSION ${${APP_NAME}_VERSION}
 )
 
 # Install the executable
 install(TARGETS ${APPLICATION_NAME} DESTINATION bin)
+
+# Print build info
+message(STATUS "========= Build Configuration =========")
+message(STATUS "APP: ${APPLICATION_NAME}")
+message(STATUS "Version: ${${APP_NAME}_VERSION}")
+message(STATUS "=======================================")
