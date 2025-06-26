@@ -1,6 +1,6 @@
 #include "core/coremanager.h"
-#include "modules/czone/czoneinterface.h"
 #include "modules/czone/czonedatabase.h"
+#include "modules/czone/czoneinterface.h"
 #include "utils/common.h"
 #include "utils/logger.h"
 
@@ -70,7 +70,7 @@ void CoreManager::start() {
   // can init
   BOOST_LOG_TRIVIAL(debug) << "CoreManager::start: Initializing";
   auto czoneInterface = std::make_shared<CzoneInterface>(czonesettings, m_canService.getCanServiceMutex());
-  auto czoneData = std::make_shared<CZoneDb>(m_canService);
+  auto czoneData = std::make_shared<CzoneDatabase>(m_canService);
 
   BOOST_LOG_TRIVIAL(debug) << "CoreManager::start: Interface intializing.";
   czoneInterface->init(stored_dipswitch, uniqueId);

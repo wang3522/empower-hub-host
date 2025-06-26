@@ -1,6 +1,6 @@
 #include "modules/czone/czonedatabase.h"
 
-CZoneDb::CZoneDb(CanService &canService) : m_canService(canService) {
+CzoneDatabase::CzoneDatabase(CanService &canService) : m_canService(canService) {
   m_UnitConversion.SetDefaults();
 
   m_UnitConversion.SetUnits(eUnitType_BoatSpeed, tSpeedConversions::MetersPerSecond);
@@ -17,13 +17,13 @@ CZoneDb::CZoneDb(CanService &canService) : m_canService(canService) {
   m_UnitConversion.SetUnits(eUnitType_EngineHours, tEngineHoursConversions::EngineHoursInMinutes);
 }
 
-CZoneDb::~CZoneDb() {}
+CzoneDatabase::~CzoneDatabase() {}
 
-void CZoneDb::LoadDatabase() { Clear(); }
+void CzoneDatabase::LoadDatabase() { Clear(); }
 
-void CZoneDb::Clear() { m_DataTypeIndex.clear(); }
+void CzoneDatabase::Clear() { m_DataTypeIndex.clear(); }
 
-void CZoneDb::Update(N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot) {
+void CzoneDatabase::Update(N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot) {
   m_Snapshot.Clear();
   m_SnapshotKeyValue.Clear();
   UpdateMonitoringCircuits(m_Snapshot, lastSnapshot);

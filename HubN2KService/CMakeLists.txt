@@ -44,12 +44,13 @@ else()
 endif()
 
 
-include_directories(src)
+include_directories(src ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 # Source files
 set(SOURCES
     src/core/coremanager.cpp
     src/modules/czone/configdata.cpp
+    src/modules/czone/czonedatabase.cpp
     src/modules/czone/czoneinterface.cpp
     src/modules/czone/czonesettings.cpp
     src/modules/czone/monitoringdata.cpp

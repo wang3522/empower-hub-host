@@ -30,10 +30,10 @@ struct MonitoringValue {
   float WarnHigh;
 };
 
-class CZoneDb final {
+class CzoneDatabase final {
 public:
-  CZoneDb(CanService &m_canService);
-  ~CZoneDb();
+  CzoneDatabase(CanService &canService);
+  ~CzoneDatabase();
 
   void LoadDatabase();
   void Update(N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);

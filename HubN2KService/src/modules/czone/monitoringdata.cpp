@@ -54,3 +54,5 @@ void N2KMonitoring::NetworkStatus::clear() {
   CellularSimEid = "";
   CellularSimImsi = "";
 }
+
+void N2KMonitoring::MonitoringKeyValueMap::Clear() { KeyValueMap.clear(); }
