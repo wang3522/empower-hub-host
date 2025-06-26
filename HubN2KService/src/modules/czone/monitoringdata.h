@@ -8,341 +8,249 @@
 
 namespace N2KMonitoring {
 
-class ValueSystemOnState {
-public:
-  enum eSystemOnState { StateOff = 0, StateOn = 1, StateOnTimer = 2 };
-  bool Valid;
-  eSystemOnState Value;
+enum class eSystemOnState { StateOff = 0, StateOn = 1, StateOnTimer = 2 };
+enum eFaultState {
+  None = 0,
+  ConfigurationConflict = 1,
+  DipswitchConflict = 2,
+  EepromFailure = 3,
+  NoCZoneNetwork = 4,
+  LowRunCurrent = 5,
+  OverCurrent = 6,
+  ShortCircuit = 7,
+  MissingCommander = 8,
+  MissingModeCommander = 9,
+  ReverseCurrent = 10,
+  CurrentCalibration = 11,
+};
+enum class eSourceAvailable {
+  SourceInvalid = 0,
+  SourceUnAvailable = 1,
+  SourceAvailable = 2,
+};
+enum eEngineState {
+  Dead = 0,
+  Stall = 1,
+  Crank = 2,
+  Run = 3,
+  PowerOff = 4,
+};
+enum EngineInstance {
+  StarboardEngine = 0,
+  Port = 1,
+  StarboardInnerEngine = 2,
+  PortInnerEngine = 3,
+  EngineCount = 4,
+};
+enum eHVACOperatingMode {
+  NoChange = 0,
+  Off = 1,
+  Moisture = 2,
+  Auto = 3,
+  Heat = 4,
+  Cool = 5,
+  AutoAux = 6,
+  Aux = 7,
+  FanOnly = 8,
+  Pet = 10,
+};
+enum eAwningState {
+  AwningNoPower = 0,
+  AwningParked = 1,
+  AwningTiltedLeft = 2,
+  AwningTiltedLeftRight = 3,
+  AwningTiltedRight = 4,
+  AwningOpenUnknown = 5,
+  AwningOpenFull = 6,
+  AwningMoving = 7,
+};
+enum eGeneratorState {
+  GeneratorOff = 0,
+  GeneratorOn = 1,
+  GeneratorUnknown = 2,
+};
+enum eInverterChargerEnabled {
+  Off = 0,
+  On = 1,
+  Error = 2,
+  Unavailable = 3,
+};
+enum eInverterState {
+  Inverting = 0,
+  ACPassthru = 1,
+  LoadSense = 2,
+  Fault = 3,
+  Disabled = 4,
+  Charging = 5,
+  EnergySaving = 6,
+  Supporting = 7,
+  EnergySaving2 = 12,
+  Supporting2 = 13,
+  Error = 14,
+  DataNotAvailable = 15,
+};
+enum eChargerState {
+  NotCharging = 0,
+  Bulk = 1,
+  Absorption = 2,
+  Overcharge = 3,
+  Equalize = 4,
+  Float = 5,
+  NoFloat = 6,
+  ConstantVI = 7,
+  Disabled = 8,
+  Fault = 9,
+};
+enum eTyreStatus {
+  Ok = 0,
+  Leak = 1,
+  Error = 2,
+};
+enum eTyreLimitStatus {
+  ExtremeOverPressure = 0,
+  OverPressure = 1,
+  NoAlarm = 2,
+  LowPressure = 3,
+  ExtremeLowPressure = 4,
+  NA = 5,
+  Error = 6,
+};
+enum eAudioStatus {
+  AudioStatusInitialising = 0,
+  AudioStatusReady = 1,
+  AudioStatusUnknown = 2,
+};
+enum eAudioSource {
+  VesselAlarm = 0,
+  AM = 1,
+  FM = 2,
+  Weather = 3,
+  DAB = 4,
+  AUX = 5,
+  USB = 6,
+  CD = 7,
+  MP3 = 8,
+  AppleiOS = 9,
+  Android = 10,
+  Bluetooth = 11,
+  SiriusXM = 12,
+  Pandora = 13,
+  Spotify = 14,
+  Slacker = 15,
+  Songza = 16,
+  AppleRadio = 17,
+  LastFM = 18,
+  Ethernet = 19,
+  VideoMP4 = 20,
+  VideoDVD = 21,
+  VideoBlueRay = 22,
+  HDMI = 23,
+  Video = 24,
+  NoSource = 25,
+};
+enum eContactorOnState {
+  ContactorOff = 0x0,
+  ContactorOn = 0x01,
+  ContactorAvailable = 0x02,
+  ContactorUnAvailable = 0x04,
+  ContactorFault = 0x08,
+  ContactorOverride = 0x10,
+  ContactorStarting = 0x20,
+};
+enum eGNSSMethod {
+  NoFix = 0,
+  StandardFix = 1,
+  DifferentialFix = 2,
+  PreciseFix = 3,
+  RtkInt = 4,
+  RtkFloat = 5,
+  Estimated = 6,
+  Manual = 7,
+  Simulator = 8,
+  Error = 14,
+  Null = 15,
+};
+enum eGNSSFixType {
+  FixNA = 0,
+  Fix2D = 2,
+  Fix3D = 3,
+};
+enum eDiscreteStatus1Mask {
+  None1 = 0,
+  CheckEngine = 1,
+  OverTemperature = 2,
+  LowOilPressure = 4,
+  LowOilLevel = 8,
+  LowFuelPressure = 16,
+  LowSystemVoltage = 32,
+  LowCoolantLevel = 64,
+  WaterFlow = 128,
+  WaterInFuel = 256,
+  ChargeIndicator = 512,
+  PreheatIndicator = 1024,
+  HighBoostPressure = 2048,
+  RevLimitExceeded = 4096,
+  EGRSystem = 8192,
+  ThrottlePositionSensor = 16384,
+  EngineEmergencyStopMode = 32768,
+};
+enum eHealth {
+  HealthOk = 0x0,
+  HealthBad = 0x02,
+  HealthNone = 0x03,
 };
 
-class ValueU32 {
+template <typename T>
+using IdMap = std::unordered_map<uint32_t, std::shared_ptr<T>>;
+
+template <typename T>
+class Value {
 public:
-  bool Valid;
-  uint32_t Value;
+  bool m_valid;
+  T m_value;
+
+  bool operator==(const Value<T> &other) const { return m_valid == other.m_valid && m_value == other.m_value; }
 };
 
-class ValueS32 {
-public:
-  bool Valid;
-  int32_t Value;
-};
-
-class ValueF {
-public:
-  bool Valid;
-  float Value;
-};
-
-class ValueBool {
-public:
-  bool Valid;
-  bool Value;
-};
-
-class ValueDouble {
-public:
-  bool Valid;
-  double Value;
-};
-
-class ValueTankType {
-public:
-  bool Valid;
-  MonitoringType::eTankType Value;
-};
-
-class ValueFaultState {
-public:
-  enum eFaultState {
-    None = 0,
-    ConfigurationConflict = 1,
-    DipswitchConflict = 2,
-    EepromFailure = 3,
-    NoCZoneNetwork = 4,
-    LowRunCurrent = 5,
-    OverCurrent = 6,
-    ShortCircuit = 7,
-    MissingCommander = 8,
-    MissingModeCommander = 9,
-    ReverseCurrent = 10,
-    CurrentCalibration = 11,
-  };
-
-  bool Valid;
-  eFaultState Value;
-};
-
-class ValueSourceAvailable {
-public:
-  enum eSourceAvailable : int {
-    SourceInvalid = 0,
-    SourceUnAvailable = 1,
-    SourceAvailable = 2,
-  };
-
-  bool Valid;
-  eSourceAvailable Value;
-};
-
-class ValueEngineState {
-public:
-  enum eEngineState {
-    Dead = 0,
-    Stall = 1,
-    Crank = 2,
-    Run = 3,
-    PowerOff = 4,
-  };
-
-  enum EngineInstance {
-    StarboardEngine = 0,
-    Port = 1,
-    StarboardInnerEngine = 2,
-    PortInnerEngine = 3,
-    EngineCount = 4,
-  };
-
-  bool Valid;
-  eEngineState Value;
-};
-
-class ValueHVACOperatingMode {
-public:
-  enum eHVACOperatingMode {
-    NoChange = 0,
-    Off = 1,
-    Moisture = 2,
-    Auto = 3,
-    Heat = 4,
-    Cool = 5,
-    AutoAux = 6,
-    Aux = 7,
-    FanOnly = 8,
-    Pet = 10,
-  };
-
-  bool Valid;
-  eHVACOperatingMode Value;
-};
-
-class ValueAwningState {
-public:
-  enum eAwningState {
-    AwningNoPower = 0,
-    AwningParked = 1,
-    AwningTiltedLeft = 2,
-    AwningTiltedLeftRight = 3,
-    AwningTiltedRight = 4,
-    AwningOpenUnknown = 5,
-    AwningOpenFull = 6,
-    AwningMoving = 7,
-  };
-
-  bool Valid;
-  eAwningState Value;
-};
-
-class ValueGeneratorState {
-public:
-  enum eGeneratorState {
-    GeneratorOff = 0,
-    GeneratorOn = 1,
-    GeneratorUnknown = 2,
-  };
-
-  bool Valid;
-  eGeneratorState Value;
-};
-
-class ValueInverterChargerEnabled {
-public:
-  enum eInverterChargerEnabled {
-    Off = 0,
-    On = 1,
-    Error = 2,
-    Unavailable = 3,
-  };
-
-  bool Valid;
-  eInverterChargerEnabled Value;
-};
-
-class ValueInverterState {
-public:
-  enum eInverterState {
-    Inverting = 0,
-    ACPassthru = 1,
-    LoadSense = 2,
-    Fault = 3,
-    Disabled = 4,
-    Charging = 5,
-    EnergySaving = 6,
-    Supporting = 7,
-    EnergySaving2 = 12,
-    Supporting2 = 13,
-    Error = 14,
-    DataNotAvailable = 15,
-  };
-
-  bool Valid;
-  eInverterState Value;
-};
-
-class ValueChargerState {
-public:
-  enum eChargerState {
-    NotCharging = 0,
-    Bulk = 1,
-    Absorption = 2,
-    Overcharge = 3,
-    Equalize = 4,
-    Float = 5,
-    NoFloat = 6,
-    ConstantVI = 7,
-    Disabled = 8,
-    Fault = 9,
-  };
-
-  bool Valid;
-  eChargerState Value;
-};
-
-class ValueTyreStatus {
-public:
-  enum eTyreStatus {
-    Ok = 0,
-    Leak = 1,
-    Error = 2,
-  };
-
-  bool Valid;
-  eTyreStatus Value;
-};
-
-class ValueTyreLimitStatus {
-public:
-  enum eTyreLimitStatus {
-    ExtremeOverPressure = 0,
-    OverPressure = 1,
-    NoAlarm = 2,
-    LowPressure = 3,
-    ExtremeLowPressure = 4,
-    NA = 5,
-    Error = 6,
-  };
-
-  bool Valid;
-  eTyreLimitStatus Value;
-};
-
-class ValueAudioStatus {
-public:
-  enum eAudioStatus {
-    AudioStatusInitialising = 0,
-    AudioStatusReady = 1,
-    AudioStatusUnknown = 2,
-  };
-
-  bool Valid;
-  eAudioStatus Value;
-};
-
-class ValueAudioSource {
-public:
-  enum eAudioSource {
-    VesselAlarm = 0,
-    AM = 1,
-    FM = 2,
-    Weather = 3,
-    DAB = 4,
-    AUX = 5,
-    USB = 6,
-    CD = 7,
-    MP3 = 8,
-    AppleiOS = 9,
-    Android = 10,
-    Bluetooth = 11,
-    SiriusXM = 12,
-    Pandora = 13,
-    Spotify = 14,
-    Slacker = 15,
-    Songza = 16,
-    AppleRadio = 17,
-    LastFM = 18,
-    Ethernet = 19,
-    VideoMP4 = 20,
-    VideoDVD = 21,
-    VideoBlueRay = 22,
-    HDMI = 23,
-    Video = 24,
-    NoSource = 25,
-  };
-
-  bool Valid;
-  eAudioSource Value;
-};
-
-class ValueContactorOnState {
-public:
-  enum eContactorOnState {
-    ContactorOff = 0x0,
-    ContactorOn = 0x01,
-    ContactorAvailable = 0x02,
-    ContactorUnAvailable = 0x04,
-    ContactorFault = 0x08,
-    ContactorOverride = 0x10,
-    ContactorStarting = 0x20,
-  };
-
-  bool Valid;
-  eContactorOnState Value;
-};
-
-class ValueGNSSMethod {
-public:
-  enum eGNSSMethod {
-    NoFix = 0,
-    StandardFix = 1,
-    DifferentialFix = 2,
-    PreciseFix = 3,
-    RtkInt = 4,
-    RtkFloat = 5,
-    Estimated = 6,
-    Manual = 7,
-    Simulator = 8,
-    Error = 14,
-    Null = 15,
-  };
-
-  bool Valid;
-  eGNSSMethod Value;
-};
-
-class ValueGNSSFixType {
-public:
-  enum eGNSSFixType {
-    FixNA = 0,
-    Fix2D = 2,
-    Fix3D = 3,
-  };
-
-  bool Valid;
-  eGNSSFixType Value;
-};
+using ValueSystemOnState = Value<eSystemOnState>;
+using ValueU32 = Value<uint32_t>;
+using ValueS32 = Value<int32_t>;
+using ValueF = Value<float>;
+using ValueBool = Value<bool>;
+using ValueDouble = Value<double>;
+using ValueTankType = Value<MonitoringType::eTankType>;
+using ValueFaultState = Value<eFaultState>;
+using ValueSourceAvailable = Value<eSourceAvailable>;
+using ValueEngineState = Value<eEngineState>;
+using ValueHVACOperatingMode = Value<eHVACOperatingMode>;
+using ValueAwningState = Value<eAwningState>;
+using ValueGeneratorState = Value<eGeneratorState>;
+using ValueInverterChargerEnabled = Value<eInverterChargerEnabled>;
+using ValueInverterState = Value<eInverterState>;
+using ValueChargerState = Value<eChargerState>;
+using ValueTyreStatus = Value<eTyreStatus>;
+using ValueTyreLimitStatus = Value<eTyreLimitStatus>;
+using ValueAudioStatus = Value<eAudioStatus>;
+using ValueAudioSource = Value<eAudioSource>;
+using ValueContactorOnState = Value<eContactorOnState>;
+using ValueGNSSMethod = Value<eGNSSMethod>;
+using ValueGNSSFixType = Value<eGNSSFixType>;
 
 class Circuit {
 public:
-  int Id;
-  ValueSystemOnState SystemsOn;
-  ValueU32 Level;
-  ValueF Current;
-  ValueFaultState Fault;
-  ValueU32 OnCount;
-  ValueU32 OnTime;
-  ValueU32 SequentialState;
-  ValueU32 ModesSystemOn;
-  ValueSourceAvailable ACSourceAvailable;
-  ValueBool IsOffline;
+  int m_id;
+  ValueSystemOnState m_systemsOn;
+  ValueU32 m_level;
+  ValueF m_current;
+  ValueFaultState m_fault;
+  ValueU32 m_onCount;
+  ValueU32 m_onTime;
+  ValueU32 m_sequentialState;
+  ValueU32 m_modesSystemOn;
+  ValueSourceAvailable m_aCSourceAvailable;
+  ValueBool m_isOffline;
+
+  bool operator==(const Circuit &other) const = default;
 };
 
 class Tank {
@@ -352,30 +260,12 @@ public:
   ValueU32 Level;
   ValueU32 Capacity;
   ValueTankType TankType;
+
+  bool operator==(const Tank &other) const = default;
 };
 
 class Engine {
 public:
-  enum DiscreteStatus1Mask {
-    None1 = 0,
-    CheckEngine = 1,
-    OverTemperature = 2,
-    LowOilPressure = 4,
-    LowOilLevel = 8,
-    LowFuelPressure = 16,
-    LowSystemVoltage = 32,
-    LowCoolantLevel = 64,
-    WaterFlow = 128,
-    WaterInFuel = 256,
-    ChargeIndicator = 512,
-    PreheatIndicator = 1024,
-    HighBoostPressure = 2048,
-    RevLimitExceeded = 4096,
-    EGRSystem = 8192,
-    ThrottlePositionSensor = 16384,
-    EngineEmergencyStopMode = 32768,
-  };
-
   uint32_t Instance;
   ValueU32 Speed; // SC <unit: RPM, gain: 1> --> DP <unit: RPM, gain: 1> i.e. value: 1000 means 1000RPM * 1 = 1000RPM
   ValueF BoostPressure;  // SC <unit: kPa, gain: 0.01> --> DP <unit: kPa, gain: 0.01> i.e. value: 8836 means 8836 * 0.01
@@ -403,6 +293,8 @@ public:
   ValueS32 PercentEngineTorque; // Not implemented
   ValueEngineState EngineState; // SC <unit:enum 0-5, gain: 1> --> DP <unit:enum eEngineState>
   ValueU32 ActiveEnginesId;
+
+  bool operator==(const Engine &other) const = default;
 };
 
 class ACLine {
@@ -413,12 +305,16 @@ public:
   ValueF Current;
   ValueF Frequency;
   ValueF Power;
+
+  bool operator==(const ACLine &other) const = default;
 };
 
 class AC {
 public:
   uint32_t Instance;
   std::unordered_map<uint32_t, std::shared_ptr<ACLine>> AClines;
+
+  bool operator==(const AC &other) const;
 };
 
 class DC {
@@ -432,18 +328,24 @@ public:
   ValueU32 TimeRemaining; // minutes, current <= 0.0A
   ValueU32 TimeToCharge;  // minutes, current > 0.0A
   ValueU32 TimeRemainingOrToCharge;
+
+  bool operator==(const DC &other) const = default;
 };
 
 class Temperature {
 public:
   uint32_t Instance;
   ValueF Temperature;
+
+  bool operator==(const Temperature &other) const = default;
 };
 
 class Pressure {
 public:
   uint32_t Instance;
   ValueF Pressure;
+
+  bool operator==(const Pressure &other) const = default;
 };
 
 class HVAC {
@@ -454,12 +356,16 @@ public:
   ValueU32 FanSpeed;                // Values from 1 to 125 = 1% to 125%. Auto 126
   ValueF EnvironmentSetTemperature; // Celcius
   ValueF EnvironmentTemperature;    // Celcius
+
+  bool operator==(const HVAC &other) const = default;
 };
 
 class ZipdeeAwning {
 public:
   uint32_t Instance;
   ValueAwningState State;
+
+  bool operator==(const ZipdeeAwning &other) const = default;
 };
 
 class ThirdPartyGenerator {
@@ -467,6 +373,8 @@ public:
   uint32_t Instance;
   ValueU32 OnTime; // seconds
   ValueGeneratorState Status;
+
+  bool operator==(const ThirdPartyGenerator &other) const = default;
 };
 
 class InverterCharger {
@@ -478,6 +386,8 @@ public:
   ValueInverterState InverterState;
   ValueInverterChargerEnabled ChargerEnable;
   ValueChargerState ChargerState;
+
+  bool operator==(const InverterCharger &other) const = default;
 };
 
 class TyrePressure {
@@ -487,6 +397,8 @@ public:
   ValueF Temperature;
   ValueTyreStatus Status;
   ValueTyreLimitStatus LimitStatus;
+
+  bool operator==(const TyrePressure &other) const = default;
 };
 
 class AudioStereo {
@@ -497,6 +409,8 @@ public:
   ValueAudioStatus AudioStatus;
   ValueAudioSource SourceMode;
   ValueU32 Volume;
+
+  bool operator==(const AudioStereo &other) const = default;
 };
 
 class ACMainContactor {
@@ -507,6 +421,8 @@ public:
   ValueBool ReversePolarity;
   ValueBool ACContactorAutoChangeOver;
   ValueBool ManualOverride;
+
+  bool operator==(const ACMainContactor &other) const = default;
 };
 
 class GNSS {
@@ -528,17 +444,21 @@ public:
   ValueF Vdop;              // unitless, lower is better
   ValueDouble LatitudeDeg;  // Degrees
   ValueDouble LongitudeDeg; // Degrees
+
+  bool operator==(const GNSS &other) const = default;
 };
 
 class MonitoringKeyValue {
 public:
-  bool Valid;
-  float Value;
+  bool m_valid;
+  float m_value;
   bool LimitValid;
   float Min;
   float Max;
   float WarnLow;
   float WarnHigh;
+
+  bool operator==(const MonitoringKeyValue &other) const = default;
 };
 
 class BinaryLogicState {
@@ -546,6 +466,8 @@ public:
   uint32_t Dipswitch;
   uint32_t Instance;
   ValueU32 States;
+
+  bool operator==(const BinaryLogicState &other) const = default;
 };
 
 class NetworkStatus {
@@ -579,6 +501,7 @@ public:
   std::string CellularSimEid;
   std::string CellularSimImsi;
 
+  bool operator==(const NetworkStatus &other) const;
   void clear();
 };
 
@@ -613,12 +536,6 @@ public:
 
 class HealthStatus {
 public:
-  enum eHealth {
-    HealthOk = 0x0,
-    HealthBad = 0x02,
-    HealthNone = 0x03,
-  };
-
   eHealth ServiceThread;
   eHealth NetworkThread;
   eHealth SCThread;
