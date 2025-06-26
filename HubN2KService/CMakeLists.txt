@@ -61,7 +61,11 @@ set(SOURCES
 )
 
 # Add the executable
-add_executable(${APPLICATION_NAME} ${SOURCES} ${${APP_NAME}_VERSION_SOURCE})
+add_executable(
+  ${APPLICATION_NAME} 
+  ${SOURCES} 
+  ${${APP_NAME}_VERSION_SOURCE}
+)
 
 # Link libraries
 target_link_libraries(${APPLICATION_NAME}
@@ -84,7 +88,7 @@ set_target_properties(${APPLICATION_NAME}
   CXX_STANDARD 20
   CXX_STANDARD_REQUIRED ON
   CXX_EXTENSIONS OFF
-  VERSION ${${APP_NAME}_VERSION}
+  # VERSION ${${APP_NAME}_VERSION}
 )
 
 # Install the executable

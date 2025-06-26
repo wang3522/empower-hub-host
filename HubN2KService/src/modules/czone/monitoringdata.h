@@ -374,8 +374,10 @@ public:
   std::unordered_map<uint32_t, std::shared_ptr<GNSS>> m_GNSS;
   std::unordered_map<uint32_t, std::shared_ptr<MonitoringKeyValue>> m_MonitoringKeyValue;
   std::unordered_map<uint32_t, std::shared_ptr<BinaryLogicState>> m_BinaryLogicState;
-  std::shared_ptr<NetworkStatus> m_NetworkStatus;
+  NetworkStatus m_NetworkStatus;
   std::string m_TimeStamp;
+
+  void Clear();
 };
 
 class Circuit {
@@ -404,6 +406,26 @@ public:
 
 class Engine {
 public:
+  enum DiscreteStatus1Mask {
+    None1 = 0,
+    CheckEngine = 1,
+    OverTemperature = 2,
+    LowOilPressure = 4,
+    LowOilLevel = 8,
+    LowFuelPressure = 16,
+    LowSystemVoltage = 32,
+    LowCoolantLevel = 64,
+    WaterFlow = 128,
+    WaterInFuel = 256,
+    ChargeIndicator = 512,
+    PreheatIndicator = 1024,
+    HighBoostPressure = 2048,
+    RevLimitExceeded = 4096,
+    EGRSystem = 8192,
+    ThrottlePositionSensor = 16384,
+    EngineEmergencyStopMode = 32768,
+  };
+
   uint32_t Instance;
   ValueU32 Speed; // SC <unit: RPM, gain: 1> --> DP <unit: RPM, gain: 1> i.e. value: 1000 means 1000RPM * 1 = 1000RPM
   ValueF BoostPressure;  // SC <unit: kPa, gain: 0.01> --> DP <unit: kPa, gain: 0.01> i.e. value: 8836 means 8836 * 0.01
@@ -431,32 +453,12 @@ public:
   ValueS32 PercentEngineTorque; // Not implemented
   ValueEngineState EngineState; // SC <unit:enum 0-5, gain: 1> --> DP <unit:enum eEngineState>
   ValueU32 ActiveEnginesId;
-
-  enum DiscreteStatus1Mask {
-    None1 = 0,
-    CheckEngine = 1,
-    OverTemperature = 2,
-    LowOilPressure = 4,
-    LowOilLevel = 8,
-    LowFuelPressure = 16,
-    LowSystemVoltage = 32,
-    LowCoolantLevel = 64,
-    WaterFlow = 128,
-    WaterInFuel = 256,
-    ChargeIndicator = 512,
-    PreheatIndicator = 1024,
-    HighBoostPressure = 2048,
-    RevLimitExceeded = 4096,
-    EGRSystem = 8192,
-    ThrottlePositionSensor = 16384,
-    EngineEmergencyStopMode = 32768,
-  };
 };
 
 class AC {
 public:
   uint32_t Instance;
-  std::unordered_map<uint32_t, ACLine> AClines;
+  std::unordered_map<uint32_t, std::shared_ptr<ACLine>> AClines;
 };
 
 class ACLine {
@@ -626,9 +628,12 @@ public:
   std::string CellularSimIccid;
   std::string CellularSimEid;
   std::string CellularSimImsi;
+
+  void clear();
 };
 
 class HealthStatus {
+public:
   enum eHealth {
     HealthOk = 0x0,
     HealthBad = 0x02,
@@ -641,6 +646,11 @@ class HealthStatus {
   eHealth GNSSThread;
   eHealth GNSSLatLon;
   eHealth GNSSFix;
+};
+
+class MonitoringKeyValueMap {
+public:
+  std::unordered_map<uint32_t, std::shared_ptr<MonitoringKeyValue>> KeyValueMap;
 };
 
 }; // namespace N2KMonitoring

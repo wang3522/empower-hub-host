@@ -1,5 +1,6 @@
 #include "modules/dbus/dbusservice.h"
 #include "utils/logger.h"
+#include "N2KCoreApp_version.h"
 
 #include <thread>
 #include <unordered_map>
@@ -90,18 +91,18 @@ void DbusService::initializeServiceMethods() {
 std::string DbusService::version() {
   
   // [x] debug
-  std::thread([this]() {
-    BOOST_LOG_TRIVIAL(debug) << "Daemon thread: version() called";
-    for (size_t i = 0; i < 5; i++) {
-      BOOST_LOG_TRIVIAL(debug) << "Daemon thread: version() called " << i;
-      this->emitConcatenatedSignal("From loop " + std::to_string(i));
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-  }).detach();
-  BOOST_LOG_TRIVIAL(debug) << "return";
+  // std::thread([this]() {
+  //   BOOST_LOG_TRIVIAL(debug) << "Daemon thread: version() called";
+  //   for (size_t i = 0; i < 5; i++) {
+  //     BOOST_LOG_TRIVIAL(debug) << "Daemon thread: version() called " << i;
+  //     this->emitConcatenatedSignal("From loop " + std::to_string(i));
+  //     std::this_thread::sleep_for(std::chrono::seconds(1));
+  //   }
+  // }).detach();
+  // BOOST_LOG_TRIVIAL(debug) << "return";
   // debug
 
-  return "1.0.0";
+  return std::string(N2KCoreApp::VERSION_STRING);
 }
 
 // [x] debug
