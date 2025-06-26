@@ -10,7 +10,7 @@ namespace N2KMonitoring {
 
 class ValueSystemOnState {
 public:
-  enum eSystemOnState : int { StateOff = 0, StateOn = 1, StateOnTimer = 2 };
+  enum eSystemOnState { StateOff = 0, StateOn = 1, StateOnTimer = 2 };
   bool Valid;
   eSystemOnState Value;
 };
@@ -330,56 +330,6 @@ public:
   eGNSSFixType Value;
 };
 
-class Circuit;
-class Tank;
-class Engine;
-class AC;
-class DC;
-class Temperature;
-class Pressure;
-class HVAC;
-class ZipdeeAwning;
-class ThirdPartyGenerator;
-class InverterCharger;
-class TyrePressure;
-class AudioStereo;
-class ACMainContactor;
-class GNSS;
-class MonitoringKeyValue;
-class BinaryLogicState;
-class NetworkStatus;
-class SnapshotInstanceIdMap;
-class ACLine;
-
-class SnapshotInstanceIdMap {
-public:
-  SnapshotInstanceIdMap() = default;
-  ~SnapshotInstanceIdMap() = default;
-
-  std::unordered_map<uint32_t, std::shared_ptr<Circuit>> m_Circuits;
-  std::unordered_map<uint32_t, std::shared_ptr<Circuit>> m_Modes;
-  std::unordered_map<uint32_t, std::shared_ptr<Tank>> m_Tanks;
-  std::unordered_map<uint32_t, std::shared_ptr<Engine>> m_Engines;
-  std::unordered_map<uint32_t, std::shared_ptr<AC>> m_AC;
-  std::unordered_map<uint32_t, std::shared_ptr<DC>> m_DC;
-  std::unordered_map<uint32_t, std::shared_ptr<Temperature>> m_Temperatures;
-  std::unordered_map<uint32_t, std::shared_ptr<Pressure>> m_Pressures;
-  std::unordered_map<uint32_t, std::shared_ptr<HVAC>> m_Hvacs;
-  std::unordered_map<uint32_t, std::shared_ptr<ZipdeeAwning>> m_Awnings;
-  std::unordered_map<uint32_t, std::shared_ptr<ThirdPartyGenerator>> m_ThirdPartyGenerators;
-  std::unordered_map<uint32_t, std::shared_ptr<InverterCharger>> m_InverterChargers;
-  std::unordered_map<uint32_t, std::shared_ptr<TyrePressure>> m_Tyrepressures;
-  std::unordered_map<uint32_t, std::shared_ptr<AudioStereo>> m_AudioStereos;
-  std::unordered_map<uint32_t, std::shared_ptr<ACMainContactor>> m_ACMainContactors;
-  std::unordered_map<uint32_t, std::shared_ptr<GNSS>> m_GNSS;
-  std::unordered_map<uint32_t, std::shared_ptr<MonitoringKeyValue>> m_MonitoringKeyValue;
-  std::unordered_map<uint32_t, std::shared_ptr<BinaryLogicState>> m_BinaryLogicState;
-  NetworkStatus m_NetworkStatus;
-  std::string m_TimeStamp;
-
-  void Clear();
-};
-
 class Circuit {
 public:
   int Id;
@@ -455,12 +405,6 @@ public:
   ValueU32 ActiveEnginesId;
 };
 
-class AC {
-public:
-  uint32_t Instance;
-  std::unordered_map<uint32_t, std::shared_ptr<ACLine>> AClines;
-};
-
 class ACLine {
 public:
   uint32_t Instance;
@@ -469,6 +413,12 @@ public:
   ValueF Current;
   ValueF Frequency;
   ValueF Power;
+};
+
+class AC {
+public:
+  uint32_t Instance;
+  std::unordered_map<uint32_t, std::shared_ptr<ACLine>> AClines;
 };
 
 class DC {
@@ -632,6 +582,35 @@ public:
   void clear();
 };
 
+class SnapshotInstanceIdMap {
+public:
+  SnapshotInstanceIdMap() = default;
+  ~SnapshotInstanceIdMap() = default;
+
+  std::unordered_map<uint32_t, std::shared_ptr<Circuit>> m_Circuits;
+  std::unordered_map<uint32_t, std::shared_ptr<Circuit>> m_Modes;
+  std::unordered_map<uint32_t, std::shared_ptr<Tank>> m_Tanks;
+  std::unordered_map<uint32_t, std::shared_ptr<Engine>> m_Engines;
+  std::unordered_map<uint32_t, std::shared_ptr<AC>> m_AC;
+  std::unordered_map<uint32_t, std::shared_ptr<DC>> m_DC;
+  std::unordered_map<uint32_t, std::shared_ptr<Temperature>> m_Temperatures;
+  std::unordered_map<uint32_t, std::shared_ptr<Pressure>> m_Pressures;
+  std::unordered_map<uint32_t, std::shared_ptr<HVAC>> m_Hvacs;
+  std::unordered_map<uint32_t, std::shared_ptr<ZipdeeAwning>> m_Awnings;
+  std::unordered_map<uint32_t, std::shared_ptr<ThirdPartyGenerator>> m_ThirdPartyGenerators;
+  std::unordered_map<uint32_t, std::shared_ptr<InverterCharger>> m_InverterChargers;
+  std::unordered_map<uint32_t, std::shared_ptr<TyrePressure>> m_Tyrepressures;
+  std::unordered_map<uint32_t, std::shared_ptr<AudioStereo>> m_AudioStereos;
+  std::unordered_map<uint32_t, std::shared_ptr<ACMainContactor>> m_ACMainContactors;
+  std::unordered_map<uint32_t, std::shared_ptr<GNSS>> m_GNSS;
+  std::unordered_map<uint32_t, std::shared_ptr<MonitoringKeyValue>> m_MonitoringKeyValue;
+  std::unordered_map<uint32_t, std::shared_ptr<BinaryLogicState>> m_BinaryLogicState;
+  NetworkStatus m_NetworkStatus;
+  std::string m_TimeStamp;
+
+  void Clear();
+};
+
 class HealthStatus {
 public:
   enum eHealth {
@@ -651,6 +630,8 @@ public:
 class MonitoringKeyValueMap {
 public:
   std::unordered_map<uint32_t, std::shared_ptr<MonitoringKeyValue>> KeyValueMap;
+
+  void Clear();
 };
 
 }; // namespace N2KMonitoring
