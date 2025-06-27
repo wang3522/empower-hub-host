@@ -342,13 +342,13 @@ void CanService::event(const tCZoneEventType czoneEvent, void *data, const uint3
 }
 
 bool CanService::TransmitPGN(const uint32_t pgn, void *data) {
+  // Attempt to find the PGN in the transmit info map
   auto info = m_TxCanInfo.find(pgn);
   if (info != m_TxCanInfo.end()) {
-    info->second->Data = (void *)data;
+    info->second->Data = data; // data is already void*, no cast needed
     return TransmitCanPgn(info->second->Handle, info->second) == CZONE_TRUE;
-    ;
   } else {
-    BOOST_LOG_TRIVIAL(warning) << "CanService::TransmitPGN: unknow pgn[" << std::to_string(pgn) << "]";
+    BOOST_LOG_TRIVIAL(warning) << "CanService::TransmitPGN: unknown pgn[" << std::to_string(pgn) << "]";
   }
   return false;
 }

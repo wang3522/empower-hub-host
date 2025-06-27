@@ -22,7 +22,6 @@ void setCANBaudRate(const std::string &iface, int baudrate) {
   if (i != 0) {
     BOOST_LOG_TRIVIAL(error) << "Failed to set CAN baud rate on interface " << iface;
     throw std::runtime_error("Failed to set CAN baud rate");
-    return;
   }
   BOOST_LOG_TRIVIAL(debug) << "setCANBaudRate: CAN baud rate set to " << baudrate << " on interface " << iface;
 }
@@ -46,6 +45,7 @@ void CoreManager::start() {
     return;
   }
 
+  // Initialize default configuration values
   auto dipswitch = CzoneSystemConstants::DEFAULT_DIPSWITCH;
   auto insecure = true;
   uint32_t uniqueId = mtEuropa;
@@ -55,10 +55,10 @@ void CoreManager::start() {
   auto &nema_channel = CzoneSystemConstants::DEFAULT_NEMA_CHANNEL;
   auto &mercury_engine = CzoneSystemConstants::DEFAULT_MERCURY_ENGINE_S;
 
-  // [x] reset can network
+  // Reset CAN network to ensure correct baud rate
   setCANBaudRate(can_channel, 250000);
 
-  // Czone Settings
+  // Retrieve and update Czone settings
   auto &czonesettings = CzoneSettings::getInstance();
   auto stored_dipswitch = czonesettings.getDipswitch();
   if ((stored_dipswitch == 0) && (dipswitch != 0)) {
@@ -67,36 +67,39 @@ void CoreManager::start() {
   }
   czonesettings.setInsecure(insecure);
 
-  // can init
+  // Initialize Czone interface and database
   BOOST_LOG_TRIVIAL(debug) << "CoreManager::start: Initializing";
   auto czoneInterface = std::make_shared<CzoneInterface>(czonesettings, m_canService.getCanServiceMutex());
   auto czoneData = std::make_shared<CzoneDatabase>(m_canService);
 
+  // Initialize Czone interface
   BOOST_LOG_TRIVIAL(debug) << "CoreManager::start: Interface intializing.";
   czoneInterface->init(stored_dipswitch, uniqueId);
   BOOST_LOG_TRIVIAL(debug) << "CoreManager::start: Interface initialized.";
 
+  // Initialize CAN service with all required parameters
   BOOST_LOG_TRIVIAL(debug) << "CoreManager::start: CanService intializing.";
   m_canService.initialise(&czonesettings, czoneInterface.get(), can_channel, stored_dipswitch, uniqueId, productId,
                           lastSourceAddress, nema_channel, mercury_engine);
   BOOST_LOG_TRIVIAL(debug) << "CoreManager::start: CanService initialized.";
 
+  // Start CAN service main loop
   BOOST_LOG_TRIVIAL(debug) << "CoreManager::start: Starting CanService...";
   m_canService.service(true);
   BOOST_LOG_TRIVIAL(debug) << "CoreManager::start: CanService started.";
 
-  // dbus init and register method
+  // Initialize and run D-Bus service, register Czone interface
   m_dbusService->initialize();
-
   czoneInterface->registerDbus(m_dbusService);
-
   m_dbusService->run();
 
+  // Mark as running and enter main loop
   m_running.store(true);
   this->run();
 }
 
 void CoreManager::stop() {
+  // Stop all services and clean up resources
   BOOST_LOG_TRIVIAL(debug) << "CoreManager::stop: Stopping CoreManager...";
 
   m_canService.setShutdownSignal(true);

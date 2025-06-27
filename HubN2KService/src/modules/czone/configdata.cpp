@@ -2696,8 +2696,8 @@ json ConfigResult::tojson() const {
   if (m_fantasticFans.size() > 0) {
     result["FantasticFans"] = m_fantasticFans;
   }
-  if (m_screenConfigModes.size() > 0) {
-    result["ScreenConfigPageImageItems"] = m_screenConfigModes;
+  if (m_screenConfigPageImageItems.size() > 0) {
+    result["ScreenConfigPageImageItems"] = m_screenConfigPageImageItems;
   }
   if (m_screenConfigPageGridItems.size() > 0) {
     result["ScreenConfigPageGridItems"] = m_screenConfigPageGridItems;
@@ -2734,9 +2734,6 @@ json ConfigResult::tojson() const {
   }
   if (m_favouritesBoatViews.size() > 0) {
     result["FavouritesBoatViews"] = m_favouritesBoatViews;
-  }
-  if (m_alarms.size() > 0) {
-    result["Alarms"] = m_alarms;
   }
   if (m_devices.size() > 0) {
     result["Devices"] = m_devices;
