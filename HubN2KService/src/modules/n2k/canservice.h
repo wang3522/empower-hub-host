@@ -41,6 +41,8 @@ public:
   CzoneInterface *Interface() { return m_interface; }
   CzoneSettings *Settings() { return m_settings; }
 
+  bool HealthStatus(const int64_t timeout);
+
 private:
   CanService();
 

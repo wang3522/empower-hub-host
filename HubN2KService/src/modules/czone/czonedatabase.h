@@ -56,50 +56,50 @@ public:
   void SetNetworkStatus(const N2KMonitoring::NetworkStatus &network);
 
   void GetHealthStatus(N2KMonitoring::HealthStatus &health, const int64_t timeout = 60000);
-  //   void SetWakeupDcMeters(const google::protobuf::Map<google::protobuf::uint32, Nmea2k::DC> &dcMap) {
-  //     m_WakeUp = true;
-  //     m_WakeDcMap = dcMap;
-  //   }
+  void SetWakeupDcMeters(const std::unordered_map<uint32_t, N2KMonitoring::DC> &dcMap) {
+    m_WakeUp = true;
+    m_WakeDcMap = dcMap;
+  }
 
 private:
   CanService &m_canService;
 
-  void UpdateMonitoringCircuits(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                                N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringModes(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                             N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringACMainContactors(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                                        N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringTanks(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                             N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringEngines(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                               N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringACs(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                           N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringDCs(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                           N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringTemperatures(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                                    N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringPressures(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                                 N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringHVACs(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                             N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringAwnings(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                               N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringThirdPartyGenerators(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                                            N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringInverterChargers(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                                        N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringTyrepressures(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                                     N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringAudioStereos(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                                    N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringGNSS(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                            N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateMonitoringBinaryLogicStates(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                                         N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
-  void UpdateNetworkStatus(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
-                           N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringCircuits(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                               N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringModes(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                            N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringACMainContactors(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                                       N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringTanks(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                            N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringEngines(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                              N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringACs(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                          N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringDCs(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                          N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringTemperatures(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                                   N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringPressures(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                                N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringHVACs(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                            N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringAwnings(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                              N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringThirdPartyGenerators(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                                           N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringInverterChargers(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                                       N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringTyrepressures(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                                    N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringAudioStereos(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                                   N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringGNSS(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                           N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateMonitoringBinaryLogicStates(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                                        N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  // void UpdateNetworkStatus(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
+  //                          N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
 
   // template <typename T>
   // bool isMapSame(const T &a, const T &b) {
@@ -127,5 +127,5 @@ private:
   std::mutex m_NetworkStatusMutex;
   N2KMonitoring::NetworkStatus m_NetworkStatus;
   bool m_WakeUp = false;
-  // google::protobuf::Map<google::protobuf::uint32, Nmea2k::DC> m_WakeDcMap;
+  std::unordered_map<uint32_t, N2KMonitoring::DC> m_WakeDcMap;
 };

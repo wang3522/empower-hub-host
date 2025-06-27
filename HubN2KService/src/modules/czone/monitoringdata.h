@@ -28,21 +28,21 @@ enum class eSourceAvailable {
   SourceUnAvailable = 1,
   SourceAvailable = 2,
 };
-enum eEngineState {
+enum class eEngineState {
   Dead = 0,
   Stall = 1,
   Crank = 2,
   Run = 3,
   PowerOff = 4,
 };
-enum EngineInstance {
+enum class eEngineInstance {
   StarboardEngine = 0,
   Port = 1,
   StarboardInnerEngine = 2,
   PortInnerEngine = 3,
   EngineCount = 4,
 };
-enum eHVACOperatingMode {
+enum class eHVACOperatingMode {
   NoChange = 0,
   Off = 1,
   Moisture = 2,
@@ -54,7 +54,7 @@ enum eHVACOperatingMode {
   FanOnly = 8,
   Pet = 10,
 };
-enum eAwningState {
+enum class eAwningState {
   AwningNoPower = 0,
   AwningParked = 1,
   AwningTiltedLeft = 2,
@@ -64,18 +64,18 @@ enum eAwningState {
   AwningOpenFull = 6,
   AwningMoving = 7,
 };
-enum eGeneratorState {
+enum class eGeneratorState {
   GeneratorOff = 0,
   GeneratorOn = 1,
   GeneratorUnknown = 2,
 };
-enum eInverterChargerEnabled {
+enum class eInverterChargerEnabled {
   Off = 0,
   On = 1,
   Error = 2,
   Unavailable = 3,
 };
-enum eInverterState {
+enum class eInverterState {
   Inverting = 0,
   ACPassthru = 1,
   LoadSense = 2,
@@ -89,7 +89,7 @@ enum eInverterState {
   Error = 14,
   DataNotAvailable = 15,
 };
-enum eChargerState {
+enum class eChargerState {
   NotCharging = 0,
   Bulk = 1,
   Absorption = 2,
@@ -101,12 +101,12 @@ enum eChargerState {
   Disabled = 8,
   Fault = 9,
 };
-enum eTyreStatus {
+enum class eTyreStatus {
   Ok = 0,
   Leak = 1,
   Error = 2,
 };
-enum eTyreLimitStatus {
+enum class eTyreLimitStatus {
   ExtremeOverPressure = 0,
   OverPressure = 1,
   NoAlarm = 2,
@@ -115,12 +115,12 @@ enum eTyreLimitStatus {
   NA = 5,
   Error = 6,
 };
-enum eAudioStatus {
+enum class eAudioStatus {
   AudioStatusInitialising = 0,
   AudioStatusReady = 1,
   AudioStatusUnknown = 2,
 };
-enum eAudioSource {
+enum class eAudioSource {
   VesselAlarm = 0,
   AM = 1,
   FM = 2,
@@ -148,7 +148,7 @@ enum eAudioSource {
   Video = 24,
   NoSource = 25,
 };
-enum eContactorOnState {
+enum class eContactorOnState {
   ContactorOff = 0x0,
   ContactorOn = 0x01,
   ContactorAvailable = 0x02,
@@ -157,7 +157,7 @@ enum eContactorOnState {
   ContactorOverride = 0x10,
   ContactorStarting = 0x20,
 };
-enum eGNSSMethod {
+enum class eGNSSMethod {
   NoFix = 0,
   StandardFix = 1,
   DifferentialFix = 2,
@@ -170,12 +170,12 @@ enum eGNSSMethod {
   Error = 14,
   Null = 15,
 };
-enum eGNSSFixType {
+enum class eGNSSFixType {
   FixNA = 0,
   Fix2D = 2,
   Fix3D = 3,
 };
-enum eDiscreteStatus1Mask {
+enum class eDiscreteStatus1Mask {
   None1 = 0,
   CheckEngine = 1,
   OverTemperature = 2,
@@ -194,7 +194,7 @@ enum eDiscreteStatus1Mask {
   ThrottlePositionSensor = 16384,
   EngineEmergencyStopMode = 32768,
 };
-enum eHealth {
+enum class eHealth {
   HealthOk = 0x0,
   HealthBad = 0x02,
   HealthNone = 0x03,
@@ -312,7 +312,7 @@ public:
 class AC {
 public:
   uint32_t m_instance;
-  std::unordered_map<uint32_t, std::shared_ptr<ACLine>> m_acLines;
+  IdMap<ACLine> m_acLines;
 
   bool operator==(const AC &other) const;
 };
@@ -501,37 +501,38 @@ public:
   std::string m_cellularSimEid;
   std::string m_cellularSimImsi;
 
-  bool operator==(const NetworkStatus &other) const;
+  bool operator==(const NetworkStatus &other) const = default;
   void clear();
 };
 
 class SnapshotInstanceIdMap {
 public:
-  SnapshotInstanceIdMap() = default;
-  ~SnapshotInstanceIdMap() = default;
+  SnapshotInstanceIdMap();
+  ~SnapshotInstanceIdMap();
 
-  std::unordered_map<uint32_t, std::shared_ptr<Circuit>> m_circuits;
-  std::unordered_map<uint32_t, std::shared_ptr<Circuit>> m_modes;
-  std::unordered_map<uint32_t, std::shared_ptr<Tank>> m_tanks;
-  std::unordered_map<uint32_t, std::shared_ptr<Engine>> m_engines;
-  std::unordered_map<uint32_t, std::shared_ptr<AC>> m_ac;
-  std::unordered_map<uint32_t, std::shared_ptr<DC>> m_dc;
-  std::unordered_map<uint32_t, std::shared_ptr<Temperature>> m_temperatures;
-  std::unordered_map<uint32_t, std::shared_ptr<Pressure>> m_pressures;
-  std::unordered_map<uint32_t, std::shared_ptr<HVAC>> m_hvacs;
-  std::unordered_map<uint32_t, std::shared_ptr<ZipdeeAwning>> m_awnings;
-  std::unordered_map<uint32_t, std::shared_ptr<ThirdPartyGenerator>> m_thirdPartyGenerators;
-  std::unordered_map<uint32_t, std::shared_ptr<InverterCharger>> m_inverterChargers;
-  std::unordered_map<uint32_t, std::shared_ptr<TyrePressure>> m_tyrepressures;
-  std::unordered_map<uint32_t, std::shared_ptr<AudioStereo>> m_audioStereos;
-  std::unordered_map<uint32_t, std::shared_ptr<ACMainContactor>> m_acMainContactors;
-  std::unordered_map<uint32_t, std::shared_ptr<GNSS>> m_gnss;
-  std::unordered_map<uint32_t, std::shared_ptr<MonitoringKeyValue>> m_monitoringKeyValue;
-  std::unordered_map<uint32_t, std::shared_ptr<BinaryLogicState>> m_binaryLogicState;
-  NetworkStatus m_networkStatus;
+  IdMap<Circuit> m_circuits;
+  IdMap<Circuit> m_modes;
+  IdMap<Tank> m_tanks;
+  IdMap<Engine> m_engines;
+  IdMap<AC> m_ac;
+  IdMap<DC> m_dc;
+  IdMap<Temperature> m_temperatures;
+  IdMap<Pressure> m_pressures;
+  IdMap<HVAC> m_hvacs;
+  IdMap<ZipdeeAwning> m_awnings;
+  IdMap<ThirdPartyGenerator> m_thirdPartyGenerators;
+  IdMap<InverterCharger> m_inverterChargers;
+  IdMap<TyrePressure> m_tyrepressures;
+  IdMap<AudioStereo> m_audioStereos;
+  IdMap<ACMainContactor> m_acMainContactors;
+  IdMap<GNSS> m_gnss;
+  IdMap<MonitoringKeyValue> m_monitoringKeyValue;
+  IdMap<BinaryLogicState> m_binaryLogicState;
+  std::shared_ptr<NetworkStatus> m_networkStatus;
   std::string m_timeStamp;
 
-  void Clear();
+  bool operator==(const SnapshotInstanceIdMap &other) const;
+  void clear();
 };
 
 class HealthStatus {
@@ -542,13 +543,16 @@ public:
   eHealth m_gnssThread;
   eHealth m_gnssLatLon;
   eHealth m_gnssFix;
+
+  bool operator==(const HealthStatus &other) const = default;
 };
 
 class MonitoringKeyValueMap {
 public:
-  std::unordered_map<uint32_t, std::shared_ptr<MonitoringKeyValue>> m_keyValueMap;
+  IdMap<MonitoringKeyValue> m_keyValueMap;
 
-  void Clear();
+  bool operator==(const MonitoringKeyValueMap &other) const;
+  void clear();
 };
 
 }; // namespace N2KMonitoring
