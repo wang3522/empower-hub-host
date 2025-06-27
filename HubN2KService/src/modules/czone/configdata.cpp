@@ -2612,6 +2612,7 @@ void to_json(nlohmann::json &j, const ShoreFuseDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const CircuitDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const CircuitLoad &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const FantasticFanDevice &c) { j = c.tojson(); }
+void to_json(nlohmann::json &j, const ScreenConfigPageImageItem &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const ScreenConfigMode &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const ScreenConfigHeader &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const ScreenConfigPageGridItem &c) { j = c.tojson(); }
@@ -3302,6 +3303,21 @@ json BinaryLogicStateMsg::tojson() const {
   result["Id"] = m_id;
   result["Address"] = m_address;
   result["NameUTF8"] = m_nameutf8;
+
+  return result;
+}
+
+json ScreenConfigPageImageItem::tojson() const {
+  json result;
+
+  result["Header"] = m_header;
+  result["LocationX"] = m_locationX;
+  result["LocationY"] = m_locationY;
+  result["TargetX"] = m_targetX;
+  result["TargetY"] = m_targetY;
+  result["Icon"] = m_icon;
+  result["Name"] = m_name;
+  result["HideWhenOff"] = m_hideWhenOff;
 
   return result;
 }

@@ -2250,6 +2250,7 @@ public:
   ScreenConfigPageImageItem(ScreenConfigPageImageItem &&rhs);
   ScreenConfigPageImageItem &operator=(const ScreenConfigPageImageItem &rhs);
   ScreenConfigPageImageItem &operator=(ScreenConfigPageImageItem &&rhs);
+  json tojson() const;
 
   void set_header(const ScreenConfigHeader &header) { m_header = header; }
   const ScreenConfigHeader &get_header() const { return m_header; }
@@ -3280,6 +3281,7 @@ void to_json(nlohmann::json &j, const CircuitDevice &c);
 void to_json(nlohmann::json &j, const CircuitLoad &c);
 void to_json(nlohmann::json &j, const FantasticFanDevice &c);
 void to_json(nlohmann::json &j, const ScreenConfigMode &c);
+void to_json(nlohmann::json &j, const ScreenConfigPageImageItem &c);
 void to_json(nlohmann::json &j, const ScreenConfigHeader &c);
 void to_json(nlohmann::json &j, const ScreenConfigPageGridItem &c);
 void to_json(nlohmann::json &j, const ScreenConfigPageImage &c);
