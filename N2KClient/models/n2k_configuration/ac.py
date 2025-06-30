@@ -1,6 +1,6 @@
 from enum import Enum
 import json
-from N2KClient.models.configuration.metering_device import MeteringDevice
+from N2KClient.models.n2k_configuration.metering_device import MeteringDevice
 from ..constants import AttrNames
 
 

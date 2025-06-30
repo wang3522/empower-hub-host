@@ -53,7 +53,7 @@ def get_device_instance_value(
     """
     device_instace = instance_json.get(JsonKeys.INSTANCE, {})
     device_instance_enabled = device_instace.get(JsonKeys.ENABLED, False)
-    device_instance_value = device_instace.get(JsonKeys.INSTANCE_, None)
+    device_instance_value = device_instace.get(JsonKeys.INSTANCE, None)
     if device_instance_enabled and device_instance_value is not None:
         return device_instance_value
     return None

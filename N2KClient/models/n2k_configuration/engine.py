@@ -10,7 +10,7 @@ class EngineType(Enum):
     NMEA2000 = 1
 
 
-class EnginesDevice(ConfigItem):
+class EngineDevice(ConfigItem):
     instance: Instance
     software_id: str
     calibration_id: str

@@ -42,6 +42,7 @@ class Device:
     valid: bool
     transient: bool
     version: Optional[str]
+    dipswitch: str
 
     def __init__(self):
         self.version = None
@@ -55,6 +56,7 @@ class Device:
                 AttrNames.DEVICE_TYPE: self.device_type.value,
                 AttrNames.VALID: self.valid,
                 AttrNames.TRANSIENT: self.transient,
+                AttrNames.DIPSWITCH: self.dipswitch,
             }
             if self.version is not None:
                 fields[AttrNames.VERSION] = self.version
