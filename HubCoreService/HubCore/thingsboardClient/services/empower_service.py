@@ -15,15 +15,17 @@ import threading
 
 import reactivex as rx
 from reactivex import operators as ops
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.', '..')))
+# pylint: disable=wrong-import-position,import-error,no-name-in-module
+from mqtt_client import ThingsBoardClient
+from dict_diff import dict_diff
+from tb_utils.constants import Constants
 from config import (
     telemetry_filter_patterns,
     location_filter_pattern,
     bilge_pump_power_filter_pattern,
 )
-from dict_diff import dict_diff
-from tb_utils.constants import Constants
-from mqtt_client import ThingsBoardClient
+from n2kclient.models.empower_system.engine_list import EngineList
 
 class EmpowerService:
     """
@@ -32,8 +34,8 @@ class EmpowerService:
     _logger: logging.Logger = logging.getLogger("EmpowerService")
 
     thingsboard_client: ThingsBoardClient
-    active_alarms: rx.Observable[AlarmList]
-    engine_alerts: rx.Observable[EngineAlertList]
+    # active_alarms: rx.Observable[AlarmList]
+    # engine_alerts: rx.Observable[EngineAlertList]
     discovered_engines: rx.Observable[EngineList]
     telemetry_consent: rx.Observable[bool]
     _prev_system_subscription: rx.abc.DisposableBase = None
@@ -393,6 +395,8 @@ class EmpowerService:
             self._prev_system_subscription.dispose()
         if self._prev_engine_list_subscription:
             self._prev_engine_list_subscription.dispose()
+        if self.thingsboard_client is not None:
+            self.thingsboard_client.__del__()
 
     # TODO: Set up some sort of n2k_server_connection state
 

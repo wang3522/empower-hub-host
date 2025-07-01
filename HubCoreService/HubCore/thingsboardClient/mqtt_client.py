@@ -228,8 +228,9 @@ class ThingsBoardClient:
         if self._is_connected:
             self._client.disconnect()
 
-        self.connect_thread_event.set()
-        self.connect_thread = None
+        if self.connect_thread_event is not None:
+            self.connect_thread_event.set()
+            self.connect_thread = None
 
     def connect(self):
         """
