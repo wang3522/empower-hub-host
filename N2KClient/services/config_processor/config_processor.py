@@ -84,7 +84,7 @@ class ConfigProcessor:
     ) -> None:
         for device in config.device.values():
             if device.device_type == DeviceType.Europa:
-                hub = Hub(device)
+                hub = Hub(device, n2k_devices)
                 self._things.append(hub)
 
     # ###################################################
@@ -284,7 +284,7 @@ class ConfigProcessor:
         if shorepower is not None:
             self._ic_component_status[shorepower.line[1].instance.instance] = (
                 # charger_thing.component_status
-                charger_thing,
+                charger_thing.component_status,
                 shore_key,
             )
 
@@ -363,6 +363,7 @@ class ConfigProcessor:
                 continue
 
             ic_associated_line = None
+            component_status = None
             if ac_meter.line[1].instance.instance in self._ic_component_status:
                 component_status, ic_associated_line = self._ic_component_status[
                     ac_meter.line[1].instance.instance
@@ -433,6 +434,7 @@ class ConfigProcessor:
                     circuit=circuit,
                     ic_associated_line=ic_associated_line,
                     bls=ac_bls,
+                    component_status=component_status,
                 )
 
             if ac_type == ACType.Inverter:
@@ -458,7 +460,7 @@ class ConfigProcessor:
     # ###################################################
     #     Tanks
     # ###################################################
-    def process_tanks(self, config: N2kConfiguration) -> None:
+    def process_tanks(self, config: N2kConfiguration, n2k_devices: N2kDevices) -> None:
         for tank in config.tank.values():
             links = []
             # Fuel tanks
@@ -485,6 +487,7 @@ class ConfigProcessor:
                     tank_thing = FreshWaterTank(
                         tank=tank,
                         links=links,
+                        n2k_devices=n2k_devices,
                     )
                     self._things.append(tank_thing)
 
@@ -492,6 +495,7 @@ class ConfigProcessor:
                     tank_thing = WasteWaterTank(
                         tank=tank,
                         links=links,
+                        n2k_devices=n2k_devices,
                     )
                     self._things.append(tank_thing)
 
@@ -499,25 +503,29 @@ class ConfigProcessor:
                     tank_thing = BlackWaterTank(
                         tank=tank,
                         links=links,
+                        n2k_devices=n2k_devices,
                     )
                     self._things.append(tank_thing)
 
     # ###################################################
     #     Hvac
     # ###################################################
-    def process_hvac(self, config: N2kConfiguration) -> None:
+    def process_hvac(self, config: N2kConfiguration, n2k_devices: N2kDevices) -> None:
         for hvac in config.hvac.values():
             categories = get_category_list(ItemType.Temperature, hvac.id, config)
             climate_thing = Climate(
                 hvac=hvac,
                 categories=categories,
+                n2k_devices=n2k_devices,
             )
             self._things.append(climate_thing)
 
     # ###################################################
     #     Circuits
     # ###################################################
-    def process_circuits(self, config: N2kConfiguration) -> None:
+    def process_circuits(
+        self, config: N2kConfiguration, n2k_devices: N2kDevices
+    ) -> None:
         for circuit in config.circuit.values():
             links = []
             # 1 - LocalAndRemove, 2 - RemoteOnly
@@ -536,6 +544,7 @@ class ConfigProcessor:
                     circuit=circuit,
                     links=links,
                     bls=bls,
+                    n2k_devices=n2k_devices,
                 )
                 self._things.append(circuit_thing)
 
@@ -544,18 +553,18 @@ class ConfigProcessor:
                 if circuit.control_id in self._associated_circuit_instances:
                     continue
 
-                circuit_thing = CircuitBilgePump(circuit, links, bls)
+                circuit_thing = CircuitBilgePump(circuit, links, n2k_devices, bls)
                 circuit_thing.circuit = circuit
                 self._things.append(circuit_thing)
 
             if is_in_category(circuit.categories, Constants.Pumps):
-                circuit_thing = CircuitWaterPump(circuit, links, bls)
+                circuit_thing = CircuitWaterPump(circuit, links, n2k_devices, bls)
                 self._things.append(circuit_thing)
             if (
                 is_in_category(circuit.categories, Constants.Power)
                 and circuit.control_id not in self._associated_circuit_instances
             ):
-                circuit_thing = CircuitPowerSwitch(ThingType.PUMP, circuit, links, bls)
+                circuit_thing = CircuitPowerSwitch(circuit, links, n2k_devices, bls)
                 self._things.append(circuit_thing)
 
     def build_empower_system(
@@ -583,12 +592,14 @@ class ConfigProcessor:
             logger.error(error)
             raise
 
-    def build_engine_list(self, config: EngineConfiguration):
+    def build_engine_list(
+        self, config: EngineConfiguration, devices: N2kDevices
+    ) -> EngineList:
         logger = logging.getLogger("Engine Config Processor")
         engines: list[Thing] = []
         try:
             for device in config.devices.values():
-                thing = MarineEngine(device)
+                thing = MarineEngine(device, devices)
                 engines.append(thing)
 
         except Exception as error:

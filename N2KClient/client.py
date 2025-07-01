@@ -82,9 +82,9 @@ class N2KClient(dbus.service.Object):
     def __init__(self):
         self._disposable_list = []
 
-        self._latest_devices = {}
+        self._latest_devices = N2kDevices()
 
-        self._devices = rx.subject.BehaviorSubject({})
+        self._devices = rx.subject.BehaviorSubject(N2kDevices())
         self._config = rx.subject.BehaviorSubject(N2kConfiguration())
         self._empower_system = rx.subject.BehaviorSubject(EmpowerSystem(None))
         self._engine_config = rx.subject.BehaviorSubject(EngineConfiguration())
@@ -144,12 +144,9 @@ class N2KClient(dbus.service.Object):
         def update_latest_devices(devices: N2kDevices):
             self._latest_devices = devices
             # Uncomment for demonstration purposes
-            # devices_json = {
-            #     device_id: device.to_dict() for device_id, device in devices.items()
-            # }
-            # self._logger.info(
-            #     f"Latest devices: { json.dumps(devices_json, indent=2) }\n\n"
-            # )
+            self._logger.info(
+                f"Latest devices: { json.dumps(devices.to_mobile_dict(), indent=2) }\n\n"
+            )
 
         self._config_parser = ConfigParser()
         self._config_processor = ConfigProcessor()
@@ -249,14 +246,12 @@ class N2KClient(dbus.service.Object):
 
     def start(self):
         self._scan_factory_metadata()
-        self._get_configuration()
-        self._scan_marine_engine(should_reset=False)
         self._get_devices_thread.start()
         self._get_state_thread.start()
 
     def __merge_device_list(self, device_json):
         with self.lock:
-            device_list_copy = copy.deepcopy(self._latest_devices)
+            device_list_copy = self._latest_devices
         list_updated = False
         for device in device_json:
             device_id = device[JsonKeys.ID]
@@ -269,6 +264,8 @@ class N2KClient(dbus.service.Object):
         if list_updated:
             with self.lock:
                 self._devices.on_next(device_list_copy)
+            self._get_configuration()
+            self._scan_marine_engine(should_reset=True)
 
     def _scan_marine_engine(self, should_reset: bool):
         self._logger.info(
@@ -326,9 +323,8 @@ class N2KClient(dbus.service.Object):
         Returns:
             None
         """
-        engine_configuration: EngineConfiguration = copy.deepcopy(
-            self._engine_config.value
-        )
+        engine_configuration: EngineConfiguration = self._engine_config.value
+
         self._logger.info(
             "Loading Engine configuration with should_reset = %r...", should_reset
         )
@@ -345,7 +341,9 @@ class N2KClient(dbus.service.Object):
             self._engine_config.on_next(raw_engine_config)
 
             # Engine List
-            engine_list = self._config_processor.build_engine_list(raw_engine_config)
+            engine_list = self._config_processor.build_engine_list(
+                raw_engine_config, self._latest_devices
+            )
             self._engine_list.on_next(engine_list)
         except Exception as e:
             self._logger.error(f"Error reading dbus Get Engine response: {e}")
@@ -364,12 +362,14 @@ class N2KClient(dbus.service.Object):
     def _get_state(self):
         self._logger.info("Starting Get State thread")
         while True:
-            keys = self._latest_devices.keys()
+            kvps = self._latest_devices.devices.items()
             state_update = {}
             try:
-                for id in keys:
-                    device_state = json.loads(self.dbus_get_state(id))
-                    state_update[id] = device_state
+                for key, device in kvps:
+                    if device.type == N2kDeviceType.UNKNOWN:
+                        continue
+                    device_state = json.loads(self.dbus_get_state(key))
+                    state_update[key] = device_state
                 self._merge_state_update(state_update)
 
             except Exception as e:
@@ -378,20 +378,16 @@ class N2KClient(dbus.service.Object):
 
     def _merge_state_update(self, state_updates: dict[str, dict[str, Any]]):
         with self.lock:
-            device_list_copy = copy.deepcopy(self._latest_devices)
+            device_list_copy = self._latest_devices
 
         for id, state_update in state_updates.items():
             if id not in device_list_copy.devices:
                 continue
 
             for channel_id, value in state_update.items():
-                # Use the update_channel method to update values and immediately update mappings
-                device_list_copy.update_channel(
-                    id, channel_id, value, datetime.now().timestamp()
-                )
+                device_list_copy.update_channel(id, channel_id, value)
 
-        with self.lock:
-            self._devices.on_next(device_list_copy)
+        self._devices.on_next(device_list_copy)
 
     def __del__(self):
         if self._disposable_list is not None:

@@ -11,6 +11,36 @@ class N2kDeviceType(str, Enum):
     GENERATOR = "generator"
     CIRCUIT = "circuit"
     HVAC = "hvac"
+    DEVICE = "device"
+    UNKNOWN = "unknown"
+    GNSS = "gnss"
+
+
+class ConnectionType(str, Enum):
+    UNKNOWN = "unknown"
+    NONE = "none"
+    ETHERNET = "ethernet"
+    WIFI = "wifi"
+    CELLULAR = "cellular"
+
+
+class BatteryStatus(str, Enum):
+    CHARGED = "charged"
+    CHARGING = "charging"
+    DISCHARGING = "discharging"
+
+
+class MarineEngineStatus(str, Enum):
+    RUNNING = "running"
+    OFF = "off"
+
+
+class EngineState(Enum):
+    Dead = 0
+    Stall = 1
+    Crank = 2
+    Run = 3
+    PowerOff = 4
 
 
 class SwitchType(Enum):

@@ -1,12 +1,16 @@
 from N2KClient.models.devices import N2kDevices
+from N2KClient.models.empower_system.connection_status import ConnectionStatus
+from N2KClient.models.empower_system.state_ts import StateWithTS
 from .thing import Thing
 from ..common_enums import ChannelType, ThingType, Unit
-from ..constants import Constants
+from ..constants import Constants, JsonKeys
 from .channel import Channel
 from .link import Link
 from N2KClient.models.n2k_configuration.tank import Tank
 from ..common_enums import WaterTankType
-from N2KClient.models.empower_system.mapping_utility import RegisterMappingUtility
+from reactivex import operators as ops
+import reactivex as rx
+from N2KClient.models.filters import Volume
 
 
 class TankBase(Thing):
@@ -28,74 +32,119 @@ class TankBase(Thing):
             categories=categories,
             links=links,
         )
-
+        tank_device_id = f"{JsonKeys.TANK}.{tank.instance.instance}"
         if tank.tank_capacity is not None and tank.tank_capacity != 0:
             self.metadata[
                 f"{Constants.empower}:{Constants.tank}.{Constants.capacity}"
             ] = tank.tank_capacity
 
-        channels = []
-        channels.extend(
-            [
-                Channel(
-                    id="cs",
-                    name="Component Status",
-                    type=ChannelType.STRING,
-                    unit=Unit.NONE,
-                    read_only=False,
-                    tags=[
-                        f"{Constants.empower}:{Constants.tank}.{Constants.componentStatus}"
-                    ],
-                ),
-                Channel(
-                    id="levelAbsolute",
-                    name="Level Absolute",
-                    read_only=True,
-                    type=ChannelType.NUMBER,
-                    unit=Unit.VOLUME_LITRE,
-                    tags=[f"{Constants.empower}:{Constants.tank}.levelAbsolute"],
-                ),
-                Channel(
-                    id="levelPercent",
-                    name="Level Percent",
-                    read_only=True,
-                    type=ChannelType.NUMBER,
-                    unit=Unit.PERCENT,
-                    tags=[f"{Constants.empower}:{Constants.tank}.levelPercent"],
-                ),
-            ]
-        )
-        for channel in channels:
-            self._define_channel(channel)
+        ###################################
+        # Component Status
+        ###################################
 
-        RegisterMappingUtility.register_tanks_mappings(
-            n2k_devices, self.id, tank.instance.instance
+        channel = Channel(
+            id="cs",
+            name="Component Status",
+            type=ChannelType.STRING,
+            unit=Unit.NONE,
+            read_only=False,
+            tags=[f"{Constants.empower}:{Constants.tank}.{Constants.componentStatus}"],
+        )
+        self._define_channel(channel)
+        component_status_subject = n2k_devices.get_channel_subject(
+            tank_device_id, JsonKeys.ComponentStatus
+        )
+        n2k_devices.set_subscription(
+            channel.id,
+            component_status_subject.pipe(
+                ops.map(
+                    lambda status: (
+                        ConnectionStatus.CONNECTED
+                        if status == "Connected"
+                        else "Disconnected"
+                    )
+                ),
+                ops.map(lambda status: StateWithTS(status).to_json()),
+                ops.distinct_until_changed(lambda state: state[Constants.state]),
+            ),
+        )
+        ###################################
+        # Level Absolute
+        ###################################
+        channel = Channel(
+            id="levelAbsolute",
+            name="Level Absolute",
+            read_only=True,
+            type=ChannelType.NUMBER,
+            unit=Unit.VOLUME_LITRE,
+            tags=[f"{Constants.empower}:{Constants.tank}.levelAbsolute"],
+        )
+        self._define_channel(channel)
+        level_absolute_subject = n2k_devices.get_channel_subject(
+            tank_device_id, JsonKeys.Level
+        )
+        n2k_devices.set_subscription(
+            channel.id,
+            rx.merge(
+                level_absolute_subject.pipe(
+                    ops.filter(lambda state: state is not None),
+                    Volume.LEVEL_ABSOLUTE_FILTER,
+                ),
+                level_absolute_subject.pipe(
+                    ops.sample(Volume.SAMPLE_TIMER),
+                    ops.filter(lambda state: state is not None),
+                    ops.distinct_until_changed(),
+                ),
+            ),
+        )
+        ###################################
+        # Level Percent
+        ###################################
+        channel = Channel(
+            id="levelPercent",
+            name="Level Percent",
+            read_only=True,
+            type=ChannelType.NUMBER,
+            unit=Unit.PERCENT,
+            tags=[f"{Constants.empower}:{Constants.tank}.levelPercent"],
+        )
+        self._define_channel(channel)
+
+        level_percent_subject = n2k_devices.get_channel_subject(
+            tank_device_id, JsonKeys.LevelPercent
+        )
+        n2k_devices.set_subscription(
+            channel.id,
+            rx.merge(
+                level_percent_subject.pipe(
+                    ops.filter(lambda state: state is not None), Volume.FILTER
+                ),
+                level_percent_subject.pipe(
+                    ops.sample(Volume.SAMPLE_TIMER),
+                    ops.filter(lambda state: state is not None),
+                    ops.distinct_until_changed(),
+                ),
+            ),
         )
 
 
 class FuelTank(TankBase):
 
-    def __init__(self, tank: Tank):
-        TankBase.__init__(self, ThingType.FUEL_TANK, tank)
+    def __init__(self, tank: Tank, n2k_devices: N2kDevices):
+        TankBase.__init__(self, ThingType.FUEL_TANK, tank, n2k_devices=n2k_devices)
 
 
 class WaterTank(TankBase):
 
-    def __init__(
-        self,
-        tank: Tank,
-        links: list[Link],
-    ):
-        TankBase.__init__(self, ThingType.WATER_TANK, tank, links=links)
+    def __init__(self, tank: Tank, links: list[Link], n2k_devices: N2kDevices):
+        TankBase.__init__(
+            self, ThingType.WATER_TANK, tank, n2k_devices=n2k_devices, links=links
+        )
 
 
 class BlackWaterTank(WaterTank):
-    def __init__(
-        self,
-        tank: Tank,
-        links: list[Link],
-    ):
-        WaterTank.__init__(self, tank, links)
+    def __init__(self, tank: Tank, links: list[Link], n2k_devices: N2kDevices):
+        WaterTank.__init__(self, tank, links, n2k_devices=n2k_devices)
 
         self.metadata[f"{Constants.empower}:{Constants.tank}.{Constants.type}"] = (
             WaterTankType.BLACKWATER.value
@@ -107,8 +156,9 @@ class WasteWaterTank(WaterTank):
         self,
         tank: Tank,
         links: list[Link],
+        n2k_devices: N2kDevices,
     ):
-        WaterTank.__init__(self, tank, links)
+        WaterTank.__init__(self, tank, links, n2k_devices=n2k_devices)
 
         self.metadata[f"{Constants.empower}:{Constants.tank}.{Constants.type}"] = (
             WaterTankType.WASTEWATER.value
@@ -120,8 +170,9 @@ class FreshWaterTank(WaterTank):
         self,
         tank: Tank,
         links: list[Link],
+        n2k_devices: N2kDevices,
     ):
-        WaterTank.__init__(self, tank, links)
+        WaterTank.__init__(self, tank, links, n2k_devices=n2k_devices)
 
         self.metadata[f"{Constants.empower}:{Constants.tank}.{Constants.type}"] = (
             WaterTankType.FRESHWATER.value
