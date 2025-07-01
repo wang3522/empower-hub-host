@@ -12,15 +12,16 @@ import base64
 import logging
 import sys
 import threading
+import time
 
 import reactivex as rx
 from reactivex import operators as ops
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.', '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 # pylint: disable=wrong-import-position,import-error,no-name-in-module
 from mqtt_client import ThingsBoardClient
 from dict_diff import dict_diff
 from tb_utils.constants import Constants
-from config import (
+from services.config import (
     telemetry_filter_patterns,
     location_filter_pattern,
     bilge_pump_power_filter_pattern,
@@ -465,6 +466,7 @@ class EmpowerService:
     def run(self):
         self._logger.info("Starting Empower Service")
         self._logger.debug("Starting ThingsBoard client...")
+        self.thingsboard_client.connect()
         self._logger.debug("Starting location service")
         # TODO: Connect to thingsboard, start locaiton service, setup n2k connection status
 
@@ -476,3 +478,4 @@ class EmpowerService:
         # TODO: Get consents from sync service
 
         #TODO: Start n2k client
+        time.sleep(10)
