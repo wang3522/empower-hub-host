@@ -86,6 +86,9 @@ class ThingsBoardClient:
         # listen to. Set Paho's on_disconnect function to client.py
         # on_disconnect, then pass it to Thingsboard SDK.
         self._client._client.on_disconnect = self.__on_disconnect
+        # Need to overwrite and remove the __add_metadata_to_data_dict_from_device functionality
+        # as it was adding a timestamp to the metadata entry which causes each config to be different.
+        self._client._TBDeviceMqttClient__add_metadata_to_data_dict_from_device = lambda x: x
 
         self._client.set_server_side_rpc_request_handler(
             self.__on_server_side_rpc_request
