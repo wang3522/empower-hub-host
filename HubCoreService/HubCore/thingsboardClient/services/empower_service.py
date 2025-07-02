@@ -27,6 +27,7 @@ from services.config import (
     bilge_pump_power_filter_pattern,
 )
 from n2kclient.models.empower_system.engine_list import EngineList
+from n2kclient.models.empower_system.empower_system import EmpowerSystem
 from n2kclient.client import N2KClient
 
 class EmpowerService:
@@ -390,8 +391,31 @@ class EmpowerService:
         #             self.__update_cloud_configuration(config)
         #         self._latest_cloud_config = config
         self.n2k_client.engine_list.subscribe(self._update_engine_configuration)
+        self.n2k_client.empower_system.subscribe(self._update_cloud_configuration)
 
-    # def _update_cloud_configuration(self, config: )
+    def _update_cloud_configuration(self, config: EmpowerSystem):
+        """
+        Update the cloud configuration with the provided config.
+        This method will send the configuration to ThingsBoard if it has changed.
+        """
+        if config is None:
+            self._logger.error("Configuration is None, unable to update cloud configuration")
+            return
+
+        config_dict = config.to_config_dict()
+        self._logger.debug("Attempting to update cloud configuration: %s", json.dumps(config_dict))
+        # Get the checksum of the config, don't attempt to udpate if the config
+        # is the same
+        hashed_string = hashlib.new("sha256")
+        hashed_string.update(json.dumps(config.to_config_dict()).encode())
+        checksum_value = hashed_string.hexdigest()
+
+
+        self.thingsboard_client.update_attributes(
+            {Constants.CONFIG_KEY: config_dict,
+             Constants.CONFIG_CHECKSUM_KEY: checksum_value}
+        )
+        self.__print_cloud_config(config)
 
     def __del__(self):
         if len(self._service_init_disposables) > 0:
