@@ -389,6 +389,9 @@ class EmpowerService:
         #         if prev_value != checksum_value:
         #             self.__update_cloud_configuration(config)
         #         self._latest_cloud_config = config
+        self.n2k_client.engine_list.subscribe(self._update_engine_configuration)
+
+    # def _update_cloud_configuration(self, config: )
 
     def __del__(self):
         if len(self._service_init_disposables) > 0:
@@ -403,7 +406,24 @@ class EmpowerService:
 
     # TODO: Set up some sort of n2k_server_connection state
 
-    # def __print_cloud_config(self, system: EmpowerSystem):
+    def _update_engine_configuration(self, config: EngineList):
+        """
+        Update the cloud configuration with the provided config.
+        This method will send the configuration to ThingsBoard if it has changed.
+        """
+        if config is None:
+            self._logger.error("Configuration is None, unable to update cloud configuration")
+            return
+
+        config_dict = config.to_config_dict()
+        self._logger.debug(
+            "Publishing engine configuration to cloud: %s", json.dumps(config_dict)
+        )
+        self.thingsboard_client.update_attributes(
+            {Constants.ENGINE_CONFIG_KEY: config_dict}
+        )
+        self.__print_engine_cloud_config(config_dict)
+
     def __print_cloud_config(self, system: dict):
         if system is None:
             self._logger.error(
