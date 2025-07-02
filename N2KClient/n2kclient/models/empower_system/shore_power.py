@@ -1,12 +1,12 @@
 from typing import Optional
-from N2KClient.models.common_enums import ThingType
-from N2KClient.models.n2k_configuration.ac import AC
-from N2KClient.models.n2k_configuration.circuit import Circuit
+from ..common_enums import ThingType
+from ..n2k_configuration.ac import AC
+from ..n2k_configuration.circuit import Circuit
 from ..constants import Constants
 from .channel import Channel
 from ..common_enums import ChannelType, Unit
-from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicState
-from N2KClient.models.empower_system.ac_meter import ACMeterThingBase
+from ..n2k_configuration.binary_logic_state import BinaryLogicState
+from .ac_meter import ACMeterThingBase
 
 
 class ShorePower(ACMeterThingBase):

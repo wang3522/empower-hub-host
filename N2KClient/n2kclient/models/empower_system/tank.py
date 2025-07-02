@@ -3,7 +3,7 @@ from ..common_enums import ChannelType, ThingType, Unit
 from ..constants import Constants
 from .channel import Channel
 from .link import Link
-from N2KClient.models.n2k_configuration.tank import Tank
+from ..n2k_configuration.tank import Tank
 from ..common_enums import WaterTankType
 
 

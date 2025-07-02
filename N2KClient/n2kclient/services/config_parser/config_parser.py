@@ -2,41 +2,41 @@ import json
 import logging
 from typing import Any
 
-from N2KClient.models.n2k_configuration.n2k_configuation import N2kConfiguration
-from N2KClient.models.n2k_configuration.gnss import GNSSDevice
-from N2KClient.models.n2k_configuration.circuit import (
+from ...models.n2k_configuration.n2k_configuation import N2kConfiguration
+from ...models.n2k_configuration.gnss import GNSSDevice
+from ...models.n2k_configuration.circuit import (
     Circuit,
     CircuitLoad,
     CategoryItem,
 )
-from N2KClient.models.n2k_configuration.dc import DC
-from N2KClient.models.n2k_configuration.ac import AC, ACLine
-from N2KClient.models.n2k_configuration.tank import Tank
-from N2KClient.models.n2k_configuration.inverter_charger import InverterChargerDevice
-from N2KClient.models.n2k_configuration.device import Device
-from N2KClient.models.n2k_configuration.hvac import HVACDevice
-from N2KClient.models.n2k_configuration.audio_stereo import AudioStereoDevice
-from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicState
-from N2KClient.models.n2k_configuration.ui_relationship_msg import (
+from ...models.n2k_configuration.dc import DC
+from ...models.n2k_configuration.ac import AC, ACLine
+from ...models.n2k_configuration.tank import Tank
+from ...models.n2k_configuration.inverter_charger import InverterChargerDevice
+from ...models.n2k_configuration.device import Device
+from ...models.n2k_configuration.hvac import HVACDevice
+from ...models.n2k_configuration.audio_stereo import AudioStereoDevice
+from ...models.n2k_configuration.binary_logic_state import BinaryLogicState
+from ...models.n2k_configuration.ui_relationship_msg import (
     UiRelationShipMsg,
 )
-from N2KClient.models.n2k_configuration.pressure import Pressure
-from N2KClient.models.n2k_configuration.engine import EngineDevice
-from N2KClient.models.n2k_configuration.sequential_name import SequentialName
-from N2KClient.models.n2k_configuration.instance import Instance
-from N2KClient.models.n2k_configuration.data_id import DataId
-from N2KClient.models.constants import Constants, JsonKeys, AttrNames
-from N2KClient.services.config_parser.field_maps import *
-from N2KClient.services.config_parser.config_parser_helpers import (
+from ...models.n2k_configuration.pressure import Pressure
+from ...models.n2k_configuration.engine import EngineDevice
+from ...models.n2k_configuration.sequential_name import SequentialName
+from ...models.n2k_configuration.instance import Instance
+from ...models.n2k_configuration.data_id import DataId
+from ...models.constants import Constants, JsonKeys, AttrNames
+from .field_maps import *
+from .config_parser_helpers import (
     map_enum_fields,
     map_fields,
     map_list_fields,
     get_device_instance_value,
 )
-from N2KClient.models.n2k_configuration.ac_meter import ACMeter
-from N2KClient.models.n2k_configuration.engine_configuration import EngineConfiguration
-from N2KClient.models.n2k_configuration.config_metadata import ConfigMetadata
-from N2KClient.models.n2k_configuration.factory_metadata import FactoryMetadata
+from ...models.n2k_configuration.ac_meter import ACMeter
+from ...models.n2k_configuration.engine_configuration import EngineConfiguration
+from ...models.n2k_configuration.config_metadata import ConfigMetadata
+from ...models.n2k_configuration.factory_metadata import FactoryMetadata
 
 
 class ConfigParser:

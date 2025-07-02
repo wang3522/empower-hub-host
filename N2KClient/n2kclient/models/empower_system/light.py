@@ -1,8 +1,8 @@
-from N2KClient.models.empower_system.circuit_thing import CircuitThing
-from N2KClient.models.n2k_configuration.circuit import Circuit
+from .circuit_thing import CircuitThing
+from ..n2k_configuration.circuit import Circuit
 from ..common_enums import ThingType
 from .link import Link
-from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicState
+from ..n2k_configuration.binary_logic_state import BinaryLogicState
 
 
 class CircuitLight(CircuitThing):

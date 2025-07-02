@@ -4,7 +4,7 @@ import dbus
 import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
-from simulator.models.config import CONFIG_JSON_STRING
+from models.config import CONFIG_JSON_STRING
 
 DBusGMainLoop(set_as_default=True)
 
@@ -27,7 +27,8 @@ class N2KDBusSimulator(dbus.service.Object):
             {"Id": "tank.1", "Type": "tank"},
             {"Id": "ac.1", "Type": "ac"},
         ]
-        bus = dbus.SystemBus()
+        # bus = dbus.SystemBus()
+        bus = dbus.SessionBus()
         bus.request_name(BUS_NAME)
         bus_name = dbus.service.BusName(BUS_NAME, bus=bus)
         dbus.service.Object.__init__(self, bus_name, OPATH)

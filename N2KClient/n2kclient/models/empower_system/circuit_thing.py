@@ -1,11 +1,11 @@
 from .thing import Thing
-from N2KClient.models.n2k_configuration.circuit import Circuit
+from ..n2k_configuration.circuit import Circuit
 from ..common_enums import ChannelType, ThingType, Unit
 from ..constants import Constants
 from .channel import Channel
 from .link import Link
-from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicState
-from N2KClient.models.n2k_configuration.category_item import CategoryItem
+from ..n2k_configuration.binary_logic_state import BinaryLogicState
+from ..n2k_configuration.category_item import CategoryItem
 
 
 def get_enabled_categories(categories: list[CategoryItem]):

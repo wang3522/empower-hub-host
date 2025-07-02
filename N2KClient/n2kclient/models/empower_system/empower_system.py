@@ -2,7 +2,7 @@ import logging
 from typing import Union
 from .thing import Thing
 from ..constants import Constants
-from N2KClient.models.n2k_configuration.config_metadata import ConfigMetadata
+from ..n2k_configuration.config_metadata import ConfigMetadata
 
 
 class EmpowerSystem:

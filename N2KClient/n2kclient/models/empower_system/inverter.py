@@ -1,13 +1,12 @@
 from typing import Optional
 from .thing import Thing
-from N2KClient.models.n2k_configuration.ac import AC
-from N2KClient.models.n2k_configuration.circuit import Circuit, SwitchType
-from N2KClient.models.common_enums import ThingType
+from ..n2k_configuration.ac import AC
+from ..n2k_configuration.circuit import Circuit, SwitchType
+from ..common_enums import ThingType, Unit
 from .channel import Channel, ChannelType
-from N2KClient.models.common_enums import Unit
-from N2KClient.models.constants import Constants
-from N2KClient.models.n2k_configuration.inverter_charger import InverterChargerDevice
-from N2KClient.services.config_processor.config_processor_helpers import (
+from ..constants import Constants
+from ..n2k_configuration.inverter_charger import InverterChargerDevice
+from ...services.config_processor.config_processor_helpers import (
     calculate_inverter_charger_instance,
 )
 

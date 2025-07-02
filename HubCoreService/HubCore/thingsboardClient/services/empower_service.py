@@ -27,6 +27,7 @@ from services.config import (
     bilge_pump_power_filter_pattern,
 )
 from n2kclient.models.empower_system.engine_list import EngineList
+from n2kclient.client import N2KClient
 
 class EmpowerService:
     """
@@ -35,6 +36,7 @@ class EmpowerService:
     _logger: logging.Logger = logging.getLogger("EmpowerService")
 
     thingsboard_client: ThingsBoardClient
+    n2k_client: N2KClient = N2KClient()
     # active_alarms: rx.Observable[AlarmList]
     # engine_alerts: rx.Observable[EngineAlertList]
     discovered_engines: rx.Observable[EngineList]
@@ -478,4 +480,6 @@ class EmpowerService:
         # TODO: Get consents from sync service
 
         #TODO: Start n2k client
+        self._logger.debug("Starting N2K Client")
+        self.n2k_client.start()
         time.sleep(10)

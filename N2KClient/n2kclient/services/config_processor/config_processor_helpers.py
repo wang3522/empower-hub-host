@@ -1,17 +1,17 @@
-from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicState
-from N2KClient.models.n2k_configuration.n2k_configuation import N2kConfiguration
-from N2KClient.models.n2k_configuration.category_item import CategoryItem
-from N2KClient.models.n2k_configuration.ui_relationship_msg import (
+from ...models.n2k_configuration.binary_logic_state import BinaryLogicState
+from ...models.n2k_configuration.n2k_configuation import N2kConfiguration
+from ...models.n2k_configuration.category_item import CategoryItem
+from ...models.n2k_configuration.ui_relationship_msg import (
     ItemType,
     UiRelationShipMsg,
     RelationshipType,
 )
-from N2KClient.models.n2k_configuration.ac_meter import ACMeter
-from N2KClient.models.common_enums import ThingType
-from N2KClient.models.empower_system.link import Link
-from N2KClient.models.constants import Constants
-from N2KClient.models.n2k_configuration.circuit import Circuit
-from N2KClient.models.n2k_configuration.inverter_charger import InverterChargerDevice
+from ...models.n2k_configuration.ac_meter import ACMeter
+from ...models.common_enums import ThingType
+from ...models.empower_system.link import Link
+from ...models.constants import Constants
+from ...models.n2k_configuration.circuit import Circuit
+from ...models.n2k_configuration.inverter_charger import InverterChargerDevice
 
 
 def get_category_list(

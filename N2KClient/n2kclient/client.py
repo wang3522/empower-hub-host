@@ -9,22 +9,22 @@ import reactivex as rx
 import json
 import copy
 
-from N2KClient.models.devices import N2kDevice
-from N2KClient.models.constants import Constants, JsonKeys, AttrNames
+from .models.devices import N2kDevice
+from .models.constants import Constants, JsonKeys, AttrNames
 from reactivex import operators as ops
 from gi.repository import GLib
 from time import sleep
-from N2KClient.util.settings_util import SettingsUtil
-from N2KClient.models.common_enums import N2kDeviceType
-from N2KClient.services.config_parser.config_parser import ConfigParser
-from N2KClient.services.config_processor.config_processor import ConfigProcessor
-from N2KClient.models.n2k_configuration.n2k_configuation import N2kConfiguration
-from N2KClient.models.empower_system.empower_system import EmpowerSystem
-from N2KClient.models.n2k_configuration.engine_configuration import (
+from .util.settings_util import SettingsUtil
+from .models.common_enums import N2kDeviceType
+from .services.config_parser.config_parser import ConfigParser
+from .services.config_processor.config_processor import ConfigProcessor
+from .models.n2k_configuration.n2k_configuation import N2kConfiguration
+from .models.empower_system.empower_system import EmpowerSystem
+from .models.n2k_configuration.engine_configuration import (
     EngineConfiguration,
 )
-from N2KClient.models.empower_system.engine_list import EngineList
-from N2KClient.models.n2k_configuration.factory_metadata import FactoryMetadata
+from .models.empower_system.engine_list import EngineList
+from .models.n2k_configuration.factory_metadata import FactoryMetadata
 
 
 class N2KClient(dbus.service.Object):
@@ -101,7 +101,8 @@ class N2KClient(dbus.service.Object):
         )
 
         # Initialize N2k dbus Interface
-        self.bus = dbus.SystemBus()
+        # self.bus = dbus.SystemBus()
+        self.bus = dbus.SessionBus()
         n2k_dbus_object = self.bus.get_object(
             Constants.N2K_SERVICE_NAME, Constants.N2K_OBJECT_PATH
         )

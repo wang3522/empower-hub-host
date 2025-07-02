@@ -2,7 +2,7 @@ from .thing import Thing
 from ..common_enums import ChannelType, ThingType, Unit
 from ..constants import Constants
 from .channel import Channel
-from N2KClient.models.n2k_configuration.hvac import HVACDevice
+from ..n2k_configuration.hvac import HVACDevice
 
 
 class Climate(Thing):

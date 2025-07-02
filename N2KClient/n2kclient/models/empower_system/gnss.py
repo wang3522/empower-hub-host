@@ -1,8 +1,8 @@
-from N2KClient.models.constants import Constants
-from N2KClient.models.empower_system.channel import Channel
+from ..constants import Constants
+from .channel import Channel
 from .thing import Thing
-from N2KClient.models.common_enums import ChannelType, ThingType, Unit
-from N2KClient.models.n2k_configuration.gnss import GNSSDevice
+from ..common_enums import ChannelType, ThingType, Unit
+from ..n2k_configuration.gnss import GNSSDevice
 
 
 class GNSS(Thing):

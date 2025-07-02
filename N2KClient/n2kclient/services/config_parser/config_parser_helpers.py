@@ -1,6 +1,6 @@
 from typing import Any
 import logging
-from N2KClient.models.constants import JsonKeys
+from ...models.constants import JsonKeys
 
 
 def map_fields(source: dict[str, Any], target: object, field_map: dict) -> None:

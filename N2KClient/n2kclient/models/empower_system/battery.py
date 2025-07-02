@@ -1,8 +1,8 @@
 from typing import Optional
 from .thing import Thing
-from N2KClient.models.common_enums import ThingType
-from N2KClient.models.n2k_configuration.dc import DC
-from N2KClient.models.n2k_configuration.circuit import Circuit
+from ..common_enums import ThingType
+from ..n2k_configuration.dc import DC
+from ..n2k_configuration.circuit import Circuit
 from ..constants import Constants
 from .channel import Channel
 from ..common_enums import ChannelType, Unit

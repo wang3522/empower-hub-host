@@ -1,4 +1,4 @@
-from N2KClient.models.n2k_configuration.engine import EngineDevice
+from .engine import EngineDevice
 from ..constants import AttrNames
 
 

@@ -2,7 +2,7 @@ import json
 import os
 import logging
 
-from N2KClient.config import (
+from ..config import (
     DEFAULT_APP_SETTINGS_FILE,
     OVERRIDE_APP_SETTINGS_FILE,
 )

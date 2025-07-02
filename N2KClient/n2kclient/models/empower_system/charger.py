@@ -1,14 +1,14 @@
 from typing import Optional
 from .thing import Thing
-from N2KClient.models.n2k_configuration.inverter_charger import InverterChargerDevice
-from N2KClient.models.n2k_configuration.ac import AC
-from N2KClient.models.n2k_configuration.dc import DC
-from N2KClient.models.n2k_configuration.circuit import Circuit
+from ..n2k_configuration.inverter_charger import InverterChargerDevice
+from ..n2k_configuration.ac import AC
+from ..n2k_configuration.dc import DC
+from ..n2k_configuration.circuit import Circuit
 from ..common_enums import ChannelType, ThingType, Unit
 from ..constants import Constants
 from .channel import Channel
-from N2KClient.models.empower_system.ac_meter import ACMeterThingBase
-from N2KClient.services.config_processor.config_processor_helpers import (
+from .ac_meter import ACMeterThingBase
+from ...services.config_processor.config_processor_helpers import (
     calculate_inverter_charger_instance,
 )
 

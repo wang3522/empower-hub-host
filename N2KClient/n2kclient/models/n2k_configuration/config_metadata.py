@@ -1,4 +1,4 @@
-from N2KClient.models.constants import AttrNames
+from ..constants import AttrNames
 
 
 class ConfigMetadata:
