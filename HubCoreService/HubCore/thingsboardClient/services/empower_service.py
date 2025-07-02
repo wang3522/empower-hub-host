@@ -369,8 +369,12 @@ class EmpowerService:
         #         factory_metadata_dict
         #     )
 
-        self.n2k_client.engine_list.subscribe(self._update_engine_configuration)
-        self.n2k_client.empower_system.subscribe(self._update_cloud_configuration)
+        disposable = (self.n2k_client.get_engine_list_observable()
+                      .subscribe(self._update_engine_configuration))
+        self._service_init_disposables.append(disposable)
+        disposable = (self.n2k_client.get_empower_system_observable()
+                      .subscribe(self._update_cloud_configuration))
+        self._service_init_disposables.append(disposable)
 
     def _update_cloud_configuration(self, config: EmpowerSystem):
         """
