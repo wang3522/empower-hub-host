@@ -10,6 +10,7 @@ from N2KClient.models.empower_system.location_state import LocationState
 from reactivex import operators as ops
 import reactivex as rx
 from N2KClient.models.filters import Location
+from N2KClient.models.common_enums import N2kDeviceType
 
 
 class GNSS(Thing):
@@ -48,7 +49,7 @@ class GNSS(Thing):
         )
         self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
-            gnss_device_id, JsonKeys.ComponentStatus
+            gnss_device_id, JsonKeys.ComponentStatus, N2kDeviceType.GNSS
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -78,7 +79,7 @@ class GNSS(Thing):
         )
         self._define_channel(channel)
         fix_type_subject = n2k_devices.get_channel_subject(
-            gnss_device_id, JsonKeys.FixType
+            gnss_device_id, JsonKeys.FixType, N2kDeviceType.GNSS
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -110,14 +111,16 @@ class GNSS(Thing):
         )
         self._define_channel(channel)
         lattitude_subject = n2k_devices.get_channel_subject(
-            gnss_device_id, JsonKeys.LatitudeDeg
+            gnss_device_id, JsonKeys.LatitudeDeg, N2kDeviceType.GNSS
         )
 
         longitude_subject = n2k_devices.get_channel_subject(
-            gnss_device_id, JsonKeys.LongitudeDeg
+            gnss_device_id, JsonKeys.LongitudeDeg, N2kDeviceType.GNSS
         )
 
-        sog_subject = n2k_devices.get_channel_subject(gnss_device_id, JsonKeys.Sog)
+        sog_subject = n2k_devices.get_channel_subject(
+            gnss_device_id, JsonKeys.Sog, N2kDeviceType.GNSS
+        )
 
         n2k_devices.set_subscription(
             channel.id,

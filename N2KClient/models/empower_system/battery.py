@@ -14,6 +14,7 @@ from reactivex import operators as ops
 import N2KClient.util.rx as rxu
 from N2KClient.models.filters import Current, Voltage, Temperature, CapacityRemaining
 import reactivex as rx
+from N2KClient.models.common_enums import N2kDeviceType
 
 
 class Battery(Thing):
@@ -54,7 +55,9 @@ class Battery(Thing):
             )
             self._define_channel(channel)
             battery_enable_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.CIRCUIT}.{self.battery_circuit_id}", JsonKeys.Level
+                f"{JsonKeys.CIRCUIT}.{self.battery_circuit_id}",
+                JsonKeys.Level,
+                N2kDeviceType.CIRCUIT,
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -89,7 +92,7 @@ class Battery(Thing):
             )
             self._define_channel(channel)
             dc_voltage_subject = n2k_devices.get_channel_subject(
-                battery_device_id, Constants.voltage
+                battery_device_id, Constants.voltage, N2kDeviceType.DC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -110,7 +113,7 @@ class Battery(Thing):
             )
             self._define_channel(channel)
             dc_current_subject = n2k_devices.get_channel_subject(
-                battery_device_id, JsonKeys.Current
+                battery_device_id, JsonKeys.Current, N2kDeviceType.DC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -145,7 +148,7 @@ class Battery(Thing):
 
             self._define_channel(channel)
             dc_state_of_charge_subject = n2k_devices.get_channel_subject(
-                battery_device_id, JsonKeys.StateOfCharge
+                battery_device_id, JsonKeys.StateOfCharge, N2kDeviceType.DC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -172,7 +175,7 @@ class Battery(Thing):
 
             self._define_channel(channel)
             dc_temperature_subject = n2k_devices.get_channel_subject(
-                battery_device_id, JsonKeys.Temperature
+                battery_device_id, JsonKeys.Temperature, N2kDeviceType.DC
             )
 
             n2k_devices.set_subscription(
@@ -197,7 +200,7 @@ class Battery(Thing):
             )
             self._define_channel(channel)
             dc_soc_subject = n2k_devices.get_channel_subject(
-                battery_device_id, JsonKeys.StateOfCharge
+                battery_device_id, JsonKeys.StateOfCharge, N2kDeviceType.DC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -221,7 +224,7 @@ class Battery(Thing):
             )
             self._define_channel(channel)
             dc_capacity_remaining_subject = n2k_devices.get_channel_subject(
-                battery_device_id, JsonKeys.CapacityRemaining
+                battery_device_id, JsonKeys.CapacityRemaining, N2kDeviceType.DC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -246,7 +249,7 @@ class Battery(Thing):
             )
             self._define_channel(channel)
             dc_time_remaining_subject = n2k_devices.get_channel_subject(
-                battery_device_id, JsonKeys.TimeRemaining
+                battery_device_id, JsonKeys.TimeRemaining, N2kDeviceType.DC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -270,7 +273,7 @@ class Battery(Thing):
             )
             self._define_channel(channel)
             dc_time_to_charge_subject = n2k_devices.get_channel_subject(
-                battery_device_id, JsonKeys.TimeToCharge
+                battery_device_id, JsonKeys.TimeToCharge, N2kDeviceType.DC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -294,7 +297,7 @@ class Battery(Thing):
         )
         self._define_channel(channel)
         dc_component_status_subject = n2k_devices.get_channel_subject(
-            battery_device_id, JsonKeys.ComponentStatus
+            battery_device_id, JsonKeys.ComponentStatus, N2kDeviceType.DC
         )
         n2k_devices.set_subscription(
             channel.id,

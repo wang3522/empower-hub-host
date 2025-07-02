@@ -17,6 +17,7 @@ from .channel import Channel
 from N2KClient.models.empower_system.ac_meter import ACMeterThingBase
 import N2KClient.util.rx as rxu
 from N2KClient.models.filters import Current, Voltage
+from N2KClient.models.common_enums import N2kDeviceType
 
 CHARGER_STATE_MAPPING = {
     JsonKeys.ABSORPTION: "absorption",
@@ -70,7 +71,9 @@ class CombiCharger(Thing):
 
             dc1_device_id = f"{JsonKeys.DC}.{dc1.instance.instance}"
 
-            # DC 1 Component Status
+            ####################
+            #  DC 1 Component Status
+            ####################
             channel = Channel(
                 id="dc1cs",
                 name=" Battery 1 Component Status",
@@ -84,7 +87,7 @@ class CombiCharger(Thing):
             self._define_channel(channel)
 
             dc1_component_status_subject = n2k_devices.get_channel_subject(
-                dc1_device_id, JsonKeys.ComponentStatus
+                dc1_device_id, JsonKeys.ComponentStatus, N2kDeviceType.DC
             )
 
             n2k_devices.set_subscription(
@@ -102,7 +105,9 @@ class CombiCharger(Thing):
                 ),
             )
 
-            # DC1 Voltage
+            ####################
+            #  DC 1 Voltage
+            ####################
             channel = Channel(
                 id="dc1v",
                 name="Battery 1 Voltage",
@@ -116,7 +121,7 @@ class CombiCharger(Thing):
 
             self._define_channel(channel)
             dc1_voltage_subject = n2k_devices.get_channel_subject(
-                dc1_device_id, JsonKeys.Voltage
+                dc1_device_id, JsonKeys.Voltage, N2kDeviceType.DC
             )
 
             n2k_devices.set_subscription(
@@ -126,7 +131,9 @@ class CombiCharger(Thing):
                 ),
             )
 
-            # DC1 Current
+            ####################
+            #  DC 1 Current
+            ####################
             channel = Channel(
                 id="dc1c",
                 name="Battery 1 Current",
@@ -139,7 +146,7 @@ class CombiCharger(Thing):
             )
             self._define_channel(channel)
             dc1_current_subject = n2k_devices.get_channel_subject(
-                dc1_device_id, JsonKeys.Current
+                dc1_device_id, JsonKeys.Current, N2kDeviceType.DC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -153,7 +160,9 @@ class CombiCharger(Thing):
                 f"{Constants.empower}:{Constants.charger}.{Constants.battery2}.{Constants.name}"
             ] = dc2.name_utf8
 
-            # DC 2 Component Status
+            ####################
+            #  DC 2 Component Status
+            ####################
             channel = Channel(
                 id="dc2cs",
                 name=" Battery 2 Component Status",
@@ -167,7 +176,9 @@ class CombiCharger(Thing):
             self._define_channel(channel)
 
             d2_component_status_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc2.instance.instance}", JsonKeys.ComponentStatus
+                f"{JsonKeys.DC}.{dc2.instance.instance}",
+                JsonKeys.ComponentStatus,
+                N2kDeviceType.DC,
             )
 
             n2k_devices.set_subscription(
@@ -185,7 +196,9 @@ class CombiCharger(Thing):
                 ),
             )
 
-            # DC2 Voltage
+            ####################
+            #  DC 2 Voltage
+            ####################
             channel = Channel(
                 id="dc2v",
                 name="Battery 2 Voltage",
@@ -205,11 +218,13 @@ class CombiCharger(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc2_voltage_subject.pipe(
-                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER
+                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER, N2kDeviceType.DC
                 ),
             )
 
-            # DC 2 Current
+            ####################
+            #  DC 2 Current
+            ####################
             channel = Channel(
                 id="dc2c",
                 name="Battery 2 Current",
@@ -223,7 +238,9 @@ class CombiCharger(Thing):
             self._define_channel(channel)
 
             dc2_current_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc2.instance.instance}", JsonKeys.Current
+                f"{JsonKeys.DC}.{dc2.instance.instance}",
+                JsonKeys.Current,
+                N2kDeviceType.DC,
             )
 
             n2k_devices.set_subscription(
@@ -238,7 +255,9 @@ class CombiCharger(Thing):
                 f"{Constants.empower}:{Constants.charger}.{Constants.battery3}.{Constants.name}"
             ] = dc3.name_utf8
 
-            # DC 3 Component Status
+            ####################
+            #  DC 3 Component Status
+            ####################
             channel = Channel(
                 id="dc3cs",
                 name=" Battery 3 Component Status",
@@ -252,7 +271,9 @@ class CombiCharger(Thing):
             self._define_channel(channel)
 
             dc3_component_status_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc3.instance.instance}", JsonKeys.ComponentStatus
+                f"{JsonKeys.DC}.{dc3.instance.instance}",
+                JsonKeys.ComponentStatus,
+                N2kDeviceType.DC,
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -269,7 +290,9 @@ class CombiCharger(Thing):
                 ),
             )
 
-            # DC3 Voltage
+            ####################
+            #  DC 3 Voltage
+            ####################
             channel = Channel(
                 id="dc3v",
                 name="Battery 3 Voltage",
@@ -283,7 +306,9 @@ class CombiCharger(Thing):
             self._define_channel(channel)
 
             dc3_voltage_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc3.instance.instance}", JsonKeys.Voltage
+                f"{JsonKeys.DC}.{dc3.instance.instance}",
+                JsonKeys.Voltage,
+                N2kDeviceType.DC,
             )
 
             n2k_devices.set_subscription(
@@ -293,7 +318,9 @@ class CombiCharger(Thing):
                 ),
             )
 
-            # DC 3 Current
+            ####################
+            #  DC 3 Current
+            ####################
             channel = Channel(
                 id="dc3c",
                 name="Battery 3 Current",
@@ -307,7 +334,9 @@ class CombiCharger(Thing):
             self._define_channel(channel)
 
             dc3_current_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc3.instance.instance}", JsonKeys.Current
+                f"{JsonKeys.DC}.{dc3.instance.instance}",
+                JsonKeys.Current,
+                N2kDeviceType.DC,
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -315,7 +344,9 @@ class CombiCharger(Thing):
                     rxu.round(Current.ROUND_VALUE), Current.FILTER
                 ),
             )
-            # Component Status for Charger
+            ####################
+            #  Charger Component Status
+            ####################
             channel = Channel(
                 id="cs",
                 name="Component Status",
@@ -329,8 +360,7 @@ class CombiCharger(Thing):
             self._define_channel(channel)
 
             inverter_charger_component_status_subject = n2k_devices.get_channel_subject(
-                n2k_device_id,
-                JsonKeys.ComponentStatus,
+                n2k_device_id, JsonKeys.ComponentStatus, N2kDeviceType.INVERTERCHARGER
             )
 
             self.component_status = inverter_charger_component_status_subject.pipe(
@@ -350,7 +380,9 @@ class CombiCharger(Thing):
                 inverter_charger_component_status_subject.pipe(self.component_status),
             )
 
-            # Charger Enabled
+            ####################
+            #  Charger Enabled
+            ####################
             channel = Channel(
                 id="ce",
                 name="Charger Enabled",
@@ -366,8 +398,7 @@ class CombiCharger(Thing):
             self._define_channel(channel)
 
             charger_enable_subject = n2k_devices.get_channel_subject(
-                n2k_device_id,
-                JsonKeys.ChargerEnable,
+                n2k_device_id, JsonKeys.ChargerEnable, N2kDeviceType.INVERTERCHARGER
             )
             charger_ce = charger_enable_subject.pipe(
                 ops.distinct_until_changed(),
@@ -375,7 +406,9 @@ class CombiCharger(Thing):
             charger_enable = charger_ce
             if charger_circuit is not None:
                 circuit_level_subject = n2k_devices.get_channel_subject(
-                    f"{JsonKeys.CIRCUIT}.{charger_circuit.control_id}", JsonKeys.Level
+                    f"{JsonKeys.CIRCUIT}.{charger_circuit.control_id}",
+                    JsonKeys.Level,
+                    N2kDeviceType.CIRCUIT,
                 )
 
                 circuit_ce = circuit_level_subject.pipe(
@@ -385,7 +418,9 @@ class CombiCharger(Thing):
                 charger_enable = rx.merge(charger_ce, circuit_ce)
             n2k_devices.set_subscription(channel.id, charger_enable)
 
-            # Charger Status
+            ####################
+            #  Charger Status
+            ####################
             channel = Channel(
                 id="cst",
                 name="Charger Status",
@@ -399,6 +434,7 @@ class CombiCharger(Thing):
             inverter_charger_status_subject = n2k_devices.get_channel_subject(
                 f"{JsonKeys.INVERTER_CHARGER}.{inverter_charger.id}",
                 JsonKeys.ChargerState,
+                N2kDeviceType.INVERTERCHARGER,
             )
 
             n2k_devices.set_subscription(
@@ -430,6 +466,9 @@ class ACMeterCharger(ACMeterThingBase):
         self.line_connected = {}
         self.line_state_subject = rx.subject.BehaviorSubject(self._calc_charger_state)
 
+        ####################
+        #  Charger Enabled
+        ####################
         if circuit is not None:
             channel = Channel(
                 id="ce",
@@ -442,7 +481,9 @@ class ACMeterCharger(ACMeterThingBase):
             self._define_channel(channel)
 
             circuit_level_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.CIRCUIT}.{circuit.control_id}", JsonKeys.Level
+                f"{JsonKeys.CIRCUIT}.{circuit.control_id}",
+                JsonKeys.Level,
+                N2kDeviceType.CIRCUIT,
             )
 
             charger_enable = circuit_level_subject.pipe(
@@ -451,6 +492,9 @@ class ACMeterCharger(ACMeterThingBase):
             )
             n2k_devices.set_subscription(channel.id, charger_enable)
 
+        ####################
+        #  Charger Status
+        ####################
         channel = Channel(
             id="cst",
             name="Charger Status",
@@ -462,6 +506,7 @@ class ACMeterCharger(ACMeterThingBase):
 
         self._define_channel(channel)
 
+        ac_id = f"{JsonKeys.AC}.{ac_line1.instance.instance}"
         if ac_line1 is not None:
 
             def update_ac_line1_state(status: bool):
@@ -469,7 +514,7 @@ class ACMeterCharger(ACMeterThingBase):
                 self.line_state_subject.on_next(self._calc_charger_state())
 
             ac_line1_state_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.AC}.{ac_line1.instance.instance}", JsonKeys.Voltage
+                ac_id, f"{JsonKeys.Voltage}.{1}", N2kDeviceType.AC
             )
 
             ac_line1_state = ac_line1_state_subject.pipe(
@@ -484,7 +529,7 @@ class ACMeterCharger(ACMeterThingBase):
                 self.line_state_subject.on_next(self._calc_charger_state())
 
             ac_line2_state_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.AC}.{ac_line2.instance.instance}", JsonKeys.Voltage
+                ac_id, f"{JsonKeys.Voltage}.{2}", N2kDeviceType.AC
             )
 
             ac_line2_state = ac_line2_state_subject.pipe(
@@ -498,7 +543,7 @@ class ACMeterCharger(ACMeterThingBase):
                 self.line_state_subject.on_next(self._calc_charger_state())
 
             ac_line3_state_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.AC}.{ac_line3.instance.instance}", JsonKeys.Voltage
+                ac_id, f"{JsonKeys.Voltage}.{3}", N2kDeviceType.AC
             )
 
             ac_line3_state = ac_line3_state_subject.pipe(

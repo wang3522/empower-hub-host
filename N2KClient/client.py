@@ -383,9 +383,18 @@ class N2KClient(dbus.service.Object):
         for id, state_update in state_updates.items():
             if id not in device_list_copy.devices:
                 continue
-
-            for channel_id, value in state_update.items():
-                device_list_copy.update_channel(id, channel_id, value)
+            ## Exanded comment, explain why channel_id has appended line number
+            if device_list_copy.devices[id].type == N2kDeviceType.AC:
+                lines: dict[int, dict[str, any]] = state_update.get("AClines", {})
+                if lines is not None:
+                    for line_id, line_value in lines.items():
+                        for channel_id, value in line_value.items():
+                            device_list_copy.update_channel(
+                                id, f"{channel_id}.{int(line_id) + 1}", value
+                            )
+            else:
+                for channel_id, value in state_update.items():
+                    device_list_copy.update_channel(id, channel_id, value)
 
         self._devices.on_next(device_list_copy)
 

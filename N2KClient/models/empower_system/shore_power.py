@@ -13,6 +13,7 @@ from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicSta
 from N2KClient.models.empower_system.ac_meter import ACMeterThingBase
 from reactivex import operators as ops
 import reactivex as rx
+from N2KClient.models.common_enums import N2kDeviceType
 
 
 class ShorePower(ACMeterThingBase):
@@ -65,6 +66,8 @@ class ShorePower(ACMeterThingBase):
         )
         self._define_channel(channel)
 
+        ac_id = f"{JsonKeys.AC}.{ac_line1.instance.instance}"
+
         if component_status is not None and ic_associated_line is not None:
             # ACMeter is associated to a Inverter/Charger. We should report disconnected if
             # the reported voltage value is invalid. Combi inverter/chargers do not report 0 voltage
@@ -75,12 +78,8 @@ class ShorePower(ACMeterThingBase):
                     self.line_status[1] = status[Constants.state]
                     self.ac_connected_state.on_next(self._calc_connection_status())
 
-                ac_line1_id = (
-                    f"{JsonKeys.AC}.{ac_line1.instance.instance}.{ac_line1.line.name}"
-                )
-
                 ac_line1_connected_subject = n2k_devices.get_channel_subject(
-                    ac_line1_id, JsonKeys.ComponentStatus
+                    ac_id, f"{JsonKeys.ComponentStatus}.{1}", N2kDeviceType.AC
                 )
 
                 line1_connected = ac_line1_connected_subject.pipe(
@@ -103,12 +102,8 @@ class ShorePower(ACMeterThingBase):
                     self.line_status[2] = status[Constants.state]
                     self.ac_connected_state.on_next(self._calc_connection_status())
 
-                ac_line2_id = (
-                    f"{JsonKeys.AC}.{ac_line2.instance.instance}.{ac_line2.line.name}"
-                )
-
                 ac_line2_connected_subject = n2k_devices.get_channel_subject(
-                    ac_line2_id, JsonKeys.ComponentStatus
+                    ac_id, f"{JsonKeys.ComponentStatus}.{2}", N2kDeviceType.AC
                 )
 
                 line2_connected = ac_line2_connected_subject.pipe(
@@ -131,12 +126,8 @@ class ShorePower(ACMeterThingBase):
                     self.line_status[3] = status[Constants.state]
                     self.ac_connected_state.on_next(self._calc_connection_status())
 
-                ac_line3_id = (
-                    f"{JsonKeys.AC}.{ac_line3.instance.instance}.{ac_line3.line.name}"
-                )
-
                 ac_line3_connected_subject = n2k_devices.get_channel_subject(
-                    ac_line3_id, JsonKeys.ComponentStatus
+                    ac_id, f"{JsonKeys.ComponentStatus}.{3}", N2kDeviceType.AC
                 )
 
                 line3_connected = ac_line3_connected_subject.pipe(
@@ -161,11 +152,8 @@ class ShorePower(ACMeterThingBase):
                     self.line_status[1] = status[Constants.state]
                     self.ac_connected_state.on_next(self._calc_connection_status())
 
-                ac_line1_id = (
-                    f"{JsonKeys.AC}.{ac_line1.instance.instance}.{ac_line1.line.name}"
-                )
                 ac_line1_Voltage = n2k_devices.get_channel_subject(
-                    ac_line1_id, JsonKeys.Voltage
+                    ac_id, f"{JsonKeys.Voltage}.{1}", N2kDeviceType.AC
                 )
                 line1_connected = ac_line1_Voltage.pipe(
                     ops.map(
@@ -186,11 +174,8 @@ class ShorePower(ACMeterThingBase):
                     self.line_status[2] = status[Constants.state]
                     self.ac_connected_state.on_next(self._calc_connection_status())
 
-                ac_line2_id = (
-                    f"{JsonKeys.AC}.{ac_line2.instance.instance}.{ac_line2.line.name}"
-                )
                 ac_line2_Voltage = n2k_devices.get_channel_subject(
-                    ac_line2_id, JsonKeys.Voltage
+                    ac_id, f"{JsonKeys.Voltage}.{2}", N2kDeviceType.AC
                 )
                 line2_connected = ac_line2_Voltage.pipe(
                     ops.map(
@@ -211,11 +196,8 @@ class ShorePower(ACMeterThingBase):
                     self.line_status[3] = status[Constants.state]
                     self.ac_connected_state.on_next(self._calc_connection_status())
 
-                ac_line3_id = (
-                    f"{JsonKeys.AC}.{ac_line3.instance.instance}.{ac_line3.line.name}"
-                )
                 ac_line3_Voltage = n2k_devices.get_channel_subject(
-                    ac_line3_id, JsonKeys.Voltage
+                    ac_id, f"{JsonKeys.Voltage}.{3}", N2kDeviceType.AC
                 )
                 line3_connected = ac_line3_Voltage.pipe(
                     ops.map(
@@ -234,6 +216,7 @@ class ShorePower(ACMeterThingBase):
             bls_states_subject = n2k_devices.get_channel_subject(
                 f"{JsonKeys.BINARY_LOGIC_STATE}.{bls.address}",
                 JsonKeys.States,
+                N2kDeviceType.BINARY_LOGIC_STATE,
             )
             bls_connected_state = bls_states_subject.pipe(
                 ops.map(
@@ -265,6 +248,7 @@ class ShorePower(ACMeterThingBase):
             enabled_subject = n2k_devices.get_channel_subject(
                 f"{JsonKeys.CIRCUIT}.{circuit.control_id}",
                 JsonKeys.Level,
+                N2kDeviceType.CIRCUIT,
             )
             n2k_devices.set_subscription(
                 channel.id,

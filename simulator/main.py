@@ -57,9 +57,8 @@ class N2KDBusSimulator(dbus.service.Object):
                 return (
                     '{"ComponentStatus": "Connected", "Level": 200, "LevelPercent": 87}'
                 )
-            elif id == "AC.1.Line1":
-                return '{"ComponentStatus": "Connected", "Voltage": 230, "Current": 10, "Frequency": 50, "Power": 2000}'
-
+            elif id == "AC.1":
+                return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
             elif id == "Tank.81":
                 return (
                     '{"ComponentStatus": "Connected", "Level": 300, "LevelPercent": 92}'
@@ -95,8 +94,8 @@ class N2KDBusSimulator(dbus.service.Object):
                 return '{"ComponentStatus": "Connected", "FixType": "3D Fix", "LatitudeDeg": 10, "LongitudeDeg": 500, "Sog": 10}'
             elif id == "InverterCharger.0":
                 return '{"ComponentStatus": "Connected","InverterState": "Charging"}'
-            elif id == "AC.1.Line1":
-                return '{"ComponentStatus": "Connected", "Voltage": 230, "Current": 10, "Frequency": 50, "Power": 2000}'
+            elif id == "AC.1":
+                return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
         elif self.get_state_count < 480:
             if id == "DC.6":
                 return '{"ComponentStatus": "Connected", "Voltage": 14.2, "Current": 5.0, "StateOfCharge": 55, "Temperature": 29, "CapacityRemaining": 700, "TimeRemaining": 200, "TimeToCharge": 40}'
@@ -118,8 +117,8 @@ class N2KDBusSimulator(dbus.service.Object):
                 return (
                     '{"ComponentStatus": "Connected", "InverterState": "EnergySaving"}'
                 )
-            elif id == "AC.1.Line1":
-                return '{"ComponentStatus": "Connected", "Voltage": 230, "Current": 10, "Frequency": 50, "Power": 2000}'
+            elif id == "AC.1":
+                return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
         else:
             if id == "DC.6":
                 return '{"ComponentStatus": "Disconnected", "Voltage": 14.5, "Current": 6, "StateOfCharge": 55, "Temperature": 29.5, "CapacityRemaining": 700.5555, "TimeRemaining": 200, "TimeToCharge": 40}'
@@ -137,8 +136,8 @@ class N2KDBusSimulator(dbus.service.Object):
                 return '{"ComponentStatus": "Disconnected", "FixType": "3D Fix", "LatitudeDeg": 100.44444444444444444, "LongitudeDeg": 10.44444444444, "Sog": 20}'
             elif id == "InverterCharger.0":
                 return '{"ComponentStatus": "Disconnected", "InverterState": "EnergySaving"}'
-            elif id == "AC.1.Line1":
-                return '{"ComponentStatus": "Disconnected", "Voltage": 230, "Current": 10, "Frequency": 50, "Power": 2000}'
+            elif id == "AC.1":
+                return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
         return "{}"
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")

@@ -14,6 +14,7 @@ class N2kDeviceType(str, Enum):
     DEVICE = "device"
     UNKNOWN = "unknown"
     GNSS = "gnss"
+    BINARY_LOGIC_STATE = "binary_logic_state"
 
 
 class ConnectionType(str, Enum):

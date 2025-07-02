@@ -18,10 +18,9 @@ from N2KClient.models.devices import (
 import N2KClient.util.rx as rxu
 from N2KClient.models.filters import Current, Voltage, Frequency, Power
 from N2KClient.models.empower_system.connection_status import ConnectionStatus
-
 from N2KClient.util.state_util import StateUtil
+from N2KClient.models.common_enums import N2kDeviceType
 
-##TODO probably have to talk to Krushit about if we get this as string or int enum
 INVERTER_STATE_MAPPING = {
     JsonKeys.INVERTING: "inverting",
     JsonKeys.AC_PASSTHRU: "acPassthrough",
@@ -82,14 +81,11 @@ class InverterBase(Thing):
             links=[],
         )
 
+        ac_id = f"{JsonKeys.AC}.{ac_line1.instance.instance}"
         #########################################
         # Line 1
         #########################################
         if ac_line1 is not None:
-
-            line_1_device_id = (
-                f"{JsonKeys.AC}.{ac_line1.instance.instance}.{ac_line1.line.value}"
-            )
 
             def update_line1_status(status: dict[str, any]):
                 self.line_status[1] = status[Constants.state]
@@ -113,8 +109,7 @@ class InverterBase(Thing):
                 line1_component_status = inverter_component_status
             else:
                 ac1_component_status_subject = n2k_devices.get_channel_subject(
-                    line_1_device_id,
-                    JsonKeys.ComponentStatus,
+                    ac_id, f"{JsonKeys.ComponentStatus}.{1}", N2kDeviceType.AC
                 )
                 line1_component_status = ac1_component_status_subject.pipe(
                     ops.map(
@@ -147,8 +142,7 @@ class InverterBase(Thing):
             self._define_channel(channel)
 
             ac1_voltage_subject = n2k_devices.get_channel_subject(
-                line_1_device_id,
-                JsonKeys.Voltage,
+                ac_id, f"{JsonKeys.Voltage}.{1}", N2kDeviceType.AC
             )
 
             n2k_devices.set_subscription(
@@ -171,8 +165,7 @@ class InverterBase(Thing):
             )
             self._define_channel(channel)
             ac1_current_subject = n2k_devices.get_channel_subject(
-                line_1_device_id,
-                JsonKeys.Current,
+                ac_id, f"{JsonKeys.Current}.{1}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -195,8 +188,7 @@ class InverterBase(Thing):
             )
             self._define_channel(channel)
             ac1_frequency_subject = n2k_devices.get_channel_subject(
-                line_1_device_id,
-                JsonKeys.Frequency,
+                ac_id, f"{JsonKeys.Frequency}.{1}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -218,8 +210,7 @@ class InverterBase(Thing):
             )
             self._define_channel(channel)
             ac1_power_subject = n2k_devices.get_channel_subject(
-                line_1_device_id,
-                JsonKeys.Power,
+                ac_id, f"{JsonKeys.Power}.{1}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -230,9 +221,6 @@ class InverterBase(Thing):
         # Line 2
         #########################################
         if ac_line2 is not None:
-            line_2_device_id = (
-                f"{JsonKeys.AC}.{ac_line2.instance.instance}.{ac_line2.line.value}"
-            )
 
             def update_line2_status(status: dict[str, any]):
                 self.line_status[2] = status[Constants.state]
@@ -256,8 +244,7 @@ class InverterBase(Thing):
                 line_2_component_status = inverter_component_status
             else:
                 ac2_component_status_subject = n2k_devices.get_channel_subject(
-                    line_2_device_id,
-                    JsonKeys.ComponentStatus,
+                    ac_id, f"{JsonKeys.ComponentStatus}.{2}", N2kDeviceType.AC
                 )
                 line_2_component_status = ac2_component_status_subject.pipe(
                     ops.map(
@@ -289,8 +276,7 @@ class InverterBase(Thing):
             )
             self._define_channel(channel)
             ac2_voltage_subject = n2k_devices.get_channel_subject(
-                line_2_device_id,
-                JsonKeys.Voltage,
+                ac_id, f"{JsonKeys.Voltage}.{2}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -312,8 +298,7 @@ class InverterBase(Thing):
             )
             self._define_channel(channel)
             ac2_current_subject = n2k_devices.get_channel_subject(
-                line_2_device_id,
-                JsonKeys.Current,
+                ac_id, f"{JsonKeys.Current}.{2}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -335,8 +320,7 @@ class InverterBase(Thing):
             )
             self._define_channel(channel)
             ac2_frequency_subject = n2k_devices.get_channel_subject(
-                line_2_device_id,
-                JsonKeys.Frequency,
+                ac_id, f"{JsonKeys.Frequency}.{2}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -358,8 +342,7 @@ class InverterBase(Thing):
             )
             self._define_channel(channel)
             ac2_power_subject = n2k_devices.get_channel_subject(
-                line_2_device_id,
-                JsonKeys.Power,
+                ac_id, f"{JsonKeys.Power}.{2}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -370,9 +353,6 @@ class InverterBase(Thing):
         # Line 3
         #########################################
         if ac_line3 is not None:
-            line_3_device_id = (
-                f"{JsonKeys.AC}.{ac_line3.instance.instance}.{ac_line3.line.value}"
-            )
 
             def update_line3_status(status: dict[str, any]):
                 self.line_status[3] = status[Constants.state]
@@ -395,8 +375,7 @@ class InverterBase(Thing):
                 line_3_component_status = inverter_component_status
             else:
                 ac3_component_status_subject = n2k_devices.get_channel_subject(
-                    line_3_device_id,
-                    JsonKeys.ComponentStatus,
+                    ac_id, f"{JsonKeys.ComponentStatus}.{3}", N2kDeviceType.AC
                 )
                 line_3_component_status = ac3_component_status_subject.pipe(
                     ops.map(
@@ -428,8 +407,7 @@ class InverterBase(Thing):
             )
             self._define_channel(channel)
             ac3_voltage_subject = n2k_devices.get_channel_subject(
-                line_3_device_id,
-                JsonKeys.Voltage,
+                ac_id, f"{JsonKeys.Voltage}.{3}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -452,8 +430,7 @@ class InverterBase(Thing):
 
             self._define_channel(channel)
             ac3_current_subject = n2k_devices.get_channel_subject(
-                line_3_device_id,
-                JsonKeys.Current,
+                ac_id, f"{JsonKeys.Current}.{3}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -476,8 +453,7 @@ class InverterBase(Thing):
 
             self._define_channel(channel)
             ac3_frequency_subject = n2k_devices.get_channel_subject(
-                line_3_device_id,
-                JsonKeys.Frequency,
+                ac_id, f"{JsonKeys.Frequency}.{3}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -498,8 +474,7 @@ class InverterBase(Thing):
             )
             self._define_channel(channel)
             ac3_power_subject = n2k_devices.get_channel_subject(
-                line_3_device_id,
-                JsonKeys.Power,
+                ac_id, f"{JsonKeys.Power}.{3}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -569,6 +544,7 @@ class AcMeterInverter(InverterBase):
         )
         self._define_channel(channel)
 
+        ac_id = f"{JsonKeys.AC}.{ac_line1.instance.instance}"
         if ac_line1 is not None:
 
             def update_ac_line1_state(status: bool):
@@ -576,8 +552,7 @@ class AcMeterInverter(InverterBase):
                 self.connection_status_subject.on_next(self._calc_inverter_state())
 
             ac_line1_state_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.AC}.{ac_line1.instance.instance}.{ac_line1.line.value}",
-                JsonKeys.Voltage,
+                ac_id, f"{JsonKeys.Voltage}.{1}", N2kDeviceType.AC
             )
 
             ac_line1_state = ac_line1_state_subject.pipe(
@@ -592,8 +567,7 @@ class AcMeterInverter(InverterBase):
                 self.connection_status_subject.on_next(self._calc_inverter_state())
 
             ac_line2_status_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.AC}.{ac_line2.instance.instance}.{ac_line2.line.value}",
-                JsonKeys.Voltage,
+                ac_id, f"{JsonKeys.Voltage}.{2}", N2kDeviceType.AC
             )
 
             ac_line2_state = ac_line2_status_subject.pipe(
@@ -608,8 +582,7 @@ class AcMeterInverter(InverterBase):
                 self.connection_status_subject.on_next(self._calc_inverter_state())
 
             ac_line3_status_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.AC}.{ac_line3.instance.instance}.{ac_line3.line.value}",
-                JsonKeys.Voltage,
+                ac_id, JsonKeys.Voltage, N2kDeviceType.AC
             )
 
             ac_line3_state = ac_line3_status_subject.pipe(
@@ -641,6 +614,7 @@ class AcMeterInverter(InverterBase):
             circuit_level_subject = n2k_devices.get_channel_subject(
                 f"{JsonKeys.CIRCUIT}.{circuit.control_id}",
                 JsonKeys.Level,
+                N2kDeviceType.CIRCUIT,
             )
             inverter_enable = circuit_level_subject.pipe(
                 ops.map(lambda level: 1 if level > 0 else 0),
@@ -696,7 +670,7 @@ class CombiInverter(InverterBase):
         self._define_channel(channel)
 
         inverter_state_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.InverterState
+            n2k_device_id, JsonKeys.InverterState, N2kDeviceType.INVERTERCHARGER
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -720,7 +694,7 @@ class CombiInverter(InverterBase):
         self._define_channel(channel)
 
         component_status_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.ComponentStatus
+            n2k_device_id, JsonKeys.ComponentStatus, N2kDeviceType.INVERTERCHARGER
         )
 
         component_status = component_status_subject.pipe(
@@ -755,7 +729,7 @@ class CombiInverter(InverterBase):
 
         self._define_channel(channel)
         inverter_enable_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.InverterEnable
+            n2k_device_id, JsonKeys.InverterEnable, N2kDeviceType.INVERTERCHARGER
         )
         inverter_ie = inverter_enable_subject.pipe(ops.distinct_until_changed())
         inverter_enable = inverter_ie
@@ -764,7 +738,7 @@ class CombiInverter(InverterBase):
             circuit_device_id = f"{JsonKeys.CIRCUIT}.{inverter_circuit.control_id}"
 
             circuit_level_subject = n2k_devices.get_channel_subject(
-                circuit_device_id, JsonKeys.Level
+                circuit_device_id, JsonKeys.Level, N2kDeviceType.CIRCUIT
             )
 
             circuit_ie = circuit_level_subject.pipe(

@@ -11,6 +11,7 @@ from ..common_enums import WaterTankType
 from reactivex import operators as ops
 import reactivex as rx
 from N2KClient.models.filters import Volume
+from N2KClient.models.common_enums import N2kDeviceType
 
 
 class TankBase(Thing):
@@ -52,7 +53,7 @@ class TankBase(Thing):
         )
         self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
-            tank_device_id, JsonKeys.ComponentStatus
+            tank_device_id, JsonKeys.ComponentStatus, N2kDeviceType.TANK
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -81,7 +82,7 @@ class TankBase(Thing):
         )
         self._define_channel(channel)
         level_absolute_subject = n2k_devices.get_channel_subject(
-            tank_device_id, JsonKeys.Level
+            tank_device_id, JsonKeys.Level, N2kDeviceType.TANK
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -111,7 +112,7 @@ class TankBase(Thing):
         self._define_channel(channel)
 
         level_percent_subject = n2k_devices.get_channel_subject(
-            tank_device_id, JsonKeys.LevelPercent
+            tank_device_id, JsonKeys.LevelPercent, N2kDeviceType.TANK
         )
         n2k_devices.set_subscription(
             channel.id,

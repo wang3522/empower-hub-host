@@ -14,6 +14,7 @@ from reactivex import operators as ops
 import N2KClient.util.rx as rxu
 from N2KClient.models.filters import Current, Voltage, Frequency, Power
 import reactivex as rx
+from N2KClient.models.common_enums import N2kDeviceType
 
 
 class ACMeterThingBase(Thing):
@@ -48,8 +49,8 @@ class ACMeterThingBase(Thing):
             links=[],
         )
 
+        ac_id = f"{JsonKeys.AC}.{ac_line1.instance.instance}"
         if ac_line1 is not None:
-            line_1_device_id = f"{JsonKeys.AC}.{ac_line1.instance}.{ac_line1.line.name}"
 
             def update_line_1_status(status: dict[str, any]):
                 self.line_status[1] = status[Constants.state]
@@ -75,7 +76,7 @@ class ACMeterThingBase(Thing):
                 line_1_component_status_subject = ic_component_status
             else:
                 line_1_component_status_subject = n2k_devices.get_channel_subject(
-                    line_1_device_id, JsonKeys.ComponentStatus
+                    ac_id, f"{JsonKeys.ComponentStatus}.{1}", N2kDeviceType.AC
                 )
 
                 line_1_component_status = line_1_component_status_subject.pipe(
@@ -114,7 +115,7 @@ class ACMeterThingBase(Thing):
             self._define_channel(channel)
 
             line1_voltage_subject = n2k_devices.get_channel_subject(
-                line_1_device_id, JsonKeys.Voltage
+                ac_id, f"{JsonKeys.Voltage}.{1}", N2kDeviceType.AC
             )
 
             n2k_devices.set_subscription(
@@ -140,7 +141,7 @@ class ACMeterThingBase(Thing):
             self._define_channel(channel)
 
             line1_current_subject = n2k_devices.get_channel_subject(
-                line_1_device_id, JsonKeys.Current
+                ac_id, f"{JsonKeys.Current}.{1}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -164,7 +165,7 @@ class ACMeterThingBase(Thing):
             )
             self._define_channel(channel)
             line1_frequency_subject = n2k_devices.get_channel_subject(
-                line_1_device_id, JsonKeys.Frequency
+                ac_id, f"{JsonKeys.Frequency}.{1}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -189,7 +190,7 @@ class ACMeterThingBase(Thing):
             self._define_channel(channel)
 
             line1_power_subject = n2k_devices.get_channel_subject(
-                line_1_device_id, JsonKeys.Power
+                ac_id, f"{JsonKeys.Power}.{1}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -197,7 +198,6 @@ class ACMeterThingBase(Thing):
             )
 
         if ac_line2 is not None:
-            line_2_device_id = f"{JsonKeys.AC}.{ac_line2.instance}.{ac_line2.line.name}"
 
             def update_line_2_status(status: dict[str, any]):
                 self.line_status[2] = status[Constants.state]
@@ -222,8 +222,7 @@ class ACMeterThingBase(Thing):
                 line_2_component_status = ic_component_status
             else:
                 line_2_component_status_subject = n2k_devices.get_channel_subject(
-                    line_2_device_id,
-                    JsonKeys.ComponentStatus,
+                    ac_id, f"{JsonKeys.ComponentStatus}.{2}", N2kDeviceType.AC
                 )
 
                 line_2_component_status = line_2_component_status_subject.pipe(
@@ -258,6 +257,17 @@ class ACMeterThingBase(Thing):
             )
             self._define_channel(channel)
 
+            line_2_voltage_subject = n2k_devices.get_channel_subject(
+                ac_id, f"{JsonKeys.Voltage}.{2}", N2kDeviceType.AC
+            )
+
+            n2k_devices.set_subscription(
+                channel.id,
+                line_2_voltage_subject.pipe(
+                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER
+                ),
+            )
+
             #################################
             # Line 2 Current
             #################################
@@ -273,14 +283,14 @@ class ACMeterThingBase(Thing):
             )
             self._define_channel(channel)
 
-            line_2_voltage_subject = n2k_devices.get_channel_subject(
-                line_2_device_id, JsonKeys.Voltage
+            line_2_current_subject = n2k_devices.get_channel_subject(
+                ac_id, f"{JsonKeys.Current}.{2}", N2kDeviceType.AC
             )
 
             n2k_devices.set_subscription(
                 channel.id,
-                line_2_voltage_subject.pipe(
-                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER
+                line_2_current_subject.pipe(
+                    rxu.round(Current.ROUND_VALUE), Current.FILTER
                 ),
             )
 
@@ -299,14 +309,14 @@ class ACMeterThingBase(Thing):
             )
             self._define_channel(channel)
 
-            line_2_current_subject = n2k_devices.get_channel_subject(
-                line_2_device_id, JsonKeys.Current
+            line_2_frequency_subject = n2k_devices.get_channel_subject(
+                ac_id, f"{JsonKeys.Frequency}.{2}", N2kDeviceType.AC
             )
 
             n2k_devices.set_subscription(
                 channel.id,
-                line_2_current_subject.pipe(
-                    rxu.round(Current.ROUND_VALUE), Current.FILTER
+                line_2_frequency_subject.pipe(
+                    rxu.round(Frequency.ROUND_VALUE), Frequency.FILTER
                 ),
             )
             #################################
@@ -324,19 +334,16 @@ class ACMeterThingBase(Thing):
             )
             self._define_channel(channel)
 
-            line_2_frequency_subject = n2k_devices.get_channel_subject(
-                line_2_device_id, JsonKeys.Frequency
+            line_2_power_subject = n2k_devices.get_channel_subject(
+                ac_id, f"{JsonKeys.Power}.{2}", N2kDeviceType.AC
             )
-
             n2k_devices.set_subscription(
                 channel.id,
-                line_2_frequency_subject.pipe(
-                    rxu.round(Frequency.ROUND_VALUE), Frequency.FILTER
-                ),
+                line_2_power_subject.pipe(rxu.round(Power.ROUND_VALUE), Power.FILTER),
             )
+            self._define_channel(channel)
 
         if ac_line3 is not None:
-            line_3_device_id = f"{JsonKeys.AC}.{ac_line3.instance}.{ac_line3.line.name}"
 
             def update_line_3_status(status: dict[str, any]):
                 self.line_status[3] = status[Constants.state]
@@ -361,7 +368,7 @@ class ACMeterThingBase(Thing):
                 line_3_component_status = ic_component_status
             else:
                 line_3_component_status_subject = n2k_devices.get_channel_subject(
-                    line_3_device_id, JsonKeys.ComponentStatus
+                    ac_id, f"{JsonKeys.ComponentStatus}.{3}", N2kDeviceType.AC
                 )
 
                 line_3_component_status = line_3_component_status_subject.pipe(
@@ -400,7 +407,7 @@ class ACMeterThingBase(Thing):
             self._define_channel(channel)
 
             line_3_voltage_subject = n2k_devices.get_channel_subject(
-                line_3_device_id, JsonKeys.Voltage
+                ac_id, f"{JsonKeys.Voltage}.{3}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -425,7 +432,7 @@ class ACMeterThingBase(Thing):
             self._define_channel(channel)
 
             line_3_current_subject = n2k_devices.get_channel_subject(
-                line_3_device_id, JsonKeys.Current
+                ac_id, f"{JsonKeys.Current}.{3}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -450,7 +457,7 @@ class ACMeterThingBase(Thing):
             self._define_channel(channel)
 
             line_3_frequency_subject = n2k_devices.get_channel_subject(
-                line_3_device_id, JsonKeys.Frequency
+                ac_id, f"{JsonKeys.Frequency}.{3}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -474,7 +481,7 @@ class ACMeterThingBase(Thing):
             )
 
             line_3_power_subject = n2k_devices.get_channel_subject(
-                line_3_device_id, JsonKeys.Power
+                ac_id, f"{JsonKeys.Power}.{3}", N2kDeviceType.AC
             )
             n2k_devices.set_subscription(
                 channel.id,

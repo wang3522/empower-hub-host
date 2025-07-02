@@ -12,8 +12,9 @@ from .link import Link
 from N2KClient.models.n2k_configuration.binary_logic_state import BinaryLogicState
 from N2KClient.models.n2k_configuration.category_item import CategoryItem
 from reactivex import operators as ops
-from N2KClient.models.filters import Current, Voltage, Temperature, CapacityRemaining
+from N2KClient.models.filters import Current
 import N2KClient.util.rx as rxu
+from N2KClient.models.common_enums import N2kDeviceType
 
 
 def get_enabled_categories(categories: list[CategoryItem]):
@@ -56,7 +57,7 @@ class CircuitThing(Thing):
         )
         self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
-            circuit_device_id, JsonKeys.ComponentStatus
+            circuit_device_id, JsonKeys.ComponentStatus, N2kDeviceType.CIRCUIT
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -86,7 +87,7 @@ class CircuitThing(Thing):
         )
         self._define_channel(channel)
         current_subject = n2k_devices.get_channel_subject(
-            circuit_device_id, JsonKeys.Current
+            circuit_device_id, JsonKeys.Current, N2kDeviceType.CIRCUIT
         )
 
         n2k_devices.set_subscription(
@@ -112,7 +113,7 @@ class CircuitThing(Thing):
             self._define_channel(channel)
 
             level_subject = n2k_devices.get_channel_subject(
-                circuit_device_id, JsonKeys.Level
+                circuit_device_id, JsonKeys.Level, N2kDeviceType.CIRCUIT
             )
             n2k_devices.set_subscription(
                 channel.id,
@@ -127,7 +128,7 @@ class CircuitThing(Thing):
             ##############################
 
             power_subject = n2k_devices.get_channel_subject(
-                circuit_device_id, JsonKeys.Level
+                circuit_device_id, JsonKeys.Level, N2kDeviceType.CIRCUIT
             )
             circuit_power_state = power_subject.pipe(
                 ops.filter(lambda state: state is not None),
@@ -137,7 +138,9 @@ class CircuitThing(Thing):
             power_state = circuit_power_state
             if bls is not None and power_subject is not None:
                 bls_states_subject = n2k_devices.get_channel_subject(
-                    f"{JsonKeys.BINARY_LOGIC_STATE}.{bls.address}"
+                    f"{JsonKeys.BINARY_LOGIC_STATE}.{bls.address}",
+                    JsonKeys.States,
+                    N2kDeviceType.BINARY_LOGIC_STATE,
                 )
 
                 bls_power_state = bls_states_subject.pipe(

@@ -1,5 +1,5 @@
 import json
-from typing import Any, Callable, Dict
+from typing import Any, Dict
 import reactivex as rx
 from reactivex.subject import BehaviorSubject
 from N2KClient.models.common_enums import N2kDeviceType
@@ -70,10 +70,12 @@ class N2kDevices:
         if device_key in self.devices:
             self.devices[device_key].update_channel(channel_key, value)
 
-    def get_channel_subject(self, device_key: str, channel_key: str) -> BehaviorSubject:
-        # Ensure device entry exists
+    def get_channel_subject(
+        self, device_key: str, channel_key: str, device_type: N2kDeviceType
+    ) -> BehaviorSubject:
+        # Ensure device entry exists. If not, create it. Config builder will provide expected device type
         if device_key not in self.devices:
-            self.devices[device_key] = N2kDevice(type=N2kDeviceType.UNKNOWN)
+            self.devices[device_key] = N2kDevice(type=device_type)
         return self.devices[device_key].get_channel_subject(channel_key)
 
     def set_subscription(self, mobile_key: str, observable: rx.Observable):

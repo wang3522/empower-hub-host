@@ -9,6 +9,7 @@ from ..constants import Constants, JsonKeys
 from .channel import Channel
 from ..common_enums import ChannelType, ConnectionType, Unit
 from reactivex import operators as ops
+from N2KClient.models.common_enums import N2kDeviceType
 
 
 class Hub(Thing):
@@ -38,7 +39,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         component_status_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.ComponentStatus
+            n2k_device_id, JsonKeys.ComponentStatus, N2kDeviceType.DEVICE
         )
         if component_status_subject is not None:
             n2k_devices.set_subscription(
@@ -70,7 +71,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         ethernet_internet_connectivity_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.EthernetInternetConnectivity
+            n2k_device_id, JsonKeys.EthernetInternetConnectivity, N2kDeviceType.DEVICE
         )
         if ethernet_internet_connectivity_subject is not None:
             n2k_devices.set_subscription(
@@ -94,7 +95,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         wifi_internet_connectivity_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.WifiInternetConnectivity
+            n2k_device_id, JsonKeys.WifiInternetConnectivity, N2kDeviceType.DEVICE
         )
         if wifi_internet_connectivity_subject is not None:
             n2k_devices.set_subscription(
@@ -116,7 +117,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         wifi_ssid_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.WifiSsid
+            n2k_device_id, JsonKeys.WifiSsid, N2kDeviceType.DEVICE
         )
         if wifi_ssid_subject is not None:
             n2k_devices.set_subscription(
@@ -138,7 +139,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         wifi_type_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.WifiType
+            n2k_device_id, JsonKeys.WifiType, N2kDeviceType.DEVICE
         )
         if wifi_type_subject is not None:
             n2k_devices.set_subscription(
@@ -162,7 +163,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         wifi_signal_strength_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.WifiSignalStrength
+            n2k_device_id, JsonKeys.WifiSignalStrength, N2kDeviceType.DEVICE
         )
         if wifi_signal_strength_subject is not None:
             n2k_devices.set_subscription(
@@ -186,7 +187,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         cellular_internet_connectivity_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.CellularInternetConnectivity
+            n2k_device_id, JsonKeys.CellularInternetConnectivity, N2kDeviceType.DEVICE
         )
         if cellular_internet_connectivity_subject is not None:
             n2k_devices.set_subscription(
@@ -210,7 +211,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         cellular_signal_strength_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.CellularSignalStrengthDbm
+            n2k_device_id, JsonKeys.CellularSignalStrengthDbm, N2kDeviceType.DEVICE
         )
         if cellular_signal_strength_subject is not None:
             n2k_devices.set_subscription(
@@ -232,7 +233,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         cellular_iccid_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.CellularSimIccid
+            n2k_device_id, JsonKeys.CellularSimIccid, N2kDeviceType.DEVICE
         )
         if cellular_iccid_subject is not None:
             n2k_devices.set_subscription(
@@ -254,7 +255,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         cellular_eid_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.CellularSimEid
+            n2k_device_id, JsonKeys.CellularSimEid, N2kDeviceType.DEVICE
         )
         if cellular_eid_subject is not None:
             n2k_devices.set_subscription(

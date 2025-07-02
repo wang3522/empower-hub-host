@@ -9,6 +9,7 @@ from N2KClient.models.n2k_configuration.hvac import HVACDevice
 from reactivex import operators as ops
 import N2KClient.util.rx as rxu
 from N2KClient.models.filters import Temperature
+from N2KClient.models.common_enums import N2kDeviceType
 
 
 class Climate(Thing):
@@ -39,7 +40,7 @@ class Climate(Thing):
         )
         self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
-            hvac_device_id, JsonKeys.ComponentStatus
+            hvac_device_id, JsonKeys.ComponentStatus, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -67,7 +68,9 @@ class Climate(Thing):
             tags=[f"{Constants.empower}:{Constants.hvac}.{Constants.mode}"],
         )
         self._define_channel(channel)
-        mode_subject = n2k_devices.get_channel_subject(hvac_device_id, JsonKeys.Mode)
+        mode_subject = n2k_devices.get_channel_subject(
+            hvac_device_id, JsonKeys.Mode, N2kDeviceType.HVAC
+        )
         n2k_devices.set_subscription(
             channel.id,
             mode_subject.pipe(
@@ -87,7 +90,7 @@ class Climate(Thing):
         )
         self._define_channel(channel)
         set_point_subject = n2k_devices.get_channel_subject(
-            hvac_device_id, JsonKeys.SetPoint
+            hvac_device_id, JsonKeys.SetPoint, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -111,7 +114,7 @@ class Climate(Thing):
         )
         self._define_channel(channel)
         ambient_temp_subject = n2k_devices.get_channel_subject(
-            hvac_device_id, JsonKeys.AmbientTemperature
+            hvac_device_id, JsonKeys.AmbientTemperature, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -133,7 +136,7 @@ class Climate(Thing):
         )
         self._define_channel(channel)
         fan_speed_subject = n2k_devices.get_channel_subject(
-            hvac_device_id, JsonKeys.FanSpeed
+            hvac_device_id, JsonKeys.FanSpeed, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -155,7 +158,7 @@ class Climate(Thing):
         )
         self._define_channel(channel)
         fan_mode_subject = n2k_devices.get_channel_subject(
-            hvac_device_id, JsonKeys.FanMode
+            hvac_device_id, JsonKeys.FanMode, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
             channel.id,

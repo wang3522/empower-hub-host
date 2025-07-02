@@ -10,6 +10,7 @@ from reactivex import operators as ops
 from N2KClient.models.filters import Engine, Temperature, Pressure
 import N2KClient.util.rx as rxu
 import reactivex as rx
+from N2KClient.models.common_enums import N2kDeviceType
 
 
 def _map_engine_type(type: EngineType) -> str:
@@ -51,7 +52,7 @@ class MarineEngine(Thing):
         )
         self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
-            engine_device_id, JsonKeys.ComponentStatus
+            engine_device_id, JsonKeys.ComponentStatus, N2kDeviceType.ENGINE
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -81,7 +82,7 @@ class MarineEngine(Thing):
         )
         self._define_channel(channel)
         speed_subject = n2k_devices.get_channel_subject(
-            engine_device_id, JsonKeys.Speed
+            engine_device_id, JsonKeys.Speed, N2kDeviceType.ENGINE
         )
 
         n2k_devices.set_subscription(
@@ -110,7 +111,7 @@ class MarineEngine(Thing):
         self._define_channel(channel)
 
         engine_hours_subject = n2k_devices.get_channel_subject(
-            engine_device_id, JsonKeys.EngineHours
+            engine_device_id, JsonKeys.EngineHours, N2kDeviceType.ENGINE
         )
 
         n2k_devices.set_subscription(
@@ -136,7 +137,7 @@ class MarineEngine(Thing):
         self._define_channel(channel)
 
         coolant_temp_subject = n2k_devices.get_channel_subject(
-            engine_device_id, JsonKeys.CoolantTemperature
+            engine_device_id, JsonKeys.CoolantTemperature, N2kDeviceType.ENGINE
         )
 
         n2k_devices.set_subscription(
@@ -169,7 +170,7 @@ class MarineEngine(Thing):
         self._define_channel(channel)
 
         coolant_pressure_subject = n2k_devices.get_channel_subject(
-            engine_device_id, JsonKeys.CoolantPressure
+            engine_device_id, JsonKeys.CoolantPressure, N2kDeviceType.ENGINE
         )
 
         n2k_devices.set_subscription(
@@ -198,7 +199,7 @@ class MarineEngine(Thing):
         self._define_channel(channel)
 
         oil_pressure_subject = n2k_devices.get_channel_subject(
-            engine_device_id, JsonKeys.OilPressure
+            engine_device_id, JsonKeys.OilPressure, N2kDeviceType.ENGINE
         )
 
         n2k_devices.set_subscription(
@@ -235,7 +236,7 @@ class MarineEngine(Thing):
         self._define_channel(channel)
 
         engine_state_subject = n2k_devices.get_channel_subject(
-            engine_device_id, JsonKeys.EngineState
+            engine_device_id, JsonKeys.EngineState, N2kDeviceType.ENGINE
         )
 
         n2k_devices.set_subscription(
