@@ -352,29 +352,51 @@ class EmpowerService:
         #             subject=fetch_engine_config,
         #         )
 
-        # TODO: Subscribe and publish factory metadata
+        self.__setup_subscriptions()
 
-        # def _publish_factory_metadata(factory_metadata: FactoryMetadata):
-        #     if (
-        #         factory_metadata.mender_artifact_info is None
-        #         and factory_metadata.rt_firmware_version is None
-        #         and factory_metadata.serial_number is None
-        #     ):
-        #         return
-        #     factory_metadata_dict = factory_metadata.to_factory_metadata_dict()
-        #     self._logger.debug(
-        #         f"Publishing factory metadata as attributes:\n{factory_metadata_dict}"
-        #     )
-        #     self.thingsboard_client.update_attributes(
-        #         factory_metadata_dict
-        #     )
+    def __del__(self):
+        if len(self._service_init_disposables) > 0:
+            for disposable in self._service_init_disposables:
+                disposable.dispose()
+        if self._prev_system_subscription:
+            self._prev_system_subscription.dispose()
+        if self._prev_engine_list_subscription:
+            self._prev_engine_list_subscription.dispose()
+        if self.thingsboard_client is not None:
+            self.thingsboard_client.__del__()
 
+    # TODO: Set up some sort of n2k_server_connection state
+
+    def __setup_subscriptions(self):
+        """
+        Set up subscriptions for the EmpowerService.
+        """
+        # Subscribe to mobile friendly engine configuration
         disposable = (self.n2k_client.get_engine_list_observable()
                       .subscribe(self._update_engine_configuration))
         self._service_init_disposables.append(disposable)
+        # Subscribe to mobile friendly configuration
         disposable = (self.n2k_client.get_empower_system_observable()
                       .subscribe(self._update_cloud_configuration))
         self._service_init_disposables.append(disposable)
+        # Subscribe to metadata updates
+        disposable = (self.n2k_client.get_factory_metadata_observable()
+                      .subscribe(self._update_metadata))
+        self._service_init_disposables.append(disposable)
+
+    def _update_metadata(self, metadata: dict[str, Any]):
+        """
+        Update the metadata with the provided metadata.
+        This method will send the metadata to ThingsBoard if it has changed.
+        """
+        if metadata is None:
+            self._logger.error("Metadata is None, unable to update cloud configuration")
+            return
+
+        self._logger.debug("Attempting to update cloud metadata: %s",
+            json.dumps(metadata)
+        )
+        self.thingsboard_client.update_attributes(metadata)
 
     def _update_cloud_configuration(self, config: EmpowerSystem):
         """
@@ -409,18 +431,6 @@ class EmpowerService:
                 "Cloud configuration is up to date, no changes detected."
             )
 
-    def __del__(self):
-        if len(self._service_init_disposables) > 0:
-            for disposable in self._service_init_disposables:
-                disposable.dispose()
-        if self._prev_system_subscription:
-            self._prev_system_subscription.dispose()
-        if self._prev_engine_list_subscription:
-            self._prev_engine_list_subscription.dispose()
-        if self.thingsboard_client is not None:
-            self.thingsboard_client.__del__()
-
-    # TODO: Set up some sort of n2k_server_connection state
 
     def _update_engine_configuration(self, config: EngineList):
         """
