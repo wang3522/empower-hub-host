@@ -169,9 +169,6 @@ class EmpowerService:
                     state_to_send
                 )
 
-        #TODO: Subscribe to config changes for updating config
-        # and to cloud, print out values for logs, and update config checksum
-
         #TODO: Subscribe to active alarms
 
         #TODO: Subscribe to engine alarms
@@ -372,24 +369,6 @@ class EmpowerService:
         #         factory_metadata_dict
         #     )
 
-        # TODO: Subscribe and handle configuration, push if checksum has changed
-        # Report configuration changes, but only if the config has changed.
-        # def update_cloud_configuration_if_connected(
-        #     config: n2k_client.models.common.EmpowerSystem,
-        # ):
-        #     if config:
-        #         # Get the checksum of the config, don't attempt to udpate if the config
-        #         # is the same
-        #         hashed_string = hashlib.new("sha256")
-        #         hashed_string.update(json.dumps(config.to_config_dict()).encode())
-        #         checksum_value = hashed_string.hexdigest()
-
-        #         prev_value = self.last_state_attrs.get(
-        #             Constants.CONFIG_CHECKSUM_KEY, None
-        #         )
-        #         if prev_value != checksum_value:
-        #             self.__update_cloud_configuration(config)
-        #         self._latest_cloud_config = config
         self.n2k_client.engine_list.subscribe(self._update_engine_configuration)
         self.n2k_client.empower_system.subscribe(self._update_cloud_configuration)
 
@@ -403,19 +382,28 @@ class EmpowerService:
             return
 
         config_dict = config.to_config_dict()
-        self._logger.debug("Attempting to update cloud configuration: %s", json.dumps(config_dict))
         # Get the checksum of the config, don't attempt to udpate if the config
         # is the same
         hashed_string = hashlib.new("sha256")
         hashed_string.update(json.dumps(config.to_config_dict()).encode())
         checksum_value = hashed_string.hexdigest()
 
-
-        self.thingsboard_client.update_attributes(
-            {Constants.CONFIG_KEY: config_dict,
-             Constants.CONFIG_CHECKSUM_KEY: checksum_value}
+        prev_value = self.thingsboard_client.last_attributes.get(
+            Constants.CONFIG_CHECKSUM_KEY, None
         )
-        self.__print_cloud_config(config)
+        if prev_value != checksum_value:
+            self._logger.debug("Attempting to update cloud configuration: %s",
+                json.dumps(config_dict)
+            )
+            self.thingsboard_client.update_attributes(
+                {Constants.CONFIG_KEY: config_dict,
+                 Constants.CONFIG_CHECKSUM_KEY: checksum_value}
+            )
+            self.__print_cloud_config(config)
+        else:
+            self._logger.debug(
+                "Cloud configuration is up to date, no changes detected."
+            )
 
     def __del__(self):
         if len(self._service_init_disposables) > 0:
