@@ -355,7 +355,7 @@ class N2KClient(dbus.service.Object):
                 devices_json = json.loads(devices)
                 self.__merge_device_list(devices_json)
             except Exception as e:
-                self._logger.error(f"Error reading dbus device response: {e}")
+                self._logger.error(f"Error reading dbus device response")
             sleep(self._get_devices_timeout)
 
     def _get_state(self):
@@ -372,7 +372,7 @@ class N2KClient(dbus.service.Object):
                 self._merge_state_update(state_update)
 
             except Exception as e:
-                self._logger.error(f"Error reading dbus state response: {e}")
+                self._logger.error(f"Error reading dbus state response")
             sleep(self._get_state_timeout)
 
     def _merge_state_update(self, state_updates: dict[str, dict[str, Any]]):
@@ -382,7 +382,9 @@ class N2KClient(dbus.service.Object):
         for id, state_update in state_updates.items():
             if id not in device_list_copy.devices:
                 continue
-            ## Exanded comment, explain why channel_id has appended line number
+            # Devices of type AC contain multiple AC Lines,
+            # We want to keep ACLine data together within same device, but each lines data accessable by knowing the line ID
+            # For this reason, we are creating channels within the AC device named as {channel_id}.{line_id}
             if device_list_copy.devices[id].type == N2kDeviceType.AC:
                 lines: dict[int, dict[str, any]] = state_update.get("AClines", {})
                 if lines is not None:
