@@ -8,6 +8,7 @@ import dbus.service
 import reactivex as rx
 import json
 import copy
+import platform
 
 from .models.devices import N2kDevice
 from .models.constants import Constants, JsonKeys, AttrNames
@@ -80,9 +81,7 @@ class N2KClient(dbus.service.Object):
 
     def __init__(self):
         self._disposable_list = []
-
         self._latest_devices = {}
-
         self._devices = rx.subject.BehaviorSubject({})
         self._config = rx.subject.BehaviorSubject(N2kConfiguration())
         self._empower_system = rx.subject.BehaviorSubject(EmpowerSystem(None))
@@ -101,8 +100,12 @@ class N2KClient(dbus.service.Object):
         )
 
         # Initialize N2k dbus Interface
-        # self.bus = dbus.SystemBus()
-        self.bus = dbus.SessionBus()
+        # Mac uses SessionBus, Linux uses SystemBus
+        if platform.system() == "Darwin":
+            self.bus = dbus.SessionBus()
+        else:
+            self.bus = dbus.SystemBus()
+
         n2k_dbus_object = self.bus.get_object(
             Constants.N2K_SERVICE_NAME, Constants.N2K_OBJECT_PATH
         )
