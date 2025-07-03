@@ -26,7 +26,6 @@ class N2kDevice:
         # Update subject if it exists
         if channel_key in self._channel_subjects:
             self._channel_subjects[channel_key].on_next(value)
-            print(f"Channel {channel_key} updated to {value}")
 
     def get_channel_subject(self, channel_key: str) -> BehaviorSubject:
         if channel_key not in self._channel_subjects:
@@ -96,7 +95,6 @@ class N2kDevices:
     def _update_mobile_channel(self, mobile_key: str, value: Any):
         """Update a mobile channel value"""
         self.mobile_channels[mobile_key] = value
-        print(f"Mobile channel {mobile_key} updated to {value}")
 
     def to_mobile_dict(self) -> Dict[str, Any]:
         """Return mobile channel values from all devices"""

@@ -37,7 +37,6 @@ class ShorePower(ACMeterThingBase):
         self.ac_connected_state = rx.subject.BehaviorSubject(
             self._calc_shorepower_connected()
         )
-        print(f"Creating ShorePower with lines: {ac_line1}, {ac_line2}, {ac_line3}")
         ACMeterThingBase.__init__(
             self,
             ThingType.SHORE_POWER,

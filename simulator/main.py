@@ -33,6 +33,7 @@ class N2KDBusSimulator(dbus.service.Object):
             {"Id": "InverterCharger.0", "Type": "inverter_charger"},
             {"Id": "AC.5", "Type": "ac"},
             {"Id": "AC.1", "Type": "ac"},
+            {"Id": "DC.7", "Type": "dc"},
         ]
         bus = dbus.SystemBus()
         bus.request_name(BUS_NAME)
@@ -53,6 +54,8 @@ class N2KDBusSimulator(dbus.service.Object):
         self.get_state_count += 1
         if id == "DC.6":
             return '{"ComponentStatus": "Connected", "Voltage": 12.0, "Current": 2.0, "StateOfCharge": 75, "Temperature": 23.11, "CapacityRemaining": 1000.0, "TimeRemaining": 120, "TimeToCharge": 60}'
+        elif id == "DC.7":
+            return '{"ComponentStatus": "Connected", "Voltage": 11.0, "Current": 12.0, "StateOfCharge": 13, "Temperature": 14.11, "CapacityRemaining": 15555.0, "TimeRemaining": 1444, "TimeToCharge": 124}'
         elif id == "Tank.17":
             return '{"ComponentStatus": "Connected", "Level": 200, "LevelPercent": 87}'
         elif id == "AC.1":
@@ -68,7 +71,7 @@ class N2KDBusSimulator(dbus.service.Object):
         elif id == "GNSS.128":
             return '{"ComponentStatus": "Connected", "FixType": "2D Fix", "LatitudeDeg": 8.5, "LongitudeDeg": 100, "Sog": 5.5}'
         elif id == "InverterCharger.0":
-            return '{"ComponentStatus": "Connected", "InverterState": "Inverting"}'
+            return '{"ComponentStatus": "Connected", "InverterState": "Inverting", "ChargerState": "Float"}'
         elif id == "AC.5":
             return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 1110.0, "Current": 11.5, "Frequency": 11.0, "Power": 1111.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 111.0, "Current": 11.8, "Frequency": 111.0, "Power": 111.0}}}'
         # if self.get_state_count < 160:

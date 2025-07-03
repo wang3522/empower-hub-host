@@ -400,73 +400,73 @@ class CombiCharger(Thing):
                 inverter_charger_component_status_subject.pipe(self.component_status),
             )
 
-            ####################
-            #  Charger Enabled
-            ####################
-            channel = Channel(
-                id="ce",
-                name="Charger Enabled",
-                read_only=(
-                    charger_circuit.switch_type == 0
-                    if charger_circuit is not None
-                    else True
-                ),
-                type=ChannelType.NUMBER,
-                unit=Unit.NONE,
-                tags=[f"{Constants.empower}:{Constants.charger}.enabled"],
-            )
-            self._define_channel(channel)
+        ####################
+        #  Charger Enabled
+        ####################
+        channel = Channel(
+            id="ce",
+            name="Charger Enabled",
+            read_only=(
+                charger_circuit.switch_type == 0
+                if charger_circuit is not None
+                else True
+            ),
+            type=ChannelType.NUMBER,
+            unit=Unit.NONE,
+            tags=[f"{Constants.empower}:{Constants.charger}.enabled"],
+        )
+        self._define_channel(channel)
 
-            charger_enable_subject = n2k_devices.get_channel_subject(
-                n2k_device_id, JsonKeys.ChargerEnable, N2kDeviceType.INVERTERCHARGER
+        charger_enable_subject = n2k_devices.get_channel_subject(
+            n2k_device_id, JsonKeys.ChargerEnable, N2kDeviceType.INVERTERCHARGER
+        )
+        charger_ce = charger_enable_subject.pipe(
+            ops.filter(lambda state: state is not None),
+            ops.distinct_until_changed(),
+        )
+        charger_enable = charger_ce
+        if charger_circuit is not None:
+            circuit_level_subject = n2k_devices.get_channel_subject(
+                f"{JsonKeys.CIRCUIT}.{self.charger_circuit}",
+                JsonKeys.Level,
+                N2kDeviceType.CIRCUIT,
             )
-            charger_ce = charger_enable_subject.pipe(
+
+            circuit_ce = circuit_level_subject.pipe(
                 ops.filter(lambda state: state is not None),
+                ops.map(lambda level: 1 if level > 0 else 0),
                 ops.distinct_until_changed(),
             )
-            charger_enable = charger_ce
-            if charger_circuit is not None:
-                circuit_level_subject = n2k_devices.get_channel_subject(
-                    f"{JsonKeys.CIRCUIT}.{self.charger_circuit}",
-                    JsonKeys.Level,
-                    N2kDeviceType.CIRCUIT,
-                )
+            charger_enable = rx.merge(charger_ce, circuit_ce)
+        n2k_devices.set_subscription(channel.id, charger_enable)
 
-                circuit_ce = circuit_level_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    ops.map(lambda level: 1 if level > 0 else 0),
-                    ops.distinct_until_changed(),
-                )
-                charger_enable = rx.merge(charger_ce, circuit_ce)
-            n2k_devices.set_subscription(channel.id, charger_enable)
+        ####################
+        #  Charger Status
+        ####################
+        channel = Channel(
+            id="cst",
+            name="Charger Status",
+            read_only=True,
+            type=ChannelType.STRING,
+            unit=Unit.NONE,
+            tags=[f"{Constants.empower}:{Constants.charger}.status"],
+        )
+        self._define_channel(channel)
 
-            ####################
-            #  Charger Status
-            ####################
-            channel = Channel(
-                id="cst",
-                name="Charger Status",
-                read_only=True,
-                type=ChannelType.STRING,
-                unit=Unit.NONE,
-                tags=[f"{Constants.empower}:{Constants.charger}.status"],
-            )
-            self._define_channel(channel)
+        inverter_charger_status_subject = n2k_devices.get_channel_subject(
+            n2k_device_id,
+            JsonKeys.ChargerState,
+            N2kDeviceType.INVERTERCHARGER,
+        )
 
-            inverter_charger_status_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.INVERTER_CHARGER}.{inverter_charger.id}",
-                JsonKeys.ChargerState,
-                N2kDeviceType.INVERTERCHARGER,
-            )
-
-            n2k_devices.set_subscription(
-                channel.id,
-                inverter_charger_status_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    ops.map(lambda state: map_charger_state(state)),
-                    ops.distinct_until_changed(),
-                ),
-            )
+        n2k_devices.set_subscription(
+            channel.id,
+            inverter_charger_status_subject.pipe(
+                ops.filter(lambda state: state is not None),
+                ops.map(lambda state: map_charger_state(state)),
+                ops.distinct_until_changed(),
+            ),
+        )
 
 
 class ACMeterCharger(ACMeterThingBase):

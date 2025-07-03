@@ -50,7 +50,6 @@ class ACMeterThingBase(Thing):
         )
 
         ac_id = f"{JsonKeys.AC}.{ac_line1.instance.instance}"
-        print(f"Creating ACMeterThingBase for AC ID: {ac_id}")
         if ac_line1 is not None:
 
             def update_line_1_status(status: dict[str, any]):

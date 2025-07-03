@@ -257,7 +257,6 @@ class ConfigProcessor:
             )
             if dc_meter3 is not None:
                 self._dcMeter_charger_instances.append(dc_meter3.instance.instance)
-
         charger_thing = CombiCharger(
             inverter_charger=inverter_charger,
             dc1=dc_meter1 if dc_meter1 is not None else None,
