@@ -823,9 +823,8 @@ auto createInstance(const uint8_t instance) {
 
 void addInstance(Instance &t, const uint8_t instance) { t = createInstance(instance); }
 
-ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
+ConfigResult CzoneInterface::genConfig(const ConfigRequest &request) {
   std::lock_guard<std::mutex> lock(m_configMutex);
-  m_config.clear();
 
   if (m_configReady) {
     m_config.set_status(ConfigResult::eConfigResultStatus::eOk);
@@ -854,204 +853,199 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eAlarms";
     auto alarms = displayListNoLock(eCZoneStructDisplayAlarmConfig);
     for (auto &a : alarms) {
-      m_config._alarms.emplace_back();
-      populateAlarm(m_config._alarms.back(), a.Alarm, false, true);
+      auto &alarm = m_config.add_mutable_alarms();
+      populateAlarm(alarm, a.Alarm, false, true);
     }
   } break;
   case ConfigRequest::eConfigType::eDC: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eDC";
     auto dcs = displayListNoLock(eCZoneStructDisplayMeteringDC);
     for (auto &d : dcs) {
-      m_config._dcs.emplace_back();
-      auto &dc = m_config._dcs.back();
-      dc._displayType = static_cast<ConfigRequest::eConfigType>(d.MeteringDevice.DisplayType);
-      dc._id = d.MeteringDevice.Id;
-      dc._nameUTF8 = d.MeteringDevice.NameUTF8;
-      addInstance(dc._instance, d.MeteringDevice.Instance);
-      dc._nominalVoltage = d.MeteringDevice.NominalVoltage;
-      dc._address = d.MeteringDevice.Address;
-      dc._capacity = d.MeteringDevice.Capacity;
-      dc._warningLow = d.MeteringDevice.WarningLow;
-      dc._warningHigh = d.MeteringDevice.WarningHigh;
-      dc._lowLimit = addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneLowLimit, d.MeteringDevice.LowOnLimit,
-                              d.MeteringDevice.LowOffLimit, d.MeteringDevice.LowAlarmId);
-      dc._veryLowLimit =
-          addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneVeryLowLimit, d.MeteringDevice.VeryLowOnLimit,
-                   d.MeteringDevice.VeryLowOffLimit, d.MeteringDevice.VeryLowAlarmId);
-      dc._highLimit = addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneHighLimit, d.MeteringDevice.HighOnLimit,
-                               d.MeteringDevice.HighOffLimit, d.MeteringDevice.HighAlarmId);
-      dc._veryHighLimit =
-          addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneVeryHighLimit, d.MeteringDevice.VeryHighOnLimit,
-                   d.MeteringDevice.VeryHighOffLimit, d.MeteringDevice.VeryHighAlarmId);
-      dc._lowVoltage = addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneLowVoltage, d.MeteringDevice.LowVoltageOn,
-                                d.MeteringDevice.LowVoltageOff, d.MeteringDevice.LowVoltageAlarmId);
-      dc._veryLowVoltage =
-          addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneVeryLowVoltage, d.MeteringDevice.VeryLowVoltageOn,
-                   d.MeteringDevice.VeryLowVoltageOff, d.MeteringDevice.VeryLowVoltageAlarmId);
-      dc._highVoltage = addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneHighVoltage, d.MeteringDevice.HighVoltageOn,
-                                 d.MeteringDevice.HighVoltageOff, d.MeteringDevice.HighVoltageAlarmId);
-      dc._canResetCapacity = static_cast<bool>(d.MeteringDevice.CanResetCapacity == CZONE_TRUE);
-      dc._dcType = static_cast<MeteringDevice::eDCType>((d.MeteringDevice.Capabilities >> 24) & CZONE_TYPE_MASK_STRUCT);
-      dc._showVoltage = (d.MeteringDevice.Capabilities & CZONE_SHOW_VOLTS);
-      dc._showCurrent = (d.MeteringDevice.Capabilities & CZONE_SHOW_CURRENT);
-      dc._showStateOfCharge = (d.MeteringDevice.Capabilities & CZONE_SHOW_STATE_OF_CHARGE);
-      dc._showTemperature = (d.MeteringDevice.Capabilities & CZONE_SHOW_TEMPERATURE);
-      dc._showTimeOfRemaining = (d.MeteringDevice.Capabilities & CZONE_SHOW_TIME_REMAINING);
+      auto &dc = m_config.add_mutable_dcs();
+      dc.set_displayType(static_cast<ConfigRequest::eConfigType>(d.MeteringDevice.DisplayType));
+      dc.set_id(d.MeteringDevice.Id);
+      dc.set_nameUTF8(d.MeteringDevice.NameUTF8);
+      addInstance(dc.mutable_instance(), d.MeteringDevice.Instance);
+      dc.set_nominalVoltage(d.MeteringDevice.NominalVoltage);
+      dc.set_address(d.MeteringDevice.Address);
+      dc.set_capacity(d.MeteringDevice.Capacity);
+      dc.set_warningLow(d.MeteringDevice.WarningLow);
+      dc.set_warningHigh(d.MeteringDevice.WarningHigh);
+      dc.set_lowLimit(addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneLowLimit, d.MeteringDevice.LowOnLimit,
+                               d.MeteringDevice.LowOffLimit, d.MeteringDevice.LowAlarmId));
+      dc.set_veryLowLimit(addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneVeryLowLimit,
+                                   d.MeteringDevice.VeryLowOnLimit, d.MeteringDevice.VeryLowOffLimit,
+                                   d.MeteringDevice.VeryLowAlarmId));
+      dc.set_highLimit(addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneHighLimit, d.MeteringDevice.HighOnLimit,
+                                d.MeteringDevice.HighOffLimit, d.MeteringDevice.HighAlarmId));
+      dc.set_veryHighLimit(addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneVeryHighLimit,
+                                    d.MeteringDevice.VeryHighOnLimit, d.MeteringDevice.VeryHighOffLimit,
+                                    d.MeteringDevice.VeryHighAlarmId));
+      dc.set_lowVoltage(addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneLowVoltage, d.MeteringDevice.LowVoltageOn,
+                                 d.MeteringDevice.LowVoltageOff, d.MeteringDevice.LowVoltageAlarmId));
+      dc.set_veryLowVoltage(addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneVeryLowVoltage,
+                                     d.MeteringDevice.VeryLowVoltageOn, d.MeteringDevice.VeryLowVoltageOff,
+                                     d.MeteringDevice.VeryLowVoltageAlarmId));
+      dc.set_highVoltage(addLimit(d.MeteringDevice.LimitEnabledMask & eCZoneHighVoltage, d.MeteringDevice.HighVoltageOn,
+                                  d.MeteringDevice.HighVoltageOff, d.MeteringDevice.HighVoltageAlarmId));
+      dc.set_canResetCapacity(static_cast<bool>(d.MeteringDevice.CanResetCapacity == CZONE_TRUE));
+      dc.set_dcType(
+          static_cast<MeteringDevice::eDCType>((d.MeteringDevice.Capabilities >> 24) & CZONE_TYPE_MASK_STRUCT));
+      dc.set_showVoltage((d.MeteringDevice.Capabilities & CZONE_SHOW_VOLTS));
+      dc.set_showCurrent((d.MeteringDevice.Capabilities & CZONE_SHOW_CURRENT));
+      dc.set_showStateOfCharge((d.MeteringDevice.Capabilities & CZONE_SHOW_STATE_OF_CHARGE));
+      dc.set_showTemperature((d.MeteringDevice.Capabilities & CZONE_SHOW_TEMPERATURE));
+      dc.set_showTimeOfRemaining((d.MeteringDevice.Capabilities & CZONE_SHOW_TIME_REMAINING));
     }
   } break;
   case ConfigRequest::eConfigType::eAC: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eAC";
     auto acs = displayListNoLock(eCZoneStructDisplayMeteringAC);
     for (auto &a : acs) {
-      m_config._acs.emplace_back();
-      auto &ac = m_config._acs.back();
-      ac._displayType = static_cast<ConfigRequest::eConfigType>(a.MeteringDevice.DisplayType);
-      ac._id = a.MeteringDevice.Id;
-      ac._nameUTF8 = a.MeteringDevice.NameUTF8;
-      addInstance(ac._instance, a.MeteringDevice.Instance);
-      ac._line = static_cast<MeteringDevice::eACLine>(a.MeteringDevice.Line);
-      ac._output = a.MeteringDevice.Output == CZONE_TRUE;
-      ac._nominalVoltage = a.MeteringDevice.NominalVoltage;
-      ac._nominalFrequency = a.MeteringDevice.NominalFrequency;
-      ac._address = a.MeteringDevice.Address;
-      ac._lowLimit = addLimit(a.MeteringDevice.LimitEnabledMask & eCZoneLowLimit, a.MeteringDevice.LowOnLimit,
-                              a.MeteringDevice.LowOffLimit, a.MeteringDevice.LowAlarmId);
-      ac._highLimit = addLimit(a.MeteringDevice.LimitEnabledMask & eCZoneHighLimit, a.MeteringDevice.HighOnLimit,
-                               a.MeteringDevice.HighOffLimit, a.MeteringDevice.HighAlarmId);
-      ac._veryHighLimit =
-          addLimit(a.MeteringDevice.LimitEnabledMask & eCZoneVeryHighLimit, a.MeteringDevice.VeryHighOnLimit,
-                   a.MeteringDevice.VeryHighOffLimit, a.MeteringDevice.VeryHighAlarmId);
-      ac._highVoltage = addLimit(a.MeteringDevice.LimitEnabledMask & eCZoneHighVoltage, a.MeteringDevice.HighVoltageOn,
-                                 a.MeteringDevice.HighVoltageOff, a.MeteringDevice.HighVoltageAlarmId);
-      ac._frequency = addLimit(a.MeteringDevice.LimitEnabledMask & eCZoneVeryHighLimit, a.MeteringDevice.FreqeuncyOn,
-                               a.MeteringDevice.FreqeuncyOff, a.MeteringDevice.FrequencyErrorAlarmId);
-      ac._showVoltage = (a.MeteringDevice.Capabilities & CZONE_SHOW_VOLTS);
-      ac._showCurrent = (a.MeteringDevice.Capabilities & CZONE_SHOW_CURRENT);
-      ac._acType = static_cast<MeteringDevice::eACType>(a.MeteringDevice.AcType);
+      auto &ac = m_config.add_mutable_acs();
+      ac.set_displayType(static_cast<ConfigRequest::eConfigType>(a.MeteringDevice.DisplayType));
+      ac.set_id(a.MeteringDevice.Id);
+      ac.set_nameUTF8(a.MeteringDevice.NameUTF8);
+      addInstance(ac.mutable_instance(), a.MeteringDevice.Instance);
+      ac.set_line(static_cast<MeteringDevice::eACLine>(a.MeteringDevice.Line));
+      ac.set_output(a.MeteringDevice.Output == CZONE_TRUE);
+      ac.set_nominalVoltage(a.MeteringDevice.NominalVoltage);
+      ac.set_nominalFrequency(a.MeteringDevice.NominalFrequency);
+      ac.set_address(a.MeteringDevice.Address);
+      ac.set_lowLimit(addLimit(a.MeteringDevice.LimitEnabledMask & eCZoneLowLimit, a.MeteringDevice.LowOnLimit,
+                               a.MeteringDevice.LowOffLimit, a.MeteringDevice.LowAlarmId));
+      ac.set_highLimit(addLimit(a.MeteringDevice.LimitEnabledMask & eCZoneHighLimit, a.MeteringDevice.HighOnLimit,
+                                a.MeteringDevice.HighOffLimit, a.MeteringDevice.HighAlarmId));
+      ac.set_veryHighLimit(addLimit(a.MeteringDevice.LimitEnabledMask & eCZoneVeryHighLimit,
+                                    a.MeteringDevice.VeryHighOnLimit, a.MeteringDevice.VeryHighOffLimit,
+                                    a.MeteringDevice.VeryHighAlarmId));
+      ac.set_highVoltage(addLimit(a.MeteringDevice.LimitEnabledMask & eCZoneHighVoltage, a.MeteringDevice.HighVoltageOn,
+                                  a.MeteringDevice.HighVoltageOff, a.MeteringDevice.HighVoltageAlarmId));
+      ac.set_frequency(addLimit(a.MeteringDevice.LimitEnabledMask & eCZoneVeryHighLimit, a.MeteringDevice.FreqeuncyOn,
+                                a.MeteringDevice.FreqeuncyOff, a.MeteringDevice.FrequencyErrorAlarmId));
+      ac.set_showVoltage((a.MeteringDevice.Capabilities & CZONE_SHOW_VOLTS));
+      ac.set_showCurrent((a.MeteringDevice.Capabilities & CZONE_SHOW_CURRENT));
+      ac.set_acType(static_cast<MeteringDevice::eACType>(a.MeteringDevice.AcType));
     }
   } break;
   case ConfigRequest::eConfigType::ePressure: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::ePressure";
     auto pressures = displayListNoLock(eCZoneStructDisplayMonitoringPressure);
     for (auto &p : pressures) {
-      m_config._pressures.emplace_back();
-      auto &pressure = m_config._pressures.back();
-      pressure._displayType = static_cast<ConfigRequest::eConfigType>(p.MonitoringDevice.DisplayType);
-      pressure._id = p.MonitoringDevice.Id;
-      pressure._nameUTF8 = p.MonitoringDevice.NameUTF8;
-      addInstance(pressure._instance, p.MonitoringDevice.Instance);
-      pressure._pressureType = static_cast<MonitoringType::ePressureType>(p.MonitoringDevice.Type);
-      pressure._circuitId = createDataId(p.MonitoringDevice.CircuitId);
-      pressure._switchType = static_cast<CircuitDevice::eSwitchType>(p.MonitoringDevice.SwitchType);
-      pressure._confirmDialog = static_cast<CircuitDevice::eConfirmType>(p.MonitoringDevice.ConfirmDialog);
-      pressure._circuitNameUTF8 = p.MonitoringDevice.CircuitNameUTF8;
-      pressure._atmosphericPressure = (p.MonitoringDevice.AtmosphericPressure == CZONE_TRUE);
-      pressure._lowLimit = addLimit(p.MonitoringDevice.LimitEnabledMask & eCZoneLowLimit, p.MonitoringDevice.LowOnLimit,
-                                    p.MonitoringDevice.LowOffLimit, p.MonitoringDevice.LowAlarmId);
-      pressure._veryLowLimit =
-          addLimit(p.MonitoringDevice.LimitEnabledMask & eCZoneVeryLowLimit, p.MonitoringDevice.VeryLowOnLimit,
-                   p.MonitoringDevice.VeryLowOffLimit, p.MonitoringDevice.VeryLowAlarmId);
-      pressure._highLimit =
-          addLimit(p.MonitoringDevice.LimitEnabledMask & eCZoneHighLimit, p.MonitoringDevice.HighOnLimit,
-                   p.MonitoringDevice.HighOffLimit, p.MonitoringDevice.HighAlarmId);
-      pressure._veryHighLimit =
-          addLimit(p.MonitoringDevice.LimitEnabledMask & eCZoneVeryHighLimit, p.MonitoringDevice.VeryHighOnLimit,
-                   p.MonitoringDevice.VeryHighOffLimit, p.MonitoringDevice.VeryHighAlarmId);
-      pressure._address = p.MonitoringDevice.Address;
+      auto &pressure = m_config.add_mutable_pressures();
+      pressure.set_displayType(static_cast<ConfigRequest::eConfigType>(p.MonitoringDevice.DisplayType));
+      pressure.set_id(p.MonitoringDevice.Id);
+      pressure.set_nameUTF8(p.MonitoringDevice.NameUTF8);
+      addInstance(pressure.mutable_instance(), p.MonitoringDevice.Instance);
+      pressure.set_pressureType(static_cast<MonitoringType::ePressureType>(p.MonitoringDevice.Type));
+      pressure.set_circuitId(createDataId(p.MonitoringDevice.CircuitId));
+      pressure.set_switchType(static_cast<CircuitDevice::eSwitchType>(p.MonitoringDevice.SwitchType));
+      pressure.set_confirmDialog(static_cast<CircuitDevice::eConfirmType>(p.MonitoringDevice.ConfirmDialog));
+      pressure.set_circuitNameUTF8(p.MonitoringDevice.CircuitNameUTF8);
+      pressure.set_atmosphericPressure((p.MonitoringDevice.AtmosphericPressure == CZONE_TRUE));
+      pressure.set_lowLimit(addLimit(p.MonitoringDevice.LimitEnabledMask & eCZoneLowLimit,
+                                     p.MonitoringDevice.LowOnLimit, p.MonitoringDevice.LowOffLimit,
+                                     p.MonitoringDevice.LowAlarmId));
+      pressure.set_veryLowLimit(addLimit(p.MonitoringDevice.LimitEnabledMask & eCZoneVeryLowLimit,
+                                         p.MonitoringDevice.VeryLowOnLimit, p.MonitoringDevice.VeryLowOffLimit,
+                                         p.MonitoringDevice.VeryLowAlarmId));
+      pressure.set_highLimit(addLimit(p.MonitoringDevice.LimitEnabledMask & eCZoneHighLimit,
+                                      p.MonitoringDevice.HighOnLimit, p.MonitoringDevice.HighOffLimit,
+                                      p.MonitoringDevice.HighAlarmId));
+      pressure.set_veryHighLimit(addLimit(p.MonitoringDevice.LimitEnabledMask & eCZoneVeryHighLimit,
+                                          p.MonitoringDevice.VeryHighOnLimit, p.MonitoringDevice.VeryHighOffLimit,
+                                          p.MonitoringDevice.VeryHighAlarmId));
+      pressure.set_address(p.MonitoringDevice.Address);
     }
   } break;
   case ConfigRequest::eConfigType::eTank: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eTank";
     auto tanks = displayListNoLock(eCZoneStructDisplayMonitoringTank);
     for (auto &t : tanks) {
-      m_config._tanks.emplace_back();
-      auto &tank = m_config._tanks.back();
-      tank._displayType = static_cast<ConfigRequest::eConfigType>(t.MonitoringDevice.DisplayType);
-      tank._id = t.MonitoringDevice.Id;
-      tank._nameUTF8 = t.MonitoringDevice.NameUTF8;
-      addInstance(tank._instance, t.MonitoringDevice.Instance);
-      tank._tankType = static_cast<MonitoringType::eTankType>(t.MonitoringDevice.Type);
-      tank._circuitId = createDataId(t.MonitoringDevice.CircuitId);
-      tank._switchType = static_cast<CircuitDevice::eSwitchType>(t.MonitoringDevice.SwitchType);
-      tank._confirmDialog = static_cast<CircuitDevice::eConfirmType>(t.MonitoringDevice.ConfirmDialog);
-      tank._circuitNameUTF8 = t.MonitoringDevice.CircuitNameUTF8;
-      tank._tankCapacity = t.MonitoringDevice.Capacity;
-      tank._lowLimit = addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneLowLimit, t.MonitoringDevice.LowOnLimit,
-                                t.MonitoringDevice.LowOffLimit, t.MonitoringDevice.LowAlarmId);
-      tank._veryLowLimit =
-          addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneVeryLowLimit, t.MonitoringDevice.VeryLowOnLimit,
-                   t.MonitoringDevice.VeryLowOffLimit, t.MonitoringDevice.VeryLowAlarmId);
-      tank._highLimit = addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneHighLimit, t.MonitoringDevice.HighOnLimit,
-                                 t.MonitoringDevice.HighOffLimit, t.MonitoringDevice.HighAlarmId);
-      tank._veryHighLimit =
-          addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneVeryHighLimit, t.MonitoringDevice.VeryHighOnLimit,
-                   t.MonitoringDevice.VeryHighOffLimit, t.MonitoringDevice.VeryHighAlarmId);
-      tank._address = t.MonitoringDevice.Address;
+      auto &tank = m_config.add_mutable_tanks();
+      tank.set_displayType(static_cast<ConfigRequest::eConfigType>(t.MonitoringDevice.DisplayType));
+      tank.set_id(t.MonitoringDevice.Id);
+      tank.set_nameUTF8(t.MonitoringDevice.NameUTF8);
+      addInstance(tank.mutable_instance(), t.MonitoringDevice.Instance);
+      tank.set_tankType(static_cast<MonitoringType::eTankType>(t.MonitoringDevice.Type));
+      tank.set_circuitId(createDataId(t.MonitoringDevice.CircuitId));
+      tank.set_switchType(static_cast<CircuitDevice::eSwitchType>(t.MonitoringDevice.SwitchType));
+      tank.set_confirmDialog(static_cast<CircuitDevice::eConfirmType>(t.MonitoringDevice.ConfirmDialog));
+      tank.set_circuitNameUTF8(t.MonitoringDevice.CircuitNameUTF8);
+      tank.set_tankCapacity(t.MonitoringDevice.Capacity);
+      tank.set_lowLimit(addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneLowLimit, t.MonitoringDevice.LowOnLimit,
+                                 t.MonitoringDevice.LowOffLimit, t.MonitoringDevice.LowAlarmId));
+      tank.set_veryLowLimit(addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneVeryLowLimit,
+                                     t.MonitoringDevice.VeryLowOnLimit, t.MonitoringDevice.VeryLowOffLimit,
+                                     t.MonitoringDevice.VeryLowAlarmId));
+      tank.set_highLimit(addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneHighLimit, t.MonitoringDevice.HighOnLimit,
+                                  t.MonitoringDevice.HighOffLimit, t.MonitoringDevice.HighAlarmId));
+      tank.set_veryHighLimit(addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneVeryHighLimit,
+                                      t.MonitoringDevice.VeryHighOnLimit, t.MonitoringDevice.VeryHighOffLimit,
+                                      t.MonitoringDevice.VeryHighAlarmId));
+      tank.set_address(t.MonitoringDevice.Address);
     }
   } break;
   case ConfigRequest::eConfigType::eTemperature: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eTemperature";
     auto temperatures = displayListNoLock(eCZoneStructDisplayMonitoringTemperature);
     for (auto &t : temperatures) {
-      m_config._temperatures.emplace_back();
-      auto &temperature = m_config._temperatures.back();
-      temperature._displayType = static_cast<ConfigRequest::eConfigType>(t.MonitoringDevice.DisplayType);
-      temperature._id = t.MonitoringDevice.Id;
-      temperature._nameUTF8 = t.MonitoringDevice.NameUTF8;
-      addInstance(temperature._instance, t.MonitoringDevice.Instance);
-      temperature._temperatureType = static_cast<MonitoringType::eTemperatureType>(t.MonitoringDevice.Type);
-      temperature._circuitId = createDataId(t.MonitoringDevice.CircuitId);
-      temperature._switchType = static_cast<CircuitDevice::eSwitchType>(t.MonitoringDevice.SwitchType);
-      temperature._confirmDialog = static_cast<CircuitDevice::eConfirmType>(t.MonitoringDevice.ConfirmDialog);
-      temperature._circuitNameUTF8 = t.MonitoringDevice.CircuitNameUTF8;
-      temperature._highTemperature = (t.MonitoringDevice.HighTemperature == CZONE_TRUE);
-      temperature._lowLimit =
-          addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneLowLimit, t.MonitoringDevice.LowOnLimit,
-                   t.MonitoringDevice.LowOffLimit, t.MonitoringDevice.LowAlarmId);
-      temperature._veryLowLimit =
-          addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneVeryLowLimit, t.MonitoringDevice.VeryLowOnLimit,
-                   t.MonitoringDevice.VeryLowOffLimit, t.MonitoringDevice.VeryLowAlarmId);
-      temperature._highLimit =
-          addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneHighLimit, t.MonitoringDevice.HighOnLimit,
-                   t.MonitoringDevice.HighOffLimit, t.MonitoringDevice.HighAlarmId);
-      temperature._veryHighLimit =
-          addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneVeryHighLimit, t.MonitoringDevice.VeryHighOnLimit,
-                   t.MonitoringDevice.VeryHighOffLimit, t.MonitoringDevice.VeryHighAlarmId);
-      temperature._address = t.MonitoringDevice.Address;
+      auto &temperature = m_config.add_mutable_temperatures();
+      temperature.set_displayType(static_cast<ConfigRequest::eConfigType>(t.MonitoringDevice.DisplayType));
+      temperature.set_id(t.MonitoringDevice.Id);
+      temperature.set_nameUTF8(t.MonitoringDevice.NameUTF8);
+      addInstance(temperature.mutable_instance(), t.MonitoringDevice.Instance);
+      temperature.set_temperatureType(static_cast<MonitoringType::eTemperatureType>(t.MonitoringDevice.Type));
+      temperature.set_circuitId(createDataId(t.MonitoringDevice.CircuitId));
+      temperature.set_switchType(static_cast<CircuitDevice::eSwitchType>(t.MonitoringDevice.SwitchType));
+      temperature.set_confirmDialog(static_cast<CircuitDevice::eConfirmType>(t.MonitoringDevice.ConfirmDialog));
+      temperature.set_circuitNameUTF8(t.MonitoringDevice.CircuitNameUTF8);
+      temperature.set_highTemperature((t.MonitoringDevice.HighTemperature == CZONE_TRUE));
+      temperature.set_lowLimit(addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneLowLimit,
+                                        t.MonitoringDevice.LowOnLimit, t.MonitoringDevice.LowOffLimit,
+                                        t.MonitoringDevice.LowAlarmId));
+      temperature.set_veryLowLimit(addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneVeryLowLimit,
+                                            t.MonitoringDevice.VeryLowOnLimit, t.MonitoringDevice.VeryLowOffLimit,
+                                            t.MonitoringDevice.VeryLowAlarmId));
+      temperature.set_highLimit(addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneHighLimit,
+                                         t.MonitoringDevice.HighOnLimit, t.MonitoringDevice.HighOffLimit,
+                                         t.MonitoringDevice.HighAlarmId));
+      temperature.set_veryHighLimit(addLimit(t.MonitoringDevice.LimitEnabledMask & eCZoneVeryHighLimit,
+                                             t.MonitoringDevice.VeryHighOnLimit, t.MonitoringDevice.VeryHighOffLimit,
+                                             t.MonitoringDevice.VeryHighAlarmId));
+      temperature.set_address(t.MonitoringDevice.Address);
     }
   } break;
   case ConfigRequest::eConfigType::eACMain: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eACMain";
     auto acmains = displayListNoLock(eCZoneStructDisplayACMains);
     for (auto &a : acmains) {
-      m_config._acMains.emplace_back();
-      auto &acmain = m_config._acMains.back();
-      acmain._displayType = static_cast<ConfigRequest::eConfigType>(a.ACMainsDevice.DisplayType);
-      acmain._id = static_cast<uint32_t>(a.ACMainsDevice.Id);
-      acmain._nameUTF8 = a.ACMainsDevice.NameUTF8;
-      acmain._dipswitch = static_cast<uint32_t>(a.ACMainsDevice.Dipswitch);
+      auto &acmain = m_config.add_mutable_acMains();
+      acmain.set_displayType(static_cast<ConfigRequest::eConfigType>(a.ACMainsDevice.DisplayType));
+      acmain.set_id(static_cast<uint32_t>(a.ACMainsDevice.Id));
+      acmain.set_nameUTF8(a.ACMainsDevice.NameUTF8);
+      acmain.set_dipswitch(static_cast<uint32_t>(a.ACMainsDevice.Dipswitch));
       for (uint32_t i = 0; i < a.ACMainsDevice.NumberOfContactors; i++) {
-        acmain._contactors.emplace_back();
-        auto &contactor = acmain._contactors.back();
-        contactor._systemStateId = static_cast<uint32_t>(a.ACMainsDevice.Contactors[i].SystemStateId);
-        contactor._nameUTF8 = a.ACMainsDevice.Contactors[i].NameUTF8;
-        contactor._contactorId = createDataId(a.ACMainsDevice.Contactors[i].ContactorId);
-        contactor._contactorToggleId = createDataId(a.ACMainsDevice.Contactors[i].ContactorToggleId);
-        contactor._ac1Id = createDataId(a.ACMainsDevice.Contactors[i].AC1Id);
-        contactor._ac2Id = createDataId(a.ACMainsDevice.Contactors[i].AC2Id);
-        contactor._ac3Id = createDataId(a.ACMainsDevice.Contactors[i].AC3Id);
-        contactor._displayIndex = static_cast<uint32_t>(a.ACMainsDevice.Contactors[i].DisplayIndex);
-        contactor._loadGroupIndex = static_cast<uint32_t>(a.ACMainsDevice.Contactors[i].LoadGroupIndex);
-        contactor._loadGroupParallelIndex = static_cast<uint32_t>(a.ACMainsDevice.Contactors[i].LoadGroupParallelIndex);
-        contactor._isParallel = (a.ACMainsDevice.Contactors[i].Parallel == CZONE_TRUE);
-        contactor._acInputType =
-            static_cast<ACMainContactorDevice::eACInputType>(a.ACMainsDevice.Contactors[i].ACInputType);
+        auto &contactor = acmain.add_mutable_contactor();
+        contactor.set_systemStateId(static_cast<uint32_t>(a.ACMainsDevice.Contactors[i].SystemStateId));
+        contactor.set_nameUTF8(a.ACMainsDevice.Contactors[i].NameUTF8);
+        contactor.set_contactorId(createDataId(a.ACMainsDevice.Contactors[i].ContactorId));
+        contactor.set_contactorToggleId(createDataId(a.ACMainsDevice.Contactors[i].ContactorToggleId));
+        contactor.set_ac1Id(createDataId(a.ACMainsDevice.Contactors[i].AC1Id));
+        contactor.set_ac2Id(createDataId(a.ACMainsDevice.Contactors[i].AC2Id));
+        contactor.set_ac3Id(createDataId(a.ACMainsDevice.Contactors[i].AC3Id));
+        contactor.set_displayIndex(static_cast<uint32_t>(a.ACMainsDevice.Contactors[i].DisplayIndex));
+        contactor.set_loadGroupIndex(static_cast<uint32_t>(a.ACMainsDevice.Contactors[i].LoadGroupIndex));
+        contactor.set_loadGroupParallelIndex(
+            static_cast<uint32_t>(a.ACMainsDevice.Contactors[i].LoadGroupParallelIndex));
+        contactor.set_isParallel((a.ACMainsDevice.Contactors[i].Parallel == CZONE_TRUE));
+        contactor.set_acInputType(
+            static_cast<ACMainContactorDevice::eACInputType>(a.ACMainsDevice.Contactors[i].ACInputType));
       }
       for (uint32_t i = 0; i < a.ACMainsDevice.NumberOfLoadGroups; i++) {
-        acmain._loadGroups.emplace_back();
-        auto &loadgroup = acmain._loadGroups.back();
-        loadgroup._loadGroupIndex = static_cast<uint32_t>(a.ACMainsDevice.LoadGroups[i].LoadGroupIndex);
-        loadgroup._nameUTF8 = a.ACMainsDevice.LoadGroups[i].NameUTF8;
+        auto &loadgroup = acmain.add_mutable_loadGroup();
+        loadgroup.set_loadGroupIndex(static_cast<uint32_t>(a.ACMainsDevice.LoadGroups[i].LoadGroupIndex));
+        loadgroup.set_nameUTF8(a.ACMainsDevice.LoadGroups[i].NameUTF8);
       }
     }
   } break;
@@ -1059,91 +1053,87 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eInverterCharger";
     auto inverterchargers = displayListNoLock(eCZoneStructDisplayInverterCharger);
     for (auto &i : inverterchargers) {
-      m_config._inverterChargers.emplace_back();
-      auto &invertercharger = m_config._inverterChargers.back();
-      invertercharger._displayType = static_cast<ConfigRequest::eConfigType>(i.InverterChargerDevice.DisplayType);
-      invertercharger._id = static_cast<uint32_t>(i.InverterChargerDevice.Id);
-      invertercharger._nameUTF8 = i.InverterChargerDevice.NameUTF8;
-      invertercharger._inverterInstance.set_instance(i.InverterChargerDevice.InverterInstance);
-      invertercharger._chargerInstance.set_instance(i.InverterChargerDevice.ChargerInstance);
-      invertercharger._model = static_cast<uint32_t>(i.InverterChargerDevice.Model);
-      invertercharger._type = static_cast<uint32_t>(i.InverterChargerDevice.Type);
-      invertercharger._subType = static_cast<uint32_t>(i.InverterChargerDevice.SubType);
-      invertercharger._inverterACId = createDataId(i.InverterChargerDevice.InverterACId);
-      invertercharger._inverterCircuitId = createDataId(i.InverterChargerDevice.InverterCircuitId);
-      invertercharger._inverterToggleCircuitId = createDataId(i.InverterChargerDevice.InverterToggleCircuitId);
-      invertercharger._chargerACId = createDataId(i.InverterChargerDevice.ChargerACId);
-      invertercharger._chargerCircuitId = createDataId(i.InverterChargerDevice.ChargerCircuitId);
-      invertercharger._chargerToggleCircuitId = createDataId(i.InverterChargerDevice.ChargerToggleCircuitId);
-      invertercharger._batteryBank1Id = createDataId(i.InverterChargerDevice.BatteryBank1Id);
-      invertercharger._batteryBank2Id = createDataId(i.InverterChargerDevice.BatteryBank2Id);
-      invertercharger._batteryBank3Id = createDataId(i.InverterChargerDevice.BatteryBank3Id);
-      invertercharger._positionColumn =
-          static_cast<uint32_t>((i.InverterChargerDevice.SmartTerminalOutputVoltage & 0xff00) >> 8);
-      invertercharger._positionRow = static_cast<uint32_t>(i.InverterChargerDevice.SmartTerminalOutputVoltage & 0xff);
-      invertercharger._clustered = ((i.InverterChargerDevice.Dc3DcOutputCurrentLimit & (0x1 << 15)) ? true : false);
-      invertercharger._primary = ((i.InverterChargerDevice.Dc3DcOutputCurrentLimit & (0x1 << 14)) ? true : false);
-      invertercharger._primaryPhase = ((i.InverterChargerDevice.Dc3DcOutputCurrentLimit & (0x3 << 8)) >> 8);
-      invertercharger._deviceInstance = (i.InverterChargerDevice.Dc3DcOutputCurrentLimit & 0xff);
-      invertercharger._dipswitch = i.InverterChargerDevice.Dipswitch;
-      invertercharger._channelIndex = i.InverterChargerDevice.ChannelIndex;
+      auto &invertercharger = m_config.add_mutable_inverterChargers();
+      invertercharger.set_displayType(static_cast<ConfigRequest::eConfigType>(i.InverterChargerDevice.DisplayType));
+      invertercharger.set_id(static_cast<uint32_t>(i.InverterChargerDevice.Id));
+      invertercharger.set_nameUTF8(i.InverterChargerDevice.NameUTF8);
+      invertercharger.mutable_inverterInstance().set_instance(i.InverterChargerDevice.InverterInstance);
+      invertercharger.mutable_chargerInstance().set_instance(i.InverterChargerDevice.ChargerInstance);
+      invertercharger.set_model(static_cast<uint32_t>(i.InverterChargerDevice.Model));
+      invertercharger.set_type(static_cast<uint32_t>(i.InverterChargerDevice.Type));
+      invertercharger.set_subType(static_cast<uint32_t>(i.InverterChargerDevice.SubType));
+      invertercharger.set_inverterACId(createDataId(i.InverterChargerDevice.InverterACId));
+      invertercharger.set_inverterCircuitId(createDataId(i.InverterChargerDevice.InverterCircuitId));
+      invertercharger.set_inverterToggleCircuitId(createDataId(i.InverterChargerDevice.InverterToggleCircuitId));
+      invertercharger.set_chargerACId(createDataId(i.InverterChargerDevice.ChargerACId));
+      invertercharger.set_chargerCircuitId(createDataId(i.InverterChargerDevice.ChargerCircuitId));
+      invertercharger.set_chargerToggleCircuitId(createDataId(i.InverterChargerDevice.ChargerToggleCircuitId));
+      invertercharger.set_batteryBank1Id(createDataId(i.InverterChargerDevice.BatteryBank1Id));
+      invertercharger.set_batteryBank2Id(createDataId(i.InverterChargerDevice.BatteryBank2Id));
+      invertercharger.set_batteryBank3Id(createDataId(i.InverterChargerDevice.BatteryBank3Id));
+      invertercharger.set_positionColumn(
+          static_cast<uint32_t>((i.InverterChargerDevice.SmartTerminalOutputVoltage & 0xff00) >> 8));
+      invertercharger.set_positionRow(static_cast<uint32_t>(i.InverterChargerDevice.SmartTerminalOutputVoltage & 0xff));
+      invertercharger.set_clustered((i.InverterChargerDevice.Dc3DcOutputCurrentLimit & (0x1 << 15)) ? true : false);
+      invertercharger.set_primary((i.InverterChargerDevice.Dc3DcOutputCurrentLimit & (0x1 << 14)) ? true : false);
+      invertercharger.set_primaryPhase((i.InverterChargerDevice.Dc3DcOutputCurrentLimit & (0x3 << 8)) >> 8);
+      invertercharger.set_deviceInstance(i.InverterChargerDevice.Dc3DcOutputCurrentLimit & 0xff);
+      invertercharger.set_dipswitch(i.InverterChargerDevice.Dipswitch);
+      invertercharger.set_channelIndex(i.InverterChargerDevice.ChannelIndex);
     }
   } break;
   case ConfigRequest::eConfigType::eHVAC: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eHVAC";
     auto hvacs = displayListNoLock(eCZoneStructDisplayHvac);
     for (auto &h : hvacs) {
-      m_config._hvacs.emplace_back();
-      auto &hvac = m_config._hvacs.back();
-      hvac._displayType = static_cast<ConfigRequest::eConfigType>(h.HvacDevice.DisplayType);
-      hvac._id = static_cast<uint32_t>(h.HvacDevice.Id);
-      hvac._nameUTF8 = h.HvacDevice.NameUTF8;
-      addInstance(hvac._instance, h.HvacDevice.HvacInstance);
-      hvac._operatingModeId = createDataId(h.HvacDevice.OperatingModeId);
-      hvac._fanModeId = createDataId(h.HvacDevice.FanModeId);
-      hvac._fanSpeedId = createDataId(h.HvacDevice.FanSpeedId);
-      hvac._temperatureMonitoringId = createDataId(h.HvacDevice.SetpointTemperatureId);
-      hvac._operatingModeToggleId = createDataId(h.HvacDevice.OperatingModeToggleId);
-      hvac._fanModeToggleId = createDataId(h.HvacDevice.FanModeToggleId);
-      hvac._fanSpeedToggleId = createDataId(h.HvacDevice.FanSpeedToggleId);
-      hvac._setpointTemperatureToggleId = createDataId(h.HvacDevice.SetpointTemperatureToggleId);
-      hvac._temperatureMonitoringId = createDataId(h.HvacDevice.TemperatureMonitoringId);
-      hvac._fanSpeedCount = static_cast<uint32_t>(h.HvacDevice.FanSpeedCount);
-      hvac._operatingModesMask = static_cast<uint32_t>(h.HvacDevice.OperatingModesMask);
-      hvac._model = static_cast<uint32_t>(h.HvacDevice.Model);
-      hvac._temperatureInstance.set_instance(h.HvacDevice.TemperatureInstance);
+      auto &hvac = m_config.add_mutable_hvacs();
+      hvac.set_displayType(static_cast<ConfigRequest::eConfigType>(h.HvacDevice.DisplayType));
+      hvac.set_id(static_cast<uint32_t>(h.HvacDevice.Id));
+      hvac.set_nameUTF8(h.HvacDevice.NameUTF8);
+      addInstance(hvac.mutable_instance(), h.HvacDevice.HvacInstance);
+      hvac.set_operatingModeId(createDataId(h.HvacDevice.OperatingModeId));
+      hvac.set_fanModeId(createDataId(h.HvacDevice.FanModeId));
+      hvac.set_fanSpeedId(createDataId(h.HvacDevice.FanSpeedId));
+      hvac.set_temperatureMonitoringId(createDataId(h.HvacDevice.SetpointTemperatureId));
+      hvac.set_operatingModeToggleId(createDataId(h.HvacDevice.OperatingModeToggleId));
+      hvac.set_fanModeToggleId(createDataId(h.HvacDevice.FanModeToggleId));
+      hvac.set_fanSpeedToggleId(createDataId(h.HvacDevice.FanSpeedToggleId));
+      hvac.set_setpointTemperatureToggleId(createDataId(h.HvacDevice.SetpointTemperatureToggleId));
+      hvac.set_temperatureMonitoringId(createDataId(h.HvacDevice.TemperatureMonitoringId));
+      hvac.set_fanSpeedCount(static_cast<uint32_t>(h.HvacDevice.FanSpeedCount));
+      hvac.set_operatingModesMask(static_cast<uint32_t>(h.HvacDevice.OperatingModesMask));
+      hvac.set_model(static_cast<uint32_t>(h.HvacDevice.Model));
+      hvac.mutable_temperatureInstance().set_instance(h.HvacDevice.TemperatureInstance);
 
       float minC = tTemperatureConversions::ToCelsius(static_cast<float>(h.HvacDevice.SetpointTemperatureMinF),
                                                       tTemperatureConversions::Fahrenheit);
       float maxC = tTemperatureConversions::ToCelsius(static_cast<float>(h.HvacDevice.SetpointTemperatureMaxF),
                                                       tTemperatureConversions::Fahrenheit);
-      hvac._setpointTemperatureMin = minC;
-      hvac._setpointTemperatureMax = maxC;
-      hvac._fanSpeedOffModesMask = static_cast<uint32_t>(h.HvacDevice.FanSpeedOffModesMask);
-      hvac._fanSpeedAutoModesMask = static_cast<uint32_t>(h.HvacDevice.FanSpeedAutoModesMask);
-      hvac._fanSpeedManualModesMask = static_cast<uint32_t>(h.HvacDevice.FanSpeedManualModesMask);
+      hvac.set_setpointTemperatureMin(minC);
+      hvac.set_setpointTemperatureMax(maxC);
+      hvac.set_fanSpeedOffModesMask(static_cast<uint32_t>(h.HvacDevice.FanSpeedOffModesMask));
+      hvac.set_fanSpeedAutoModesMask(static_cast<uint32_t>(h.HvacDevice.FanSpeedAutoModesMask));
+      hvac.set_fanSpeedManualModesMask(static_cast<uint32_t>(h.HvacDevice.FanSpeedManualModesMask));
     }
   } break;
   case ConfigRequest::eConfigType::eZipdeeAwning: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eZipdeeAwning";
     auto awnings = displayListNoLock(eCZoneStructDisplayZipdeeAwning);
     for (auto &a : awnings) {
-      m_config._zipdeeAwnings.emplace_back();
-      auto &awning = m_config._zipdeeAwnings.back();
-      awning._displayType = static_cast<ConfigRequest::eConfigType>(a.AwningDevice.DisplayType);
-      awning._id = static_cast<uint32_t>(a.AwningDevice.Id);
-      awning._nameUTF8 = a.AwningDevice.NameUTF8;
-      addInstance(awning._instance, a.AwningDevice.Instance);
-      awning._openId = createDataId(a.AwningDevice.OpenId);
-      awning._closeId = createDataId(a.AwningDevice.CloseId);
-      awning._tiltLeftId = createDataId(a.AwningDevice.TiltLeft);
-      awning._tiltRightId = createDataId(a.AwningDevice.TiltRight);
+      auto &awning = m_config.add_mutable_zipdeeAwnings();
+      awning.set_displayType(static_cast<ConfigRequest::eConfigType>(a.AwningDevice.DisplayType));
+      awning.set_id(static_cast<uint32_t>(a.AwningDevice.Id));
+      awning.set_nameUTF8(a.AwningDevice.NameUTF8);
+      addInstance(awning.mutable_instance(), a.AwningDevice.Instance);
+      awning.set_openId(createDataId(a.AwningDevice.OpenId));
+      awning.set_closeId(createDataId(a.AwningDevice.CloseId));
+      awning.set_tiltLeftId(createDataId(a.AwningDevice.TiltLeft));
+      awning.set_tiltRightId(createDataId(a.AwningDevice.TiltRight));
       for (uint32_t i = 0; i < 3; i++) {
-        awning._binarySignals.emplace_back();
-        auto &signal = awning._binarySignals.back();
-        signal._dataType = static_cast<uint32_t>(a.AwningDevice.Signals[i].DataType);
-        signal._dipswitch = static_cast<uint32_t>(a.AwningDevice.Signals[i].Dipswitch);
-        signal._bit = static_cast<uint32_t>(a.AwningDevice.Signals[i].Bit);
+        auto &signal = awning.add_mutable_binarySignal();
+        signal.set_dataType(static_cast<uint32_t>(a.AwningDevice.Signals[i].DataType));
+        signal.set_dipswitch(static_cast<uint32_t>(a.AwningDevice.Signals[i].Dipswitch));
+        signal.set_bit(static_cast<uint32_t>(a.AwningDevice.Signals[i].Bit));
       }
     }
   } break;
@@ -1151,45 +1141,42 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eThirdPartyGenerator";
     auto generators = displayListNoLock(eCZoneStructDisplayThirdPartyGenerator);
     for (auto &g : generators) {
-      m_config._thirdPartyGenerators.emplace_back();
-      auto &generator = m_config._thirdPartyGenerators.back();
-      generator._displayType = static_cast<ConfigRequest::eConfigType>(g.ThirdPartyGeneratorDevice.DisplayType);
-      generator._id = static_cast<uint32_t>(g.ThirdPartyGeneratorDevice.Id);
-      generator._nameUTF8 = g.ThirdPartyGeneratorDevice.NameUTF8;
-      addInstance(generator._instance, g.ThirdPartyGeneratorDevice.SignalInstance);
-      generator._startControlId = createDataId(g.ThirdPartyGeneratorDevice.StartControlId);
-      generator._stopControlId = createDataId(g.ThirdPartyGeneratorDevice.StopControlId);
-      generator._associatedAcMetersInstance.set_instance(g.ThirdPartyGeneratorDevice.AssociatedAcMetersInstance);
-      generator._acMeterLine1Id = createDataId(g.ThirdPartyGeneratorDevice.AcMeterLine1Id);
-      generator._acMeterLine2Id = createDataId(g.ThirdPartyGeneratorDevice.AcMeterLine2Id);
-      generator._acMeterLine3Id = createDataId(g.ThirdPartyGeneratorDevice.AcMeterLine3Id);
+      auto &generator = m_config.add_mutable_thirdPartyGenerators();
+      generator.set_displayType(static_cast<ConfigRequest::eConfigType>(g.ThirdPartyGeneratorDevice.DisplayType));
+      generator.set_id(static_cast<uint32_t>(g.ThirdPartyGeneratorDevice.Id));
+      generator.set_nameUTF8(g.ThirdPartyGeneratorDevice.NameUTF8);
+      addInstance(generator.mutable_instance(), g.ThirdPartyGeneratorDevice.SignalInstance);
+      generator.set_startControlId(createDataId(g.ThirdPartyGeneratorDevice.StartControlId));
+      generator.set_stopControlId(createDataId(g.ThirdPartyGeneratorDevice.StopControlId));
+      generator.mutable_associatedAcMetersInstance().set_instance(
+          g.ThirdPartyGeneratorDevice.AssociatedAcMetersInstance);
+      generator.set_acMeterLine1Id(createDataId(g.ThirdPartyGeneratorDevice.AcMeterLine1Id));
+      generator.set_acMeterLine2Id(createDataId(g.ThirdPartyGeneratorDevice.AcMeterLine2Id));
+      generator.set_acMeterLine3Id(createDataId(g.ThirdPartyGeneratorDevice.AcMeterLine3Id));
     }
   } break;
   case ConfigRequest::eConfigType::eTyrePressure: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eTyrePressure";
     auto tyrepressures = displayListNoLock(eCZoneStructDisplayTyrePressure);
     for (auto &t : tyrepressures) {
-      m_config._tyrePressures.emplace_back();
-      auto &tyrepressure = m_config._tyrePressures.back();
-      tyrepressure._displayType = static_cast<ConfigRequest::eConfigType>(t.TyrePressure.DisplayType);
-      tyrepressure._id = static_cast<uint32_t>(t.TyrePressure.Id);
-      tyrepressure._nameUTF8 = t.TyrePressure.NameUTF8;
-      addInstance(tyrepressure._instance, t.TyrePressure.Instance);
-      tyrepressure._numberOfAxles = static_cast<uint32_t>(t.TyrePressure.NumberOfAxles);
-      tyrepressure._tyresAxle1 = static_cast<uint32_t>(t.TyrePressure.TyresAxle1);
-      tyrepressure._tyresAxle2 = static_cast<uint32_t>(t.TyrePressure.TyresAxle2);
-      tyrepressure._tyresAxle3 = static_cast<uint32_t>(t.TyrePressure.TyresAxle3);
-      tyrepressure._tyresAxle4 = static_cast<uint32_t>(t.TyrePressure.TyresAxle4);
-      tyrepressure._spareAxle = static_cast<uint32_t>(t.TyrePressure.SpareAxle);
+      auto &tyrepressure = m_config.add_mutable_tyrePressures();
+      tyrepressure.set_displayType(static_cast<ConfigRequest::eConfigType>(t.TyrePressure.DisplayType));
+      tyrepressure.set_id(static_cast<uint32_t>(t.TyrePressure.Id));
+      tyrepressure.set_nameUTF8(t.TyrePressure.NameUTF8);
+      addInstance(tyrepressure.mutable_instance(), t.TyrePressure.Instance);
+      tyrepressure.set_numberOfAxles(static_cast<uint32_t>(t.TyrePressure.NumberOfAxles));
+      tyrepressure.set_tyresAxle1(static_cast<uint32_t>(t.TyrePressure.TyresAxle1));
+      tyrepressure.set_tyresAxle2(static_cast<uint32_t>(t.TyrePressure.TyresAxle2));
+      tyrepressure.set_tyresAxle3(static_cast<uint32_t>(t.TyrePressure.TyresAxle3));
+      tyrepressure.set_tyresAxle4(static_cast<uint32_t>(t.TyrePressure.TyresAxle4));
+      tyrepressure.set_spareAxle(static_cast<uint32_t>(t.TyrePressure.SpareAxle));
       for (uint32_t i = 0; i < MAX_TYRE_INSTANCES; i++) {
-        tyrepressure._tyreInstances.emplace_back();
-        auto &tyreinstance = tyrepressure._tyreInstances.back();
+        auto &tyreinstance = tyrepressure.add_mutable_tyreInstance();
         tyreinstance.set_instance(static_cast<uint32_t>(t.TyrePressure.TyreInstances[i]));
         tyreinstance.set_enabled(t.TyrePressure.TyreInstances[i] < CZONE_NUMBER_OF_INSTANCES);
       }
       for (uint32_t i = 0; i < MAX_TYRE_INSTANCES; i++) {
-        tyrepressure._tyreSpareInstances.emplace_back();
-        auto &tyreinstancespare = tyrepressure._tyreSpareInstances.back();
+        auto &tyreinstancespare = tyrepressure.add_mutable_tyreSpareInstance();
         tyreinstancespare.set_instance(static_cast<uint32_t>(t.TyrePressure.TyreInstanceSpare[i]));
         tyreinstancespare.set_enabled(t.TyrePressure.TyreInstanceSpare[i] < CZONE_NUMBER_OF_INSTANCES);
       }
@@ -1199,16 +1186,15 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eAudioStereo";
     auto audiostereos = displayListNoLock(eCZoneStructDisplayAudioStereo);
     for (auto &a : audiostereos) {
-      m_config._audioStereos.emplace_back();
-      auto &audiostereo = m_config._audioStereos.back();
-      audiostereo._displayType = static_cast<ConfigRequest::eConfigType>(a.AudioStereoDevice.DisplayType);
-      audiostereo._id = static_cast<uint32_t>(a.AudioStereoDevice.Id);
-      audiostereo._nameUTF8 = a.AudioStereoDevice.NameUTF8;
-      addInstance(audiostereo._instance, a.AudioStereoDevice.Instance);
-      audiostereo._muteEnabled = static_cast<uint32_t>(a.AudioStereoDevice.MuteEnabled);
+      auto &audiostereo = m_config.add_mutable_audioStereos();
+      audiostereo.set_displayType(static_cast<ConfigRequest::eConfigType>(a.AudioStereoDevice.DisplayType));
+      audiostereo.set_id(static_cast<uint32_t>(a.AudioStereoDevice.Id));
+      audiostereo.set_nameUTF8(a.AudioStereoDevice.NameUTF8);
+      addInstance(audiostereo.mutable_instance(), a.AudioStereoDevice.Instance);
+      audiostereo.set_muteEnabled(static_cast<uint32_t>(a.AudioStereoDevice.MuteEnabled));
       for (uint32_t i = 0; i < 8; i++) {
-        audiostereo._circuitIds.emplace_back(static_cast<uint32_t>(a.AudioStereoDevice.CircuitId[i]),
-                                             a.AudioStereoDevice.CircuitId[i] != CZONE_INVALID_CIRCUIT_INDEX);
+        audiostereo.add_circuitId(DataId(static_cast<uint32_t>(a.AudioStereoDevice.CircuitId[i]),
+                                         a.AudioStereoDevice.CircuitId[i] != CZONE_INVALID_CIRCUIT_INDEX));
       }
     }
   } break;
@@ -1216,13 +1202,12 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eShoreFuse";
     auto shorefuses = displayListNoLock(eCZoneStructDisplayShoreFuse);
     for (auto &s : shorefuses) {
-      m_config._shoreFuses.emplace_back();
-      auto &shorefuse = m_config._shoreFuses.back();
-      shorefuse._displayType = static_cast<ConfigRequest::eConfigType>(s.ShoreFuseDevice.DisplayType);
-      shorefuse._id = static_cast<uint32_t>(s.ShoreFuseDevice.Id);
-      shorefuse._nameUTF8 = s.ShoreFuseDevice.NameUTF8;
-      addInstance(shorefuse._instance, s.ShoreFuseDevice.ChargerInstance);
-      shorefuse._shoreFuseControlId = createDataId(s.ShoreFuseDevice.ShoreFuseControlId);
+      auto &shorefuse = m_config.add_mutable_shoreFuses();
+      shorefuse.set_displayType(static_cast<ConfigRequest::eConfigType>(s.ShoreFuseDevice.DisplayType));
+      shorefuse.set_id(static_cast<uint32_t>(s.ShoreFuseDevice.Id));
+      shorefuse.set_nameUTF8(s.ShoreFuseDevice.NameUTF8);
+      addInstance(shorefuse.mutable_instance(), s.ShoreFuseDevice.ChargerInstance);
+      shorefuse.set_shoreFuseControlId(createDataId(s.ShoreFuseDevice.ShoreFuseControlId));
     }
   } break;
   case ConfigRequest::eConfigType::eCircuit:
@@ -1238,8 +1223,7 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
           continue;
         }
 
-        m_config._circuits.emplace_back();
-        auto &circuit = m_config._circuits.back();
+        auto &circuit = m_config.add_mutable_circuits();
 
         circuit.set_displayType(static_cast<ConfigRequest::eConfigType>(c.Circuit.DisplayType));
         circuit.set_id(std::make_pair(c.Circuit.Id, c.Circuit.Id != CZONE_INVALID_CIRCUIT_INDEX));
@@ -1302,8 +1286,7 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
     for (auto &c : circuits) {
       if (c.Circuit.CircuitType >= CircuitDevice::eCircuitType::eModeGroup1 &&
           c.Circuit.CircuitType <= CircuitDevice::eCircuitType::eModeGroupExclusive) {
-        m_config._modes.emplace_back();
-        auto &circuit = m_config._modes.back();
+        auto &circuit = m_config.add_mutable_modes();
 
         circuit.set_displayType(static_cast<ConfigRequest::eConfigType>(c.Circuit.DisplayType));
         circuit.set_id(std::make_pair(c.Circuit.Id, c.Circuit.Id != CZONE_INVALID_CIRCUIT_INDEX));
@@ -1354,293 +1337,273 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eFantasticFan";
     auto fantasticfans = displayListNoLock(eCZoneStructDisplayFantasticFan);
     for (auto &f : fantasticfans) {
-      m_config._fantasticFans.emplace_back();
-      auto &fantasticfan = m_config._fantasticFans.back();
-      fantasticfan._displayType = (static_cast<ConfigRequest::eConfigType>(f.FantasticFanDevice.DisplayType));
-      fantasticfan._id = static_cast<uint32_t>(f.FantasticFanDevice.Id);
-      fantasticfan._nameUTF8 = (f.FantasticFanDevice.NameUTF8);
-      addInstance(fantasticfan._instance, f.FantasticFanDevice.Instance);
-      fantasticfan._directionForwardCircuitId = createDataId(f.FantasticFanDevice.DirectionForwardCircuitId);
-      fantasticfan._directionReverseCircuitId = createDataId(f.FantasticFanDevice.DirectionReverseCircuitId);
-      fantasticfan._lidOpenCircuitId = createDataId(f.FantasticFanDevice.LidOpenCircuitId);
-      fantasticfan._lidCloseCircuitId = createDataId(f.FantasticFanDevice.LidCloseCircuitId);
-      fantasticfan._fanCircuitId = createDataId(f.FantasticFanDevice.FanCircuitId);
+      auto &fantasticfan = m_config.add_mutable_fantasticFans();
+      fantasticfan.set_displayType(static_cast<ConfigRequest::eConfigType>(f.FantasticFanDevice.DisplayType));
+      fantasticfan.set_id(static_cast<uint32_t>(f.FantasticFanDevice.Id));
+      fantasticfan.set_nameUTF8(f.FantasticFanDevice.NameUTF8);
+      addInstance(fantasticfan.mutable_instance(), f.FantasticFanDevice.Instance);
+      fantasticfan.set_directionForwardCircuitId(createDataId(f.FantasticFanDevice.DirectionForwardCircuitId));
+      fantasticfan.set_directionReverseCircuitId(createDataId(f.FantasticFanDevice.DirectionReverseCircuitId));
+      fantasticfan.set_lidOpenCircuitId(createDataId(f.FantasticFanDevice.LidOpenCircuitId));
+      fantasticfan.set_lidCloseCircuitId(createDataId(f.FantasticFanDevice.LidCloseCircuitId));
+      fantasticfan.set_fanCircuitId(createDataId(f.FantasticFanDevice.FanCircuitId));
     }
   } break;
   case ConfigRequest::eConfigType::eScreenConfigPageImageItem: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eScreenConfigPageImageItem";
     auto screenconfigs = displayListNoLock(eCZoneStructScreenConfigPageImageItem);
     for (auto &s : screenconfigs) {
-      m_config._screenConfigPageImageItems.emplace_back();
-      auto &screenconfig = m_config._screenConfigPageImageItems.back();
-      auto header = ScreenConfigHeader();
-      header._displayType = static_cast<ConfigRequest::eConfigType>(s.ScreenConfigPageImageItems.Header.DisplayType);
-      header._id = (static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.Id));
-      header._targetDisplayType = (static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.TargetDisplayType));
-      header._targetId = (static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.TargetId));
-      header._confirmationType = (static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.ConfirmationType));
-      header._smoothStart = (static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.SmoothStart));
-      header._index = (static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.Index));
-      header._parentIndex = (static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.ParentIndex));
-      header._controlId = (static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.ControlId));
-      screenconfig._header = (header);
-      screenconfig._locationX = (s.ScreenConfigPageImageItems.LocationX);
-      screenconfig._locationY = (s.ScreenConfigPageImageItems.LocationY);
-      screenconfig._targetX = (s.ScreenConfigPageImageItems.TargetX);
-      screenconfig._targetY = (s.ScreenConfigPageImageItems.TargetY);
-      screenconfig._name = (s.ScreenConfigPageImageItems.Name);
-      screenconfig._icon = (static_cast<uint32_t>(s.ScreenConfigPageImageItems.Icon));
-      screenconfig._hideWhenOff = (static_cast<bool>(s.ScreenConfigPageImageItems.HideWhenOff));
+      auto &screenconfig = m_config.add_mutable_screenConfigPageImageItems();
+      auto &header = screenconfig.mutable_header();
+      header.set_displayType(static_cast<ConfigRequest::eConfigType>(s.ScreenConfigPageImageItems.Header.DisplayType));
+      header.set_id(static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.Id));
+      header.set_targetDisplayType(static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.TargetDisplayType));
+      header.set_targetId(static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.TargetId));
+      header.set_confirmationType(static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.ConfirmationType));
+      header.set_smoothStart(static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.SmoothStart));
+      header.set_index(static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.Index));
+      header.set_parentIndex(static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.ParentIndex));
+      header.set_controlId(static_cast<uint32_t>(s.ScreenConfigPageImageItems.Header.ControlId));
+      screenconfig.set_locationX(s.ScreenConfigPageImageItems.LocationX);
+      screenconfig.set_locationY(s.ScreenConfigPageImageItems.LocationY);
+      screenconfig.set_targetX(s.ScreenConfigPageImageItems.TargetX);
+      screenconfig.set_targetY(s.ScreenConfigPageImageItems.TargetY);
+      screenconfig.set_name(s.ScreenConfigPageImageItems.Name);
+      screenconfig.set_icon(static_cast<uint32_t>(s.ScreenConfigPageImageItems.Icon));
+      screenconfig.set_hideWhenOff(static_cast<bool>(s.ScreenConfigPageImageItems.HideWhenOff));
     }
   } break;
   case ConfigRequest::eConfigType::eScreenConfigPageImage: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eScreenConfigPageImage";
     auto screenconfigs = displayListNoLock(eCZoneStructScreenConfigPageImage);
     for (auto &s : screenconfigs) {
-      m_config._screenConfigPageImages.emplace_back();
-      auto &screenconfig = m_config._screenConfigPageImages.back();
-      auto header = ScreenConfigHeader();
-      header._displayType = static_cast<ConfigRequest::eConfigType>(s.ScreenConfigPageImages.Header.DisplayType);
-      header._id = static_cast<uint32_t>(s.ScreenConfigPageImages.Header.Id);
-      header._targetDisplayType = static_cast<uint32_t>(s.ScreenConfigPageImages.Header.TargetDisplayType);
-      header._targetId = static_cast<uint32_t>(s.ScreenConfigPageImages.Header.TargetId);
-      header._confirmationType = static_cast<uint32_t>(s.ScreenConfigPageImages.Header.ConfirmationType);
-      header._smoothStart = static_cast<uint32_t>(s.ScreenConfigPageImages.Header.SmoothStart);
-      header._index = static_cast<uint32_t>(s.ScreenConfigPageImages.Header.Index);
-      header._parentIndex = static_cast<uint32_t>(s.ScreenConfigPageImages.Header.ParentIndex);
-      header._controlId = static_cast<uint32_t>(s.ScreenConfigPageImages.Header.ControlId);
-      screenconfig._header = header;
-      screenconfig._gridX = static_cast<uint32_t>(s.ScreenConfigPageImages.GridX);
-      screenconfig._gridY = static_cast<uint32_t>(s.ScreenConfigPageImages.GridY);
-      screenconfig._gridWidth = static_cast<uint32_t>(s.ScreenConfigPageImages.GridWidth);
-      screenconfig._gridHeight = static_cast<uint32_t>(s.ScreenConfigPageImages.GridHeight);
-      screenconfig._sourceWidth = s.ScreenConfigPageImages.SourceWidth;
-      screenconfig._sourceHeight = s.ScreenConfigPageImages.SourceHeight;
-      screenconfig._targetX = s.ScreenConfigPageImages.TargetX;
-      screenconfig._targetY = s.ScreenConfigPageImages.TargetY;
-      screenconfig._targetWidth = s.ScreenConfigPageImages.TargetWidth;
-      screenconfig._targetHeight = s.ScreenConfigPageImages.TargetHeight;
-      screenconfig._fileName = s.ScreenConfigPageImages.FileName;
-      screenconfig._backgroundColourR = static_cast<uint32_t>(s.ScreenConfigPageImages.BackgroundColourR);
-      screenconfig._backgroundColourG = static_cast<uint32_t>(s.ScreenConfigPageImages.BackgroundColourG);
-      screenconfig._backgroundColourB = static_cast<uint32_t>(s.ScreenConfigPageImages.BackgroundColourB);
-      screenconfig._showBackground = static_cast<uint32_t>(s.ScreenConfigPageImages.ShowBackground);
-      screenconfig._cropToFit = static_cast<uint32_t>(s.ScreenConfigPageImages.CropToFit);
+      auto &screenconfig = m_config.add_mutable_screenConfigPageImages();
+      auto &header = screenconfig.mutable_header();
+      header.set_displayType(static_cast<ConfigRequest::eConfigType>(s.ScreenConfigPageImages.Header.DisplayType));
+      header.set_id(static_cast<uint32_t>(s.ScreenConfigPageImages.Header.Id));
+      header.set_targetDisplayType(static_cast<uint32_t>(s.ScreenConfigPageImages.Header.TargetDisplayType));
+      header.set_targetId(static_cast<uint32_t>(s.ScreenConfigPageImages.Header.TargetId));
+      header.set_confirmationType(static_cast<uint32_t>(s.ScreenConfigPageImages.Header.ConfirmationType));
+      header.set_smoothStart(static_cast<uint32_t>(s.ScreenConfigPageImages.Header.SmoothStart));
+      header.set_index(static_cast<uint32_t>(s.ScreenConfigPageImages.Header.Index));
+      header.set_parentIndex(static_cast<uint32_t>(s.ScreenConfigPageImages.Header.ParentIndex));
+      header.set_controlId(static_cast<uint32_t>(s.ScreenConfigPageImages.Header.ControlId));
+      screenconfig.set_gridX(static_cast<uint32_t>(s.ScreenConfigPageImages.GridX));
+      screenconfig.set_gridY(static_cast<uint32_t>(s.ScreenConfigPageImages.GridY));
+      screenconfig.set_gridWidth(static_cast<uint32_t>(s.ScreenConfigPageImages.GridWidth));
+      screenconfig.set_gridHeight(static_cast<uint32_t>(s.ScreenConfigPageImages.GridHeight));
+      screenconfig.set_sourceWidth(s.ScreenConfigPageImages.SourceWidth);
+      screenconfig.set_sourceHeight(s.ScreenConfigPageImages.SourceHeight);
+      screenconfig.set_targetX(s.ScreenConfigPageImages.TargetX);
+      screenconfig.set_targetY(s.ScreenConfigPageImages.TargetY);
+      screenconfig.set_targetWidth(s.ScreenConfigPageImages.TargetWidth);
+      screenconfig.set_targetHeight(s.ScreenConfigPageImages.TargetHeight);
+      screenconfig.set_fileName(s.ScreenConfigPageImages.FileName);
+      screenconfig.set_backgroundColourR(static_cast<uint32_t>(s.ScreenConfigPageImages.BackgroundColourR));
+      screenconfig.set_backgroundColourG(static_cast<uint32_t>(s.ScreenConfigPageImages.BackgroundColourG));
+      screenconfig.set_backgroundColourB(static_cast<uint32_t>(s.ScreenConfigPageImages.BackgroundColourB));
+      screenconfig.set_showBackground(static_cast<uint32_t>(s.ScreenConfigPageImages.ShowBackground));
+      screenconfig.set_cropToFit(static_cast<uint32_t>(s.ScreenConfigPageImages.CropToFit));
     }
   } break;
   case ConfigRequest::eConfigType::eScreenConfigPageGridItem: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eScreenConfigPageGridItem";
     auto screenconfigs = displayListNoLock(eCZoneStructScreenConfigPageGridItem);
     for (auto &s : screenconfigs) {
-      m_config._screenConfigPageGridItems.emplace_back();
-      auto screenconfig = m_config._screenConfigPageGridItems.back();
-      auto header = ScreenConfigHeader();
-      header._displayType = static_cast<ConfigRequest::eConfigType>(s.ScreenConfigPageGridItems.Header.DisplayType);
-      header._id = static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.Id);
-      header._targetDisplayType = static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.TargetDisplayType);
-      header._targetId = static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.TargetId);
-      header._confirmationType = static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.ConfirmationType);
-      header._smoothStart = static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.SmoothStart);
-      header._index = static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.Index);
-      header._parentIndex = static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.ParentIndex);
-      header._controlId = static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.ControlId);
-      screenconfig._header = header;
-      screenconfig._gridX = static_cast<uint32_t>(s.ScreenConfigPageGridItems.GridX);
-      screenconfig._gridY = static_cast<uint32_t>(s.ScreenConfigPageGridItems.GridY);
-      screenconfig._targetX = s.ScreenConfigPageGridItems.TargetX;
-      screenconfig._targetY = s.ScreenConfigPageGridItems.TargetY;
-      screenconfig._targetWidth = s.ScreenConfigPageGridItems.TargetWidth;
-      screenconfig._targetHeight = s.ScreenConfigPageGridItems.TargetHeight;
-      screenconfig._name = s.ScreenConfigPageGridItems.Name;
-      screenconfig._icon = static_cast<uint32_t>(s.ScreenConfigPageGridItems.Icon);
-      screenconfig._columnSpan = static_cast<uint32_t>(s.ScreenConfigPageGridItems.ColumnSpan);
-      screenconfig._rowSpan = static_cast<uint32_t>(s.ScreenConfigPageGridItems.RowSpan);
-      screenconfig._doubleThrowType = static_cast<uint32_t>(s.ScreenConfigPageGridItems.DoubleThrowType);
+      auto &screenconfig = m_config.add_mutable_screenConfigPageGridItems();
+      auto &header = screenconfig.mutable_header();
+      header.set_displayType(static_cast<ConfigRequest::eConfigType>(s.ScreenConfigPageGridItems.Header.DisplayType));
+      header.set_id(static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.Id));
+      header.set_targetDisplayType(static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.TargetDisplayType));
+      header.set_targetId(static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.TargetId));
+      header.set_confirmationType(static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.ConfirmationType));
+      header.set_smoothStart(static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.SmoothStart));
+      header.set_index(static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.Index));
+      header.set_parentIndex(static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.ParentIndex));
+      header.set_controlId(static_cast<uint32_t>(s.ScreenConfigPageGridItems.Header.ControlId));
+      screenconfig.set_gridX(static_cast<uint32_t>(s.ScreenConfigPageGridItems.GridX));
+      screenconfig.set_gridY(static_cast<uint32_t>(s.ScreenConfigPageGridItems.GridY));
+      screenconfig.set_targetX(s.ScreenConfigPageGridItems.TargetX);
+      screenconfig.set_targetY(s.ScreenConfigPageGridItems.TargetY);
+      screenconfig.set_targetWidth(s.ScreenConfigPageGridItems.TargetWidth);
+      screenconfig.set_targetHeight(s.ScreenConfigPageGridItems.TargetHeight);
+      screenconfig.set_name(s.ScreenConfigPageGridItems.Name);
+      screenconfig.set_icon(static_cast<uint32_t>(s.ScreenConfigPageGridItems.Icon));
+      screenconfig.set_columnSpan(static_cast<uint32_t>(s.ScreenConfigPageGridItems.ColumnSpan));
+      screenconfig.set_rowSpan(static_cast<uint32_t>(s.ScreenConfigPageGridItems.RowSpan));
+      screenconfig.set_doubleThrowType(static_cast<uint32_t>(s.ScreenConfigPageGridItems.DoubleThrowType));
     }
   } break;
   case ConfigRequest::eConfigType::eScreenConfigPage: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eScreenConfigPage";
     auto screenconfigs = displayListNoLock(eCZoneStructScreenConfigPage);
     for (auto &s : screenconfigs) {
-      m_config._screenConfigPages.emplace_back();
-      auto &screenconfig = m_config._screenConfigPages.back();
-      auto header = ScreenConfigHeader();
-      header._displayType = static_cast<ConfigRequest::eConfigType>(s.ScreenConfigPages.Header.DisplayType);
-      header._id = static_cast<uint32_t>(s.ScreenConfigPages.Header.Id);
-      header._targetDisplayType = static_cast<uint32_t>(s.ScreenConfigPages.Header.TargetDisplayType);
-      header._targetId = static_cast<uint32_t>(s.ScreenConfigPages.Header.TargetId);
-      header._confirmationType = static_cast<uint32_t>(s.ScreenConfigPages.Header.ConfirmationType);
-      header._smoothStart = static_cast<uint32_t>(s.ScreenConfigPages.Header.SmoothStart);
-      header._index = static_cast<uint32_t>(s.ScreenConfigPages.Header.Index);
-      header._parentIndex = static_cast<uint32_t>(s.ScreenConfigPages.Header.ParentIndex);
-      header._controlId = static_cast<uint32_t>(s.ScreenConfigPages.Header.ControlId);
-      screenconfig._header = header;
+      auto &screenconfig = m_config.add_mutable_screenConfigPages();
+      auto &header = screenconfig.mutable_header();
+      header.set_displayType(static_cast<ConfigRequest::eConfigType>(s.ScreenConfigPages.Header.DisplayType));
+      header.set_id(static_cast<uint32_t>(s.ScreenConfigPages.Header.Id));
+      header.set_targetDisplayType(static_cast<uint32_t>(s.ScreenConfigPages.Header.TargetDisplayType));
+      header.set_targetId(static_cast<uint32_t>(s.ScreenConfigPages.Header.TargetId));
+      header.set_confirmationType(static_cast<uint32_t>(s.ScreenConfigPages.Header.ConfirmationType));
+      header.set_smoothStart(static_cast<uint32_t>(s.ScreenConfigPages.Header.SmoothStart));
+      header.set_index(static_cast<uint32_t>(s.ScreenConfigPages.Header.Index));
+      header.set_parentIndex(static_cast<uint32_t>(s.ScreenConfigPages.Header.ParentIndex));
+      header.set_controlId(static_cast<uint32_t>(s.ScreenConfigPages.Header.ControlId));
     }
   } break;
   case ConfigRequest::eConfigType::eScreenConfigMode: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eScreenConfigMode";
     auto screenconfigs = displayListNoLock(eCZoneStructScreenConfigMode);
     for (auto &s : screenconfigs) {
-      m_config._screenConfigModes.emplace_back();
-      auto &screenconfig = m_config._screenConfigModes.back();
-      auto header = ScreenConfigHeader();
-      header._displayType = static_cast<ConfigRequest::eConfigType>(s.ScreenConfigModes.Header.DisplayType);
-      header._id = static_cast<uint32_t>(s.ScreenConfigModes.Header.Id);
-      header._targetDisplayType = static_cast<uint32_t>(s.ScreenConfigModes.Header.TargetDisplayType);
-      header._targetId = static_cast<uint32_t>(s.ScreenConfigModes.Header.TargetId);
-      header._confirmationType = static_cast<uint32_t>(s.ScreenConfigModes.Header.ConfirmationType);
-      header._smoothStart = static_cast<uint32_t>(s.ScreenConfigModes.Header.SmoothStart);
-      header._index = static_cast<uint32_t>(s.ScreenConfigModes.Header.Index);
-      header._parentIndex = static_cast<uint32_t>(s.ScreenConfigModes.Header.ParentIndex);
-      header._controlId = static_cast<uint32_t>(s.ScreenConfigModes.Header.ControlId);
-      screenconfig._header = header;
-      screenconfig._name = s.ScreenConfigModes.Name;
+      auto &screenconfig = m_config.add_mutable_screenConfigModes();
+      auto &header = screenconfig.mutable_header();
+      header.set_displayType(static_cast<ConfigRequest::eConfigType>(s.ScreenConfigModes.Header.DisplayType));
+      header.set_id(static_cast<uint32_t>(s.ScreenConfigModes.Header.Id));
+      header.set_targetDisplayType(static_cast<uint32_t>(s.ScreenConfigModes.Header.TargetDisplayType));
+      header.set_targetId(static_cast<uint32_t>(s.ScreenConfigModes.Header.TargetId));
+      header.set_confirmationType(static_cast<uint32_t>(s.ScreenConfigModes.Header.ConfirmationType));
+      header.set_smoothStart(static_cast<uint32_t>(s.ScreenConfigModes.Header.SmoothStart));
+      header.set_index(static_cast<uint32_t>(s.ScreenConfigModes.Header.Index));
+      header.set_parentIndex(static_cast<uint32_t>(s.ScreenConfigModes.Header.ParentIndex));
+      header.set_controlId(static_cast<uint32_t>(s.ScreenConfigModes.Header.ControlId));
+      screenconfig.set_name(s.ScreenConfigModes.Name);
     }
   } break;
   case ConfigRequest::eConfigType::eScreenConfig: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eScreenConfig";
     auto screenconfigs = displayListNoLock(eCZoneStructScreenConfig);
     for (auto &s : screenconfigs) {
-      m_config._screenConfigs.emplace_back();
-      auto &screenconfig = m_config._screenConfigs.back();
-      auto header = ScreenConfigHeader();
-      header._displayType = static_cast<ConfigRequest::eConfigType>(s.ScreenConfigs.Header.DisplayType);
-      header._id = static_cast<uint32_t>(s.ScreenConfigs.Header.Id);
-      header._targetDisplayType = static_cast<uint32_t>(s.ScreenConfigs.Header.TargetDisplayType);
-      header._targetId = static_cast<uint32_t>(s.ScreenConfigs.Header.TargetId);
-      header._confirmationType = static_cast<uint32_t>(s.ScreenConfigs.Header.ConfirmationType);
-      header._smoothStart = static_cast<uint32_t>(s.ScreenConfigs.Header.SmoothStart);
-      header._index = static_cast<uint32_t>(s.ScreenConfigs.Header.Index);
-      header._parentIndex = static_cast<uint32_t>(s.ScreenConfigs.Header.ParentIndex);
-      header._controlId = static_cast<uint32_t>(s.ScreenConfigs.Header.ControlId);
-      screenconfig._header = header;
-      screenconfig._gridHeight = static_cast<uint32_t>(s.ScreenConfigs.GridWidth);
-      screenconfig._gridHeight = static_cast<uint32_t>(s.ScreenConfigs.GridHeight);
-      screenconfig._landscape = static_cast<uint32_t>(s.ScreenConfigs.Landscape);
-      screenconfig._displayName = s.ScreenConfigs.DisplayName;
-      screenconfig._relativePath = s.ScreenConfigs.RelativePath;
+      auto &screenconfig = m_config.add_mutable_screenConfigs();
+      auto &header = screenconfig.mutable_header();
+      header.set_displayType(static_cast<ConfigRequest::eConfigType>(s.ScreenConfigs.Header.DisplayType));
+      header.set_id(static_cast<uint32_t>(s.ScreenConfigs.Header.Id));
+      header.set_targetDisplayType(static_cast<uint32_t>(s.ScreenConfigs.Header.TargetDisplayType));
+      header.set_targetId(static_cast<uint32_t>(s.ScreenConfigs.Header.TargetId));
+      header.set_confirmationType(static_cast<uint32_t>(s.ScreenConfigs.Header.ConfirmationType));
+      header.set_smoothStart(static_cast<uint32_t>(s.ScreenConfigs.Header.SmoothStart));
+      header.set_index(static_cast<uint32_t>(s.ScreenConfigs.Header.Index));
+      header.set_parentIndex(static_cast<uint32_t>(s.ScreenConfigs.Header.ParentIndex));
+      header.set_controlId(static_cast<uint32_t>(s.ScreenConfigs.Header.ControlId));
+      screenconfig.set_gridHeight(static_cast<uint32_t>(s.ScreenConfigs.GridWidth));
+      screenconfig.set_gridHeight(static_cast<uint32_t>(s.ScreenConfigs.GridHeight));
+      screenconfig.set_landscape(static_cast<uint32_t>(s.ScreenConfigs.Landscape));
+      screenconfig.set_displayName(s.ScreenConfigs.DisplayName);
+      screenconfig.set_relativePath(s.ScreenConfigs.RelativePath);
     }
   } break;
   case ConfigRequest::eConfigType::eFavouritesMode: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eFavouritesMode";
     auto favourites = displayListNoLock(eCZoneStructDisplayFavouritesMode);
     for (auto &f : favourites) {
-      m_config._favouritesModes.emplace_back();
-      auto &favourite = m_config._favouritesModes.back();
-      favourite._displayType = static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType);
-      favourite._id == static_cast<uint32_t>(f.FavouritesInfo.Id);
-      favourite._targetDisplayType = static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType);
-      favourite._targetId = static_cast<uint32_t>(f.FavouritesInfo.TargetId);
-      favourite._x = static_cast<uint32_t>(f.FavouritesInfo.X);
-      favourite._y = static_cast<uint32_t>(f.FavouritesInfo.Y);
+      auto &favourite = m_config.add_mutable_favouritesModes();
+      favourite.set_displayType(static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType));
+      favourite.set_id(static_cast<uint32_t>(f.FavouritesInfo.Id));
+      favourite.set_targetDisplayType(static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType));
+      favourite.set_targetId(static_cast<uint32_t>(f.FavouritesInfo.TargetId));
+      favourite.set_x(static_cast<uint32_t>(f.FavouritesInfo.X));
+      favourite.set_y(static_cast<uint32_t>(f.FavouritesInfo.Y));
     }
   } break;
   case ConfigRequest::eConfigType::eFavouritesControl: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eFavouritesControl";
     auto favourites = displayListNoLock(eCZoneStructDisplayFavouritesControl);
     for (auto &f : favourites) {
-      m_config._favouritesControls.emplace_back();
-      auto &favourite = m_config._favouritesControls.back();
-      favourite._displayType = static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType);
-      favourite._id = static_cast<uint32_t>(f.FavouritesInfo.Id);
-      favourite._targetDisplayType = static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType);
-      favourite._targetId = static_cast<uint32_t>(f.FavouritesInfo.TargetId);
-      favourite._x = static_cast<uint32_t>(f.FavouritesInfo.X);
-      favourite._y = static_cast<uint32_t>(f.FavouritesInfo.Y);
+      auto &favourite = m_config.add_mutable_favouritesControls();
+      favourite.set_displayType(static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType));
+      favourite.set_id(static_cast<uint32_t>(f.FavouritesInfo.Id));
+      favourite.set_targetDisplayType(static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType));
+      favourite.set_targetId(static_cast<uint32_t>(f.FavouritesInfo.TargetId));
+      favourite.set_x(static_cast<uint32_t>(f.FavouritesInfo.X));
+      favourite.set_y(static_cast<uint32_t>(f.FavouritesInfo.Y));
     }
   } break;
   case ConfigRequest::eConfigType::eFavouritesMonitoring: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eFavouritesMonitoring";
     auto favourites = displayListNoLock(eCZoneStructDisplayFavouritesMonitoring);
     for (auto &f : favourites) {
-      m_config._favouritesMonitorings.emplace_back();
-      auto &favourite = m_config._favouritesMonitorings.back();
-      favourite._displayType = static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType);
-      favourite._id = static_cast<uint32_t>(f.FavouritesInfo.Id);
-      favourite._targetDisplayType = static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType);
-      favourite._targetId = static_cast<uint32_t>(f.FavouritesInfo.TargetId);
-      favourite._x = static_cast<uint32_t>(f.FavouritesInfo.X);
-      favourite._y = static_cast<uint32_t>(f.FavouritesInfo.Y);
+      auto &favourite = m_config.add_mutable_favouritesMonitorings();
+      favourite.set_displayType(static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType));
+      favourite.set_id(static_cast<uint32_t>(f.FavouritesInfo.Id));
+      favourite.set_targetDisplayType(static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType));
+      favourite.set_targetId(static_cast<uint32_t>(f.FavouritesInfo.TargetId));
+      favourite.set_x(static_cast<uint32_t>(f.FavouritesInfo.X));
+      favourite.set_y(static_cast<uint32_t>(f.FavouritesInfo.Y));
     }
   } break;
   case ConfigRequest::eConfigType::eFavouritesAlarm: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eFavouritesAlarm";
     auto favourites = displayListNoLock(eCZoneStructDisplayFavouritesAlarms);
     for (auto &f : favourites) {
-      m_config._favouritesAlarms.emplace_back();
-      auto &favourite = m_config._favouritesAlarms.back();
-      favourite._displayType = static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType);
-      favourite._id = static_cast<uint32_t>(f.FavouritesInfo.Id);
-      favourite._targetDisplayType = static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType);
-      favourite._targetId = static_cast<uint32_t>(f.FavouritesInfo.TargetId);
-      favourite._x = static_cast<uint32_t>(f.FavouritesInfo.X);
-      favourite._y = static_cast<uint32_t>(f.FavouritesInfo.Y);
+      auto &favourite = m_config.add_mutable_favouritesAlarms();
+      favourite.set_displayType(static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType));
+      favourite.set_id(static_cast<uint32_t>(f.FavouritesInfo.Id));
+      favourite.set_targetDisplayType(static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType));
+      favourite.set_targetId(static_cast<uint32_t>(f.FavouritesInfo.TargetId));
+      favourite.set_x(static_cast<uint32_t>(f.FavouritesInfo.X));
+      favourite.set_y(static_cast<uint32_t>(f.FavouritesInfo.Y));
     }
   } break;
   case ConfigRequest::eConfigType::eFavouritesACMain: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eFavouritesACMain";
     auto favourites = displayListNoLock(eCZoneStructDisplayFavouritesACMains);
     for (auto &f : favourites) {
-      m_config._favouritesACMains.emplace_back();
-      auto &favourite = m_config._favouritesACMains.back();
-      favourite._displayType = static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType);
-      favourite._id = static_cast<uint32_t>(f.FavouritesInfo.Id);
-      favourite._targetDisplayType = static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType);
-      favourite._targetId = static_cast<uint32_t>(f.FavouritesInfo.TargetId);
-      favourite._x = static_cast<uint32_t>(f.FavouritesInfo.X);
-      favourite._y = static_cast<uint32_t>(f.FavouritesInfo.Y);
+      auto &favourite = m_config.add_mutable_favouritesACMains();
+      favourite.set_displayType(static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType));
+      favourite.set_id(static_cast<uint32_t>(f.FavouritesInfo.Id));
+      favourite.set_targetDisplayType(static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType));
+      favourite.set_targetId(static_cast<uint32_t>(f.FavouritesInfo.TargetId));
+      favourite.set_x(static_cast<uint32_t>(f.FavouritesInfo.X));
+      favourite.set_y(static_cast<uint32_t>(f.FavouritesInfo.Y));
     }
   } break;
   case ConfigRequest::eConfigType::eFavouritesInverterCharger: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eFavouritesInverterCharger";
     auto favourites = displayListNoLock(eCZoneStructDisplayFavouritesInverterCharger);
     for (auto &f : favourites) {
-      m_config._favouritesInverterChargers.emplace_back();
-      auto &favourite = m_config._favouritesInverterChargers.back();
-      favourite._displayType = static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType);
-      favourite._id = static_cast<uint32_t>(f.FavouritesInfo.Id);
-      favourite._targetDisplayType = static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType);
-      favourite._targetId = static_cast<uint32_t>(f.FavouritesInfo.TargetId);
-      favourite._x = static_cast<uint32_t>(f.FavouritesInfo.X);
-      favourite._y = static_cast<uint32_t>(f.FavouritesInfo.Y);
+      auto &favourite = m_config.add_mutable_favouritesInverterChargers();
+      favourite.set_displayType(static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType));
+      favourite.set_id(static_cast<uint32_t>(f.FavouritesInfo.Id));
+      favourite.set_targetDisplayType(static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType));
+      favourite.set_targetId(static_cast<uint32_t>(f.FavouritesInfo.TargetId));
+      favourite.set_x(static_cast<uint32_t>(f.FavouritesInfo.X));
+      favourite.set_y(static_cast<uint32_t>(f.FavouritesInfo.Y));
     }
   } break;
   case ConfigRequest::eConfigType::eDevice: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eDevice";
     auto devices = displayListNoLock(eCZoneStructDisplayNetworkDevice);
     for (auto &d : devices) {
-      m_config._devices.emplace_back();
-      auto &device = m_config._devices.back();
-      device._displayType = static_cast<ConfigRequest::eConfigType>(eCZoneStructDisplayNetworkDevice);
-      device._nameUTF8 = d.Device.NameUTF8;
-      device._dipswitch = d.Device.Dipswitch;
-      device._sourceAddress = d.Device.SourceAddress;
-      device._version = d.Device.SoftwareVersion;
-      device._conflict = d.Device.Conflict;
-      device._deviceType = static_cast<Device::eDeviceType>(d.Device.DeviceType);
-      device._valid = d.Device.Valid;
-      device._transient = d.Device.Transient;
+      auto &device = m_config.add_mutable_devices();
+      device.set_displayType(static_cast<ConfigRequest::eConfigType>(eCZoneStructDisplayNetworkDevice));
+      device.set_nameUTF8(d.Device.NameUTF8);
+      device.set_dipswitch(d.Device.Dipswitch);
+      device.set_sourceAddress(d.Device.SourceAddress);
+      device.set_version(d.Device.SoftwareVersion);
+      device.set_conflict(d.Device.Conflict);
+      device.set_deviceType(static_cast<Device::eDeviceType>(d.Device.DeviceType));
+      device.set_valid(d.Device.Valid);
+      device.set_transient(d.Device.Transient);
     }
   } break;
   case ConfigRequest::eConfigType::eFavouritesBoatView: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eFavouritesBoatView";
     auto favourites = displayListNoLock(eCZoneStructDisplayFavouritesBoatView);
     for (auto &f : favourites) {
-      m_config._favouritesBoatViews.emplace_back();
-      auto &favourite = m_config._favouritesBoatViews.back();
-      favourite._displayType = static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType);
-      favourite._id = static_cast<uint32_t>(f.FavouritesInfo.Id);
-      favourite._targetDisplayType = static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType);
-      favourite._targetId = static_cast<uint32_t>(f.FavouritesInfo.TargetId);
-      favourite._x = static_cast<uint32_t>(f.FavouritesInfo.X);
-      favourite._y = static_cast<uint32_t>(f.FavouritesInfo.Y);
+      auto &favourite = m_config.add_mutable_favouritesBoatViews();
+      favourite.set_displayType(static_cast<ConfigRequest::eConfigType>(f.FavouritesInfo.DisplayType));
+      favourite.set_id(static_cast<uint32_t>(f.FavouritesInfo.Id));
+      favourite.set_targetDisplayType(static_cast<uint32_t>(f.FavouritesInfo.TargetDisplayType));
+      favourite.set_targetId(static_cast<uint32_t>(f.FavouritesInfo.TargetId));
+      favourite.set_x(static_cast<uint32_t>(f.FavouritesInfo.X));
+      favourite.set_y(static_cast<uint32_t>(f.FavouritesInfo.Y));
     }
   } break;
   case ConfigRequest::eConfigType::eEngines: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eEngines";
     // SmartCraft Engines:
     for (auto &e : m_engineList) {
-      m_config._engines.emplace_back(e.second);
+      auto &engine = m_config.add_mutable_engines();
+      engine = e.second;
     }
 
     // NMEA2000 Engines:
@@ -1657,8 +1620,7 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
     }
 
     for (auto &e : nmea2kEngines) {
-      m_config._engines.emplace_back();
-      auto &engine = m_config._engines.back();
+      auto &engine = m_config.add_mutable_engines();
       engine.set_displayType(static_cast<ConfigRequest::eConfigType>(e.DynamicDevice.DisplayType));
       engine.set_engineType(EngineDevice::eEngineType::eNMEA2000);
       engine.set_id(static_cast<uint32_t>(e.DynamicDevice.Id));
@@ -1718,24 +1680,23 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eGNSS";
     auto gnssDevices = displayListNoLock(eCZoneStructDisplayGNSS);
     for (auto &g : gnssDevices) {
-      m_config._gnss.emplace_back();
-      auto &gnss = m_config._gnss.back();
-      gnss._displayType = static_cast<ConfigRequest::eConfigType>(g.DynamicDevice.DisplayType);
-      gnss._id = static_cast<uint32_t>(g.DynamicDevice.Id);
-      gnss._nameUTF8 = g.DynamicDevice.NameUTF8;
+      auto &gnss = m_config.add_mutable_gnss();
+      gnss.set_displayType(static_cast<ConfigRequest::eConfigType>(g.DynamicDevice.DisplayType));
+      gnss.set_id(static_cast<uint32_t>(g.DynamicDevice.Id));
+      gnss.set_nameUTF8(g.DynamicDevice.NameUTF8);
 
       auto name = NetworkName();
       tCZoneNmea2kName n(name);
 
-      gnss._isExternal = (n.DeviceInstance() != g.DynamicDevice.Instance);
+      gnss.set_isExternal((n.DeviceInstance() != g.DynamicDevice.Instance));
 
-      addInstance(gnss._instance, g.DynamicDevice.Instance);
+      addInstance(gnss.mutable_instance(), g.DynamicDevice.Instance);
     }
   } break;
   case ConfigRequest::eConfigType::eCZoneRaw: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eCZoneRaw";
     CZoneRawConfig rawConfig;
-    rawConfig._type = Event::eEventType::eCZoneRaw;
+    rawConfig.set_type(Event::eEventType::eCZoneRaw);
 
     void *ptr = NULL;
     uint32_t length = 0;
@@ -1750,12 +1711,14 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
       CZoneFreeDataArray((void **)&ptr);
       return m_config;
     }
-    rawConfig._contents.resize(length * sizeOfData);
-    std::memcpy(rawConfig._contents.data(), ptr, length * sizeOfData);
 
-    rawConfig._length = length;
-    rawConfig._sizeOfData = sizeOfData;
-    m_config._displayList = rawConfig;
+    auto &rawConfigContents = rawConfig.mutable_contents();
+    rawConfigContents.resize(length * sizeOfData);
+    std::memcpy(rawConfigContents.data(), ptr, length * sizeOfData);
+
+    rawConfig.set_length(length);
+    rawConfig.set_sizeOfData(sizeOfData);
+    m_config.set_displayList(rawConfig);
     CZoneFreeDataArray((void **)&ptr);
   } break;
   case ConfigRequest::eConfigType::eUiRelationships: {
@@ -1763,19 +1726,18 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
     auto uiRelationships = displayListNoLock(eCZoneStructDisplayUIRelationship);
 
     for (auto &u : uiRelationships) {
-      m_config._uiRelationships.emplace_back();
-      auto &uir = m_config._uiRelationships.back();
-      uir._displaytype = static_cast<ConfigRequest::eConfigType>(u.UiRelationship.DisplayType);
-      uir._id = static_cast<uint32_t>(u.UiRelationship.Id);
-      uir._primarytype = static_cast<UiRelationshipMsg::eItemType>(u.UiRelationship.primaryType);
-      uir._secondarytype = static_cast<UiRelationshipMsg::eItemType>(u.UiRelationship.secondaryType);
-      uir._primaryid = static_cast<uint32_t>(u.UiRelationship.primaryId);
-      uir._secondaryid = static_cast<uint32_t>(u.UiRelationship.secondaryId);
-      uir._relationshiptype = static_cast<UiRelationshipMsg::eRelationshipType>(u.UiRelationship.relationshipType);
-      uir._primaryconfigaddress = static_cast<uint32_t>(u.UiRelationship.primaryConfigId);
-      uir._secondaryconfigaddress = static_cast<uint32_t>(u.UiRelationship.secondaryConfigId);
-      uir._primarychannelindex = static_cast<uint32_t>(u.UiRelationship.primaryItemChannelIndex);
-      uir._secondarychannelindex = static_cast<uint32_t>(u.UiRelationship.secondaryItemChannelIndex);
+      auto &uir = m_config.add_mutable_uiRelationships();
+      uir.set_displaytype(static_cast<ConfigRequest::eConfigType>(u.UiRelationship.DisplayType));
+      uir.set_id(static_cast<uint32_t>(u.UiRelationship.Id));
+      uir.set_primarytype(static_cast<UiRelationshipMsg::eItemType>(u.UiRelationship.primaryType));
+      uir.set_secondarytype(static_cast<UiRelationshipMsg::eItemType>(u.UiRelationship.secondaryType));
+      uir.set_primaryid(static_cast<uint32_t>(u.UiRelationship.primaryId));
+      uir.set_secondaryid(static_cast<uint32_t>(u.UiRelationship.secondaryId));
+      uir.set_relationshiptype(static_cast<UiRelationshipMsg::eRelationshipType>(u.UiRelationship.relationshipType));
+      uir.set_primaryconfigaddress(static_cast<uint32_t>(u.UiRelationship.primaryConfigId));
+      uir.set_secondaryconfigaddress(static_cast<uint32_t>(u.UiRelationship.secondaryConfigId));
+      uir.set_primarychannelindex(static_cast<uint32_t>(u.UiRelationship.primaryItemChannelIndex));
+      uir.set_secondarychannelindex(static_cast<uint32_t>(u.UiRelationship.secondaryItemChannelIndex));
     }
   } break;
 
@@ -1784,20 +1746,20 @@ ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
     auto bLogicStates = displayListNoLock(eCZoneStructDisplayBinaryLogicState);
 
     for (auto &bLogicState : bLogicStates) {
-      m_config._binaryLogicStates.emplace_back();
-      auto &bls = m_config._binaryLogicStates.back();
-      bls._displaytype = static_cast<ConfigRequest::eConfigType>(bLogicState.BinaryLogicState.DisplayType);
-      bls._id = static_cast<uint32_t>(bLogicState.BinaryLogicState.Id);
-      bls._address = static_cast<uint32_t>(bLogicState.BinaryLogicState.Address);
-      bls._nameutf8 = bLogicState.BinaryLogicState.NameUTF8;
+      auto &bls = m_config.add_mutable_binaryLogicStates();
+      bls.set_displaytype(static_cast<ConfigRequest::eConfigType>(bLogicState.BinaryLogicState.DisplayType));
+      bls.set_id(static_cast<uint32_t>(bLogicState.BinaryLogicState.Id));
+      bls.set_address(static_cast<uint32_t>(bLogicState.BinaryLogicState.Address));
+      bls.set_nameutf8(bLogicState.BinaryLogicState.NameUTF8);
     }
   } break;
   case ConfigRequest::eConfigType::eRTCoreMap: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eRTCoreMap";
-    m_config._rtCoreLogicalIdToDeviceConfig = m_RTCoreConfig;
+    m_config.set_rtCoreLogicalIdToDeviceConfig(m_RTCoreConfig);
   } break;
   default:
-    BOOST_LOG_TRIVIAL(error) << "CzoneInterface::GetConfig ConfigType[" << request.get_type() << "] is not supported.";
+    BOOST_LOG_TRIVIAL(error) << "CzoneInterface::GetConfig ConfigType[" << ConfigRequest::to_string(request.get_type())
+                             << "] is not supported.";
     break;
   }
   return m_config;
@@ -1809,7 +1771,7 @@ Categories CzoneInterface::getCategories(const CategoryRequest::eCategoryType ty
   case CategoryRequest::eCategoryType::eCategoriesAll: {
     auto AllCategories = displayListNoLock(eCZoneStructDisplayAllCategories);
     for (auto &c : AllCategories) {
-      response._items.emplace_back(c.CategoryItem.NameUTF8, c.CategoryItem.Enabled, c.CategoryItem.Index);
+      response.add_categoryItem(CategoryItem(c.CategoryItem.NameUTF8, c.CategoryItem.Enabled, c.CategoryItem.Index));
     }
   } break;
   default:
@@ -2447,7 +2409,7 @@ void CzoneInterface::processRTCoreConfig() {
     for (const auto &europaDcm : europaDcms) {
       if (europaDcm.DCConfigure.ChannelAddress == dcm.MeteringDevice.Address) {
         RTCoreMapEntry dcEntry;
-        dcEntry._displaytype = ConfigRequest::eConfigType::eDC;
+        dcEntry.set_displaytype(ConfigRequest::eConfigType::eDC);
 
         uint32_t index = (europaDcm.DCConfigure.ChannelAddress & 0xFF) - 48;
 
@@ -2462,78 +2424,78 @@ void CzoneInterface::processRTCoreConfig() {
           index--;
         }
 
-        auto &dc = dcEntry._dcMeters;
-        auto &alarmMap = dcEntry._alarms;
-        dc._displayType = static_cast<ConfigRequest::eConfigType>(dcm.MeteringDevice.DisplayType);
-        dc._id = dcm.MeteringDevice.Id;
-        dc._nameUTF8 = dcm.MeteringDevice.NameUTF8;
-        addInstance(dc._instance, dcm.MeteringDevice.Instance);
-        dc._nominalVoltage = dcm.MeteringDevice.NominalVoltage;
-        dc._address = dcm.MeteringDevice.Address;
-        dc._capacity = dcm.MeteringDevice.Capacity;
-        dc._warningLow = dcm.MeteringDevice.WarningLow;
-        dc._warningHigh = dcm.MeteringDevice.WarningHigh;
+        auto &dc = dcEntry.mutable_dcMeters();
+        auto &alarmMap = dcEntry.mutable_alarms();
+        dc.set_displayType(static_cast<ConfigRequest::eConfigType>(dcm.MeteringDevice.DisplayType));
+        dc.set_id(dcm.MeteringDevice.Id);
+        dc.set_nameUTF8(dcm.MeteringDevice.NameUTF8);
+        addInstance(dc.mutable_instance(), dcm.MeteringDevice.Instance);
+        dc.set_nominalVoltage(dcm.MeteringDevice.NominalVoltage);
+        dc.set_address(dcm.MeteringDevice.Address);
+        dc.set_capacity(dcm.MeteringDevice.Capacity);
+        dc.set_warningLow(dcm.MeteringDevice.WarningLow);
+        dc.set_warningHigh(dcm.MeteringDevice.WarningHigh);
 
-        dc._veryHighLimit =
-            addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneVeryHighLimit, dcm.MeteringDevice.VeryHighOnLimit,
-                     dcm.MeteringDevice.VeryHighOffLimit, dcm.MeteringDevice.VeryHighAlarmId);
+        dc.set_veryHighLimit(addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneVeryHighLimit,
+                                      dcm.MeteringDevice.VeryHighOnLimit, dcm.MeteringDevice.VeryHighOffLimit,
+                                      dcm.MeteringDevice.VeryHighAlarmId));
         if (dcm.MeteringDevice.LimitEnabledMask & eCZoneVeryHighLimit) {
           getAlarmContent(dcm.MeteringDevice.VeryHighAlarmId, alarm);
           alarmMap["vh"] = std::move(alarm);
         }
 
-        dc._highLimit = addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneHighLimit, dcm.MeteringDevice.HighOnLimit,
-                                 dcm.MeteringDevice.HighOffLimit, dcm.MeteringDevice.HighAlarmId);
+        dc.set_highLimit(addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneHighLimit, dcm.MeteringDevice.HighOnLimit,
+                                  dcm.MeteringDevice.HighOffLimit, dcm.MeteringDevice.HighAlarmId));
         if (dcm.MeteringDevice.LimitEnabledMask & eCZoneHighLimit) {
           getAlarmContent(dcm.MeteringDevice.HighAlarmId, alarm);
           alarmMap["f"] = std::move(alarm);
         }
 
-        dc._lowLimit = addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneLowLimit, dcm.MeteringDevice.LowOnLimit,
-                                dcm.MeteringDevice.LowOffLimit, dcm.MeteringDevice.LowAlarmId);
+        dc.set_lowLimit(addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneLowLimit, dcm.MeteringDevice.LowOnLimit,
+                                 dcm.MeteringDevice.LowOffLimit, dcm.MeteringDevice.LowAlarmId));
         if (dcm.MeteringDevice.LimitEnabledMask & eCZoneLowLimit) {
           getAlarmContent(dcm.MeteringDevice.LowAlarmId, alarm);
           alarmMap["lc"] = std::move(alarm);
         }
 
-        dc._veryLowLimit =
-            addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneVeryLowLimit, dcm.MeteringDevice.VeryLowOnLimit,
-                     dcm.MeteringDevice.VeryLowOffLimit, dcm.MeteringDevice.VeryLowAlarmId);
+        dc.set_veryLowLimit(addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneVeryLowLimit,
+                                     dcm.MeteringDevice.VeryLowOnLimit, dcm.MeteringDevice.VeryLowOffLimit,
+                                     dcm.MeteringDevice.VeryLowAlarmId));
         if (dcm.MeteringDevice.LimitEnabledMask & eCZoneVeryLowLimit) {
           getAlarmContent(dcm.MeteringDevice.VeryLowAlarmId, alarm);
           alarmMap["vlc"] = std::move(alarm);
         }
 
-        dc._lowVoltage =
-            addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneLowVoltage, dcm.MeteringDevice.LowVoltageOn,
-                     dcm.MeteringDevice.LowVoltageOff, dcm.MeteringDevice.LowVoltageAlarmId);
+        dc.set_lowVoltage(addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneLowVoltage,
+                                   dcm.MeteringDevice.LowVoltageOn, dcm.MeteringDevice.LowVoltageOff,
+                                   dcm.MeteringDevice.LowVoltageAlarmId));
         if (dcm.MeteringDevice.LimitEnabledMask & eCZoneLowVoltage) {
           getAlarmContent(dcm.MeteringDevice.LowVoltageAlarmId, alarm);
           alarmMap["l"] = std::move(alarm);
         }
-        dc._veryLowVoltage =
-            addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneVeryLowVoltage, dcm.MeteringDevice.VeryLowVoltageOn,
-                     dcm.MeteringDevice.VeryLowVoltageOff, dcm.MeteringDevice.VeryLowVoltageAlarmId);
+        dc.set_veryLowVoltage(addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneVeryLowVoltage,
+                                       dcm.MeteringDevice.VeryLowVoltageOn, dcm.MeteringDevice.VeryLowVoltageOff,
+                                       dcm.MeteringDevice.VeryLowVoltageAlarmId));
         if (dcm.MeteringDevice.LimitEnabledMask & eCZoneVeryLowVoltage) {
           getAlarmContent(dcm.MeteringDevice.VeryLowVoltageAlarmId, alarm);
           alarmMap["vl"] = std::move(alarm);
         }
-        dc._highVoltage =
-            addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneHighVoltage, dcm.MeteringDevice.HighVoltageOn,
-                     dcm.MeteringDevice.HighVoltageOff, dcm.MeteringDevice.HighVoltageAlarmId);
+        dc.set_highVoltage(addLimit(dcm.MeteringDevice.LimitEnabledMask & eCZoneHighVoltage,
+                                    dcm.MeteringDevice.HighVoltageOn, dcm.MeteringDevice.HighVoltageOff,
+                                    dcm.MeteringDevice.HighVoltageAlarmId));
         if (dcm.MeteringDevice.LimitEnabledMask & eCZoneHighVoltage) {
           getAlarmContent(dcm.MeteringDevice.HighVoltageAlarmId, alarm);
           alarmMap["h"] = std::move(alarm);
         }
-        dc._canResetCapacity = (dcm.MeteringDevice.CanResetCapacity == CZONE_TRUE);
-        dc._dcType =
-            static_cast<MeteringDevice::eDCType>((dcm.MeteringDevice.Capabilities >> 24) & CZONE_TYPE_MASK_STRUCT);
-        dc._showVoltage = (dcm.MeteringDevice.Capabilities & CZONE_SHOW_VOLTS);
-        dc._showCurrent = (dcm.MeteringDevice.Capabilities & CZONE_SHOW_CURRENT);
-        dc._showStateOfCharge = (dcm.MeteringDevice.Capabilities & CZONE_SHOW_STATE_OF_CHARGE);
-        dc._showTemperature = (dcm.MeteringDevice.Capabilities & CZONE_SHOW_TEMPERATURE);
-        dc._showTimeOfRemaining = (dcm.MeteringDevice.Capabilities & CZONE_SHOW_TIME_REMAINING);
-        m_RTCoreConfig._dcMeters[index] = dcEntry;
+        dc.set_canResetCapacity((dcm.MeteringDevice.CanResetCapacity == CZONE_TRUE));
+        dc.set_dcType(
+            static_cast<MeteringDevice::eDCType>((dcm.MeteringDevice.Capabilities >> 24) & CZONE_TYPE_MASK_STRUCT));
+        dc.set_showVoltage((dcm.MeteringDevice.Capabilities & CZONE_SHOW_VOLTS));
+        dc.set_showCurrent((dcm.MeteringDevice.Capabilities & CZONE_SHOW_CURRENT));
+        dc.set_showStateOfCharge((dcm.MeteringDevice.Capabilities & CZONE_SHOW_STATE_OF_CHARGE));
+        dc.set_showTemperature((dcm.MeteringDevice.Capabilities & CZONE_SHOW_TEMPERATURE));
+        dc.set_showTimeOfRemaining((dcm.MeteringDevice.Capabilities & CZONE_SHOW_TIME_REMAINING));
+        m_RTCoreConfig.mutable_dcMeters()[index] = dcEntry;
       }
     }
   }
@@ -2552,8 +2514,8 @@ void CzoneInterface::processRTCoreConfig() {
     for (const auto &item : items) {
       if (ad.ADConfigure.ChannelAddress == item.MonitoringDevice.Address) {
         RTCoreMapEntry adEntry;
-        auto &md = adEntry._monitoringDevice;
-        auto &alarmMap = adEntry._alarms;
+        auto &md = adEntry.mutable_monitoringDevice();
+        auto &alarmMap = adEntry.mutable_alarms();
 
         uint32_t index = (ad.ADConfigure.ChannelAddress & 0xFF) - 49;
         if (index >= 4) {
@@ -2563,68 +2525,68 @@ void CzoneInterface::processRTCoreConfig() {
 
         switch (type) {
         case eCZoneStructDisplayMonitoringTank:
-          adEntry._displaytype = ConfigRequest::eConfigType::eTank;
-          md._tankType = static_cast<MonitoringType::eTankType>(item.MonitoringDevice.Type);
-          md._tankCapacity = item.MonitoringDevice.Capacity;
+          adEntry.set_displaytype(ConfigRequest::eConfigType::eTank);
+          md.set_tankType(static_cast<MonitoringType::eTankType>(item.MonitoringDevice.Type));
+          md.set_tankCapacity(item.MonitoringDevice.Capacity);
           break;
         case eCZoneStructDisplayMonitoringPressure:
-          adEntry._displaytype = ConfigRequest::eConfigType::ePressure;
-          md._pressureType = static_cast<MonitoringType::ePressureType>(item.MonitoringDevice.Type);
-          md._atmosphericPressure = (item.MonitoringDevice.AtmosphericPressure == CZONE_TRUE);
+          adEntry.set_displaytype(ConfigRequest::eConfigType::ePressure);
+          md.set_pressureType(static_cast<MonitoringType::ePressureType>(item.MonitoringDevice.Type));
+          md.set_atmosphericPressure(item.MonitoringDevice.AtmosphericPressure == CZONE_TRUE);
           break;
         case eCZoneStructDisplayMonitoringTemperature:
-          adEntry._displaytype = ConfigRequest::eConfigType::eTemperature;
-          md._temperatureType = static_cast<MonitoringType::eTemperatureType>(item.MonitoringDevice.Type);
-          md._highTemperature = (item.MonitoringDevice.HighTemperature == CZONE_TRUE);
+          adEntry.set_displaytype(ConfigRequest::eConfigType::eTemperature);
+          md.set_temperatureType(static_cast<MonitoringType::eTemperatureType>(item.MonitoringDevice.Type));
+          md.set_highTemperature(item.MonitoringDevice.HighTemperature == CZONE_TRUE);
           break;
         default: break;
         }
 
-        md._displayType = static_cast<ConfigRequest::eConfigType>(item.MonitoringDevice.DisplayType);
-        md._id = item.MonitoringDevice.Id;
-        md._nameUTF8 = item.MonitoringDevice.NameUTF8;
-        addInstance(md._instance, item.MonitoringDevice.Instance);
+        md.set_displayType(static_cast<ConfigRequest::eConfigType>(item.MonitoringDevice.DisplayType));
+        md.set_id(item.MonitoringDevice.Id);
+        md.set_nameUTF8(item.MonitoringDevice.NameUTF8);
+        addInstance(md.mutable_instance(), item.MonitoringDevice.Instance);
 
-        md._circuitId = createDataId(item.MonitoringDevice.CircuitId);
-        md._switchType = static_cast<CircuitDevice::eSwitchType>(item.MonitoringDevice.SwitchType);
-        md._confirmDialog = static_cast<CircuitDevice::eConfirmType>(item.MonitoringDevice.ConfirmDialog);
-        md._circuitNameUTF8 = item.MonitoringDevice.CircuitNameUTF8;
+        md.set_circuitId(createDataId(item.MonitoringDevice.CircuitId));
+        md.set_switchType(static_cast<CircuitDevice::eSwitchType>(item.MonitoringDevice.SwitchType));
+        md.set_confirmDialog(static_cast<CircuitDevice::eConfirmType>(item.MonitoringDevice.ConfirmDialog));
+        md.set_circuitNameUTF8(item.MonitoringDevice.CircuitNameUTF8);
 
-        md._lowLimit =
-            addLimit(item.MonitoringDevice.LimitEnabledMask & eCZoneLowLimit, item.MonitoringDevice.LowOnLimit,
-                     item.MonitoringDevice.LowOffLimit, item.MonitoringDevice.LowAlarmId);
+        md.set_lowLimit(addLimit(item.MonitoringDevice.LimitEnabledMask & eCZoneLowLimit,
+                                 item.MonitoringDevice.LowOnLimit, item.MonitoringDevice.LowOffLimit,
+                                 item.MonitoringDevice.LowAlarmId));
         if (item.MonitoringDevice.LimitEnabledMask & eCZoneLowLimit) {
           getAlarmContent(item.MonitoringDevice.LowAlarmId, alarm);
           alarmMap["l"] = std::move(alarm);
         }
 
-        md._veryLowLimit =
-            addLimit(item.MonitoringDevice.LimitEnabledMask & eCZoneVeryLowLimit, item.MonitoringDevice.VeryLowOnLimit,
-                     item.MonitoringDevice.VeryLowOffLimit, item.MonitoringDevice.VeryLowAlarmId);
+        md.set_veryLowLimit(addLimit(item.MonitoringDevice.LimitEnabledMask & eCZoneVeryLowLimit,
+                                     item.MonitoringDevice.VeryLowOnLimit, item.MonitoringDevice.VeryLowOffLimit,
+                                     item.MonitoringDevice.VeryLowAlarmId));
         if (item.MonitoringDevice.LimitEnabledMask & eCZoneVeryLowLimit) {
           getAlarmContent(item.MonitoringDevice.VeryLowAlarmId, alarm);
           alarmMap["vl"] = std::move(alarm);
         }
 
-        md._highLimit =
-            addLimit(item.MonitoringDevice.LimitEnabledMask & eCZoneHighLimit, item.MonitoringDevice.HighOnLimit,
-                     item.MonitoringDevice.HighOffLimit, item.MonitoringDevice.HighAlarmId);
+        md.set_highLimit(addLimit(item.MonitoringDevice.LimitEnabledMask & eCZoneHighLimit,
+                                  item.MonitoringDevice.HighOnLimit, item.MonitoringDevice.HighOffLimit,
+                                  item.MonitoringDevice.HighAlarmId));
         if (item.MonitoringDevice.LimitEnabledMask & eCZoneHighLimit) {
           getAlarmContent(item.MonitoringDevice.HighAlarmId, alarm);
           alarmMap["h"] = std::move(alarm);
         }
 
-        md._veryHighLimit = addLimit(item.MonitoringDevice.LimitEnabledMask & eCZoneVeryHighLimit,
-                                     item.MonitoringDevice.VeryHighOnLimit, item.MonitoringDevice.VeryHighOffLimit,
-                                     item.MonitoringDevice.VeryHighAlarmId);
+        md.set_veryHighLimit(addLimit(item.MonitoringDevice.LimitEnabledMask & eCZoneVeryHighLimit,
+                                      item.MonitoringDevice.VeryHighOnLimit, item.MonitoringDevice.VeryHighOffLimit,
+                                      item.MonitoringDevice.VeryHighAlarmId));
         if (item.MonitoringDevice.LimitEnabledMask & eCZoneVeryHighLimit) {
           getAlarmContent(item.MonitoringDevice.VeryHighAlarmId, alarm);
           alarmMap["vh"] = std::move(alarm);
         }
 
-        md._address = item.MonitoringDevice.Address;
+        md.set_address(item.MonitoringDevice.Address);
 
-        m_RTCoreConfig._monitoringDevice[index] = adEntry;
+        m_RTCoreConfig.mutable_monitoringDevice()[index] = adEntry;
       }
     }
 
@@ -2639,8 +2601,8 @@ void CzoneInterface::processRTCoreConfig() {
       }
 
       RTCoreMapEntry adEntry;
-      auto &alarmMap = adEntry._alarms;
-      auto &spg = adEntry._switchPositiveNegtive;
+      auto &alarmMap = adEntry.mutable_alarms();
+      auto &spg = adEntry.mutable_switchPositiveNegtive();
       uint32_t index = (ad.ADConfigure.ChannelAddress & 0xFF) - 49;
       uint32_t binaryStatusIndex;
       if (ad.ADConfigure.Mode == eCZoneADModeSwitchBatteryPositive) {
@@ -2657,9 +2619,9 @@ void CzoneInterface::processRTCoreConfig() {
         BOOST_LOG_TRIVIAL(error) << "ProcessRTCoreConfig invalid ad index " << index << ", skip";
         continue;
       }
-      spg._binaryStatusIndex = binaryStatusIndex;
-      spg._channelAddress = ad.ADConfigure.ChannelAddress;
-      spg._channel = ad.ADConfigure.Channel;
+      spg.set_binaryStatusIndex(binaryStatusIndex);
+      spg.set_channelAddress(ad.ADConfigure.ChannelAddress);
+      spg.set_channel(ad.ADConfigure.Channel);
 
 // CZoneGetAlarmId is a temporary solution here, because there is no way
 // to get AlarmId from tZoneAdChannelConfig or ad.ADConfigure yet.
@@ -2667,9 +2629,9 @@ void CzoneInterface::processRTCoreConfig() {
 #define CZ_ALARM_SI_SIGNAL_LOW_ALARM_CODE 9
 
       if (ad.ADConfigure.Mode == eCZoneADModeSwitchBatteryPositive) {
-        spg._mode = SwitchPositiveNegtive::eSwitchPositiveNegtiveMode::eSwitchBatteryPositive;
+        spg.set_mode(SwitchPositiveNegtive::eSwitchPositiveNegtiveMode::eSwitchBatteryPositive);
       } else if (ad.ADConfigure.Mode == eCZoneADModeSwitchBatteryNegtive) {
-        spg._mode = SwitchPositiveNegtive::eSwitchPositiveNegtiveMode::eSwitchBatteryNegtive;
+        spg.set_mode(SwitchPositiveNegtive::eSwitchPositiveNegtiveMode::eSwitchBatteryNegtive);
       }
 
       // this aligns with tCZoneDisplayDatabase::AddAlarms(bool simulate)
@@ -2697,8 +2659,8 @@ void CzoneInterface::processRTCoreConfig() {
         }
       }
 
-      adEntry._displaytype = ConfigRequest::eConfigType::eSwitchPositiveNegtive;
-      m_RTCoreConfig._switchPositiveNegtive[index] = adEntry;
+      adEntry.set_displaytype(ConfigRequest::eConfigType::eSwitchPositiveNegtive);
+      m_RTCoreConfig.mutable_switchPositiveNegtive()[index] = adEntry;
     }
   }
 
@@ -2720,10 +2682,10 @@ void CzoneInterface::processRTCoreConfig() {
             continue;
           }
 
-          if (m_RTCoreConfig._circuitLoads.find(index) == m_RTCoreConfig._circuitLoads.end()) {
+          if (m_RTCoreConfig.get_circuitLoads().find(index) == m_RTCoreConfig.get_circuitLoads().end()) {
             RTCoreMapEntry clEntry;
-            clEntry._displaytype = ConfigRequest::eConfigType::eCircuitLoads;
-            auto &circuitLoad = clEntry._circuitLoads;
+            clEntry.set_displaytype(ConfigRequest::eConfigType::eCircuitLoads);
+            auto &circuitLoad = clEntry.mutable_circuitLoads();
 
             circuitLoad.set_displayType(static_cast<ConfigRequest::eConfigType>(l.CircuitLoads.DisplayType));
             circuitLoad.set_id(static_cast<uint32_t>(l.CircuitLoads.Id));
@@ -2737,12 +2699,11 @@ void CzoneInterface::processRTCoreConfig() {
             circuitLoad.set_controlType(static_cast<CircuitLoad::eControlType>(l.CircuitLoads.ControlType));
             circuitLoad.set_isSwitchedModule(l.CircuitLoads.IsSwitchedModule);
 
-            m_RTCoreConfig._circuitLoads[index] = clEntry;
+            m_RTCoreConfig.mutable_circuitLoads()[index] = clEntry;
           }
 
           const uint32_t doubleThrowMask = 0x8000;
-          m_RTCoreConfig._circuitLoads[index]._circuits.emplace_back();
-          auto &circuit = m_RTCoreConfig._circuitLoads[index]._circuits.back();
+          auto &circuit = m_RTCoreConfig.mutable_circuitLoads()[index].mutable_circuit();
 
           circuit.set_displayType(static_cast<ConfigRequest::eConfigType>(c.Circuit.DisplayType));
           circuit.set_id(std::make_pair(c.Circuit.Id, (c.Circuit.Id != CZONE_INVALID_CIRCUIT_INDEX)));
@@ -2820,4 +2781,73 @@ float value(tCZoneDataType dataType, uint32_t instance, bool &valid, std::map<ui
   }
 
   return value;
+}
+
+ConfigResult CzoneInterface::getConfig(const ConfigRequest &request) {
+  m_config.clear();
+  return genConfig(request);
+}
+
+ConfigResult CzoneInterface::getAllConfig() {
+  m_config.clear();
+  genConfig(ConfigRequest(ConfigRequest::eAlarms));
+  genConfig(ConfigRequest(ConfigRequest::eControl));
+  genConfig(ConfigRequest(ConfigRequest::eAC));
+  genConfig(ConfigRequest(ConfigRequest::eDC));
+  genConfig(ConfigRequest(ConfigRequest::eTank));
+  genConfig(ConfigRequest(ConfigRequest::eTemperature));
+  genConfig(ConfigRequest(ConfigRequest::ePressure));
+  genConfig(ConfigRequest(ConfigRequest::eACMain));
+  genConfig(ConfigRequest(ConfigRequest::eInverterCharger));
+  genConfig(ConfigRequest(ConfigRequest::eDevice));
+  genConfig(ConfigRequest(ConfigRequest::eMode));
+  genConfig(ConfigRequest(ConfigRequest::eCircuit));
+  genConfig(ConfigRequest(ConfigRequest::eScreenConfigPageImageItem));
+  genConfig(ConfigRequest(ConfigRequest::eScreenConfigPageImage));
+  genConfig(ConfigRequest(ConfigRequest::eScreenConfigPageGridItem));
+  genConfig(ConfigRequest(ConfigRequest::eScreenConfigPage));
+  genConfig(ConfigRequest(ConfigRequest::eScreenConfigMode));
+  genConfig(ConfigRequest(ConfigRequest::eScreenConfig));
+  genConfig(ConfigRequest(ConfigRequest::eHVAC));
+  genConfig(ConfigRequest(ConfigRequest::eThirdPartyGenerator));
+  genConfig(ConfigRequest(ConfigRequest::eZipdeeAwning));
+  genConfig(ConfigRequest(ConfigRequest::eFantasticFan));
+  genConfig(ConfigRequest(ConfigRequest::eShoreFuse));
+  genConfig(ConfigRequest(ConfigRequest::eTyrePressure));
+  genConfig(ConfigRequest(ConfigRequest::eAudioStereo));
+  genConfig(ConfigRequest(ConfigRequest::eCircuitLoads));
+  genConfig(ConfigRequest(ConfigRequest::eCategories));
+  genConfig(ConfigRequest(ConfigRequest::eEngines));
+  genConfig(ConfigRequest(ConfigRequest::eGNSS));
+  genConfig(ConfigRequest(ConfigRequest::eFavouritesMode));
+  genConfig(ConfigRequest(ConfigRequest::eFavouritesControl));
+  genConfig(ConfigRequest(ConfigRequest::eFavouritesMonitoring));
+  genConfig(ConfigRequest(ConfigRequest::eFavouritesAlarm));
+  genConfig(ConfigRequest(ConfigRequest::eFavouritesACMain));
+  genConfig(ConfigRequest(ConfigRequest::eFavouritesInverterCharger));
+  genConfig(ConfigRequest(ConfigRequest::eFavouritesBoatView));
+  genConfig(ConfigRequest(ConfigRequest::eUiRelationships));
+  genConfig(ConfigRequest(ConfigRequest::eBinaryLogicStates));
+  genConfig(ConfigRequest(ConfigRequest::eCZoneRaw));
+  genConfig(ConfigRequest(ConfigRequest::eRTCoreMap));
+  genConfig(ConfigRequest(ConfigRequest::eSwitchPositiveNegtive));
+  genConfig(ConfigRequest(ConfigRequest::eNonVisibleCircuit));
+  return m_config;
+}
+
+void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
+  dbusService->registerService("GetConfigAll", "czone", [ptr = this]() -> std::string {
+    auto r = ptr->getAllConfig();
+    return r.tojson().dump();
+  });
+
+  dbusService->registerService("GetConfig", "czone", [ptr = this](std::string type) -> std::string {
+    auto r = ptr->getConfig(ConfigRequest::from_string(type));
+    return r.tojson().dump();
+  });
+
+  dbusService->registerService("GetCategories", "czone", [ptr = this](std::string type) -> std::string {
+    auto r = ptr->getCategories(CategoryRequest::from_string(type));
+    return r.tojson().dump();
+  });
 }

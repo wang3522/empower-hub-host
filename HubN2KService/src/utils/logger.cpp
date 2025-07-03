@@ -25,7 +25,7 @@ void initLogger() {
                                                  << "[" << std::setw(7) << std::left << logging::trivial::severity
                                                  << "] " << expr::message);
 
-  auto filename = getLogPath() + "HubCZoneCore.log";
+  auto filename = getLogPath() + "N2KCoreApp.log";
 
   logging::add_file_log(keywords::file_name = filename, keywords::rotation_size = 10 * 1024 * 1024,
                         keywords::auto_flush = true, keywords::open_mode = std::ios_base::app,

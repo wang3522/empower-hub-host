@@ -41,13 +41,11 @@ from N2KClient.models.n2k_configuration.factory_metadata import FactoryMetadata
 
 
 class ConfigParser:
-    _config: N2kConfiguration
     _logger = logging.getLogger(
         f"{Constants.DBUS_N2K_CLIENT}: {Constants.Config_Parser}"
     )
 
     def __init__(self):
-        self._config = ()
         self._circuit_list_field_map = {
             AttrNames.CIRCUIT_LOADS: (JsonKeys.CIRCUIT_LOADS, self.parse_circuit_load),
             AttrNames.CATEGORIES: (JsonKeys.CATEGORIES, self.parse_category),
