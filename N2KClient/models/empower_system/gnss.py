@@ -54,6 +54,7 @@ class GNSS(Thing):
         n2k_devices.set_subscription(
             channel.id,
             component_status_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda status: (
                         ConnectionStatus.CONNECTED
@@ -84,6 +85,7 @@ class GNSS(Thing):
         n2k_devices.set_subscription(
             channel.id,
             fix_type_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda state: (
                         Constants.TWO_D_FIX

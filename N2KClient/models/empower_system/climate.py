@@ -45,6 +45,7 @@ class Climate(Thing):
         n2k_devices.set_subscription(
             channel.id,
             component_status_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda status: (
                         ConnectionStatus.CONNECTED
@@ -74,6 +75,7 @@ class Climate(Thing):
         n2k_devices.set_subscription(
             channel.id,
             mode_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.distinct_until_changed(),
             ),
         )
@@ -95,6 +97,7 @@ class Climate(Thing):
         n2k_devices.set_subscription(
             channel.id,
             set_point_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 rxu.round(2),
                 ops.distinct_until_changed(),
             ),
@@ -119,6 +122,7 @@ class Climate(Thing):
         n2k_devices.set_subscription(
             channel.id,
             ambient_temp_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 rxu.round(Temperature.ROUND_VALUE),
                 ops.distinct_until_changed(),
             ),
@@ -141,6 +145,7 @@ class Climate(Thing):
         n2k_devices.set_subscription(
             channel.id,
             fan_speed_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 rxu.round(2),
                 ops.distinct_until_changed(),
             ),
@@ -163,6 +168,7 @@ class Climate(Thing):
         n2k_devices.set_subscription(
             channel.id,
             fan_mode_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.distinct_until_changed(),
             ),
         )

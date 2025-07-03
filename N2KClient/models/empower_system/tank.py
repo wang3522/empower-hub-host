@@ -58,6 +58,7 @@ class TankBase(Thing):
         n2k_devices.set_subscription(
             channel.id,
             component_status_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda status: (
                         ConnectionStatus.CONNECTED

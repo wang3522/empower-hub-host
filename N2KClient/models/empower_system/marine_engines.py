@@ -57,6 +57,7 @@ class MarineEngine(Thing):
         n2k_devices.set_subscription(
             channel.id,
             component_status_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda status: (
                         ConnectionStatus.CONNECTED
@@ -117,7 +118,9 @@ class MarineEngine(Thing):
         n2k_devices.set_subscription(
             channel.id,
             engine_hours_subject.pipe(
-                Engine.ENGINE_HOURS_FILTER, ops.map(lambda state: state / 60)
+                ops.filter(lambda state: state is not None),
+                Engine.ENGINE_HOURS_FILTER,
+                ops.map(lambda state: state / 60),
             ),
         )
 

@@ -41,9 +41,10 @@ class CircuitThing(Thing):
             links=links,
         )
         self.circuit = circuit
-        self.circuit_runtime_id = circuit.control_id
+        self.circuit_control_id = circuit.control_id
+        self.circuit_id = circuit.id.value
 
-        circuit_device_id = f"{JsonKeys.CIRCUIT}.{circuit.control_id}"
+        circuit_device_id = f"{JsonKeys.CIRCUIT}.{self.circuit_id}"
         #############################
         # Component Status
         #############################
@@ -62,6 +63,7 @@ class CircuitThing(Thing):
         n2k_devices.set_subscription(
             channel.id,
             component_status_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda status: (
                         ConnectionStatus.CONNECTED
@@ -144,6 +146,7 @@ class CircuitThing(Thing):
                 )
 
                 bls_power_state = bls_states_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(
                         lambda state: StateWithTS(
                             StateUtil.get_bls_state(bls.address, state)

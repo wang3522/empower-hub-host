@@ -18,12 +18,8 @@ from N2KClient.models.common_enums import N2kDeviceType
 
 class ShorePower(ACMeterThingBase):
 
-    def _calc_connection_status(self):
-        return (
-            ConnectionStatus.CONNECTED
-            if StateUtil.any_connected(self.line_status)
-            else ConnectionStatus.DISCONNECTED
-        )
+    def _calc_shorepower_connected(self):
+        return True if StateUtil.any_connected(self.line_status) else False
 
     def __init__(
         self,
@@ -39,8 +35,9 @@ class ShorePower(ACMeterThingBase):
     ):
         self.line_status = {}
         self.ac_connected_state = rx.subject.BehaviorSubject(
-            self._calc_connection_status()
+            self._calc_shorepower_connected()
         )
+        print(f"Creating ShorePower with lines: {ac_line1}, {ac_line2}, {ac_line3}")
         ACMeterThingBase.__init__(
             self,
             ThingType.SHORE_POWER,
@@ -76,7 +73,7 @@ class ShorePower(ACMeterThingBase):
 
                 def update_line1_status(status: dict[str, any]):
                     self.line_status[1] = status[Constants.state]
-                    self.ac_connected_state.on_next(self._calc_connection_status())
+                    self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
                 ac_line1_connected_subject = n2k_devices.get_channel_subject(
                     ac_id, f"{JsonKeys.ComponentStatus}.{1}", N2kDeviceType.AC
@@ -100,7 +97,7 @@ class ShorePower(ACMeterThingBase):
 
                 def update_line2_connected(status: dict[str, any]):
                     self.line_status[2] = status[Constants.state]
-                    self.ac_connected_state.on_next(self._calc_connection_status())
+                    self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
                 ac_line2_connected_subject = n2k_devices.get_channel_subject(
                     ac_id, f"{JsonKeys.ComponentStatus}.{2}", N2kDeviceType.AC
@@ -124,7 +121,7 @@ class ShorePower(ACMeterThingBase):
 
                 def update_line3_connected(status: dict[str, any]):
                     self.line_status[3] = status[Constants.state]
-                    self.ac_connected_state.on_next(self._calc_connection_status())
+                    self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
                 ac_line3_connected_subject = n2k_devices.get_channel_subject(
                     ac_id, f"{JsonKeys.ComponentStatus}.{3}", N2kDeviceType.AC
@@ -150,7 +147,7 @@ class ShorePower(ACMeterThingBase):
 
                 def update_line1_status(status: dict[str, any]):
                     self.line_status[1] = status[Constants.state]
-                    self.ac_connected_state.on_next(self._calc_connection_status())
+                    self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
                 ac_line1_Voltage = n2k_devices.get_channel_subject(
                     ac_id, f"{JsonKeys.Voltage}.{1}", N2kDeviceType.AC
@@ -172,7 +169,7 @@ class ShorePower(ACMeterThingBase):
 
                 def update_line2_connected(status: dict[str, any]):
                     self.line_status[2] = status[Constants.state]
-                    self.ac_connected_state.on_next(self._calc_connection_status())
+                    self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
                 ac_line2_Voltage = n2k_devices.get_channel_subject(
                     ac_id, f"{JsonKeys.Voltage}.{2}", N2kDeviceType.AC
@@ -194,7 +191,7 @@ class ShorePower(ACMeterThingBase):
 
                 def update_line3_connected(status: dict[str, any]):
                     self.line_status[3] = status[Constants.state]
-                    self.ac_connected_state.on_next(self._calc_connection_status())
+                    self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
                 ac_line3_Voltage = n2k_devices.get_channel_subject(
                     ac_id, f"{JsonKeys.Voltage}.{3}", N2kDeviceType.AC
@@ -246,7 +243,7 @@ class ShorePower(ACMeterThingBase):
             )
             self._define_channel(channel)
             enabled_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.CIRCUIT}.{circuit.control_id}",
+                f"{JsonKeys.CIRCUIT}.{circuit.id.value}",
                 JsonKeys.Level,
                 N2kDeviceType.CIRCUIT,
             )

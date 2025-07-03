@@ -50,6 +50,7 @@ class ACMeterThingBase(Thing):
         )
 
         ac_id = f"{JsonKeys.AC}.{ac_line1.instance.instance}"
+        print(f"Creating ACMeterThingBase for AC ID: {ac_id}")
         if ac_line1 is not None:
 
             def update_line_1_status(status: dict[str, any]):
@@ -80,6 +81,7 @@ class ACMeterThingBase(Thing):
                 )
 
                 line_1_component_status = line_1_component_status_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(
                         lambda status: (
                             ConnectionStatus.CONNECTED
@@ -121,7 +123,9 @@ class ACMeterThingBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 line1_voltage_subject.pipe(
-                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Voltage.ROUND_VALUE),
+                    Voltage.FILTER,
                 ),
             )
 
@@ -146,7 +150,9 @@ class ACMeterThingBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 line1_current_subject.pipe(
-                    rxu.round(Current.ROUND_VALUE), Current.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Current.ROUND_VALUE),
+                    Current.FILTER,
                 ),
             )
 
@@ -170,7 +176,9 @@ class ACMeterThingBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 line1_frequency_subject.pipe(
-                    rxu.round(Frequency.ROUND_VALUE), Frequency.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Frequency.ROUND_VALUE),
+                    Frequency.FILTER,
                 ),
             )
 
@@ -194,7 +202,11 @@ class ACMeterThingBase(Thing):
             )
             n2k_devices.set_subscription(
                 channel.id,
-                line1_power_subject.pipe(rxu.round(Power.ROUND_VALUE), Power.FILTER),
+                line1_power_subject.pipe(
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Power.ROUND_VALUE),
+                    Power.FILTER,
+                ),
             )
 
         if ac_line2 is not None:
@@ -226,6 +238,7 @@ class ACMeterThingBase(Thing):
                 )
 
                 line_2_component_status = line_2_component_status_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(
                         lambda status: (
                             ConnectionStatus.CONNECTED
@@ -264,7 +277,9 @@ class ACMeterThingBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 line_2_voltage_subject.pipe(
-                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Voltage.ROUND_VALUE),
+                    Voltage.FILTER,
                 ),
             )
 
@@ -290,7 +305,9 @@ class ACMeterThingBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 line_2_current_subject.pipe(
-                    rxu.round(Current.ROUND_VALUE), Current.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Current.ROUND_VALUE),
+                    Current.FILTER,
                 ),
             )
 
@@ -316,7 +333,9 @@ class ACMeterThingBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 line_2_frequency_subject.pipe(
-                    rxu.round(Frequency.ROUND_VALUE), Frequency.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Frequency.ROUND_VALUE),
+                    Frequency.FILTER,
                 ),
             )
             #################################
@@ -339,7 +358,11 @@ class ACMeterThingBase(Thing):
             )
             n2k_devices.set_subscription(
                 channel.id,
-                line_2_power_subject.pipe(rxu.round(Power.ROUND_VALUE), Power.FILTER),
+                line_2_power_subject.pipe(
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Power.ROUND_VALUE),
+                    Power.FILTER,
+                ),
             )
             self._define_channel(channel)
 
@@ -372,6 +395,7 @@ class ACMeterThingBase(Thing):
                 )
 
                 line_3_component_status = line_3_component_status_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(
                         lambda status: (
                             ConnectionStatus.CONNECTED
@@ -412,7 +436,9 @@ class ACMeterThingBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 line_3_voltage_subject.pipe(
-                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Voltage.ROUND_VALUE),
+                    Voltage.FILTER,
                 ),
             )
 
@@ -437,7 +463,9 @@ class ACMeterThingBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 line_3_current_subject.pipe(
-                    rxu.round(Current.ROUND_VALUE), Current.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Current.ROUND_VALUE),
+                    Current.FILTER,
                 ),
             )
 
@@ -462,7 +490,9 @@ class ACMeterThingBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 line_3_frequency_subject.pipe(
-                    rxu.round(Frequency.ROUND_VALUE), Frequency.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Frequency.ROUND_VALUE),
+                    Frequency.FILTER,
                 ),
             )
 
@@ -485,7 +515,11 @@ class ACMeterThingBase(Thing):
             )
             n2k_devices.set_subscription(
                 channel.id,
-                line_3_power_subject.pipe(rxu.round(Power.ROUND_VALUE), Power.FILTER),
+                line_3_power_subject.pipe(
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Power.ROUND_VALUE),
+                    Power.FILTER,
+                ),
             )
             self._define_channel(channel)
 
@@ -500,6 +534,7 @@ class ACMeterThingBase(Thing):
         self._define_channel(channel)
 
         componenet_status = self.connection_status_subject.pipe(
+            ops.filter(lambda state: state is not None),
             ops.map(lambda status: StateWithTS(status).to_json()),
             ops.distinct_until_changed(lambda state: state[Constants.state]),
         )

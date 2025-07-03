@@ -53,7 +53,8 @@ class CombiCharger(Thing):
         charger_circuit: Optional[Circuit] = None,
     ):
         if charger_circuit is not None:
-            self.charger_circuit = charger_circuit.control_id
+            self.charger_circuit = charger_circuit.id.value
+            self.charger_circuit_control_id = charger_circuit.control_id
         n2k_device_id = f"{JsonKeys.INVERTER_CHARGER}.{instance}"
         Thing.__init__(
             self,
@@ -93,6 +94,7 @@ class CombiCharger(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc1_component_status_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(
                         lambda status: (
                             ConnectionStatus.CONNECTED
@@ -127,7 +129,9 @@ class CombiCharger(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc1_voltage_subject.pipe(
-                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Voltage.ROUND_VALUE),
+                    Voltage.FILTER,
                 ),
             )
 
@@ -151,7 +155,9 @@ class CombiCharger(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc1_current_subject.pipe(
-                    rxu.round(Current.ROUND_VALUE), Current.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Current.ROUND_VALUE),
+                    Current.FILTER,
                 ),
             )
 
@@ -184,6 +190,7 @@ class CombiCharger(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 d2_component_status_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(
                         lambda status: (
                             ConnectionStatus.CONNECTED
@@ -212,13 +219,18 @@ class CombiCharger(Thing):
             self._define_channel(channel)
 
             dc2_voltage_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc2.instance.instance}", JsonKeys.Voltage
+                f"{JsonKeys.DC}.{dc2.instance.instance}",
+                JsonKeys.Voltage,
+                N2kDeviceType.DC,
             )
 
             n2k_devices.set_subscription(
                 channel.id,
                 dc2_voltage_subject.pipe(
-                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER, N2kDeviceType.DC
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Voltage.ROUND_VALUE),
+                    Voltage.FILTER,
+                    N2kDeviceType.DC,
                 ),
             )
 
@@ -246,7 +258,9 @@ class CombiCharger(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc2_current_subject.pipe(
-                    rxu.round(Current.ROUND_VALUE), Current.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Current.ROUND_VALUE),
+                    Current.FILTER,
                 ),
             )
 
@@ -278,6 +292,7 @@ class CombiCharger(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc3_component_status_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(
                         lambda status: (
                             ConnectionStatus.CONNECTED
@@ -314,7 +329,9 @@ class CombiCharger(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc3_voltage_subject.pipe(
-                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Voltage.ROUND_VALUE),
+                    Voltage.FILTER,
                 ),
             )
 
@@ -341,7 +358,9 @@ class CombiCharger(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc3_current_subject.pipe(
-                    rxu.round(Current.ROUND_VALUE), Current.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Current.ROUND_VALUE),
+                    Current.FILTER,
                 ),
             )
             ####################
@@ -364,6 +383,7 @@ class CombiCharger(Thing):
             )
 
             self.component_status = inverter_charger_component_status_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda status: (
                         ConnectionStatus.CONNECTED
@@ -401,17 +421,19 @@ class CombiCharger(Thing):
                 n2k_device_id, JsonKeys.ChargerEnable, N2kDeviceType.INVERTERCHARGER
             )
             charger_ce = charger_enable_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.distinct_until_changed(),
             )
             charger_enable = charger_ce
             if charger_circuit is not None:
                 circuit_level_subject = n2k_devices.get_channel_subject(
-                    f"{JsonKeys.CIRCUIT}.{charger_circuit.control_id}",
+                    f"{JsonKeys.CIRCUIT}.{self.charger_circuit}",
                     JsonKeys.Level,
                     N2kDeviceType.CIRCUIT,
                 )
 
                 circuit_ce = circuit_level_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(lambda level: 1 if level > 0 else 0),
                     ops.distinct_until_changed(),
                 )
@@ -440,6 +462,7 @@ class CombiCharger(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 inverter_charger_status_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(lambda state: map_charger_state(state)),
                     ops.distinct_until_changed(),
                 ),
@@ -470,6 +493,8 @@ class ACMeterCharger(ACMeterThingBase):
         #  Charger Enabled
         ####################
         if circuit is not None:
+            self.charger_circuit = circuit.id.value
+            self.charger_circuit_control_id = circuit.control_id
             channel = Channel(
                 id="ce",
                 name="Charger Enabled",
@@ -481,12 +506,13 @@ class ACMeterCharger(ACMeterThingBase):
             self._define_channel(channel)
 
             circuit_level_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.CIRCUIT}.{circuit.control_id}",
+                f"{JsonKeys.CIRCUIT}.{self.charger_circuit}",
                 JsonKeys.Level,
                 N2kDeviceType.CIRCUIT,
             )
 
             charger_enable = circuit_level_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(lambda level: 1 if level > 0 else 0),
                 ops.distinct_until_changed(),
             )
@@ -518,7 +544,8 @@ class ACMeterCharger(ACMeterThingBase):
             )
 
             ac_line1_state = ac_line1_state_subject.pipe(
-                ops.map(lambda voltage: voltage > 0)
+                ops.filter(lambda state: state is not None),
+                ops.map(lambda voltage: voltage > 0),
             ).subscribe(update_ac_line1_state)
             self._disposable_list.append(ac_line1_state)
 
@@ -533,7 +560,8 @@ class ACMeterCharger(ACMeterThingBase):
             )
 
             ac_line2_state = ac_line2_state_subject.pipe(
-                ops.map(lambda voltage: voltage > 0)
+                ops.filter(lambda state: state is not None),
+                ops.map(lambda voltage: voltage > 0),
             ).subscribe(update_ac_line2_state)
             self._disposable_list.append(ac_line2_state)
         if ac_line3 is not None:
@@ -547,7 +575,8 @@ class ACMeterCharger(ACMeterThingBase):
             )
 
             ac_line3_state = ac_line3_state_subject.pipe(
-                ops.map(lambda voltage: voltage > 0)
+                ops.filter(lambda state: state is not None),
+                ops.map(lambda voltage: voltage > 0),
             ).subscribe(update_ac_line3_state)
             self._disposable_list.append(ac_line3_state)
 

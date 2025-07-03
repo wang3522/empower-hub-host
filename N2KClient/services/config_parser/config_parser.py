@@ -26,6 +26,7 @@ from N2KClient.models.n2k_configuration.sequential_name import SequentialName
 from N2KClient.models.n2k_configuration.instance import Instance
 from N2KClient.models.n2k_configuration.data_id import DataId
 from N2KClient.models.constants import Constants, JsonKeys, AttrNames
+from N2KClient.models.n2k_configuration.value_u32 import ValueU32
 from N2KClient.services.config_parser.field_maps import *
 from N2KClient.services.config_parser.config_parser_helpers import (
     map_enum_fields,
@@ -74,6 +75,18 @@ class ConfigParser:
             return sequential_name
         except Exception as e:
             self._logger.error(f"Failed to parse sequential name: {e}")
+            raise
+
+    def parse_value_u32(self, value_u32_json: dict[str, Any]) -> ValueU32:
+        """
+        Parse the ValueU32 object from the configuration.
+        """
+        try:
+            value_u32 = ValueU32()
+            map_fields(value_u32_json, value_u32, VALUE_U32_FIELD_MAP)
+            return value_u32
+        except Exception as e:
+            self._logger.error(f"Failed to parse ValueU32: {e}")
             raise
 
     def parse_data_id(self, data_id_json: dict[str, Any]) -> DataId:
@@ -174,6 +187,9 @@ class ConfigParser:
                 circuit_device.single_throw_id = self.parse_data_id(
                     single_throw_id_json
                 )
+            id = circuit_json.get(JsonKeys.ID)
+            if id is not None:
+                circuit_device.id = self.parse_value_u32(id)
             # Parse circuit_loads and categories
             map_list_fields(circuit_json, circuit_device, self._circuit_list_field_map)
 

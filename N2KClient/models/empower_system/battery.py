@@ -19,6 +19,7 @@ from N2KClient.models.common_enums import N2kDeviceType
 
 class Battery(Thing):
     battery_circuit_id: Optional[int] = None
+    battery_circuit_control_id: Optional[int] = None
     instance = int
 
     def __init__(
@@ -41,7 +42,8 @@ class Battery(Thing):
         self.instance = battery.instance.instance
         battery_device_id = f"{JsonKeys.DC}.{self.instance}"
         if battery_circuit is not None:
-            self.battery_circuit_id = battery_circuit.control_id
+            self.battery_circuit_id = battery_circuit.id.value
+            self.battery_circuit_control_id = battery_circuit.control_id
             ######################
             # Circuit Channel
             ######################
@@ -62,6 +64,7 @@ class Battery(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 battery_enable_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(lambda level: level > 0),
                     ops.distinct_until_changed(),
                 ),
@@ -96,7 +99,11 @@ class Battery(Thing):
             )
             n2k_devices.set_subscription(
                 channel.id,
-                dc_voltage_subject.pipe(rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER),
+                dc_voltage_subject.pipe(
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Voltage.ROUND_VALUE),
+                    Voltage.FILTER,
+                ),
             )
 
         if battery.show_current:
@@ -117,7 +124,11 @@ class Battery(Thing):
             )
             n2k_devices.set_subscription(
                 channel.id,
-                dc_current_subject.pipe(rxu.round(Current.ROUND_VALUE), Current.FILTER),
+                dc_current_subject.pipe(
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Current.ROUND_VALUE),
+                    Current.FILTER,
+                ),
             )
 
             #############################
@@ -153,6 +164,7 @@ class Battery(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 rx.combine_latest(dc_current_subject, dc_state_of_charge_subject).pipe(
+                    ops.filter(lambda state: state is not [None, None]),
                     ops.map(lambda state: resolve_battery_status(state[0], state[1])),
                     ops.distinct_until_changed(),
                 ),
@@ -181,7 +193,9 @@ class Battery(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc_temperature_subject.pipe(
-                    rxu.round(Temperature.ROUND_VALUE), Temperature.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Temperature.ROUND_VALUE),
+                    Temperature.FILTER,
                 ),
             )
         if battery.show_state_of_charge:
@@ -205,6 +219,7 @@ class Battery(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc_soc_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -229,6 +244,7 @@ class Battery(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc_capacity_remaining_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     rxu.round(CapacityRemaining.ROUND_VALUE),
                     ops.distinct_until_changed(),
                 ),
@@ -254,6 +270,7 @@ class Battery(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc_time_remaining_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -278,6 +295,7 @@ class Battery(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 dc_time_to_charge_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -302,6 +320,7 @@ class Battery(Thing):
         n2k_devices.set_subscription(
             channel.id,
             dc_component_status_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda status: (
                         ConnectionStatus.CONNECTED

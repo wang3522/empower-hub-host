@@ -112,6 +112,7 @@ class InverterBase(Thing):
                     ac_id, f"{JsonKeys.ComponentStatus}.{1}", N2kDeviceType.AC
                 )
                 line1_component_status = ac1_component_status_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(
                         lambda status: (
                             ConnectionStatus.CONNECTED
@@ -148,7 +149,9 @@ class InverterBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 ac1_voltage_subject.pipe(
-                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Voltage.ROUND_VALUE),
+                    Voltage.FILTER,
                 ),
             )
 
@@ -170,7 +173,9 @@ class InverterBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 ac1_current_subject.pipe(
-                    rxu.round(Current.ROUND_VALUE), Current.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Current.ROUND_VALUE),
+                    Current.FILTER,
                 ),
             )
             #######################
@@ -193,7 +198,9 @@ class InverterBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 ac1_frequency_subject.pipe(
-                    rxu.round(Frequency.ROUND_VALUE), Frequency.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Frequency.ROUND_VALUE),
+                    Frequency.FILTER,
                 ),
             )
 
@@ -214,7 +221,11 @@ class InverterBase(Thing):
             )
             n2k_devices.set_subscription(
                 channel.id,
-                ac1_power_subject.pipe(rxu.round(Power.ROUND_VALUE), Power.FILTER),
+                ac1_power_subject.pipe(
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Power.ROUND_VALUE),
+                    Power.FILTER,
+                ),
             )
 
         #########################################
@@ -247,6 +258,7 @@ class InverterBase(Thing):
                     ac_id, f"{JsonKeys.ComponentStatus}.{2}", N2kDeviceType.AC
                 )
                 line_2_component_status = ac2_component_status_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(
                         lambda status: (
                             ConnectionStatus.CONNECTED
@@ -281,7 +293,9 @@ class InverterBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 ac2_voltage_subject.pipe(
-                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Voltage.ROUND_VALUE),
+                    Voltage.FILTER,
                 ),
             )
 
@@ -303,7 +317,9 @@ class InverterBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 ac2_current_subject.pipe(
-                    rxu.round(Current.ROUND_VALUE), Current.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Current.ROUND_VALUE),
+                    Current.FILTER,
                 ),
             )
 
@@ -325,7 +341,9 @@ class InverterBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 ac2_frequency_subject.pipe(
-                    rxu.round(Frequency.ROUND_VALUE), Frequency.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Frequency.ROUND_VALUE),
+                    Frequency.FILTER,
                 ),
             )
 
@@ -346,7 +364,11 @@ class InverterBase(Thing):
             )
             n2k_devices.set_subscription(
                 channel.id,
-                ac2_power_subject.pipe(rxu.round(Power.ROUND_VALUE), Power.FILTER),
+                ac2_power_subject.pipe(
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Power.ROUND_VALUE),
+                    Power.FILTER,
+                ),
             )
 
         #########################################
@@ -378,6 +400,7 @@ class InverterBase(Thing):
                     ac_id, f"{JsonKeys.ComponentStatus}.{3}", N2kDeviceType.AC
                 )
                 line_3_component_status = ac3_component_status_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(
                         lambda status: (
                             ConnectionStatus.CONNECTED
@@ -412,7 +435,9 @@ class InverterBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 ac3_voltage_subject.pipe(
-                    rxu.round(Voltage.ROUND_VALUE), Voltage.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Voltage.ROUND_VALUE),
+                    Voltage.FILTER,
                 ),
             )
 
@@ -435,7 +460,9 @@ class InverterBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 ac3_current_subject.pipe(
-                    rxu.round(Current.ROUND_VALUE), Current.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Current.ROUND_VALUE),
+                    Current.FILTER,
                 ),
             )
 
@@ -458,7 +485,9 @@ class InverterBase(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 ac3_frequency_subject.pipe(
-                    rxu.round(Frequency.ROUND_VALUE), Frequency.FILTER
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Frequency.ROUND_VALUE),
+                    Frequency.FILTER,
                 ),
             )
             # Line 3 Power
@@ -478,7 +507,11 @@ class InverterBase(Thing):
             )
             n2k_devices.set_subscription(
                 channel.id,
-                ac3_power_subject.pipe(rxu.round(Power.ROUND_VALUE), Power.FILTER),
+                ac3_power_subject.pipe(
+                    ops.filter(lambda state: state is not None),
+                    rxu.round(Power.ROUND_VALUE),
+                    Power.FILTER,
+                ),
             )
         if inverter_component_status is None and status_ac_line is None:
             channel = Channel(
@@ -493,6 +526,7 @@ class InverterBase(Thing):
             )
 
             component_status = self.connection_status_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(lambda status: StateWithTS(status).to_json()),
                 ops.distinct_until_changed(lambda state: state[Constants.state]),
             )
@@ -520,7 +554,8 @@ class AcMeterInverter(InverterBase):
         )
 
         if circuit is not None:
-            self.inverter_circuit_id = circuit.control_id
+            self.inverter_circuit_id = circuit.id.value
+            self.inverter_circuit_control_id = circuit.control_id
         InverterBase.__init__(
             self,
             id=ac_line1.instance.instance,
@@ -556,7 +591,9 @@ class AcMeterInverter(InverterBase):
             )
 
             ac_line1_state = ac_line1_state_subject.pipe(
-                ops.map(lambda voltage: voltage > 0), ops.distinct_until_changed()
+                ops.filter(lambda state: state is not None),
+                ops.map(lambda voltage: voltage > 0),
+                ops.distinct_until_changed(),
             ).subscribe(update_ac_line1_state)
             self._disposable_list.append(ac_line1_state)
 
@@ -571,7 +608,9 @@ class AcMeterInverter(InverterBase):
             )
 
             ac_line2_state = ac_line2_status_subject.pipe(
-                ops.map(lambda voltage: voltage > 0), ops.distinct_until_changed()
+                ops.filter(lambda state: state is not None),
+                ops.map(lambda voltage: voltage > 0),
+                ops.distinct_until_changed(),
             ).subscribe(update_ac_line2_state)
             self._disposable_list.append(ac_line2_state)
 
@@ -586,7 +625,9 @@ class AcMeterInverter(InverterBase):
             )
 
             ac_line3_state = ac_line3_status_subject.pipe(
-                ops.map(lambda voltage: voltage > 0), ops.distinct_until_changed()
+                ops.filter(lambda state: state is not None),
+                ops.map(lambda voltage: voltage > 0),
+                ops.distinct_until_changed(),
             ).subscribe(update_ac_line3_state)
             self._disposable_list.append(ac_line3_state)
 
@@ -612,11 +653,12 @@ class AcMeterInverter(InverterBase):
             self._define_channel(channel)
 
             circuit_level_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.CIRCUIT}.{circuit.control_id}",
+                f"{JsonKeys.CIRCUIT}.{self.inverter_circuit_id}",
                 JsonKeys.Level,
                 N2kDeviceType.CIRCUIT,
             )
             inverter_enable = circuit_level_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(lambda level: 1 if level > 0 else 0),
                 ops.distinct_until_changed(),
             )
@@ -654,7 +696,8 @@ class CombiInverter(InverterBase):
             n2k_devices=n2k_devices,
         )
         if inverter_circuit is not None:
-            self.inverter_circuit_id = inverter_circuit.control_id
+            self.inverter_circuit_id = inverter_circuit.id.value
+            self.inverter_circuit_control_id = inverter_circuit.control_id
 
         n2k_device_id = f"{JsonKeys.INVERTER_CHARGER}.{instance}"
 
@@ -675,6 +718,7 @@ class CombiInverter(InverterBase):
         n2k_devices.set_subscription(
             channel.id,
             inverter_state_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(lambda state: map_inverter_state(state)),
                 ops.distinct_until_changed(),
             ),
@@ -698,6 +742,7 @@ class CombiInverter(InverterBase):
         )
 
         component_status = component_status_subject.pipe(
+            ops.filter(lambda state: state is not None),
             ops.map(
                 lambda status: (
                     ConnectionStatus.CONNECTED
@@ -731,17 +776,20 @@ class CombiInverter(InverterBase):
         inverter_enable_subject = n2k_devices.get_channel_subject(
             n2k_device_id, JsonKeys.InverterEnable, N2kDeviceType.INVERTERCHARGER
         )
-        inverter_ie = inverter_enable_subject.pipe(ops.distinct_until_changed())
+        inverter_ie = inverter_enable_subject.pipe(
+            ops.filter(lambda state: state is not None), ops.distinct_until_changed()
+        )
         inverter_enable = inverter_ie
 
         if inverter_circuit is not None:
-            circuit_device_id = f"{JsonKeys.CIRCUIT}.{inverter_circuit.control_id}"
+            circuit_device_id = f"{JsonKeys.CIRCUIT}.{self.inverter_circuit_id}"
 
             circuit_level_subject = n2k_devices.get_channel_subject(
                 circuit_device_id, JsonKeys.Level, N2kDeviceType.CIRCUIT
             )
 
             circuit_ie = circuit_level_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(lambda level: 1 if level > 0 else 0),
                 ops.distinct_until_changed(),
             )

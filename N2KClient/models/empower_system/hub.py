@@ -45,6 +45,7 @@ class Hub(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 component_status_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.map(
                         lambda status: (
                             ConnectionStatus.CONNECTED
@@ -77,6 +78,7 @@ class Hub(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 ethernet_internet_connectivity_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -101,6 +103,7 @@ class Hub(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 wifi_internet_connectivity_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -123,6 +126,7 @@ class Hub(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 wifi_ssid_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -145,6 +149,7 @@ class Hub(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 wifi_type_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -169,6 +174,7 @@ class Hub(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 wifi_signal_strength_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -193,6 +199,7 @@ class Hub(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 cellular_internet_connectivity_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -217,6 +224,7 @@ class Hub(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 cellular_signal_strength_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -239,6 +247,7 @@ class Hub(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 cellular_iccid_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -261,6 +270,7 @@ class Hub(Thing):
             n2k_devices.set_subscription(
                 channel.id,
                 cellular_eid_subject.pipe(
+                    ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
                 ),
             )
@@ -294,6 +304,7 @@ class Hub(Thing):
                         ops.distinct_until_changed
                     ),
                 ).pipe(
+                    ops.filter(lambda status: any(status)),
                     ops.map(
                         # status is [EthernetInternetConnectivity, WiFiInternetConnectivity, CellularInternetConnectivity]
                         lambda status: (

@@ -1,5 +1,6 @@
 import json
 from .config_item import ConfigItem
+from .value_u32 import ValueU32
 from .data_id import DataId
 from .instance import Instance
 from ..common_enums import SwitchType
@@ -61,7 +62,7 @@ class CircuitLoad(ConfigItem):
             return "{}"
 
 
-class Circuit(ConfigItem):
+class Circuit:
     single_throw_id: DataId
     sequential_names_utf8: list[SequentialName]
     has_complement: bool
@@ -81,6 +82,9 @@ class Circuit(ConfigItem):
     circuit_loads: list[CircuitLoad]
     categories: list[CategoryItem]
 
+    id: ValueU32
+    name_utf8: str
+
     non_visible_circuit: Optional[bool]
     voltage_source: Optional[Instance]
     dc_circuit: Optional[bool]
@@ -91,7 +95,6 @@ class Circuit(ConfigItem):
     systems_on_and: Optional[bool]
 
     def __init__(self):
-        super().__init__()
         self.non_visible_circuit = None
         self.voltage_source = None
         self.dc_circuit = None
@@ -121,6 +124,8 @@ class Circuit(ConfigItem):
                 AttrNames.LOAD_SMOOTH_START: self.load_smooth_start,
                 AttrNames.SEQUENTIAL_STATES: self.sequential_states,
                 AttrNames.CONTROL_ID: self.control_id,
+                AttrNames.ID: self.id.to_dict(),
+                AttrNames.NAMEUTF8: self.name_utf8,
             }
 
             if self.voltage_source:
@@ -147,7 +152,6 @@ class Circuit(ConfigItem):
                 fields[AttrNames.SYSTEMS_ON_AND] = self.systems_on_and
 
             return {
-                **super().to_dict(),
                 **fields,
             }
         except Exception as e:

@@ -25,12 +25,13 @@ class N2KDBusSimulator(dbus.service.Object):
         self.device_list = [
             {"Id": "DC.6", "Type": "dc"},
             {"Id": "Tank.17", "Type": "tank"},
-            {"Id": "Circuit.77", "Type": "circuit"},
+            {"Id": "Circuit.141", "Type": "circuit"},
             {"Id": "Tank.81", "Type": "tank"},
             {"Id": "Engine.0", "Type": "engine"},
-            {"Id": "Circuit.43", "Type": "circuit"},
+            {"Id": "Circuit.114", "Type": "circuit"},
             {"Id": "GNSS.128", "Type": "gnss"},
             {"Id": "InverterCharger.0", "Type": "inverter_charger"},
+            {"Id": "AC.5", "Type": "ac"},
             {"Id": "AC.1", "Type": "ac"},
         ]
         bus = dbus.SystemBus()
@@ -64,10 +65,10 @@ class N2KDBusSimulator(dbus.service.Object):
                     '{"ComponentStatus": "Connected", "Level": 300, "LevelPercent": 92}'
                 )
             elif id == "Engine.0":
-                return '{"ComponentStatus": "Connected", "EngineState": 1, "Speed": 0, "OilPressure": 50, "OilTemperature": 80, "FuelLevel": 50, "EngineHours": 1000}'
-            elif id == "Circuit.77":
+                return '{"ComponentStatus": "Connected", "EngineState": 1, "Speed": 0, "OilPressure": 50, "CoolantTemperature": 80.0, "FuelLevel": 50, "EngineHours": 1000}'
+            elif id == "Circuit.141":
                 return '{"ComponentStatus": "Connected", "Current": 1.5, "Voltage": 12.5, "Level": 100}'
-            elif id == "Circuit.43":
+            elif id == "Circuit.114":
                 return '{"ComponentStatus": "Disconnected", "Current": 2.5, "Voltage": 8.5, "Level": 100}'
             elif id == "GNSS.128":
                 return '{"ComponentStatus": "Connected", "FixType": "2D Fix", "LatitudeDeg": 8.5, "LongitudeDeg": 100, "Sog": 5.5}'
@@ -85,15 +86,17 @@ class N2KDBusSimulator(dbus.service.Object):
                     '{"ComponentStatus": "Connected", "Level": 250, "LevelPercent": 78}'
                 )
             elif id == "Engine.0":
-                return '{"ComponentStatus": "Connected", "EngineState": 3, "Speed": 3200, "OilPressure": 45, "CoolantTemperature": 85, "FuelLevel": 40, "EngineHours": 1200}'
-            elif id == "Circuit.77":
+                return '{"ComponentStatus": "Connected", "EngineState": 3, "Speed": 3200, "OilPressure": 45, "CoolantTemperature": 85.0, "FuelLevel": 40, "EngineHours": 1200}'
+            elif id == "Circuit.141":
                 return '{"ComponentStatus": "Connected", "Current": 2.5, "Voltage": 9.5, "Level": 0}'
-            elif id == "Circuit.43":
+            elif id == "Circuit.114":
                 return '{"ComponentStatus": "Connected", "Current": 2.5, "Voltage": 8.5, "Level": 100}'
             elif id == "GNSS.128":
                 return '{"ComponentStatus": "Connected", "FixType": "3D Fix", "LatitudeDeg": 10, "LongitudeDeg": 500, "Sog": 10}'
             elif id == "InverterCharger.0":
                 return '{"ComponentStatus": "Connected","InverterState": "Charging"}'
+            elif id == "AC.5":
+                return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
             elif id == "AC.1":
                 return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
         elif self.get_state_count < 480:
@@ -106,10 +109,10 @@ class N2KDBusSimulator(dbus.service.Object):
                     '{"ComponentStatus": "Connected", "Level": 200, "LevelPercent": 65}'
                 )
             elif id == "Engine.0":
-                return '{"ComponentStatus": "Connected", "EngineState": 1, "Speed": 900, "OilPressure": 40, "CoolantTemperature": 80, "FuelLevel": 30, "EngineHours": 1400}'
-            elif id == "Circuit.77":
+                return '{"ComponentStatus": "Connected", "EngineState": 1, "Speed": 900, "OilPressure": 40, "CoolantTemperature": 80.0, "FuelLevel": 30, "EngineHours": 1400}'
+            elif id == "Circuit.141":
                 return '{"ComponentStatus": "Connected", "Current": 3.5, "Voltage": 13.5, "Level": 100}'
-            elif id == "Circuit.43":
+            elif id == "Circuit.114":
                 return '{"ComponentStatus": "Disconnected", "Current": 1.8, "Voltage": 10.5, "Level": 0}'
             elif id == "GNSS.128":
                 return '{"ComponentStatus": "Connected", "FixType": "3D Fix", "LatitudeDeg": 100, "LongitudeDeg": 10, "Sog": 20}'
@@ -119,6 +122,8 @@ class N2KDBusSimulator(dbus.service.Object):
                 )
             elif id == "AC.1":
                 return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
+            elif id == "AC.5":
+                return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
         else:
             if id == "DC.6":
                 return '{"ComponentStatus": "Disconnected", "Voltage": 14.5, "Current": 6, "StateOfCharge": 55, "Temperature": 29.5, "CapacityRemaining": 700.5555, "TimeRemaining": 200, "TimeToCharge": 40}'
@@ -127,16 +132,18 @@ class N2KDBusSimulator(dbus.service.Object):
             elif id == "Tank.81":
                 return '{"ComponentStatus": "Disconnected", "Level": 200.09, "LevelPercent": 65}'
             elif id == "Engine.0":
-                return '{"ComponentStatus": "Disconnected", "EngineState": 1, "Speed": 800, "OilPressure": 40000, "CoolantPressure": 44444, "CoolantTemperature": 300, "FuelLevel": 3000, "EngineHours": 2000}'
-            elif id == "Circuit.77":
+                return '{"ComponentStatus": "Disconnected", "EngineState": 1, "Speed": 800, "OilPressure": 40000, "CoolantPressure": 44444, "CoolantTemperature": 300.0, "FuelLevel": 3000, "EngineHours": 2000}'
+            elif id == "Circuit.141":
                 return '{"ComponentStatus": "Disconnected", "Current": 9.5666666, "Voltage": 13.5, "Level": 100}'
-            elif id == "Circuit.43":
+            elif id == "Circuit.114":
                 return '{"ComponentStatus": "Disconnected", "Current": 5.8256326, "Voltage": 10.5, "Level": 0}'
             elif id == "GNSS.128":
                 return '{"ComponentStatus": "Disconnected", "FixType": "3D Fix", "LatitudeDeg": 100.44444444444444444, "LongitudeDeg": 10.44444444444, "Sog": 20}'
             elif id == "InverterCharger.0":
                 return '{"ComponentStatus": "Disconnected", "InverterState": "EnergySaving"}'
             elif id == "AC.1":
+                return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
+            elif id == "AC.5":
                 return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
         return "{}"
 

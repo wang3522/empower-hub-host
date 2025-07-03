@@ -25,7 +25,6 @@ from N2KClient.models.n2k_configuration.engine_configuration import (
 )
 from N2KClient.models.empower_system.engine_list import EngineList
 from N2KClient.models.n2k_configuration.factory_metadata import FactoryMetadata
-from datetime import datetime
 
 
 class N2KClient(dbus.service.Object):
@@ -389,8 +388,11 @@ class N2KClient(dbus.service.Object):
                 if lines is not None:
                     for line_id, line_value in lines.items():
                         for channel_id, value in line_value.items():
+                            print(
+                                f"Updating channel {channel_id}.{int(line_id)} for device {id} with value {value}"
+                            )
                             device_list_copy.update_channel(
-                                id, f"{channel_id}.{int(line_id) + 1}", value
+                                id, f"{channel_id}.{int(line_id)}", value
                             )
             else:
                 for channel_id, value in state_update.items():
