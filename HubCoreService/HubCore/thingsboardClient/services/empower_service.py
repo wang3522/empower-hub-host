@@ -20,6 +20,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 # pylint: disable=wrong-import-position,import-error,no-name-in-module
 from mqtt_client import ThingsBoardClient
 from dict_diff import dict_diff
+from services.sync_service import SyncService
 from tb_utils.constants import Constants
 from services.config import (
     telemetry_filter_patterns,
@@ -51,10 +52,17 @@ class EmpowerService:
     last_state_attrs = {}
 
     def __init__(self):
+        self._logger = logging.getLogger("EmpowerService")
         self.thingsboard_client = ThingsBoardClient()
+        self.n2k_client = N2KClient()
         self._service_init_disposables = []
         self._prev_empower_system = None
         self._prev_engine_list = None
+        self._prev_system_subscription = None
+        self._prev_engine_list_subscription = None
+        self.last_telemetry = {}
+        self.last_state_attrs = {}
+        self.sync_service = SyncService()
 
         #TODO: Callback for controlling value, is this needed here?
         # def callback(result, *args):
