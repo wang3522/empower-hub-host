@@ -134,7 +134,7 @@ class Battery(Thing):
             read_only=True,
             type=ChannelType.NUMBER,
             unit=Unit.ENERGY_VOLT,
-            tags=[f"{Constants.empower}:{Constants.battery}.{JsonKeys.Voltage}"],
+            tags=[f"{Constants.empower}:{Constants.battery}.{Constants.voltage}"],
         )
         self._define_channel(channel)
         dc_voltage_subject = n2k_devices.get_channel_subject(
