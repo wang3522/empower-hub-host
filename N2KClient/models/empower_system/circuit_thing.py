@@ -64,22 +64,16 @@ class CircuitThing(Thing):
             tags=[f"{Constants.empower}:{self.type}.{Constants.componentStatus}"],
         )
         self._define_channel(channel)
-        component_status_subject = n2k_devices.get_channel_subject(
+        is_offline_subject = n2k_devices.get_channel_subject(
             self.circuit_device_id,
-            CircuitStates.ComponentStatus.value,
+            CircuitStates.IsOffline.value,
             N2kDeviceType.CIRCUIT,
         )
         n2k_devices.set_subscription(
             channel.id,
-            component_status_subject.pipe(
+            is_offline_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                ops.map(
-                    lambda status: (
-                        ConnectionStatus.CONNECTED
-                        if status == "Connected"
-                        else ConnectionStatus.DISCONNECTED
-                    )
-                ),
+                ops.map(lambda state: StateUtil.is_circuit_connected(state)),
                 ops.map(lambda status: StateWithTS(status).to_json()),
                 ops.distinct_until_changed(lambda state: state[Constants.state]),
             ),

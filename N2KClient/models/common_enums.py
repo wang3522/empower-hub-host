@@ -196,9 +196,9 @@ class CombiChargerStates(str, Enum):
 
 
 class CircuitStates(str, Enum):
-    ComponentStatus = "ComponentStatus"
     Current = "Current"
     Level = "Level"
+    IsOffline = "IsOffline"
 
 
 class BLSStates(str, Enum):
