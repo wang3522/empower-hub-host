@@ -150,7 +150,6 @@ class JsonKeys:
     CONFIG_VERSION = "ConfigVersion"
     CONFIG_FILE_VERSION = "ConfigFileVersion"
     CONFIG_NAME = "ConfigName"
-    SERIAL_NUMBER = "SerialNumber"
     RT_FIRMWARE_VERSION = "RTFirmwareVersion"
     MENDER_ARTIFACT_INFO = "MenderArtifactInfo"
     Items = "Items"

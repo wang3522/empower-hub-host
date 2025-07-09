@@ -10,7 +10,7 @@ import json
 import copy
 
 from N2KClient.models.devices import N2kDevice, N2kDevices
-from N2KClient.models.constants import Constants, JsonKeys, AttrNames
+from N2KClient.models.constants import Constants, JsonKeys
 from reactivex import operators as ops
 from gi.repository import GLib
 from time import sleep

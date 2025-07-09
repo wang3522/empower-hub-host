@@ -173,7 +173,7 @@ class N2KDBusSimulator(dbus.service.Object):
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetConfig(self, type: str):
         if type == "Engines":
-            return '{"Engines":[{"DisplayType":41,"Id":0,"NameUTF8":"Starboard Engine","Instance":{"Enabled":true,"Instance":0},"SoftwareId":"Software_Id_0","CalibrationId":"CalibrationId_0","SerialNumber":"","ECUSerialNumber":"","EngineType":1}]}'
+            return '{"Engines":[{"DisplayType":41,"Id":0,"NameUTF8":"Starboard Engine","Instance":{"Enabled":true,"Instance":0},"SoftwareId":"Software_Id_0","CalibrationId":"CalibrationId_0","SerialNumber":"TESTSERIAL","ECUSerialNumber":"TESTECU","EngineType":1}]}'
         return ""
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
