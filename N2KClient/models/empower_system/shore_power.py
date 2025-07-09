@@ -24,7 +24,7 @@ from N2KClient.models.common_enums import (
 class ShorePower(ACMeterThingBase):
 
     def _calc_shorepower_connected(self):
-        StateUtil.any_connected(self.line_status)
+        return StateUtil.any_connected(self.line_connected)
 
     def __init__(
         self,
@@ -38,10 +38,8 @@ class ShorePower(ACMeterThingBase):
         component_status: Optional[rx.Observable[dict[str, any]]] = None,
         bls: BinaryLogicState = None,
     ):
-        self.line_status = {}
-        self.ac_connected_state = rx.subject.BehaviorSubject(
-            self._calc_shorepower_connected()
-        )
+        self.line_connected = {}
+        self.ac_connected_state = rx.subject.BehaviorSubject(None)
         ACMeterThingBase.__init__(
             self,
             ThingType.SHORE_POWER,
@@ -76,8 +74,8 @@ class ShorePower(ACMeterThingBase):
     ):
         if ac_line1 is not None:
 
-            def update_line1_status(status: dict[str, any]):
-                self.line_status[1] = status[Constants.state]
+            def update_line1_status(status: ConnectionStatus):
+                self.line_connected[1] = status
                 self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
             ac_line1_connected_subject = n2k_devices.get_channel_subject(
@@ -103,8 +101,8 @@ class ShorePower(ACMeterThingBase):
 
         if ac_line2 is not None:
 
-            def update_line2_connected(status: dict[str, any]):
-                self.line_status[2] = status[Constants.state]
+            def update_line2_connected(status: ConnectionStatus):
+                self.line_connected[2] = status
                 self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
             ac_line2_connected_subject = n2k_devices.get_channel_subject(
@@ -130,8 +128,8 @@ class ShorePower(ACMeterThingBase):
 
         if ac_line3 is not None:
 
-            def update_line3_connected(status: dict[str, any]):
-                self.line_status[3] = status[Constants.state]
+            def update_line3_connected(status: ConnectionStatus):
+                self.line_connected[3] = status
                 self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
             ac_line3_connected_subject = n2k_devices.get_channel_subject(
@@ -161,8 +159,8 @@ class ShorePower(ACMeterThingBase):
         # Report connected if ANY line voltage is greater than 0
         if ac_line1 is not None:
 
-            def update_line1_status(status: dict[str, any]):
-                self.line_status[1] = status[Constants.state]
+            def update_line1_status(status: ConnectionStatus):
+                self.line_connected[1] = status
                 self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
             ac_line1_Voltage = n2k_devices.get_channel_subject(
@@ -184,8 +182,8 @@ class ShorePower(ACMeterThingBase):
 
         if ac_line2 is not None:
 
-            def update_line2_connected(status: dict[str, any]):
-                self.line_status[2] = status[Constants.state]
+            def update_line2_connected(status: ConnectionStatus):
+                self.line_connected[2] = status
                 self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
             ac_line2_Voltage = n2k_devices.get_channel_subject(
@@ -207,8 +205,8 @@ class ShorePower(ACMeterThingBase):
 
         if ac_line3 is not None:
 
-            def update_line3_connected(status: dict[str, any]):
-                self.line_status[3] = status[Constants.state]
+            def update_line3_connected(status: ConnectionStatus):
+                self.line_connected[3] = status
                 self.ac_connected_state.on_next(self._calc_shorepower_connected())
 
             ac_line3_Voltage = n2k_devices.get_channel_subject(
@@ -259,7 +257,7 @@ class ShorePower(ACMeterThingBase):
             self.define_shorepower_connected_pipe_non_inverter_charger(
                 n2k_devices, ac_line1, ac_line2, ac_line3
             )
-
+        connected_state = self.ac_connected_state
         if bls is not None:
             bls_states_subject = n2k_devices.get_channel_subject(
                 f"{JsonKeys.BINARY_LOGIC_STATE}.{bls.address}",
@@ -267,15 +265,15 @@ class ShorePower(ACMeterThingBase):
                 N2kDeviceType.BINARY_LOGIC_STATE,
             )
             bls_connected_state = bls_states_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda state: not StateUtil.get_bls_state(bls.address, state),
                 ),
                 ops.distinct_until_changed(),
             )
 
-            n2k_devices.set_subscription(
-                channel.id, rx.merge(bls_connected_state, self.ac_connected_state)
-            )
+            connected_state = rx.merge(bls_connected_state, self.ac_connected_state)
+        n2k_devices.set_subscription(channel.id, connected_state)
 
     def define_shorepower_enabled_channel(
         self,

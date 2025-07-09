@@ -375,7 +375,9 @@ class N2KClient(dbus.service.Object):
                 self._merge_state_update(state_update)
 
             except Exception as e:
-                self._logger.error(f"Error reading dbus state response: {e}")
+                self._logger.error(
+                    f"Error reading dbus state response: {e}", exc_info=True
+                )
             sleep(self._get_state_timeout)
 
     def _merge_state_update(self, state_updates: dict[str, dict[str, Any]]):
