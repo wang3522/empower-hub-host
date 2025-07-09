@@ -1055,6 +1055,7 @@ public:
   Event(Event &&rhs);
   Event &operator=(const Event &rhs);
   Event &operator=(Event &&rhs);
+  json tojson() const;
 
   void set_type(eEventType type) { m_type = type; }
   eEventType get_type() const { return m_type; }
@@ -3293,3 +3294,4 @@ void to_json(nlohmann::json &j, const GNSSDevice &c);
 void to_json(nlohmann::json &j, const EngineDevice &c);
 void to_json(nlohmann::json &j, const UiRelationshipMsg &c);
 void to_json(nlohmann::json &j, const BinaryLogicStateMsg &c);
+void to_json(nlohmann::json &j, const Event &c);

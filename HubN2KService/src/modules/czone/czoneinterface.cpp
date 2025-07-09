@@ -2289,8 +2289,7 @@ void CzoneInterface::publishEvent(const Event &Event) {
       it(Event);
     }
   } else {
-    // BOOST_LOG_TRIVIAL(debug)
-    //     << "CzoneInterface::PublishEvent: no callback registered";
+    BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::PublishEvent: no callback registered";
   }
 }
 
@@ -2849,5 +2848,11 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
   dbusService->registerService("GetCategories", "czone", [ptr = this](std::string type) -> std::string {
     auto r = ptr->getCategories(CategoryRequest::from_string(type));
     return r.tojson().dump();
+  });
+
+  dbusService->registerSignal("Event", "czone");
+  registerEventCallback([&dbusService](const Event &event) {
+    BOOST_LOG_TRIVIAL(info) << "Event callback for signal (dbus) " << Event::to_string(event.get_type()) ;
+    dbusService->emitSignal("Event", "czone", event.tojson().dump());
   });
 }

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "modules/czone/monitoringdata.h"
+#include "modules/dbus/dbusservice.h"
 #include "modules/n2k/canservice.h"
 #include "utils/json.hpp"
 
@@ -39,7 +40,7 @@ public:
   void Update(N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
   void Clear();
 
-  N2KMonitoring::SnapshotInstanceIdMap Snapshot(bool &empty, N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
+  std::string Snapshot();
 
   bool GetSetting(CZoneDbSettingsType type, int32_t &value) const;
   bool GetSetting(CZoneDbSettingsType type, float &value) const;
@@ -58,8 +59,13 @@ public:
   void GetHealthStatus(N2KMonitoring::HealthStatus &health, const int64_t timeout = 60000);
   void SetWakeupDcMeters(const std::unordered_map<uint32_t, N2KMonitoring::DC> &dcMap) {
     m_WakeUp = true;
-    m_WakeDcMap = dcMap;
+    m_WakeDcMap.clear();
+    for (auto &d : dcMap) {
+      m_WakeDcMap[d.first] = std::make_shared<N2KMonitoring::DC>(d.second);
+    }
   }
+
+  void registerDbus(std::shared_ptr<DbusService> dbusService);
 
 private:
   CanService &m_canService;
@@ -102,13 +108,39 @@ private:
                            N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
 
   std::mutex m_SnapshotMutex;
-  N2KMonitoring::SnapshotInstanceIdMap m_Snapshot;
-  N2KMonitoring::MonitoringKeyValueMap m_SnapshotKeyValue;
+  N2KMonitoring::SnapshotInstanceIdMap m_Snapshot;         // delta
+  N2KMonitoring::SnapshotInstanceIdMap m_LastSnapshot;     // save bw scan
+  N2KMonitoring::MonitoringKeyValueMap m_SnapshotKeyValue; // temp keyvalue
   tUnitConversion m_UnitConversion;
 
   std::map<uint32_t, uint32_t> m_DataTypeIndex;
   std::mutex m_NetworkStatusMutex;
   N2KMonitoring::NetworkStatus m_NetworkStatus;
   bool m_WakeUp = false;
-  std::unordered_map<uint32_t, N2KMonitoring::DC> m_WakeDcMap;
+  std::unordered_map<uint32_t, std::shared_ptr<N2KMonitoring::DC>> m_WakeDcMap;
+
+  struct Field {
+    tCZoneDataType Type;
+    bool Valid;
+    float Value;
+    std::string FieldName;
+    uint32_t Instance;
+  };
+
+  template <typename T>
+  uint32_t CreateKey(tCZoneDataType dataType, T instanceOrId);
+  template <typename T>
+  int32_t ValueS32(tCZoneDataType dataType, T instanceOrId, bool &valid, std::map<uint32_t, uint32_t> &dataTypeIndex);
+  template <typename T>
+  float Value(tCZoneDataType dataType, T instanceOrId, bool &valid, std::map<uint32_t, uint32_t> &dataTypeIndex,
+              std::unordered_map<uint32_t, struct MonitoringValue> &valueMap);
+  bool GetValuesForInstanceOrId(std::vector<Field> &fields, tUnitConversion &unitConversion,
+                                std::map<uint32_t, uint32_t> &dataTypeIndex,
+                                std::unordered_map<uint32_t, struct MonitoringValue> &valueMap);
+  template <typename T>
+  bool UpdateMessageIfDifferent(T *message1, T *message2, const std::vector<Field> &fields, bool forceUpdate);
+  template <typename T1, typename T2>
+  void ProcessFields(std::vector<Field> &fields, T1 instance, N2KMonitoring::IdMap<T2> &snapshot,
+                     N2KMonitoring::IdMap<T2> &lastSnapshot, tUnitConversion &unitConversion,
+                     std::map<uint32_t, uint32_t> &dataTypeIndex);
 };

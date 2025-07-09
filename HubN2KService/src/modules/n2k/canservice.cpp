@@ -297,6 +297,7 @@ bool CanService::checkSystemHealth(const int64_t timeout) {
 }
 
 void CanService::sourceAddressChanged(const uint8_t address) {
+  BOOST_LOG_TRIVIAL(debug) << "CanService::sourceAddressChanged source address changed, " << address;
   CanService::getInstance().Settings()->setSourceAddress(address);
   CZoneSetValue(eCZoneLastSourceAddress, static_cast<float>(address));
 }

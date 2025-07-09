@@ -53,7 +53,7 @@ set(SOURCES
     src/modules/czone/czonedatabase.cpp
     src/modules/czone/czoneinterface.cpp
     src/modules/czone/czonesettings.cpp
-    src/modules/czone/czoneUnitUtils.cpp
+    src/modules/czone/czoneunitutils.cpp
     src/modules/czone/monitoringdata.cpp
     src/modules/dbus/dbusservice.cpp
     src/modules/n2k/canservice.cpp

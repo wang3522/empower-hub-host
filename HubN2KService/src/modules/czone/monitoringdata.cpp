@@ -42,9 +42,7 @@ N2KMonitoring::SnapshotInstanceIdMap::SnapshotInstanceIdMap() {
   m_timeStamp = "";
 }
 
-N2KMonitoring::SnapshotInstanceIdMap::~SnapshotInstanceIdMap() {
-  clear();
-}
+N2KMonitoring::SnapshotInstanceIdMap::~SnapshotInstanceIdMap() { clear(); }
 
 void N2KMonitoring::SnapshotInstanceIdMap::clear() {
   m_circuits.clear();
@@ -129,3 +127,1434 @@ bool N2KMonitoring::SnapshotInstanceIdMap::operator==(const N2KMonitoring::Snaps
 bool N2KMonitoring::MonitoringKeyValueMap::operator==(const MonitoringKeyValueMap &other) const {
   return deepCompareMap(m_keyValueMap, other.m_keyValueMap);
 }
+
+auto N2KMonitoring::Circuit::get(const std::string &memberName) -> N2KMonitoring::Circuit::CircuitValue {
+  if (memberName == "Id")
+    return &m_id;
+  if (memberName == "SystemsOn")
+    return &m_systemsOn;
+  if (memberName == "Level")
+    return &m_level;
+  if (memberName == "OnCount")
+    return &m_onCount;
+  if (memberName == "OnTime")
+    return &m_onTime;
+  if (memberName == "SequentialState")
+    return &m_sequentialState;
+  if (memberName == "ModesSystemOn")
+    return &m_modesSystemOn;
+  if (memberName == "Current")
+    return &m_current;
+  if (memberName == "Fault")
+    return &m_fault;
+  if (memberName == "ACSourceAvailable")
+    return &m_aCSourceAvailable;
+  if (memberName == "IsOffline")
+    return &m_isOffline;
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::Circuit::get(const std::string &memberName) const -> N2KMonitoring::Circuit::CircuitValueConst {
+  if (memberName == "Id")
+    return &m_id;
+  if (memberName == "SystemsOn")
+    return &m_systemsOn;
+  if (memberName == "Level")
+    return &m_level;
+  if (memberName == "OnCount")
+    return &m_onCount;
+  if (memberName == "OnTime")
+    return &m_onTime;
+  if (memberName == "SequentialState")
+    return &m_sequentialState;
+  if (memberName == "ModesSystemOn")
+    return &m_modesSystemOn;
+  if (memberName == "Current")
+    return &m_current;
+  if (memberName == "Fault")
+    return &m_fault;
+  if (memberName == "ACSourceAvailable")
+    return &m_aCSourceAvailable;
+  if (memberName == "IsOffline")
+    return &m_isOffline;
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::Tank::get(const std::string &memberName) -> N2KMonitoring::Tank::TankValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "LevelPercent") {
+    return &m_levelPercent;
+  }
+  if (memberName == "Level") {
+    return &m_level;
+  }
+  if (memberName == "Capacity") {
+    return &m_capacity;
+  }
+  if (memberName == "TankType") {
+    return &m_tankType;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::Tank::get(const std::string &memberName) const -> N2KMonitoring::Tank::TankValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "LevelPercent") {
+    return &m_levelPercent;
+  }
+  if (memberName == "Level") {
+    return &m_level;
+  }
+  if (memberName == "Capacity") {
+    return &m_capacity;
+  }
+  if (memberName == "TankType") {
+    return &m_tankType;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::Engine::get(const std::string &memberName) -> N2KMonitoring::Engine::EngineValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Speed") {
+    return &m_speed;
+  }
+  if (memberName == "BoostPressure") {
+    return &m_boostPressure;
+  }
+  if (memberName == "Trim") {
+    return &m_trim;
+  }
+  if (memberName == "OilPressure") {
+    return &m_oilPressure;
+  }
+  if (memberName == "OilTemperature") {
+    return &m_oilTemperature;
+  }
+  if (memberName == "Temperature") {
+    return &m_temperature;
+  }
+  if (memberName == "AlternatorPotential") {
+    return &m_alternatorPotential;
+  }
+  if (memberName == "FuelRate") {
+    return &m_fuelRate;
+  }
+  if (memberName == "TotalEngineHours") {
+    return &m_totalEngineHours;
+  }
+  if (memberName == "CoolantPressure") {
+    return &m_coolantPressure;
+  }
+  if (memberName == "CoolantTemperature") {
+    return &m_coolantTemperature;
+  }
+  if (memberName == "FuelPressure") {
+    return &m_fuelPressure;
+  }
+  if (memberName == "DiscreteStatus1") {
+    return &m_discreteStatus1;
+  }
+  if (memberName == "DiscreteStatus2") {
+    return &m_discreteStatus2;
+  }
+  if (memberName == "PercentEngineLoad") {
+    return &m_percentEngineLoad;
+  }
+  if (memberName == "PercentEngineTorque") {
+    return &m_percentEngineTorque;
+  }
+  if (memberName == "EngineState") {
+    return &m_engineState;
+  }
+  if (memberName == "ActiveEnginesId") {
+    return &m_activeEnginesId;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::Engine::get(const std::string &memberName) const -> N2KMonitoring::Engine::EngineValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Speed") {
+    return &m_speed;
+  }
+  if (memberName == "BoostPressure") {
+    return &m_boostPressure;
+  }
+  if (memberName == "Trim") {
+    return &m_trim;
+  }
+  if (memberName == "OilPressure") {
+    return &m_oilPressure;
+  }
+  if (memberName == "OilTemperature") {
+    return &m_oilTemperature;
+  }
+  if (memberName == "Temperature") {
+    return &m_temperature;
+  }
+  if (memberName == "AlternatorPotential") {
+    return &m_alternatorPotential;
+  }
+  if (memberName == "FuelRate") {
+    return &m_fuelRate;
+  }
+  if (memberName == "TotalEngineHours") {
+    return &m_totalEngineHours;
+  }
+  if (memberName == "CoolantPressure") {
+    return &m_coolantPressure;
+  }
+  if (memberName == "CoolantTemperature") {
+    return &m_coolantTemperature;
+  }
+  if (memberName == "FuelPressure") {
+    return &m_fuelPressure;
+  }
+  if (memberName == "DiscreteStatus1") {
+    return &m_discreteStatus1;
+  }
+  if (memberName == "DiscreteStatus2") {
+    return &m_discreteStatus2;
+  }
+  if (memberName == "PercentEngineLoad") {
+    return &m_percentEngineLoad;
+  }
+  if (memberName == "PercentEngineTorque") {
+    return &m_percentEngineTorque;
+  }
+  if (memberName == "EngineState") {
+    return &m_engineState;
+  }
+  if (memberName == "ActiveEnginesId") {
+    return &m_activeEnginesId;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::ACLine::get(const std::string &memberName) -> N2KMonitoring::ACLine::ACLineValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Line") {
+    return &m_line;
+  }
+  if (memberName == "Voltage") {
+    return &m_voltage;
+  }
+  if (memberName == "Current") {
+    return &m_current;
+  }
+  if (memberName == "Frequency") {
+    return &m_frequency;
+  }
+  if (memberName == "Power") {
+    return &m_power;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::ACLine::get(const std::string &memberName) const -> N2KMonitoring::ACLine::ACLineValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Line") {
+    return &m_line;
+  }
+  if (memberName == "Voltage") {
+    return &m_voltage;
+  }
+  if (memberName == "Current") {
+    return &m_current;
+  }
+  if (memberName == "Frequency") {
+    return &m_frequency;
+  }
+  if (memberName == "Power") {
+    return &m_power;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::AC::get(const std::string &memberName) -> N2KMonitoring::AC::ACValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "AClines") {
+    return &m_acLines;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::AC::get(const std::string &memberName) const -> N2KMonitoring::AC::ACValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "AClines") {
+    return &m_acLines;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::DC::get(const std::string &memberName) -> N2KMonitoring::DC::DCValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Voltage") {
+    return &m_voltage;
+  }
+  if (memberName == "Current") {
+    return &m_current;
+  }
+  if (memberName == "Temperature") {
+    return &m_temperature;
+  }
+  if (memberName == "StateOfCharge") {
+    return &m_stateOfCharge;
+  }
+  if (memberName == "CapacityRemaining") {
+    return &m_capacityRemaining;
+  }
+  if (memberName == "TimeRemaining") {
+    return &m_timeRemaining;
+  }
+  if (memberName == "TimeToCharge") {
+    return &m_timeToCharge;
+  }
+  if (memberName == "TimeRemainingOrToCharge") {
+    return &m_timeRemainingOrToCharge;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::DC::get(const std::string &memberName) const -> N2KMonitoring::DC::DCValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Voltage") {
+    return &m_voltage;
+  }
+  if (memberName == "Current") {
+    return &m_current;
+  }
+  if (memberName == "Temperature") {
+    return &m_temperature;
+  }
+  if (memberName == "StateOfCharge") {
+    return &m_stateOfCharge;
+  }
+  if (memberName == "CapacityRemaining") {
+    return &m_capacityRemaining;
+  }
+  if (memberName == "TimeRemaining") {
+    return &m_timeRemaining;
+  }
+  if (memberName == "TimeToCharge") {
+    return &m_timeToCharge;
+  }
+  if (memberName == "TimeRemainingOrToCharge") {
+    return &m_timeRemainingOrToCharge;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::Temperature::get(const std::string &memberName) -> N2KMonitoring::Temperature::TemperatureValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Temperature") {
+    return &m_temperature;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::Temperature::get(const std::string &memberName) const
+    -> N2KMonitoring::Temperature::TemperatureValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Temperature") {
+    return &m_temperature;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::Pressure::get(const std::string &memberName) -> N2KMonitoring::Pressure::PressureValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Pressure") {
+    return &m_pressure;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::Pressure::get(const std::string &memberName) const -> N2KMonitoring::Pressure::PressureValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Pressure") {
+    return &m_pressure;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::HVAC::get(const std::string &memberName) -> N2KMonitoring::HVAC::HVACValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "OperationMode") {
+    return &m_operationMode;
+  }
+  if (memberName == "FanMode") {
+    return &m_fanMode;
+  }
+  if (memberName == "FanSpeed") {
+    return &m_fanSpeed;
+  }
+  if (memberName == "EnvironmentSetTemperature") {
+    return &m_environmentSetTemperature;
+  }
+  if (memberName == "EnvironmentTemperature") {
+    return &m_environmentTemperature;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::HVAC::get(const std::string &memberName) const -> N2KMonitoring::HVAC::HVACValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "OperationMode") {
+    return &m_operationMode;
+  }
+  if (memberName == "FanMode") {
+    return &m_fanMode;
+  }
+  if (memberName == "FanSpeed") {
+    return &m_fanSpeed;
+  }
+  if (memberName == "EnvironmentSetTemperature") {
+    return &m_environmentSetTemperature;
+  }
+  if (memberName == "EnvironmentTemperature") {
+    return &m_environmentTemperature;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::ZipdeeAwning::get(const std::string &memberName) -> N2KMonitoring::ZipdeeAwning::ZipdeeAwningValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "State") {
+    return &m_state;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::ZipdeeAwning::get(const std::string &memberName) const
+    -> N2KMonitoring::ZipdeeAwning::ZipdeeAwningValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "State") {
+    return &m_state;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::ThirdPartyGenerator::get(const std::string &memberName)
+    -> N2KMonitoring::ThirdPartyGenerator::ThirdPartyGeneratorValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "OnTime") {
+    return &m_onTime;
+  }
+  if (memberName == "Status") {
+    return &m_status;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::ThirdPartyGenerator::get(const std::string &memberName) const
+    -> N2KMonitoring::ThirdPartyGenerator::ThirdPartyGeneratorValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "OnTime") {
+    return &m_onTime;
+  }
+  if (memberName == "Status") {
+    return &m_status;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::InverterCharger::get(const std::string &memberName)
+    -> N2KMonitoring::InverterCharger::InverterChargerValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "InverterInstance") {
+    return &m_inverterInstance;
+  }
+  if (memberName == "ChargerInstance") {
+    return &m_chargerInstance;
+  }
+  if (memberName == "InverterEnable") {
+    return &m_inverterEnable;
+  }
+  if (memberName == "InverterState") {
+    return &m_inverterState;
+  }
+  if (memberName == "ChargerEnable") {
+    return &m_chargerEnable;
+  }
+  if (memberName == "ChargerState") {
+    return &m_chargerState;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::InverterCharger::get(const std::string &memberName) const
+    -> N2KMonitoring::InverterCharger::InverterChargerValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "InverterInstance") {
+    return &m_inverterInstance;
+  }
+  if (memberName == "ChargerInstance") {
+    return &m_chargerInstance;
+  }
+  if (memberName == "InverterEnable") {
+    return &m_inverterEnable;
+  }
+  if (memberName == "InverterState") {
+    return &m_inverterState;
+  }
+  if (memberName == "ChargerEnable") {
+    return &m_chargerEnable;
+  }
+  if (memberName == "ChargerState") {
+    return &m_chargerState;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::TyrePressure::get(const std::string &memberName) -> N2KMonitoring::TyrePressure::TyrePressureValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Pressure") {
+    return &m_pressure;
+  }
+  if (memberName == "Temperature") {
+    return &m_temperature;
+  }
+  if (memberName == "Status") {
+    return &m_status;
+  }
+  if (memberName == "LimitStatus") {
+    return &m_limitStatus;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::TyrePressure::get(const std::string &memberName) const
+    -> N2KMonitoring::TyrePressure::TyrePressureValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Pressure") {
+    return &m_pressure;
+  }
+  if (memberName == "Temperature") {
+    return &m_temperature;
+  }
+  if (memberName == "Status") {
+    return &m_status;
+  }
+  if (memberName == "LimitStatus") {
+    return &m_limitStatus;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::AudioStereo::get(const std::string &memberName) -> N2KMonitoring::AudioStereo::AudioStereoValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Power") {
+    return &m_power;
+  }
+  if (memberName == "Mute") {
+    return &m_mute;
+  }
+  if (memberName == "AudioStatus") {
+    return &m_audioStatus;
+  }
+  if (memberName == "SourceMode") {
+    return &m_sourceMode;
+  }
+  if (memberName == "Volume") {
+    return &m_volume;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::AudioStereo::get(const std::string &memberName) const
+    -> N2KMonitoring::AudioStereo::AudioStereoValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Power") {
+    return &m_power;
+  }
+  if (memberName == "Mute") {
+    return &m_mute;
+  }
+  if (memberName == "AudioStatus") {
+    return &m_audioStatus;
+  }
+  if (memberName == "SourceMode") {
+    return &m_sourceMode;
+  }
+  if (memberName == "Volume") {
+    return &m_volume;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::ACMainContactor::get(const std::string &memberName)
+    -> N2KMonitoring::ACMainContactor::ACMainContactorValue {
+  if (memberName == "SystemStateId") {
+    return &m_systemStateId;
+  }
+  if (memberName == "ACContactorSystemsState") {
+    return &m_acContactorSystemsState;
+  }
+  if (memberName == "ACContactorSourceAvailable") {
+    return &m_acContactorSourceAvailable;
+  }
+  if (memberName == "ReversePolarity") {
+    return &m_reversePolarity;
+  }
+  if (memberName == "ACContactorAutoChangeOver") {
+    return &m_acContactorAutoChangeOver;
+  }
+  if (memberName == "ManualOverride") {
+    return &m_manualOverride;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::ACMainContactor::get(const std::string &memberName) const
+    -> N2KMonitoring::ACMainContactor::ACMainContactorValueConst {
+  if (memberName == "SystemStateId") {
+    return &m_systemStateId;
+  }
+  if (memberName == "ACContactorSystemsState") {
+    return &m_acContactorSystemsState;
+  }
+  if (memberName == "ACContactorSourceAvailable") {
+    return &m_acContactorSourceAvailable;
+  }
+  if (memberName == "ReversePolarity") {
+    return &m_reversePolarity;
+  }
+  if (memberName == "ACContactorAutoChangeOver") {
+    return &m_acContactorAutoChangeOver;
+  }
+  if (memberName == "ManualOverride") {
+    return &m_manualOverride;
+  }
+
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::GNSS::get(const std::string &memberName) -> N2KMonitoring::GNSS::GNSSValue {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Latitude") {
+    return &m_latitude;
+  }
+  if (memberName == "Longitude") {
+    return &m_longitude;
+  }
+  if (memberName == "Cog") {
+    return &m_cog;
+  }
+  if (memberName == "Sog") {
+    return &m_sog;
+  }
+  if (memberName == "MagneticVariation") {
+    return &m_magneticVariation;
+  }
+  if (memberName == "UTCDateTime") {
+    return &m_utcDateTime;
+  }
+  if (memberName == "TimeOffset") {
+    return &m_timeOffset;
+  }
+  if (memberName == "SatellitesInFix") {
+    return &m_satellitesInFix;
+  }
+  if (memberName == "BestOfFourSatellitesSNR") {
+    return &m_bestOfFourSatellitesSNR;
+  }
+  if (memberName == "Method") {
+    return &m_method;
+  }
+  if (memberName == "FixType") {
+    return &m_fixType;
+  }
+  if (memberName == "Hdop") {
+    return &m_hdop;
+  }
+  if (memberName == "Pdop") {
+    return &m_pdop;
+  }
+  if (memberName == "Vdop") {
+    return &m_vdop;
+  }
+  if (memberName == "LatitudeDeg") {
+    return &m_latitudeDeg;
+  }
+  if (memberName == "LongitudeDeg") {
+    return &m_longitudeDeg;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::GNSS::get(const std::string &memberName) const -> N2KMonitoring::GNSS::GNSSValueConst {
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "Latitude") {
+    return &m_latitude;
+  }
+  if (memberName == "Longitude") {
+    return &m_longitude;
+  }
+  if (memberName == "Cog") {
+    return &m_cog;
+  }
+  if (memberName == "Sog") {
+    return &m_sog;
+  }
+  if (memberName == "MagneticVariation") {
+    return &m_magneticVariation;
+  }
+  if (memberName == "UTCDateTime") {
+    return &m_utcDateTime;
+  }
+  if (memberName == "TimeOffset") {
+    return &m_timeOffset;
+  }
+  if (memberName == "SatellitesInFix") {
+    return &m_satellitesInFix;
+  }
+  if (memberName == "BestOfFourSatellitesSNR") {
+    return &m_bestOfFourSatellitesSNR;
+  }
+  if (memberName == "Method") {
+    return &m_method;
+  }
+  if (memberName == "FixType") {
+    return &m_fixType;
+  }
+  if (memberName == "Hdop") {
+    return &m_hdop;
+  }
+  if (memberName == "Pdop") {
+    return &m_pdop;
+  }
+  if (memberName == "Vdop") {
+    return &m_vdop;
+  }
+  if (memberName == "LatitudeDeg") {
+    return &m_latitudeDeg;
+  }
+  if (memberName == "LongitudeDeg") {
+    return &m_longitudeDeg;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::MonitoringKeyValue::get(const std::string &memberName)
+    -> N2KMonitoring::MonitoringKeyValue::MonitoringKeyValueValue {
+  if (memberName == "Valid") {
+    return &m_valid;
+  }
+  if (memberName == "Value") {
+    return &m_value;
+  }
+  if (memberName == "LimitValid") {
+    return &m_limitValid;
+  }
+  if (memberName == "Min") {
+    return &m_min;
+  }
+  if (memberName == "Max") {
+    return &m_max;
+  }
+  if (memberName == "WarnLow") {
+    return &m_warnLow;
+  }
+  if (memberName == "WarnHigh") {
+    return &m_warnHigh;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::MonitoringKeyValue::get(const std::string &memberName) const
+    -> N2KMonitoring::MonitoringKeyValue::MonitoringKeyValueValueConst {
+  if (memberName == "Valid") {
+    return &m_valid;
+  }
+  if (memberName == "Value") {
+    return &m_value;
+  }
+  if (memberName == "LimitValid") {
+    return &m_limitValid;
+  }
+  if (memberName == "Min") {
+    return &m_min;
+  }
+  if (memberName == "Max") {
+    return &m_max;
+  }
+  if (memberName == "WarnLow") {
+    return &m_warnLow;
+  }
+  if (memberName == "WarnHigh") {
+    return &m_warnHigh;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::BinaryLogicState::get(const std::string &memberName)
+    -> N2KMonitoring::BinaryLogicState::BinaryLogicStateValue {
+  if (memberName == "Dipswitch") {
+    return &m_dipswitch;
+  }
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "States") {
+    return &m_states;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+auto N2KMonitoring::BinaryLogicState::get(const std::string &memberName) const
+    -> N2KMonitoring::BinaryLogicState::BinaryLogicStateValueConst {
+  if (memberName == "Dipswitch") {
+    return &m_dipswitch;
+  }
+  if (memberName == "Instance") {
+    return &m_instance;
+  }
+  if (memberName == "States") {
+    return &m_states;
+  }
+  throw std::invalid_argument("Invalid member name: " + memberName);
+}
+
+// JSON conversion implementations
+
+// Helper function implementations for enum to string conversion
+namespace N2KMonitoring::JsonHelpers {
+  std::string toString(eSystemOnState value) {
+    switch (value) {
+      case eSystemOnState::StateOff: return "StateOff";
+      case eSystemOnState::StateOn: return "StateOn";
+      case eSystemOnState::StateOnTimer: return "StateOnTimer";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eFaultState value) {
+    switch (value) {
+      case eFaultState::None: return "None";
+      case eFaultState::ConfigurationConflict: return "ConfigurationConflict";
+      case eFaultState::DipswitchConflict: return "DipswitchConflict";
+      case eFaultState::EepromFailure: return "EepromFailure";
+      case eFaultState::NoCZoneNetwork: return "NoCZoneNetwork";
+      case eFaultState::LowRunCurrent: return "LowRunCurrent";
+      case eFaultState::OverCurrent: return "OverCurrent";
+      case eFaultState::ShortCircuit: return "ShortCircuit";
+      case eFaultState::MissingCommander: return "MissingCommander";
+      case eFaultState::MissingModeCommander: return "MissingModeCommander";
+      case eFaultState::ReverseCurrent: return "ReverseCurrent";
+      case eFaultState::CurrentCalibration: return "CurrentCalibration";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eSourceAvailable value) {
+    switch (value) {
+      case eSourceAvailable::SourceInvalid: return "SourceInvalid";
+      case eSourceAvailable::SourceUnAvailable: return "SourceUnAvailable";
+      case eSourceAvailable::SourceAvailable: return "SourceAvailable";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eEngineState value) {
+    switch (value) {
+      case eEngineState::Dead: return "Dead";
+      case eEngineState::Stall: return "Stall";
+      case eEngineState::Crank: return "Crank";
+      case eEngineState::Run: return "Run";
+      case eEngineState::PowerOff: return "PowerOff";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eHVACOperatingMode value) {
+    switch (value) {
+      case eHVACOperatingMode::NoChange: return "NoChange";
+      case eHVACOperatingMode::Off: return "Off";
+      case eHVACOperatingMode::Moisture: return "Moisture";
+      case eHVACOperatingMode::Auto: return "Auto";
+      case eHVACOperatingMode::Heat: return "Heat";
+      case eHVACOperatingMode::Cool: return "Cool";
+      case eHVACOperatingMode::AutoAux: return "AutoAux";
+      case eHVACOperatingMode::Aux: return "Aux";
+      case eHVACOperatingMode::FanOnly: return "FanOnly";
+      case eHVACOperatingMode::Pet: return "Pet";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eAwningState value) {
+    switch (value) {
+      case eAwningState::AwningNoPower: return "AwningNoPower";
+      case eAwningState::AwningParked: return "AwningParked";
+      case eAwningState::AwningTiltedLeft: return "AwningTiltedLeft";
+      case eAwningState::AwningTiltedLeftRight: return "AwningTiltedLeftRight";
+      case eAwningState::AwningTiltedRight: return "AwningTiltedRight";
+      case eAwningState::AwningOpenUnknown: return "AwningOpenUnknown";
+      case eAwningState::AwningOpenFull: return "AwningOpenFull";
+      case eAwningState::AwningMoving: return "AwningMoving";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eGeneratorState value) {
+    switch (value) {
+      case eGeneratorState::GeneratorOff: return "GeneratorOff";
+      case eGeneratorState::GeneratorOn: return "GeneratorOn";
+      case eGeneratorState::GeneratorUnknown: return "GeneratorUnknown";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eInverterChargerEnabled value) {
+    switch (value) {
+      case eInverterChargerEnabled::Off: return "Off";
+      case eInverterChargerEnabled::On: return "On";
+      case eInverterChargerEnabled::Error: return "Error";
+      case eInverterChargerEnabled::Unavailable: return "Unavailable";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eInverterState value) {
+    switch (value) {
+      case eInverterState::Inverting: return "Inverting";
+      case eInverterState::ACPassthru: return "ACPassthru";
+      case eInverterState::LoadSense: return "LoadSense";
+      case eInverterState::Fault: return "Fault";
+      case eInverterState::Disabled: return "Disabled";
+      case eInverterState::Charging: return "Charging";
+      case eInverterState::EnergySaving: return "EnergySaving";
+      case eInverterState::Supporting: return "Supporting";
+      case eInverterState::EnergySaving2: return "EnergySaving2";
+      case eInverterState::Supporting2: return "Supporting2";
+      case eInverterState::Error: return "Error";
+      case eInverterState::DataNotAvailable: return "DataNotAvailable";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eChargerState value) {
+    switch (value) {
+      case eChargerState::NotCharging: return "NotCharging";
+      case eChargerState::Bulk: return "Bulk";
+      case eChargerState::Absorption: return "Absorption";
+      case eChargerState::Overcharge: return "Overcharge";
+      case eChargerState::Equalize: return "Equalize";
+      case eChargerState::Float: return "Float";
+      case eChargerState::NoFloat: return "NoFloat";
+      case eChargerState::ConstantVI: return "ConstantVI";
+      case eChargerState::Disabled: return "Disabled";
+      case eChargerState::Fault: return "Fault";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eTyreStatus value) {
+    switch (value) {
+      case eTyreStatus::Ok: return "Ok";
+      case eTyreStatus::Leak: return "Leak";
+      case eTyreStatus::Error: return "Error";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eTyreLimitStatus value) {
+    switch (value) {
+      case eTyreLimitStatus::ExtremeOverPressure: return "ExtremeOverPressure";
+      case eTyreLimitStatus::OverPressure: return "OverPressure";
+      case eTyreLimitStatus::NoAlarm: return "NoAlarm";
+      case eTyreLimitStatus::LowPressure: return "LowPressure";
+      case eTyreLimitStatus::ExtremeLowPressure: return "ExtremeLowPressure";
+      case eTyreLimitStatus::NA: return "NA";
+      case eTyreLimitStatus::Error: return "Error";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eAudioStatus value) {
+    switch (value) {
+      case eAudioStatus::AudioStatusInitialising: return "AudioStatusInitialising";
+      case eAudioStatus::AudioStatusReady: return "AudioStatusReady";
+      case eAudioStatus::AudioStatusUnknown: return "AudioStatusUnknown";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eAudioSource value) {
+    switch (value) {
+      case eAudioSource::VesselAlarm: return "VesselAlarm";
+      case eAudioSource::AM: return "AM";
+      case eAudioSource::FM: return "FM";
+      case eAudioSource::Weather: return "Weather";
+      case eAudioSource::DAB: return "DAB";
+      case eAudioSource::AUX: return "AUX";
+      case eAudioSource::USB: return "USB";
+      case eAudioSource::CD: return "CD";
+      case eAudioSource::MP3: return "MP3";
+      case eAudioSource::AppleiOS: return "AppleiOS";
+      case eAudioSource::Android: return "Android";
+      case eAudioSource::Bluetooth: return "Bluetooth";
+      case eAudioSource::SiriusXM: return "SiriusXM";
+      case eAudioSource::Pandora: return "Pandora";
+      case eAudioSource::Spotify: return "Spotify";
+      case eAudioSource::Slacker: return "Slacker";
+      case eAudioSource::Songza: return "Songza";
+      case eAudioSource::AppleRadio: return "AppleRadio";
+      case eAudioSource::LastFM: return "LastFM";
+      case eAudioSource::Ethernet: return "Ethernet";
+      case eAudioSource::VideoMP4: return "VideoMP4";
+      case eAudioSource::VideoDVD: return "VideoDVD";
+      case eAudioSource::VideoBlueRay: return "VideoBlueRay";
+      case eAudioSource::HDMI: return "HDMI";
+      case eAudioSource::Video: return "Video";
+      case eAudioSource::NoSource: return "NoSource";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eContactorOnState value) {
+    switch (value) {
+      case eContactorOnState::ContactorOff: return "ContactorOff";
+      case eContactorOnState::ContactorOn: return "ContactorOn";
+      case eContactorOnState::ContactorAvailable: return "ContactorAvailable";
+      case eContactorOnState::ContactorUnAvailable: return "ContactorUnAvailable";
+      case eContactorOnState::ContactorFault: return "ContactorFault";
+      case eContactorOnState::ContactorOverride: return "ContactorOverride";
+      case eContactorOnState::ContactorStarting: return "ContactorStarting";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eGNSSMethod value) {
+    switch (value) {
+      case eGNSSMethod::NoFix: return "NoFix";
+      case eGNSSMethod::StandardFix: return "StandardFix";
+      case eGNSSMethod::DifferentialFix: return "DifferentialFix";
+      case eGNSSMethod::PreciseFix: return "PreciseFix";
+      case eGNSSMethod::RtkInt: return "RtkInt";
+      case eGNSSMethod::RtkFloat: return "RtkFloat";
+      case eGNSSMethod::Estimated: return "Estimated";
+      case eGNSSMethod::Manual: return "Manual";
+      case eGNSSMethod::Simulator: return "Simulator";
+      case eGNSSMethod::Error: return "Error";
+      case eGNSSMethod::Null: return "Null";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eGNSSFixType value) {
+    switch (value) {
+      case eGNSSFixType::FixNA: return "FixNA";
+      case eGNSSFixType::Fix2D: return "Fix2D";
+      case eGNSSFixType::Fix3D: return "Fix3D";
+      default: return "Unknown";
+    }
+  }
+  
+  std::string toString(eHealth value) {
+    switch (value) {
+      case eHealth::HealthOk: return "HealthOk";
+      case eHealth::HealthBad: return "HealthBad";
+      case eHealth::HealthNone: return "HealthNone";
+      default: return "Unknown";
+    }
+  }
+  
+  // External enum types from configdata.h
+  std::string toString(MonitoringType::eTankType value) {
+    return MonitoringType::to_string(value);
+  }
+  
+  std::string toString(MeteringDevice::eACLine value) {
+    return MeteringDevice::to_string(value);
+  }
+}
+
+// Class tojson() method implementations
+json N2KMonitoring::Circuit::tojson() const {
+  json result;
+  result["id"] = m_id;
+  result["systemsOn"] = JsonHelpers::valueToJson(m_systemsOn);
+  result["level"] = JsonHelpers::valueToJson(m_level);
+  result["current"] = JsonHelpers::valueToJson(m_current);
+  result["fault"] = JsonHelpers::valueToJson(m_fault);
+  result["onCount"] = JsonHelpers::valueToJson(m_onCount);
+  result["onTime"] = JsonHelpers::valueToJson(m_onTime);
+  result["sequentialState"] = JsonHelpers::valueToJson(m_sequentialState);
+  result["modesSystemOn"] = JsonHelpers::valueToJson(m_modesSystemOn);
+  result["aCSourceAvailable"] = JsonHelpers::valueToJson(m_aCSourceAvailable);
+  result["isOffline"] = JsonHelpers::valueToJson(m_isOffline);
+  return result;
+}
+
+json N2KMonitoring::Tank::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["levelPercent"] = JsonHelpers::valueToJson(m_levelPercent);
+  result["level"] = JsonHelpers::valueToJson(m_level);
+  result["capacity"] = JsonHelpers::valueToJson(m_capacity);
+  result["tankType"] = JsonHelpers::valueToJson(m_tankType);
+  return result;
+}
+
+json N2KMonitoring::Engine::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["speed"] = JsonHelpers::valueToJson(m_speed);
+  result["boostPressure"] = JsonHelpers::valueToJson(m_boostPressure);
+  result["trim"] = JsonHelpers::valueToJson(m_trim);
+  result["oilPressure"] = JsonHelpers::valueToJson(m_oilPressure);
+  result["oilTemperature"] = JsonHelpers::valueToJson(m_oilTemperature);
+  result["temperature"] = JsonHelpers::valueToJson(m_temperature);
+  result["alternatorPotential"] = JsonHelpers::valueToJson(m_alternatorPotential);
+  result["fuelRate"] = JsonHelpers::valueToJson(m_fuelRate);
+  result["totalEngineHours"] = JsonHelpers::valueToJson(m_totalEngineHours);
+  result["coolantPressure"] = JsonHelpers::valueToJson(m_coolantPressure);
+  result["coolantTemperature"] = JsonHelpers::valueToJson(m_coolantTemperature);
+  result["fuelPressure"] = JsonHelpers::valueToJson(m_fuelPressure);
+  result["discreteStatus1"] = JsonHelpers::valueToJson(m_discreteStatus1);
+  result["discreteStatus2"] = JsonHelpers::valueToJson(m_discreteStatus2);
+  result["percentEngineLoad"] = JsonHelpers::valueToJson(m_percentEngineLoad);
+  result["percentEngineTorque"] = JsonHelpers::valueToJson(m_percentEngineTorque);
+  result["engineState"] = JsonHelpers::valueToJson(m_engineState);
+  result["activeEnginesId"] = JsonHelpers::valueToJson(m_activeEnginesId);
+  return result;
+}
+
+json N2KMonitoring::ACLine::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["line"] = static_cast<int>(m_line);
+  result["voltage"] = JsonHelpers::valueToJson(m_voltage);
+  result["current"] = JsonHelpers::valueToJson(m_current);
+  result["frequency"] = JsonHelpers::valueToJson(m_frequency);
+  result["power"] = JsonHelpers::valueToJson(m_power);
+  return result;
+}
+
+json N2KMonitoring::AC::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["acLines"] = JsonHelpers::idMapToJson(m_acLines);
+  return result;
+}
+
+json N2KMonitoring::DC::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["voltage"] = JsonHelpers::valueToJson(m_voltage);
+  result["current"] = JsonHelpers::valueToJson(m_current);
+  result["temperature"] = JsonHelpers::valueToJson(m_temperature);
+  result["stateOfCharge"] = JsonHelpers::valueToJson(m_stateOfCharge);
+  result["capacityRemaining"] = JsonHelpers::valueToJson(m_capacityRemaining);
+  result["timeRemaining"] = JsonHelpers::valueToJson(m_timeRemaining);
+  result["timeToCharge"] = JsonHelpers::valueToJson(m_timeToCharge);
+  result["timeRemainingOrToCharge"] = JsonHelpers::valueToJson(m_timeRemainingOrToCharge);
+  return result;
+}
+
+json N2KMonitoring::Temperature::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["temperature"] = JsonHelpers::valueToJson(m_temperature);
+  return result;
+}
+
+json N2KMonitoring::Pressure::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["pressure"] = JsonHelpers::valueToJson(m_pressure);
+  return result;
+}
+
+json N2KMonitoring::HVAC::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["operationMode"] = JsonHelpers::valueToJson(m_operationMode);
+  result["fanMode"] = JsonHelpers::valueToJson(m_fanMode);
+  result["fanSpeed"] = JsonHelpers::valueToJson(m_fanSpeed);
+  result["environmentSetTemperature"] = JsonHelpers::valueToJson(m_environmentSetTemperature);
+  result["environmentTemperature"] = JsonHelpers::valueToJson(m_environmentTemperature);
+  return result;
+}
+
+json N2KMonitoring::ZipdeeAwning::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["state"] = JsonHelpers::valueToJson(m_state);
+  return result;
+}
+
+json N2KMonitoring::ThirdPartyGenerator::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["onTime"] = JsonHelpers::valueToJson(m_onTime);
+  result["status"] = JsonHelpers::valueToJson(m_status);
+  return result;
+}
+
+json N2KMonitoring::InverterCharger::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["inverterInstance"] = JsonHelpers::valueToJson(m_inverterInstance);
+  result["chargerInstance"] = JsonHelpers::valueToJson(m_chargerInstance);
+  result["inverterEnable"] = JsonHelpers::valueToJson(m_inverterEnable);
+  result["inverterState"] = JsonHelpers::valueToJson(m_inverterState);
+  result["chargerEnable"] = JsonHelpers::valueToJson(m_chargerEnable);
+  result["chargerState"] = JsonHelpers::valueToJson(m_chargerState);
+  return result;
+}
+
+json N2KMonitoring::TyrePressure::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["pressure"] = JsonHelpers::valueToJson(m_pressure);
+  result["temperature"] = JsonHelpers::valueToJson(m_temperature);
+  result["status"] = JsonHelpers::valueToJson(m_status);
+  result["limitStatus"] = JsonHelpers::valueToJson(m_limitStatus);
+  return result;
+}
+
+json N2KMonitoring::AudioStereo::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["power"] = JsonHelpers::valueToJson(m_power);
+  result["mute"] = JsonHelpers::valueToJson(m_mute);
+  result["audioStatus"] = JsonHelpers::valueToJson(m_audioStatus);
+  result["sourceMode"] = JsonHelpers::valueToJson(m_sourceMode);
+  result["volume"] = JsonHelpers::valueToJson(m_volume);
+  return result;
+}
+
+json N2KMonitoring::ACMainContactor::tojson() const {
+  json result;
+  result["systemStateId"] = m_systemStateId;
+  result["acContactorSystemsState"] = JsonHelpers::valueToJson(m_acContactorSystemsState);
+  result["acContactorSourceAvailable"] = JsonHelpers::valueToJson(m_acContactorSourceAvailable);
+  result["reversePolarity"] = JsonHelpers::valueToJson(m_reversePolarity);
+  result["acContactorAutoChangeOver"] = JsonHelpers::valueToJson(m_acContactorAutoChangeOver);
+  result["manualOverride"] = JsonHelpers::valueToJson(m_manualOverride);
+  return result;
+}
+
+json N2KMonitoring::GNSS::tojson() const {
+  json result;
+  result["instance"] = m_instance;
+  result["latitude"] = JsonHelpers::valueToJson(m_latitude);
+  result["longitude"] = JsonHelpers::valueToJson(m_longitude);
+  result["cog"] = JsonHelpers::valueToJson(m_cog);
+  result["sog"] = JsonHelpers::valueToJson(m_sog);
+  result["magneticVariation"] = JsonHelpers::valueToJson(m_magneticVariation);
+  result["utcDateTime"] = m_utcDateTime;
+  result["timeOffset"] = JsonHelpers::valueToJson(m_timeOffset);
+  result["satellitesInFix"] = JsonHelpers::valueToJson(m_satellitesInFix);
+  result["bestOfFourSatellitesSNR"] = JsonHelpers::valueToJson(m_bestOfFourSatellitesSNR);
+  result["method"] = JsonHelpers::valueToJson(m_method);
+  result["fixType"] = JsonHelpers::valueToJson(m_fixType);
+  result["hdop"] = JsonHelpers::valueToJson(m_hdop);
+  result["pdop"] = JsonHelpers::valueToJson(m_pdop);
+  result["vdop"] = JsonHelpers::valueToJson(m_vdop);
+  result["latitudeDeg"] = JsonHelpers::valueToJson(m_latitudeDeg);
+  result["longitudeDeg"] = JsonHelpers::valueToJson(m_longitudeDeg);
+  return result;
+}
+
+json N2KMonitoring::MonitoringKeyValue::tojson() const {
+  json result;
+  result["valid"] = m_valid;
+  result["value"] = m_value;
+  result["limitValid"] = m_limitValid;
+  result["min"] = m_min;
+  result["max"] = m_max;
+  result["warnLow"] = m_warnLow;
+  result["warnHigh"] = m_warnHigh;
+  return result;
+}
+
+json N2KMonitoring::BinaryLogicState::tojson() const {
+  json result;
+  result["dipswitch"] = m_dipswitch;
+  result["instance"] = m_instance;
+  result["states"] = JsonHelpers::valueToJson(m_states);
+  return result;
+}
+
+json N2KMonitoring::NetworkStatus::tojson() const {
+  json result;
+  result["ethernetStatus"] = m_ethernetStatus;
+  result["ethernetInternetConnectivity"] = m_ethernetInternetConnectivity;
+  result["ethernetIp"] = m_ethernetIp;
+  result["ethernetId"] = m_ethernetId;
+  result["wifiStatus"] = m_wifiStatus;
+  result["wifiInternetConnectivity"] = m_wifiInternetConnectivity;
+  result["wifiIp"] = m_wifiIp;
+  result["wifiSsid"] = m_wifiSsid;
+  result["wifiSecurity"] = m_wifiSecurity;
+  result["wifiType"] = m_wifiType;
+  result["wifiChannel"] = m_wifiChannel;
+  result["wifiSignalStrengthDbm"] = m_wifiSignalStrengthDbm;
+  result["hotspotStatus"] = m_hotspotStatus;
+  result["hotspotIp"] = m_hotspotIp;
+  result["hotspotSsid"] = m_hotspotSsid;
+  result["hotspotPassword"] = m_hotspotPassword;
+  result["hotspotSecurity"] = m_hotspotSecurity;
+  result["hotspotType"] = m_hotspotType;
+  result["hotspotChannel"] = m_hotspotChannel;
+  result["cellularStatus"] = m_cellularStatus;
+  result["celllularInternetConnectivity"] = m_celllularInternetConnectivity;
+  result["cellularIp"] = m_cellularIp;
+  result["cellularOperator"] = m_cellularOperator;
+  result["cellularType"] = m_cellularType;
+  result["cellularSignalStrengthDbm"] = m_cellularSignalStrengthDbm;
+  result["cellularSimIccid"] = m_cellularSimIccid;
+  result["cellularSimEid"] = m_cellularSimEid;
+  result["cellularSimImsi"] = m_cellularSimImsi;
+  return result;
+}
+
+json N2KMonitoring::SnapshotInstanceIdMap::tojson() const {
+  json result;
+  result["circuits"] = JsonHelpers::idMapToJson(m_circuits);
+  result["modes"] = JsonHelpers::idMapToJson(m_modes);
+  result["tanks"] = JsonHelpers::idMapToJson(m_tanks);
+  result["engines"] = JsonHelpers::idMapToJson(m_engines);
+  result["ac"] = JsonHelpers::idMapToJson(m_ac);
+  result["dc"] = JsonHelpers::idMapToJson(m_dc);
+  result["temperatures"] = JsonHelpers::idMapToJson(m_temperatures);
+  result["pressures"] = JsonHelpers::idMapToJson(m_pressures);
+  result["hvacs"] = JsonHelpers::idMapToJson(m_hvacs);
+  result["awnings"] = JsonHelpers::idMapToJson(m_awnings);
+  result["thirdPartyGenerators"] = JsonHelpers::idMapToJson(m_thirdPartyGenerators);
+  result["inverterChargers"] = JsonHelpers::idMapToJson(m_inverterChargers);
+  result["tyrepressures"] = JsonHelpers::idMapToJson(m_tyrepressures);
+  result["audioStereos"] = JsonHelpers::idMapToJson(m_audioStereos);
+  result["acMainContactors"] = JsonHelpers::idMapToJson(m_acMainContactors);
+  result["gnss"] = JsonHelpers::idMapToJson(m_gnss);
+  result["monitoringKeyValue"] = JsonHelpers::idMapToJson(m_monitoringKeyValue);
+  result["binaryLogicState"] = JsonHelpers::idMapToJson(m_binaryLogicState);
+  if (m_networkStatus) {
+    result["networkStatus"] = m_networkStatus->tojson();
+  } else {
+    result["networkStatus"] = nullptr;
+  }
+  result["timeStamp"] = m_timeStamp;
+  return result;
+}
+
+json N2KMonitoring::HealthStatus::tojson() const {
+  json result;
+  result["serviceThread"] = JsonHelpers::toString(m_serviceThread);
+  result["networkThread"] = JsonHelpers::toString(m_networkThread);
+  result["scThread"] = JsonHelpers::toString(m_scThread);
+  result["gnssThread"] = JsonHelpers::toString(m_gnssThread);
+  result["gnssLatLon"] = JsonHelpers::toString(m_gnssLatLon);
+  result["gnssFix"] = JsonHelpers::toString(m_gnssFix);
+  return result;
+}
+
+json N2KMonitoring::MonitoringKeyValueMap::tojson() const {
+  json result;
+  result["keyValueMap"] = JsonHelpers::idMapToJson(m_keyValueMap);
+  return result;
+}
+
+// Global to_json function implementations
+void N2KMonitoring::to_json(nlohmann::json &j, const Circuit &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const Tank &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const Engine &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const ACLine &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const AC &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const DC &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const Temperature &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const Pressure &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const HVAC &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const ZipdeeAwning &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const ThirdPartyGenerator &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const InverterCharger &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const TyrePressure &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const AudioStereo &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const ACMainContactor &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const GNSS &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const MonitoringKeyValue &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const BinaryLogicState &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const NetworkStatus &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const SnapshotInstanceIdMap &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const HealthStatus &c) { j = c.tojson(); }
+void N2KMonitoring::to_json(nlohmann::json &j, const MonitoringKeyValueMap &c) { j = c.tojson(); }

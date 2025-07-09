@@ -1,10 +1,16 @@
 #pragma once
 
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
+#include <variant>
 
 #include "modules/czone/configdata.h"
+#include "utils/json.hpp"
+
+using json = nlohmann::json;
 
 namespace N2KMonitoring {
 
@@ -236,6 +242,60 @@ using ValueContactorOnState = Value<eContactorOnState>;
 using ValueGNSSMethod = Value<eGNSSMethod>;
 using ValueGNSSFixType = Value<eGNSSFixType>;
 
+// JSON conversion helper functions
+namespace JsonHelpers {
+  // Enum to string conversion functions
+  std::string toString(eSystemOnState value);
+  std::string toString(eFaultState value);
+  std::string toString(eSourceAvailable value);
+  std::string toString(eEngineState value);
+  std::string toString(eHVACOperatingMode value);
+  std::string toString(eAwningState value);
+  std::string toString(eGeneratorState value);
+  std::string toString(eInverterChargerEnabled value);
+  std::string toString(eInverterState value);
+  std::string toString(eChargerState value);
+  std::string toString(eTyreStatus value);
+  std::string toString(eTyreLimitStatus value);
+  std::string toString(eAudioStatus value);
+  std::string toString(eAudioSource value);
+  std::string toString(eContactorOnState value);
+  std::string toString(eGNSSMethod value);
+  std::string toString(eGNSSFixType value);
+  std::string toString(eHealth value);
+  
+  // External enum types from configdata.h
+  std::string toString(MonitoringType::eTankType value);
+  std::string toString(MeteringDevice::eACLine value);
+  
+  // Template function for Value<T> JSON serialization
+  template<typename T>
+  json valueToJson(const Value<T>& value) {
+    json result;
+    result["valid"] = value.m_valid;
+    if constexpr (std::is_enum_v<T>) {
+      result["value"] = toString(value.m_value);
+    } else {
+      result["value"] = value.m_value;
+    }
+    return result;
+  }
+  
+  // Template function for IdMap<T> JSON serialization
+  template<typename T>
+  json idMapToJson(const IdMap<T>& map) {
+    json result = json::array();
+    for (const auto& [id, item] : map) {
+      if (item) {
+        json entry = item->tojson();
+        entry["id"] = id;
+        result.push_back(entry);
+      }
+    }
+    return result;
+  }
+}
+
 class Circuit {
 public:
   int m_id;
@@ -251,6 +311,16 @@ public:
   ValueBool m_isOffline;
 
   bool operator==(const Circuit &other) const = default;
+
+  using CircuitValue = std::variant<int *, ValueSystemOnState *, ValueU32 *, ValueF *, ValueFaultState *,
+                                    ValueSourceAvailable *, ValueBool *>;
+  using CircuitValueConst = std::variant<const int *, const ValueSystemOnState *, const ValueU32 *, const ValueF *,
+                                         const ValueFaultState *, const ValueSourceAvailable *, const ValueBool *>;
+
+  auto get(const std::string &memberName) -> CircuitValue;
+  auto get(const std::string &memberName) const -> CircuitValueConst;
+  
+  json tojson() const;
 };
 
 class Tank {
@@ -262,6 +332,14 @@ public:
   ValueTankType m_tankType;
 
   bool operator==(const Tank &other) const = default;
+
+  using TankValue = std::variant<uint32_t *, ValueU32 *, ValueTankType *>;
+  using TankValueConst = std::variant<const uint32_t *, const ValueU32 *, const ValueTankType *>;
+
+  auto get(const std::string &memberName) -> TankValue;
+  auto get(const std::string &memberName) const -> TankValueConst;
+  
+  json tojson() const;
 };
 
 class Engine {
@@ -295,6 +373,15 @@ public:
   ValueU32 m_activeEnginesId;
 
   bool operator==(const Engine &other) const = default;
+
+  using EngineValue = std::variant<uint32_t *, ValueU32 *, ValueF *, ValueS32 *, ValueEngineState *>;
+  using EngineValueConst =
+      std::variant<const uint32_t *, const ValueU32 *, const ValueF *, const ValueS32 *, const ValueEngineState *>;
+
+  auto get(const std::string &memberName) -> EngineValue;
+  auto get(const std::string &memberName) const -> EngineValueConst;
+  
+  json tojson() const;
 };
 
 class ACLine {
@@ -307,6 +394,14 @@ public:
   ValueF m_power;
 
   bool operator==(const ACLine &other) const = default;
+
+  using ACLineValue = std::variant<uint32_t *, MeteringDevice::eACLine *, ValueF *>;
+  using ACLineValueConst = std::variant<const uint32_t *, const MeteringDevice::eACLine *, const ValueF *>;
+
+  auto get(const std::string &memberName) -> ACLineValue;
+  auto get(const std::string &memberName) const -> ACLineValueConst;
+  
+  json tojson() const;
 };
 
 class AC {
@@ -315,6 +410,14 @@ public:
   IdMap<ACLine> m_acLines;
 
   bool operator==(const AC &other) const;
+
+  using ACValue = std::variant<uint32_t *, IdMap<ACLine> *>;
+  using ACValueConst = std::variant<const uint32_t *, const IdMap<ACLine> *>;
+
+  auto get(const std::string &memberName) -> ACValue;
+  auto get(const std::string &memberName) const -> ACValueConst;
+  
+  json tojson() const;
 };
 
 class DC {
@@ -330,6 +433,14 @@ public:
   ValueU32 m_timeRemainingOrToCharge;
 
   bool operator==(const DC &other) const = default;
+
+  using DCValue = std::variant<uint32_t *, ValueF *, ValueS32 *, ValueU32 *>;
+  using DCValueConst = std::variant<const uint32_t *, const ValueF *, const ValueS32 *, const ValueU32 *>;
+
+  auto get(const std::string &memberName) -> DCValue;
+  auto get(const std::string &memberName) const -> DCValueConst;
+  
+  json tojson() const;
 };
 
 class Temperature {
@@ -338,6 +449,14 @@ public:
   ValueF m_temperature;
 
   bool operator==(const Temperature &other) const = default;
+
+  using TemperatureValue = std::variant<uint32_t *, ValueF *>;
+  using TemperatureValueConst = std::variant<const uint32_t *, const ValueF *>;
+
+  auto get(const std::string &memberName) -> TemperatureValue;
+  auto get(const std::string &memberName) const -> TemperatureValueConst;
+  
+  json tojson() const;
 };
 
 class Pressure {
@@ -346,6 +465,14 @@ public:
   ValueF m_pressure;
 
   bool operator==(const Pressure &other) const = default;
+
+  using PressureValue = std::variant<uint32_t *, ValueF *>;
+  using PressureValueConst = std::variant<const uint32_t *, const ValueF *>;
+
+  auto get(const std::string &memberName) -> PressureValue;
+  auto get(const std::string &memberName) const -> PressureValueConst;
+  
+  json tojson() const;
 };
 
 class HVAC {
@@ -358,6 +485,15 @@ public:
   ValueF m_environmentTemperature;    // Celcius
 
   bool operator==(const HVAC &other) const = default;
+
+  using HVACValue = std::variant<uint32_t *, ValueF *, ValueHVACOperatingMode *, ValueU32 *>;
+  using HVACValueConst =
+      std::variant<const uint32_t *, const ValueF *, const ValueHVACOperatingMode *, const ValueU32 *>;
+
+  auto get(const std::string &memberName) -> HVACValue;
+  auto get(const std::string &memberName) const -> HVACValueConst;
+  
+  json tojson() const;
 };
 
 class ZipdeeAwning {
@@ -366,6 +502,14 @@ public:
   ValueAwningState m_state;
 
   bool operator==(const ZipdeeAwning &other) const = default;
+
+  using ZipdeeAwningValue = std::variant<uint32_t *, ValueAwningState *>;
+  using ZipdeeAwningValueConst = std::variant<const uint32_t *, const ValueAwningState *>;
+
+  auto get(const std::string &memberName) -> ZipdeeAwningValue;
+  auto get(const std::string &memberName) const -> ZipdeeAwningValueConst;
+  
+  json tojson() const;
 };
 
 class ThirdPartyGenerator {
@@ -375,6 +519,14 @@ public:
   ValueGeneratorState m_status;
 
   bool operator==(const ThirdPartyGenerator &other) const = default;
+
+  using ThirdPartyGeneratorValue = std::variant<uint32_t *, ValueU32 *, ValueGeneratorState *>;
+  using ThirdPartyGeneratorValueConst = std::variant<const uint32_t *, const ValueU32 *, const ValueGeneratorState *>;
+
+  auto get(const std::string &memberName) -> ThirdPartyGeneratorValue;
+  auto get(const std::string &memberName) const -> ThirdPartyGeneratorValueConst;
+  
+  json tojson() const;
 };
 
 class InverterCharger {
@@ -388,6 +540,17 @@ public:
   ValueChargerState m_chargerState;
 
   bool operator==(const InverterCharger &other) const = default;
+
+  using InverterChargerValue =
+      std::variant<uint32_t *, ValueU32 *, ValueInverterChargerEnabled *, ValueInverterState *, ValueChargerState *>;
+  using InverterChargerValueConst =
+      std::variant<const uint32_t *, const ValueU32 *, const ValueInverterChargerEnabled *, const ValueInverterState *,
+                   const ValueChargerState *>;
+
+  auto get(const std::string &memberName) -> InverterChargerValue;
+  auto get(const std::string &memberName) const -> InverterChargerValueConst;
+  
+  json tojson() const;
 };
 
 class TyrePressure {
@@ -399,6 +562,15 @@ public:
   ValueTyreLimitStatus m_limitStatus;
 
   bool operator==(const TyrePressure &other) const = default;
+
+  using TyrePressureValue = std::variant<uint32_t *, ValueF *, ValueTyreStatus *, ValueTyreLimitStatus *>;
+  using TyrePressureValueConst =
+      std::variant<const uint32_t *, const ValueF *, const ValueTyreStatus *, const ValueTyreLimitStatus *>;
+
+  auto get(const std::string &memberName) -> TyrePressureValue;
+  auto get(const std::string &memberName) const -> TyrePressureValueConst;
+  
+  json tojson() const;
 };
 
 class AudioStereo {
@@ -411,6 +583,15 @@ public:
   ValueU32 m_volume;
 
   bool operator==(const AudioStereo &other) const = default;
+
+  using AudioStereoValue = std::variant<uint32_t *, ValueBool *, ValueAudioStatus *, ValueAudioSource *, ValueU32 *>;
+  using AudioStereoValueConst = std::variant<const uint32_t *, const ValueBool *, const ValueAudioStatus *,
+                                             const ValueAudioSource *, const ValueU32 *>;
+
+  auto get(const std::string &memberName) -> AudioStereoValue;
+  auto get(const std::string &memberName) const -> AudioStereoValueConst;
+  
+  json tojson() const;
 };
 
 class ACMainContactor {
@@ -423,6 +604,14 @@ public:
   ValueBool m_manualOverride;
 
   bool operator==(const ACMainContactor &other) const = default;
+
+  using ACMainContactorValue = std::variant<uint32_t *, ValueContactorOnState *, ValueBool *>;
+  using ACMainContactorValueConst = std::variant<const uint32_t *, const ValueContactorOnState *, const ValueBool *>;
+
+  auto get(const std::string &memberName) -> ACMainContactorValue;
+  auto get(const std::string &memberName) const -> ACMainContactorValueConst;
+  
+  json tojson() const;
 };
 
 class GNSS {
@@ -446,6 +635,17 @@ public:
   ValueDouble m_longitudeDeg; // Degrees
 
   bool operator==(const GNSS &other) const = default;
+
+  using GNSSValue = std::variant<uint32_t *, ValueF *, std::string *, ValueU32 *, ValueGNSSMethod *, ValueGNSSFixType *,
+                                 ValueDouble *, ValueS32 *>;
+  using GNSSValueConst =
+      std::variant<const uint32_t *, const ValueF *, const std::string *, const ValueU32 *, const ValueGNSSMethod *,
+                   const ValueGNSSFixType *, const ValueDouble *, const ValueS32 *>;
+
+  auto get(const std::string &memberName) -> GNSSValue;
+  auto get(const std::string &memberName) const -> GNSSValueConst;
+  
+  json tojson() const;
 };
 
 class MonitoringKeyValue {
@@ -459,6 +659,14 @@ public:
   float m_warnHigh;
 
   bool operator==(const MonitoringKeyValue &other) const = default;
+
+  using MonitoringKeyValueValue = std::variant<bool *, float *>;
+  using MonitoringKeyValueValueConst = std::variant<const bool *, const float *>;
+
+  auto get(const std::string &memberName) -> MonitoringKeyValueValue;
+  auto get(const std::string &memberName) const -> MonitoringKeyValueValueConst;
+  
+  json tojson() const;
 };
 
 class BinaryLogicState {
@@ -468,6 +676,14 @@ public:
   ValueU32 m_states;
 
   bool operator==(const BinaryLogicState &other) const = default;
+
+  using BinaryLogicStateValue = std::variant<uint32_t *, ValueU32 *>;
+  using BinaryLogicStateValueConst = std::variant<const uint32_t *, const ValueU32 *>;
+
+  auto get(const std::string &memberName) -> BinaryLogicStateValue;
+  auto get(const std::string &memberName) const -> BinaryLogicStateValueConst;
+  
+  json tojson() const;
 };
 
 class NetworkStatus {
@@ -503,6 +719,8 @@ public:
 
   bool operator==(const NetworkStatus &other) const = default;
   void clear();
+  
+  json tojson() const;
 };
 
 class SnapshotInstanceIdMap {
@@ -533,6 +751,8 @@ public:
 
   bool operator==(const SnapshotInstanceIdMap &other) const;
   void clear();
+  
+  json tojson() const;
 };
 
 class HealthStatus {
@@ -545,6 +765,8 @@ public:
   eHealth m_gnssFix;
 
   bool operator==(const HealthStatus &other) const = default;
+  
+  json tojson() const;
 };
 
 class MonitoringKeyValueMap {
@@ -553,6 +775,32 @@ public:
 
   bool operator==(const MonitoringKeyValueMap &other) const;
   void clear();
+  
+  json tojson() const;
 };
+
+// Global JSON conversion function declarations
+void to_json(nlohmann::json &j, const Circuit &c);
+void to_json(nlohmann::json &j, const Tank &c);
+void to_json(nlohmann::json &j, const Engine &c);
+void to_json(nlohmann::json &j, const ACLine &c);
+void to_json(nlohmann::json &j, const AC &c);
+void to_json(nlohmann::json &j, const DC &c);
+void to_json(nlohmann::json &j, const Temperature &c);
+void to_json(nlohmann::json &j, const Pressure &c);
+void to_json(nlohmann::json &j, const HVAC &c);
+void to_json(nlohmann::json &j, const ZipdeeAwning &c);
+void to_json(nlohmann::json &j, const ThirdPartyGenerator &c);
+void to_json(nlohmann::json &j, const InverterCharger &c);
+void to_json(nlohmann::json &j, const TyrePressure &c);
+void to_json(nlohmann::json &j, const AudioStereo &c);
+void to_json(nlohmann::json &j, const ACMainContactor &c);
+void to_json(nlohmann::json &j, const GNSS &c);
+void to_json(nlohmann::json &j, const MonitoringKeyValue &c);
+void to_json(nlohmann::json &j, const BinaryLogicState &c);
+void to_json(nlohmann::json &j, const NetworkStatus &c);
+void to_json(nlohmann::json &j, const SnapshotInstanceIdMap &c);
+void to_json(nlohmann::json &j, const HealthStatus &c);
+void to_json(nlohmann::json &j, const MonitoringKeyValueMap &c);
 
 }; // namespace N2KMonitoring

@@ -1,4 +1,5 @@
 #include "modules/czone/configdata.h"
+#include "utils/timestamp.h"
 #include <cstring>
 
 Instance::Instance() : m_enabled(false), m_instance(0) {}
@@ -573,7 +574,7 @@ AlarmGlobalStatus &AlarmGlobalStatus::operator=(AlarmGlobalStatus &&rhs) {
 }
 
 Event::Event(eEventType type)
-    : m_type(type), m_content(), m_alarmItem(), m_globalStatus(), m_czoneEvent(), m_timeStamp() {}
+    : m_type(type), m_content(), m_alarmItem(), m_globalStatus(), m_czoneEvent(), m_timeStamp(getCurrentTimeString()) {}
 
 Event::Event(const Event &rhs)
     : m_type(rhs.m_type),
@@ -2625,6 +2626,7 @@ void to_json(nlohmann::json &j, const GNSSDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const EngineDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const UiRelationshipMsg &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const BinaryLogicStateMsg &c) { j = c.tojson(); }
+void to_json(nlohmann::json &j, const Event &c) { j = c.tojson(); }
 
 json Categories::tojson() const {
   json result;
@@ -3318,6 +3320,30 @@ json ScreenConfigPageImageItem::tojson() const {
   result["Icon"] = m_icon;
   result["Name"] = m_name;
   result["HideWhenOff"] = m_hideWhenOff;
+
+  return result;
+}
+
+json Event::tojson() const {
+  json result;
+
+  result["Type"] = to_string(m_type);
+  result["Content"] = m_content;
+  result["AlarmItem"] = m_alarmItem;
+  result["GlobalStatus"] = json::object();
+  result["GlobalStatus"]["HighestEnabledSeverity"] = Alarm::to_string(m_globalStatus.get_highestEnabledSeverity());
+  result["GlobalStatus"]["HighestAcknowledgedSeverity"] =
+      Alarm::to_string(m_globalStatus.get_highestAcknowledgedSeverity());
+  result["CZoneEvent"] = json::object();
+  result["CZoneEvent"]["Type"] = m_czoneEvent.get_type();
+  result["CZoneEvent"]["Content"] =
+      std::string(reinterpret_cast<const char *>(m_czoneEvent.get_content().data()), m_czoneEvent.get_content().size());
+  result["CZoneEvent"]["RawAlarm"] = std::string(reinterpret_cast<const char *>(m_czoneEvent.get_rawAlarm().data()),
+                                                 m_czoneEvent.get_rawAlarm().size());
+  result["CZoneEvent"]["DeviceItem"] = std::string(reinterpret_cast<const char *>(m_czoneEvent.get_deviceItem().data()),
+                                                   m_czoneEvent.get_deviceItem().size());
+
+  result["TimeStamp"] = m_timeStamp;
 
   return result;
 }

@@ -91,6 +91,7 @@ void CoreManager::start() {
   // Initialize and run D-Bus service, register Czone interface
   m_dbusService->initialize();
   czoneInterface->registerDbus(m_dbusService);
+  czoneData->registerDbus(m_dbusService);
   m_dbusService->run();
 
   // Mark as running and enter main loop
