@@ -168,3 +168,119 @@ class WaterTankType(str, Enum):
     BLACKWATER = "blackWater"
     WASTEWATER = "wasteWater"
     FRESHWATER = "freshWater"
+
+
+class ACMeterStates(str, Enum):
+    ComponentStatus = "ComponentStatus"
+    Voltage = "Voltage"
+    Current = "Current"
+    Frequency = "Frequency"
+    Power = "Power"
+
+
+class DCMeterStates(str, Enum):
+    Voltage = "Voltage"
+    Current = "Current"
+    StateOfCharge = "StateOfCharge"
+    Temperature = "Temperature"
+    CapacityRemaining = "CapacityRemaining"
+    TimeRemaining = "TimeRemaining"
+    TimeToCharge = "TimeToCharge"
+    ComponentStatus = "ComponentStatus"
+
+
+class CombiChargerStates(str, Enum):
+    ComponentStatus = "ComponentStatus"
+    ChargerEnable = "ChargerEnable"
+    ChargerState = "ChargerState"
+
+
+class CircuitStates(str, Enum):
+    ComponentStatus = "ComponentStatus"
+    Current = "Current"
+    Level = "Level"
+
+
+class BLSStates(str, Enum):
+    States = "States"
+
+
+class ClimateStates(str, Enum):
+    ComponentStatus = "ComponentStatus"
+    Mode = "Mode"
+    SetPoint = "SetPoint"
+    AmbientTemperature = "AmbientTemperature"
+    FanSpeed = "FanSpeed"
+    FanMode = "FanMode"
+
+
+class GNSSStates(str, Enum):
+    ComponentStatus = "ComponentStatus"
+    FixType = "FixType"
+    LatitudeDeg = "LatitudeDeg"
+    LongitudeDeg = "LongitudeDeg"
+    Sog = "Sog"
+
+
+class HubStates(str, Enum):
+    ComponentStatus = "ComponentStatus"
+    EthernetInternetConnectivity = "EthernetInternetConnectivity"
+    WifiInternetConnectivity = "WifiInternetConnectivity"
+    WifiSignalStrength = "WifiSignalStrength"
+    WifiSsid = "WifiSsid"
+    WifiType = "WifiType"
+    CellularInternetConnectivity = "CellularInternetConnectivity"
+    CellularType = "CellularType"
+    CellularSignalStrengthDbm = "CellularSignalStrengthDbm"
+    CellularSimIccid = "CellularSimIccid"
+    CellularSimEid = "CellularSimEid"
+
+
+class CombiInverterStates(str, Enum):
+    ComponentStatus = "ComponentStatus"
+    InverterEnable = "InverterEnable"
+    InverterState = "InverterState"
+
+
+class MarineEngineStates(str, Enum):
+    ComponentStatus = "ComponentStatus"
+    Speed = "Speed"
+    EngineHours = "EngineHours"
+    CoolantTemperature = "CoolantTemperature"
+    CoolantPressure = "CoolantPressure"
+    OilPressure = "OilPressure"
+    EngineState = "EngineState"
+
+
+class TankStates(str, Enum):
+    ComponentStatus = "ComponentStatus"
+    Level = "Level"
+    LevelPercent = "LevelPercent"
+
+
+class ChargerStatus(str, Enum):
+    ABSORPTION = "Absorption"
+    BULK = "Bulk"
+    CONSTANTVI = "ConstantVI"
+    NOTCHARGING = "NotCharging"
+    EQUALIZE = "Equalize"
+    OVERCHARGE = "Overcharge"
+    FLOAT = "Float"
+    NOFLOAT = "NoFloat"
+    FAULT = "Fault"
+    DISABLED = "Disabled"
+
+
+class InverterStatus(str, Enum):
+    INVERTING = "Inverting"
+    AC_PASSTHRU = "AcPassthru"
+    LOAD_SENSE = "LoadSense"
+    FAULT = "Fault"
+    DISABLED = "Disabled"
+    CHARGING = "Charging"
+    ENERGY_SAVING = "EnergySaving"
+    ENERGY_SAVING2 = "EnergySaving2"
+    SUPPORTING = "Supporting"
+    SUPPORTING2 = "Supporting2"
+    ERROR = "Error"
+    DATA_NOT_AVAILABLE = "DataNotAvailable"

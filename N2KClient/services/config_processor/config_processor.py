@@ -40,7 +40,6 @@ from N2KClient.models.empower_system.tank import (
 from N2KClient.models.common_enums import ThingType
 from N2KClient.models.empower_system.climate import Climate
 from N2KClient.models.constants import Constants
-from N2KClient.models.constants import JsonKeys
 from N2KClient.models.empower_system.light import CircuitLight
 from N2KClient.models.empower_system.bilge_pump import CircuitBilgePump
 from N2KClient.models.empower_system.pump import CircuitWaterPump

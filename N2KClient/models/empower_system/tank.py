@@ -11,7 +11,7 @@ from ..common_enums import WaterTankType
 from reactivex import operators as ops
 import reactivex as rx
 from N2KClient.models.filters import Volume
-from N2KClient.models.common_enums import N2kDeviceType
+from N2KClient.models.common_enums import N2kDeviceType, TankStates
 
 
 class TankBase(Thing):
@@ -33,12 +33,15 @@ class TankBase(Thing):
             categories=categories,
             links=links,
         )
-        tank_device_id = f"{JsonKeys.TANK}.{tank.instance.instance}"
+        self.tank_device_id = f"{JsonKeys.TANK}.{tank.instance.instance}"
         if tank.tank_capacity is not None and tank.tank_capacity != 0:
             self.metadata[
                 f"{Constants.empower}:{Constants.tank}.{Constants.capacity}"
             ] = tank.tank_capacity
+        self.define_component_status_channel(n2k_devices)
+        self.define_level_channels(n2k_devices)
 
+    def define_component_status_channel(self, n2k_devices: N2kDevices):
         ###################################
         # Component Status
         ###################################
@@ -53,7 +56,7 @@ class TankBase(Thing):
         )
         self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
-            tank_device_id, JsonKeys.ComponentStatus, N2kDeviceType.TANK
+            self.tank_device_id, TankStates.ComponentStatus.value, N2kDeviceType.TANK
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -70,6 +73,8 @@ class TankBase(Thing):
                 ops.distinct_until_changed(lambda state: state[Constants.state]),
             ),
         )
+
+    def define_level_channels(self, n2k_devices: N2kDevices):
         ###################################
         # Level Absolute
         ###################################
@@ -83,7 +88,7 @@ class TankBase(Thing):
         )
         self._define_channel(channel)
         level_absolute_subject = n2k_devices.get_channel_subject(
-            tank_device_id, JsonKeys.Level, N2kDeviceType.TANK
+            self.tank_device_id, TankStates.Level.value, N2kDeviceType.TANK
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -113,7 +118,7 @@ class TankBase(Thing):
         self._define_channel(channel)
 
         level_percent_subject = n2k_devices.get_channel_subject(
-            tank_device_id, JsonKeys.LevelPercent, N2kDeviceType.TANK
+            self.tank_device_id, TankStates.LevelPercent.value, N2kDeviceType.TANK
         )
         n2k_devices.set_subscription(
             channel.id,

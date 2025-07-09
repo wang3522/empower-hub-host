@@ -14,7 +14,7 @@ from N2KClient.models.n2k_configuration.category_item import CategoryItem
 from reactivex import operators as ops
 from N2KClient.models.filters import Current
 import N2KClient.util.rx as rxu
-from N2KClient.models.common_enums import N2kDeviceType
+from N2KClient.models.common_enums import N2kDeviceType, CircuitStates, BLSStates
 
 
 def get_enabled_categories(categories: list[CategoryItem]):
@@ -44,7 +44,15 @@ class CircuitThing(Thing):
         self.circuit_control_id = circuit.control_id
         self.circuit_id = circuit.id.value
 
-        circuit_device_id = f"{JsonKeys.CIRCUIT}.{self.circuit_id}"
+        self.circuit_device_id = f"{JsonKeys.CIRCUIT}.{self.circuit_id}"
+        self.type = type.value
+
+        ###############################
+        # Channels
+        ###############################
+        self.define_circuit_channels(n2k_devices, bls)
+
+    def define_circuit_component_status_channel(self, n2k_devices: N2kDevices):
         #############################
         # Component Status
         #############################
@@ -54,11 +62,13 @@ class CircuitThing(Thing):
             type=ChannelType.STRING,
             unit=Unit.NONE,
             read_only=False,
-            tags=[f"{Constants.empower}:{type.value}.{Constants.componentStatus}"],
+            tags=[f"{Constants.empower}:{self.type.value}.{Constants.componentStatus}"],
         )
         self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
-            circuit_device_id, JsonKeys.ComponentStatus, N2kDeviceType.CIRCUIT
+            self.circuit_device_id,
+            CircuitStates.ComponentStatus.value,
+            N2kDeviceType.CIRCUIT,
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -76,6 +86,7 @@ class CircuitThing(Thing):
             ),
         )
 
+    def define_circuit_current_channel(self, n2k_devices: N2kDevices):
         ##############################
         # Current
         ##############################
@@ -85,11 +96,11 @@ class CircuitThing(Thing):
             type=ChannelType.NUMBER,
             unit=Unit.ENERGY_AMP,
             read_only=True,
-            tags=[f"{Constants.empower}:{type.value}.current"],
+            tags=[f"{Constants.empower}:{self.type}.current"],
         )
         self._define_channel(channel)
         current_subject = n2k_devices.get_channel_subject(
-            circuit_device_id, JsonKeys.Current, N2kDeviceType.CIRCUIT
+            self.circuit_device_id, CircuitStates.Current.value, N2kDeviceType.CIRCUIT
         )
 
         n2k_devices.set_subscription(
@@ -100,72 +111,89 @@ class CircuitThing(Thing):
                 Current.FILTER,
             ),
         )
-        if circuit.dimmable:
-            ##############################
-            # Dimming Level
-            ##############################
-            channel = Channel(
-                id="lvl",
-                name="Level",
-                type=ChannelType.NUMBER,
-                unit=Unit.NONE,
-                read_only=False,
-                tags=[f"{Constants.empower}:{type.value}.level"],
-            )
-            self._define_channel(channel)
 
-            level_subject = n2k_devices.get_channel_subject(
-                circuit_device_id, JsonKeys.Level, N2kDeviceType.CIRCUIT
-            )
-            n2k_devices.set_subscription(
-                channel.id,
-                level_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    ops.distinct_until_changed(),
-                ),
-            )
-        else:
-            ##############################
-            # Power
-            ##############################
+    def define_circuit_level_channel(self, n2k_devices: N2kDevices):
+        ##############################
+        # Dimming Level
+        ##############################
+        channel = Channel(
+            id="lvl",
+            name="Level",
+            type=ChannelType.NUMBER,
+            unit=Unit.NONE,
+            read_only=False,
+            tags=[f"{Constants.empower}:{self.type}.level"],
+        )
+        self._define_channel(channel)
 
-            power_subject = n2k_devices.get_channel_subject(
-                circuit_device_id, JsonKeys.Level, N2kDeviceType.CIRCUIT
-            )
-            circuit_power_state = power_subject.pipe(
+        level_subject = n2k_devices.get_channel_subject(
+            self.circuit_device_id, CircuitStates.Level.value, N2kDeviceType.CIRCUIT
+        )
+        n2k_devices.set_subscription(
+            channel.id,
+            level_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                ops.map(lambda level: StateWithTS(level > 0).to_json()),
+                ops.distinct_until_changed(),
+            ),
+        )
+
+    def define_circuit_power_channel(
+        self,
+        n2k_devices: N2kDevices,
+        bls: BinaryLogicState = None,
+        circuit: Circuit = None,
+    ):
+        ##############################
+        # Power
+        ##############################
+
+        power_subject = n2k_devices.get_channel_subject(
+            self.circuit_device_id, CircuitStates.Level.value, N2kDeviceType.CIRCUIT
+        )
+        circuit_power_state = power_subject.pipe(
+            ops.filter(lambda state: state is not None),
+            ops.map(lambda level: StateWithTS(level > 0).to_json()),
+            ops.distinct_until_changed(lambda state: state[Constants.state]),
+        )
+        power_state = circuit_power_state
+        if bls is not None and power_subject is not None:
+            bls_states_subject = n2k_devices.get_channel_subject(
+                f"{JsonKeys.BINARY_LOGIC_STATE}.{bls.address}",
+                BLSStates.States.value,
+                N2kDeviceType.BINARY_LOGIC_STATE,
+            )
+
+            bls_power_state = bls_states_subject.pipe(
+                ops.filter(lambda state: state is not None),
+                ops.map(
+                    lambda state: StateWithTS(
+                        StateUtil.get_bls_state(bls.address, state)
+                    ).to_json()
+                ),
                 ops.distinct_until_changed(lambda state: state[Constants.state]),
             )
-            power_state = circuit_power_state
-            if bls is not None and power_subject is not None:
-                bls_states_subject = n2k_devices.get_channel_subject(
-                    f"{JsonKeys.BINARY_LOGIC_STATE}.{bls.address}",
-                    JsonKeys.States,
-                    N2kDeviceType.BINARY_LOGIC_STATE,
-                )
+            power_state = rx.merge(circuit_power_state, bls_power_state)
 
-                bls_power_state = bls_states_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    ops.map(
-                        lambda state: StateWithTS(
-                            StateUtil.get_bls_state(bls.address, state)
-                        ).to_json()
-                    ),
-                    ops.distinct_until_changed(lambda state: state[Constants.state]),
-                )
-                power_state = rx.merge(circuit_power_state, bls_power_state)
+        channel = Channel(
+            id="p",
+            name="Power",
+            type=ChannelType.BOOLEAN,
+            unit=Unit.NONE,
+            read_only=circuit.switch_type == 0,
+            tags=[f"{Constants.empower}:{type.value}.power"],
+        )
+        self._define_channel(channel)
+        n2k_devices.set_subscription(
+            channel.id,
+            power_state,
+        )
 
-            channel = Channel(
-                id="p",
-                name="Power",
-                type=ChannelType.BOOLEAN,
-                unit=Unit.NONE,
-                read_only=circuit.switch_type == 0,
-                tags=[f"{Constants.empower}:{type.value}.power"],
-            )
-            self._define_channel(channel)
-            n2k_devices.set_subscription(
-                channel.id,
-                power_state,
-            )
+    def define_circuit_channels(
+        self, n2k_devices: N2kDevices, bls: BinaryLogicState = None
+    ):
+        self.define_circuit_component_status_channel(n2k_devices)
+        self.define_circuit_current_channel(n2k_devices)
+        if self.circuit.dimmable:
+            self.define_circuit_level_channel(n2k_devices)
+        else:
+            self.define_circuit_power_channel(n2k_devices, bls, self.circuit)

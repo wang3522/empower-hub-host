@@ -15,11 +15,10 @@ class StateUtil:
         Returns:
         True if any attribute is CONNECTED, otherwise False.
         """
-        any_connected = False
         for status in connection_status.values():
             if status == ConnectionStatus.CONNECTED:
-                any_connected = True
-        return any_connected
+                return True
+        return False
 
     @staticmethod
     def any_true(bools: dict[int, bool]):

@@ -9,7 +9,7 @@ from ..constants import Constants, JsonKeys
 from .channel import Channel
 from ..common_enums import ChannelType, ConnectionType, Unit
 from reactivex import operators as ops
-from N2KClient.models.common_enums import N2kDeviceType
+from N2KClient.models.common_enums import N2kDeviceType, HubStates
 
 
 class Hub(Thing):
@@ -23,42 +23,16 @@ class Hub(Thing):
             id=device.dipswitch,
             categories=[Constants.hub],
         )
-        n2k_device_id = f"{JsonKeys.DEVICE}.{device.dipswitch}"
+        self.n2k_device_id = f"{JsonKeys.DEVICE}.{device.dipswitch}"
 
         self.metadata[f"{Constants.empower}:{Constants.platform}"] = Constants.hubplus
 
-        # Component Status
-        channel = Channel(
-            id="cs",
-            name="Component Status",
-            type=ChannelType.STRING,
-            unit=Unit.NONE,
-            read_only=False,
-            tags=[f"{Constants.empower}:{Constants.hub}.{Constants.componentStatus}"],
-        )
-        self._define_channel(channel)
+        self.define_hub_channels(n2k_devices)
 
-        component_status_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.ComponentStatus, N2kDeviceType.DEVICE
-        )
-        if component_status_subject is not None:
-            n2k_devices.set_subscription(
-                channel.id,
-                component_status_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    ops.map(
-                        lambda status: (
-                            ConnectionStatus.CONNECTED
-                            if status == "Connected"
-                            else "Disconnected"
-                        )
-                    ),
-                    ops.map(lambda status: StateWithTS(status).to_json()),
-                    ops.distinct_until_changed(lambda state: state[Constants.state]),
-                ),
-            )
-
+    def define_ethernet_internet_connectivity_channel(self, n2k_devices: N2kDevices):
+        ##########################
         # Ethernet Internet Connectivity
+        ##########################
         channel = Channel(
             id="eic",
             name="Ethernet Internet Connectivity",
@@ -72,7 +46,9 @@ class Hub(Thing):
         self._define_channel(channel)
 
         ethernet_internet_connectivity_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.EthernetInternetConnectivity, N2kDeviceType.DEVICE
+            self.n2k_device_id,
+            HubStates.EthernetInternetConnectivity.value,
+            N2kDeviceType.DEVICE,
         )
         if ethernet_internet_connectivity_subject is not None:
             n2k_devices.set_subscription(
@@ -83,7 +59,10 @@ class Hub(Thing):
                 ),
             )
 
+    def define_wifi_internet_connectivity_channel(self, n2k_devices: N2kDevices):
+        ##########################
         # Wifi Internet Connectivity
+        ##########################
         channel = Channel(
             id="wic",
             name="Wifi Internet Connectivity",
@@ -97,7 +76,9 @@ class Hub(Thing):
         self._define_channel(channel)
 
         wifi_internet_connectivity_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.WifiInternetConnectivity, N2kDeviceType.DEVICE
+            self.n2k_device_id,
+            HubStates.WifiInternetConnectivity.value,
+            N2kDeviceType.DEVICE,
         )
         if wifi_internet_connectivity_subject is not None:
             n2k_devices.set_subscription(
@@ -108,7 +89,10 @@ class Hub(Thing):
                 ),
             )
 
+    def define_wifi_ssid_channel(self, n2k_devices: N2kDevices):
+        ##########################
         # Wifi SSID
+        ##########################
         channel = Channel(
             id="wsd",
             name="Wifi SSID",
@@ -120,7 +104,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         wifi_ssid_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.WifiSsid, N2kDeviceType.DEVICE
+            self.n2k_device_id, HubStates.WifiSsid.value, N2kDeviceType.DEVICE
         )
         if wifi_ssid_subject is not None:
             n2k_devices.set_subscription(
@@ -131,7 +115,10 @@ class Hub(Thing):
                 ),
             )
 
+    def define_wifi_type_channel(self, n2k_devices: N2kDevices):
+        ##########################
         # Wifi Type
+        ##########################
         channel = Channel(
             id="wt",
             name="Wifi Type",
@@ -143,7 +130,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         wifi_type_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.WifiType, N2kDeviceType.DEVICE
+            self.n2k_device_id, HubStates.WifiType.value, N2kDeviceType.DEVICE
         )
         if wifi_type_subject is not None:
             n2k_devices.set_subscription(
@@ -154,7 +141,10 @@ class Hub(Thing):
                 ),
             )
 
+    def define_wifi_signal_strength_channel(self, n2k_devices: N2kDevices):
+        ##########################
         # Wifi Signal Strength
+        ##########################
         channel = Channel(
             id="wss",
             name="WiFi Signal Strength",
@@ -168,7 +158,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         wifi_signal_strength_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.WifiSignalStrength, N2kDeviceType.DEVICE
+            self.n2k_device_id, HubStates.WifiSignalStrength.value, N2kDeviceType.DEVICE
         )
         if wifi_signal_strength_subject is not None:
             n2k_devices.set_subscription(
@@ -179,7 +169,10 @@ class Hub(Thing):
                 ),
             )
 
+    def define_cellular_internet_connectivity_channel(self, n2k_devices: N2kDevices):
+        ##########################
         # Cellular Internet Connectivity
+        ##########################
         channel = Channel(
             id="cic",
             name="Cellular Internet Connectivity",
@@ -193,7 +186,9 @@ class Hub(Thing):
         self._define_channel(channel)
 
         cellular_internet_connectivity_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.CellularInternetConnectivity, N2kDeviceType.DEVICE
+            self.n2k_device_id,
+            HubStates.CellularInternetConnectivity.value,
+            N2kDeviceType.DEVICE,
         )
         if cellular_internet_connectivity_subject is not None:
             n2k_devices.set_subscription(
@@ -204,7 +199,10 @@ class Hub(Thing):
                 ),
             )
 
+    def define_cellular_signal_strength_channel(self, n2k_devices: N2kDevices):
+        ##########################
         # Cellular Signal Strength
+        ##########################
         channel = Channel(
             id="css",
             name="Cellular Signal Strength (dBm)",
@@ -218,7 +216,9 @@ class Hub(Thing):
         self._define_channel(channel)
 
         cellular_signal_strength_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.CellularSignalStrengthDbm, N2kDeviceType.DEVICE
+            self.n2k_device_id,
+            HubStates.CellularSignalStrengthDbm.value,
+            N2kDeviceType.DEVICE,
         )
         if cellular_signal_strength_subject is not None:
             n2k_devices.set_subscription(
@@ -229,7 +229,10 @@ class Hub(Thing):
                 ),
             )
 
+    def define_cellular_iccid_channel(self, n2k_devices: N2kDevices):
+        ##########################
         # Cellular ICCID
+        ##########################
         channel = Channel(
             id="iccid",
             name="Cellulr ICCID",
@@ -241,7 +244,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         cellular_iccid_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.CellularSimIccid, N2kDeviceType.DEVICE
+            self.n2k_device_id, HubStates.CellularSimIccid.value, N2kDeviceType.DEVICE
         )
         if cellular_iccid_subject is not None:
             n2k_devices.set_subscription(
@@ -252,7 +255,10 @@ class Hub(Thing):
                 ),
             )
 
+    def define_cellular_eid_channel(self, n2k_devices: N2kDevices):
+        ##########################
         # Cellular EID
+        ##########################
         channel = Channel(
             id="cellularEid",
             name="Cellular EID",
@@ -264,7 +270,7 @@ class Hub(Thing):
         self._define_channel(channel)
 
         cellular_eid_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.CellularSimEid, N2kDeviceType.DEVICE
+            self.n2k_device_id, HubStates.CellularSimEid.value, N2kDeviceType.DEVICE
         )
         if cellular_eid_subject is not None:
             n2k_devices.set_subscription(
@@ -275,7 +281,10 @@ class Hub(Thing):
                 ),
             )
 
+    def define_active_connection_channel(self, n2k_devices: N2kDevices):
+        ##########################
         # Active Connection
+        ##########################
         channel = Channel(
             id="ac",
             name="Active Connection",
@@ -286,6 +295,21 @@ class Hub(Thing):
         )
         self._define_channel(channel)
 
+        ethernet_internet_connectivity_subject = n2k_devices.get_channel_subject(
+            self.n2k_device_id,
+            HubStates.EthernetInternetConnectivity.value,
+            N2kDeviceType.DEVICE,
+        )
+        wifi_internet_connectivity_subject = n2k_devices.get_channel_subject(
+            self.n2k_device_id,
+            HubStates.WifiInternetConnectivity.value,
+            N2kDeviceType.DEVICE,
+        )
+        cellular_internet_connectivity_subject = n2k_devices.get_channel_subject(
+            self.n2k_device_id,
+            HubStates.CellularInternetConnectivity.value,
+            N2kDeviceType.DEVICE,
+        )
         if (
             ethernet_internet_connectivity_subject is not None
             and wifi_internet_connectivity_subject is not None
@@ -301,7 +325,7 @@ class Hub(Thing):
                         ops.distinct_until_changed()
                     ),
                     cellular_internet_connectivity_subject.pipe(
-                        ops.distinct_until_changed
+                        ops.distinct_until_changed()
                     ),
                 ).pipe(
                     ops.filter(lambda status: any(status)),
@@ -325,3 +349,15 @@ class Hub(Thing):
                     ops.distinct_until_changed(),
                 ),
             )
+
+    def define_hub_channels(self, n2k_devices: N2kDevices):
+        self.define_ethernet_internet_connectivity_channel(n2k_devices)
+        self.define_wifi_internet_connectivity_channel(n2k_devices)
+        self.define_wifi_ssid_channel(n2k_devices)
+        self.define_wifi_type_channel(n2k_devices)
+        self.define_wifi_signal_strength_channel(n2k_devices)
+        self.define_cellular_internet_connectivity_channel(n2k_devices)
+        self.define_cellular_signal_strength_channel(n2k_devices)
+        self.define_cellular_iccid_channel(n2k_devices)
+        self.define_cellular_eid_channel(n2k_devices)
+        self.define_active_connection_channel(n2k_devices)

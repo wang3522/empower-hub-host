@@ -142,9 +142,9 @@ class N2KClient(dbus.service.Object):
         # Handler to update the latest device list internally
         def update_latest_devices(devices: N2kDevices):
             self._latest_devices = devices
-            # Uncomment for demonstration purposes
+            # change to indent = 2 for better readability when debugging
             self._logger.info(
-                f"Latest devices: { json.dumps(devices.to_mobile_dict(), indent=2) }\n\n"
+                f"Latest devices: { json.dumps(devices.to_mobile_dict(), indent=None) }\n\n"
             )
 
         self._config_parser = ConfigParser()
@@ -246,22 +246,28 @@ class N2KClient(dbus.service.Object):
     def __merge_device_list(self, device_json):
         with self.lock:
             device_list_copy = self._latest_devices
-        list_updated = False
+        is_list_updated = False
         for device in device_json:
             device_id = device[JsonKeys.ID]
             if device_id not in device_list_copy.devices:
                 # Actually do JSON/ENUM mapping here here
                 device_type = N2kDeviceType(device[JsonKeys.TYPE])
                 device_list_copy.add(device_id, N2kDevice(device_type))
-                list_updated = True
+                is_list_updated = True
 
-        if list_updated:
+        if is_list_updated:
             with self.lock:
                 self._devices.on_next(device_list_copy)
             self._get_configuration()
-            self._scan_marine_engine(should_reset=True)
+            self._scan_marine_engine_config()
 
-    def _scan_marine_engine(self, should_reset: bool):
+    def scan_marine_engines(self, should_clear: bool):
+        self._logger.info(
+            "Starting scan marine engines with should_clear = %r...", should_clear
+        )
+        self._scan_marine_engine_config(should_reset=should_clear)
+
+    def _scan_marine_engine_congig(self, should_reset: bool):
         self._logger.info(
             "Starting scan marine engine with should_reset = %r...", should_reset
         )
@@ -275,7 +281,7 @@ class N2KClient(dbus.service.Object):
             factory_metadata = self._config_parser.parse_factory_metadata(
                 factory_metadata_json
             )
-            self._factory_metadata.on_next(factory_metadata)
+            self._factory_metaadata.on_next(factory_metadata)
         except Exception as e:
             self._logger.error(f"Error reading dbus Get Factory Metadata response: {e}")
 
@@ -350,16 +356,16 @@ class N2KClient(dbus.service.Object):
                 devices_json = json.loads(devices)
                 self.__merge_device_list(devices_json)
             except Exception as e:
-                self._logger.error(f"Error reading dbus device response")
+                self._logger.error(f"Error reading dbus device response:{e}")
             sleep(self._get_devices_timeout)
 
     def _get_state(self):
         self._logger.info("Starting Get State thread")
         while True:
-            kvps = self._latest_devices.devices.items()
+            devices = self._latest_devices.devices.items()
             state_update = {}
             try:
-                for key, device in kvps:
+                for key, device in devices:
                     if device.type == N2kDeviceType.UNKNOWN:
                         continue
                     device_state = json.loads(self.dbus_get_state(key))
@@ -367,7 +373,7 @@ class N2KClient(dbus.service.Object):
                 self._merge_state_update(state_update)
 
             except Exception as e:
-                self._logger.error(f"Error reading dbus state response")
+                self._logger.error(f"Error reading dbus state response: {e}")
             sleep(self._get_state_timeout)
 
     def _merge_state_update(self, state_updates: dict[str, dict[str, Any]]):
@@ -385,9 +391,6 @@ class N2KClient(dbus.service.Object):
                 if lines is not None:
                     for line_id, line_value in lines.items():
                         for channel_id, value in line_value.items():
-                            print(
-                                f"Updating channel {channel_id}.{int(line_id)} for device {id} with value {value}"
-                            )
                             device_list_copy.update_channel(
                                 id, f"{channel_id}.{int(line_id)}", value
                             )

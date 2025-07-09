@@ -3,13 +3,13 @@ from N2KClient.models.empower_system.connection_status import ConnectionStatus
 from N2KClient.models.empower_system.state_ts import StateWithTS
 from .thing import Thing
 from ..common_enums import ChannelType, ThingType, Unit
-from ..constants import Constants, JsonKeys
+from ..constants import Constants
 from .channel import Channel
 from N2KClient.models.n2k_configuration.hvac import HVACDevice
 from reactivex import operators as ops
 import N2KClient.util.rx as rxu
 from N2KClient.models.filters import Temperature
-from N2KClient.models.common_enums import N2kDeviceType
+from N2KClient.models.common_enums import N2kDeviceType, ClimateStates
 
 
 class Climate(Thing):
@@ -26,7 +26,10 @@ class Climate(Thing):
             name=hvac.name_utf8,
             categories=categories,
         )
-        hvac_device_id = f"{Constants.hvac}.{hvac.instance.instance}"
+        self.hvac_device_id = f"{Constants.hvac}.{hvac.instance.instance}"
+        self.define_climate_channels(n2k_devices)
+
+    def define_climate_component_status_channel(self, n2k_devices: N2kDevices):
         ##########################
         # Component Status
         ##########################
@@ -40,7 +43,7 @@ class Climate(Thing):
         )
         self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
-            hvac_device_id, JsonKeys.ComponentStatus, N2kDeviceType.HVAC
+            self.hvac_device_id, ClimateStates.ComponentStatus.value, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -57,6 +60,8 @@ class Climate(Thing):
                 ops.distinct_until_changed(lambda state: state[Constants.state]),
             ),
         )
+
+    def def_mode_channels(self, n2k_devices: N2kDevices):
         ############################
         # Mode
         ############################
@@ -70,7 +75,7 @@ class Climate(Thing):
         )
         self._define_channel(channel)
         mode_subject = n2k_devices.get_channel_subject(
-            hvac_device_id, JsonKeys.Mode, N2kDeviceType.HVAC
+            self.hvac_device_id, ClimateStates.Mode.value, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -79,6 +84,8 @@ class Climate(Thing):
                 ops.distinct_until_changed(),
             ),
         )
+
+    def define_set_point_channel(self, n2k_devices: N2kDevices):
         ###############################
         # Set Point
         ###############################
@@ -92,7 +99,7 @@ class Climate(Thing):
         )
         self._define_channel(channel)
         set_point_subject = n2k_devices.get_channel_subject(
-            hvac_device_id, JsonKeys.SetPoint, N2kDeviceType.HVAC
+            self.hvac_device_id, ClimateStates.SetPoint.value, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -102,6 +109,8 @@ class Climate(Thing):
                 ops.distinct_until_changed(),
             ),
         )
+
+    def define_ambient_temperature_channel(self, n2k_devices: N2kDevices):
         ###############################
         # Ambient Temperature
         ###############################
@@ -117,7 +126,9 @@ class Climate(Thing):
         )
         self._define_channel(channel)
         ambient_temp_subject = n2k_devices.get_channel_subject(
-            hvac_device_id, JsonKeys.AmbientTemperature, N2kDeviceType.HVAC
+            self.hvac_device_id,
+            ClimateStates.AmbientTemperature.value,
+            N2kDeviceType.HVAC,
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -127,6 +138,8 @@ class Climate(Thing):
                 ops.distinct_until_changed(),
             ),
         )
+
+    def define_fan_speed_channel(self, n2k_devices: N2kDevices):
         #################################
         # Fan Speed
         #################################
@@ -140,7 +153,7 @@ class Climate(Thing):
         )
         self._define_channel(channel)
         fan_speed_subject = n2k_devices.get_channel_subject(
-            hvac_device_id, JsonKeys.FanSpeed, N2kDeviceType.HVAC
+            self.hvac_device_id, ClimateStates.FanSpeed.value, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -150,6 +163,8 @@ class Climate(Thing):
                 ops.distinct_until_changed(),
             ),
         )
+
+    def define_fan_mode_channel(self, n2k_devices: N2kDevices):
         #################################
         # Fan Mode
         #################################
@@ -163,7 +178,7 @@ class Climate(Thing):
         )
         self._define_channel(channel)
         fan_mode_subject = n2k_devices.get_channel_subject(
-            hvac_device_id, JsonKeys.FanMode, N2kDeviceType.HVAC
+            self.hvac_device_id, ClimateStates.FanMode.value, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -172,3 +187,11 @@ class Climate(Thing):
                 ops.distinct_until_changed(),
             ),
         )
+
+    def define_climate_channels(self, n2k_devices: N2kDevices):
+        self.define_climate_component_status_channel(n2k_devices)
+        self.def_mode_channels(n2k_devices)
+        self.define_set_point_channel(n2k_devices)
+        self.define_ambient_temperature_channel(n2k_devices)
+        self.define_fan_speed_channel(n2k_devices)
+        self.define_fan_mode_channel(n2k_devices)

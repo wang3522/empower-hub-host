@@ -154,79 +154,6 @@ class JsonKeys:
     RT_FIRMWARE_VERSION = "RTFirmwareVersion"
     MENDER_ARTIFACT_INFO = "MenderArtifactInfo"
     Items = "Items"
-    INVERTING = "Inverting"
-    AC_PASSTHRU = "AcPassthru"
-    LOAD_SENSE = "LoadSense"
-    FAULT = "Fault"
-    DISABLED = "Disabled"
-    CHARGING = "Charging"
-    ENERGY_SAVING = "EnergySaving"
-    ENERGY_SAVING2 = "EnergySaving2"
-    SUPPORTING = "Supporting"
-    SUPPORTING2 = "Supporting2"
-    ERROR = "Error"
-    UNKNOWN = "Unknown"
-    DATA_NOT_AVAILABLE = "DataNotAvailable"
-    ABSORPTION = "Absorption"
-    BULK = "Bulk"
-    CONSTANTVI = "ConstantVI"
-    NOTCHARGING = "NotCharging"
-    EQUALIZE = "Equalize"
-    OVERCHARGE = "Overcharge"
-    FLOAT = "Float"
-    NOFLOAT = "NoFloat"
-
-    ComponentStatus = "ComponentStatus"
-    EthernetInternetConnectivity = "EthernetInternetConnectivity"
-    WifiInternetConnectivity = "WifiInternetConnectivity"
-    WifiSignalStrength = "WifiSignalStrength"
-    WifiSsid = "WifiSsid"
-    WifiType = "WifiType"
-    CellularInternetConnectivity = "CellularInternetConnectivity"
-    CellularType = "CellularType"
-    CellularSignalStrengthDbm = "CellularSignalStrengthDbm"
-    CellularSimIccid = "CellularSimIccid"
-    CellularSimEid = "CellularSimEid"
-
-    InverterState = "InverterState"
-    InverterEnable = "InverterEnable"
-    Voltage = "Voltage"
-    Current = "Current"
-    ChargerState = "ChargerState"
-    ChargerEnable = "ChargerEnable"
-
-    Frequency = "Frequency"
-    Power = "Power"
-    Level = "Level"
-
-    StateOfCharge = "StateOfCharge"
-    Temperature = "Temperature"
-    CapacityRemaining = "CapacityRemaining"
-    TimeRemaining = "TimeRemaining"
-    TimeToCharge = "TimeToCharge"
-
-    FixType = "FixType"
-    Location = "Location"
-    LatitudeDeg = "LatitudeDeg"
-    LongitudeDeg = "LongitudeDeg"
-    Sog = "Sog"
-    States = "States"
-
-    LevelAbsolute = "LevelAbsolute"
-    LevelPercent = "LevelPercent"
-
-    Mode = "Mode"
-    SetPoint = "SetPoint"
-    AmbientTemperature = "AmbientTemperature"
-    FanSpeed = "FanSpeed"
-    FanMode = "FanMode"
-
-    Speed = "Speed"
-    EngineHours = "EngineHours"
-    CoolantTemperature = "CoolantTemperature"
-    CoolantPressure = "CoolantPressure"
-    OilPressure = "OilPressure"
-    EngineState = "EngineState"
 
 
 class AttrNames:
@@ -466,7 +393,7 @@ class Constants:
     marineEngine = "marineEngine"
     speed = "speed"
     engineHours = "engineHours"
-    coolantTemperature = "coolasntTemperature"
+    coolantTemperature = "coolantTemperature"
     coolantPressure = "coolantPressure"
     oilPressure = "oilPressure"
     serialNumber = "serialNumber"
@@ -477,9 +404,6 @@ class Constants:
     Config = "Config"
     FactoryDataSettings = "FactoryDataSettings"
     ts = "ts"
-    lat = "lat"
-    long = "long"
-    sp = "sp"
     ENGINE = "Engine"
     SPEED = "SPEED"
     MIN_CHANGE = "MIN_CHANGE"
@@ -506,3 +430,18 @@ class Constants:
     lat = "lat"
     long = "long"
     sp = "sp"
+    primaryBattery = "primaryBattery"
+    fallbackBattery = "fallbackBattery"
+
+
+LINE_CONST_MAP = {
+    1: Constants.line1,
+    2: Constants.line2,
+    3: Constants.line3,
+}
+
+BATTERY_CONST_MAP = {
+    1: Constants.battery1,
+    2: Constants.battery2,
+    3: Constants.battery3,
+}

@@ -12,29 +12,40 @@ from N2KClient.models.n2k_configuration.ac import AC
 from N2KClient.models.n2k_configuration.dc import DC
 from N2KClient.models.n2k_configuration.circuit import Circuit
 from ..common_enums import ChannelType, ThingType, Unit
-from ..constants import Constants, JsonKeys
+from ..constants import Constants, JsonKeys, BATTERY_CONST_MAP
 from .channel import Channel
 from N2KClient.models.empower_system.ac_meter import ACMeterThingBase
 import N2KClient.util.rx as rxu
 from N2KClient.models.filters import Current, Voltage
-from N2KClient.models.common_enums import N2kDeviceType
+from N2KClient.models.common_enums import (
+    N2kDeviceType,
+    CombiChargerStates,
+    CircuitStates,
+    ACMeterStates,
+    DCMeterStates,
+    ChargerStatus,
+)
 
 CHARGER_STATE_MAPPING = {
-    JsonKeys.ABSORPTION: "absorption",
-    JsonKeys.BULK: "bulk",
-    JsonKeys.CONSTANTVI: "constantVI",
-    JsonKeys.NOTCHARGING: "notCharging",
-    JsonKeys.EQUALIZE: "equalize",
-    JsonKeys.OVERCHARGE: "overcharge",
-    JsonKeys.FLOAT: "float",
-    JsonKeys.NOFLOAT: "noFloat",
-    JsonKeys.FAULT: "fault",
-    JsonKeys.DISABLED: "disabled",
+    ChargerStatus.ABSORPTION: "absorption",
+    ChargerStatus.BULK: "bulk",
+    ChargerStatus.CONSTANTVI: "constantVI",
+    ChargerStatus.NOTCHARGING: "notCharging",
+    ChargerStatus.EQUALIZE: "equalize",
+    ChargerStatus.OVERCHARGE: "overcharge",
+    ChargerStatus.FLOAT: "float",
+    ChargerStatus.NOFLOAT: "noFloat",
+    ChargerStatus.FAULT: "fault",
+    ChargerStatus.DISABLED: "disabled",
 }
 
 
 def map_charger_state(state: str) -> str:
-    return CHARGER_STATE_MAPPING.get(state, "unknown")
+    try:
+        enum_state = ChargerStatus(state)
+        return CHARGER_STATE_MAPPING.get(enum_state, "unknown")
+    except ValueError:
+        return "unknown"
 
 
 class CombiCharger(Thing):
@@ -55,7 +66,7 @@ class CombiCharger(Thing):
         if charger_circuit is not None:
             self.charger_circuit = charger_circuit.id.value
             self.charger_circuit_control_id = charger_circuit.control_id
-        n2k_device_id = f"{JsonKeys.INVERTER_CHARGER}.{instance}"
+        self.n2k_device_id = f"{JsonKeys.INVERTER_CHARGER}.{instance}"
         Thing.__init__(
             self,
             type=ThingType.CHARGER,
@@ -65,324 +76,61 @@ class CombiCharger(Thing):
         )
         self.instance = instance
 
+        ############################
+        # DC Lines
+        ############################
+        self.define_dc_lines(dc1, dc2, dc3, n2k_devices)
+
+    def define_dc_lines(self, dc1: DC, dc2: DC, dc3: DC, n2k_devices: N2kDevices):
         if dc1 is not None:
             self.metadata[
                 f"{Constants.empower}:{Constants.charger}.{Constants.battery1}.{Constants.name}"
             ] = dc1.name_utf8
 
-            dc1_device_id = f"{JsonKeys.DC}.{dc1.instance.instance}"
-
-            ####################
-            #  DC 1 Component Status
-            ####################
-            channel = Channel(
-                id="dc1cs",
-                name=" Battery 1 Component Status",
-                type=ChannelType.STRING,
-                unit=Unit.NONE,
-                read_only=False,
-                tags=[
-                    f"{Constants.empower}:{Constants.charger}.{Constants.battery1}.{Constants.componentStatus}"
-                ],
-            )
-            self._define_channel(channel)
-
-            dc1_component_status_subject = n2k_devices.get_channel_subject(
-                dc1_device_id, JsonKeys.ComponentStatus, N2kDeviceType.DC
-            )
-
-            n2k_devices.set_subscription(
-                channel.id,
-                dc1_component_status_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    ops.map(
-                        lambda status: (
-                            ConnectionStatus.CONNECTED
-                            if status == "Connected"
-                            else "Disconnected"
-                        )
-                    ),
-                    ops.map(lambda status: StateWithTS(status).to_json()),
-                    ops.distinct_until_changed(lambda state: state[Constants.state]),
-                ),
-            )
-
-            ####################
-            #  DC 1 Voltage
-            ####################
-            channel = Channel(
-                id="dc1v",
-                name="Battery 1 Voltage",
-                type=ChannelType.STRING,
-                unit=Unit.NONE,
-                read_only=False,
-                tags=[
-                    f"{Constants.empower}:{Constants.charger}.{Constants.battery1}.{Constants.voltage}"
-                ],
-            )
-
-            self._define_channel(channel)
-            dc1_voltage_subject = n2k_devices.get_channel_subject(
-                dc1_device_id, JsonKeys.Voltage, N2kDeviceType.DC
-            )
-
-            n2k_devices.set_subscription(
-                channel.id,
-                dc1_voltage_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    rxu.round(Voltage.ROUND_VALUE),
-                    Voltage.FILTER,
-                ),
-            )
-
-            ####################
-            #  DC 1 Current
-            ####################
-            channel = Channel(
-                id="dc1c",
-                name="Battery 1 Current",
-                type=ChannelType.NUMBER,
-                unit=Unit.ENERGY_AMP,
-                read_only=False,
-                tags=[
-                    f"{Constants.empower}:{Constants.charger}.{Constants.battery1}.{Constants.current}"
-                ],
-            )
-            self._define_channel(channel)
-            dc1_current_subject = n2k_devices.get_channel_subject(
-                dc1_device_id, JsonKeys.Current, N2kDeviceType.DC
-            )
-            n2k_devices.set_subscription(
-                channel.id,
-                dc1_current_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    rxu.round(Current.ROUND_VALUE),
-                    Current.FILTER,
-                ),
-            )
+            self.define_dc_line_channels(1, n2k_devices, dc1)
 
         if dc2 is not None:
             self.metadata[
                 f"{Constants.empower}:{Constants.charger}.{Constants.battery2}.{Constants.name}"
             ] = dc2.name_utf8
 
-            ####################
-            #  DC 2 Component Status
-            ####################
-            channel = Channel(
-                id="dc2cs",
-                name=" Battery 2 Component Status",
-                type=ChannelType.STRING,
-                unit=Unit.NONE,
-                read_only=False,
-                tags=[
-                    f"{Constants.empower}:{Constants.charger}.{Constants.battery2}.{Constants.componentStatus}"
-                ],
-            )
-            self._define_channel(channel)
-
-            d2_component_status_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc2.instance.instance}",
-                JsonKeys.ComponentStatus,
-                N2kDeviceType.DC,
-            )
-
-            n2k_devices.set_subscription(
-                channel.id,
-                d2_component_status_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    ops.map(
-                        lambda status: (
-                            ConnectionStatus.CONNECTED
-                            if status == "Connected"
-                            else "Disconnected"
-                        )
-                    ),
-                    ops.map(lambda status: StateWithTS(status).to_json()),
-                    ops.distinct_until_changed(lambda state: state[Constants.state]),
-                ),
-            )
-
-            ####################
-            #  DC 2 Voltage
-            ####################
-            channel = Channel(
-                id="dc2v",
-                name="Battery 2 Voltage",
-                type=ChannelType.STRING,
-                unit=Unit.NONE,
-                read_only=False,
-                tags=[
-                    f"{Constants.empower}:{Constants.charger}.{Constants.battery2}.{Constants.voltage}"
-                ],
-            )
-            self._define_channel(channel)
-
-            dc2_voltage_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc2.instance.instance}",
-                JsonKeys.Voltage,
-                N2kDeviceType.DC,
-            )
-
-            n2k_devices.set_subscription(
-                channel.id,
-                dc2_voltage_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    rxu.round(Voltage.ROUND_VALUE),
-                    Voltage.FILTER,
-                    N2kDeviceType.DC,
-                ),
-            )
-
-            ####################
-            #  DC 2 Current
-            ####################
-            channel = Channel(
-                id="dc2c",
-                name="Battery 2 Current",
-                type=ChannelType.NUMBER,
-                unit=Unit.ENERGY_AMP,
-                read_only=False,
-                tags=[
-                    f"{Constants.empower}:{Constants.charger}.{Constants.battery2}.{Constants.current}"
-                ],
-            )
-            self._define_channel(channel)
-
-            dc2_current_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc2.instance.instance}",
-                JsonKeys.Current,
-                N2kDeviceType.DC,
-            )
-
-            n2k_devices.set_subscription(
-                channel.id,
-                dc2_current_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    rxu.round(Current.ROUND_VALUE),
-                    Current.FILTER,
-                ),
-            )
+            self.define_dc_line_channels(2, n2k_devices, dc2)
 
         if dc3 is not None:
             self.metadata[
                 f"{Constants.empower}:{Constants.charger}.{Constants.battery3}.{Constants.name}"
             ] = dc3.name_utf8
 
-            ####################
-            #  DC 3 Component Status
-            ####################
-            channel = Channel(
-                id="dc3cs",
-                name=" Battery 3 Component Status",
-                type=ChannelType.STRING,
-                unit=Unit.NONE,
-                read_only=False,
-                tags=[
-                    f"{Constants.empower}:{Constants.charger}.{Constants.battery3}.{Constants.componentStatus}"
-                ],
-            )
-            self._define_channel(channel)
+            self.define_dc_line_channels(3, n2k_devices, dc3)
 
-            dc3_component_status_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc3.instance.instance}",
-                JsonKeys.ComponentStatus,
-                N2kDeviceType.DC,
-            )
-            n2k_devices.set_subscription(
-                channel.id,
-                dc3_component_status_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    ops.map(
-                        lambda status: (
-                            ConnectionStatus.CONNECTED
-                            if status == "Connected"
-                            else "Disconnected"
-                        )
-                    ),
-                    ops.map(lambda status: StateWithTS(status).to_json()),
-                    ops.distinct_until_changed(lambda state: state[Constants.state]),
-                ),
-            )
+    def define_dc_line_channels(
+        self, battery_number: int, n2k_devices: N2kDevices, dc: DC
+    ):
+        dc_device_id = f"{JsonKeys.DC}.{dc.instance.instance}"
 
-            ####################
-            #  DC 3 Voltage
-            ####################
-            channel = Channel(
-                id="dc3v",
-                name="Battery 3 Voltage",
-                type=ChannelType.STRING,
-                unit=Unit.NONE,
-                read_only=False,
-                tags=[
-                    f"{Constants.empower}:{Constants.charger}.{Constants.battery3}.{Constants.voltage}"
-                ],
-            )
-            self._define_channel(channel)
+        battery_const = BATTERY_CONST_MAP.get(battery_number)
+        ############################
+        #  DC Line Component Status
+        ###########################
+        channel = Channel(
+            id=f"dc{battery_number}cs",
+            name=f"Battery {battery_number} Component Status",
+            type=ChannelType.STRING,
+            unit=Unit.NONE,
+            read_only=False,
+            tags=[
+                f"{Constants.empower}:{Constants.charger}.{battery_const}.{Constants.componentStatus}"
+            ],
+        )
+        self._define_channel(channel)
 
-            dc3_voltage_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc3.instance.instance}",
-                JsonKeys.Voltage,
-                N2kDeviceType.DC,
-            )
+        dc1_component_status_subject = n2k_devices.get_channel_subject(
+            dc_device_id, DCMeterStates.ComponentStatus.value, N2kDeviceType.DC
+        )
 
-            n2k_devices.set_subscription(
-                channel.id,
-                dc3_voltage_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    rxu.round(Voltage.ROUND_VALUE),
-                    Voltage.FILTER,
-                ),
-            )
-
-            ####################
-            #  DC 3 Current
-            ####################
-            channel = Channel(
-                id="dc3c",
-                name="Battery 3 Current",
-                type=ChannelType.NUMBER,
-                unit=Unit.ENERGY_AMP,
-                read_only=False,
-                tags=[
-                    f"{Constants.empower}:{Constants.charger}.{Constants.battery3}.{Constants.current}"
-                ],
-            )
-            self._define_channel(channel)
-
-            dc3_current_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.DC}.{dc3.instance.instance}",
-                JsonKeys.Current,
-                N2kDeviceType.DC,
-            )
-            n2k_devices.set_subscription(
-                channel.id,
-                dc3_current_subject.pipe(
-                    ops.filter(lambda state: state is not None),
-                    rxu.round(Current.ROUND_VALUE),
-                    Current.FILTER,
-                ),
-            )
-            ####################
-            #  Charger Component Status
-            ####################
-            channel = Channel(
-                id="cs",
-                name="Component Status",
-                type=ChannelType.STRING,
-                unit=Unit.NONE,
-                read_only=False,
-                tags=[
-                    f"{Constants.empower}:{Constants.charger}.{Constants.componentStatus}"
-                ],
-            )
-            self._define_channel(channel)
-
-            inverter_charger_component_status_subject = n2k_devices.get_channel_subject(
-                n2k_device_id, JsonKeys.ComponentStatus, N2kDeviceType.INVERTERCHARGER
-            )
-
-            self.component_status = inverter_charger_component_status_subject.pipe(
+        n2k_devices.set_subscription(
+            channel.id,
+            dc1_component_status_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda status: (
@@ -393,13 +141,66 @@ class CombiCharger(Thing):
                 ),
                 ops.map(lambda status: StateWithTS(status).to_json()),
                 ops.distinct_until_changed(lambda state: state[Constants.state]),
-            )
+            ),
+        )
 
-            n2k_devices.set_subscription(
-                channel.id,
-                inverter_charger_component_status_subject.pipe(self.component_status),
-            )
+        ####################
+        #  DC Line Voltage
+        ####################
+        channel = Channel(
+            id=f"dc{battery_number}v",
+            name=f"Battery {battery_number} Voltage",
+            type=ChannelType.STRING,
+            unit=Unit.NONE,
+            read_only=False,
+            tags=[
+                f"{Constants.empower}:{Constants.charger}.{battery_const}.{Constants.voltage}"
+            ],
+        )
 
+        self._define_channel(channel)
+        dc_voltage_subject = n2k_devices.get_channel_subject(
+            dc_device_id, DCMeterStates.Voltage.value, N2kDeviceType.DC
+        )
+
+        n2k_devices.set_subscription(
+            channel.id,
+            dc_voltage_subject.pipe(
+                ops.filter(lambda state: state is not None),
+                rxu.round(Voltage.ROUND_VALUE),
+                Voltage.FILTER,
+            ),
+        )
+
+        ####################
+        #  DC Line Current
+        ####################
+        channel = Channel(
+            id=f"dc{battery_number}c",
+            name=f"Battery {battery_number} Current",
+            type=ChannelType.NUMBER,
+            unit=Unit.ENERGY_AMP,
+            read_only=False,
+            tags=[
+                f"{Constants.empower}:{Constants.charger}.{battery_const}.{Constants.current}"
+            ],
+        )
+        self._define_channel(channel)
+        dc_current_subject = n2k_devices.get_channel_subject(
+            dc_device_id, DCMeterStates.Current.value, N2kDeviceType.DC
+        )
+        n2k_devices.set_subscription(
+            channel.id,
+            dc_current_subject.pipe(
+                ops.filter(lambda state: state is not None),
+                rxu.round(Current.ROUND_VALUE),
+                Current.FILTER,
+            ),
+        )
+
+    def define_combi_channels(
+        self, charger_circuit: Optional[Circuit], n2k_devices: N2kDevices
+    ):
         ####################
         #  Charger Enabled
         ####################
@@ -418,7 +219,9 @@ class CombiCharger(Thing):
         self._define_channel(channel)
 
         charger_enable_subject = n2k_devices.get_channel_subject(
-            n2k_device_id, JsonKeys.ChargerEnable, N2kDeviceType.INVERTERCHARGER
+            self.n2k_device_id,
+            CombiChargerStates.ChargerEnable.value,
+            N2kDeviceType.INVERTERCHARGER,
         )
         charger_ce = charger_enable_subject.pipe(
             ops.filter(lambda state: state is not None),
@@ -428,7 +231,7 @@ class CombiCharger(Thing):
         if charger_circuit is not None:
             circuit_level_subject = n2k_devices.get_channel_subject(
                 f"{JsonKeys.CIRCUIT}.{self.charger_circuit}",
-                JsonKeys.Level,
+                CircuitStates.Level.value,
                 N2kDeviceType.CIRCUIT,
             )
 
@@ -454,8 +257,8 @@ class CombiCharger(Thing):
         self._define_channel(channel)
 
         inverter_charger_status_subject = n2k_devices.get_channel_subject(
-            n2k_device_id,
-            JsonKeys.ChargerState,
+            self.n2k_device_id,
+            CombiChargerStates.ChargerState.value,
             N2kDeviceType.INVERTERCHARGER,
         )
 
@@ -489,35 +292,61 @@ class ACMeterCharger(ACMeterThingBase):
         self.line_connected = {}
         self.line_state_subject = rx.subject.BehaviorSubject(self._calc_charger_state)
 
+        ###########################
+        # Channels
+        ###########################
+        self.define_ac_meter_charger_channels(
+            ac_line1, ac_line2, ac_line3, n2k_devices, circuit
+        )
+
+    def define_ac_meter_charger_channels(
+        self,
+        ac_line1: AC,
+        ac_line2: AC,
+        ac_line3: AC,
+        n2k_devices: N2kDevices,
+        circuit: Optional[Circuit] = None,
+    ):
+        self.define_ac_meter_charger_status_channel(
+            ac_line1, ac_line2, ac_line3, n2k_devices
+        )
+        if circuit is not None:
+            self.define_ac_meter_charger_circuit_enable_channel(circuit, n2k_devices)
+
+    def define_ac_meter_charger_circuit_enable_channel(
+        self, circuit: Circuit, n2k_devices: N2kDevices
+    ):
+        self.charger_circuit = circuit.id.value
+        self.charger_circuit_control_id = circuit.control_id
         ####################
         #  Charger Enabled
         ####################
-        if circuit is not None:
-            self.charger_circuit = circuit.id.value
-            self.charger_circuit_control_id = circuit.control_id
-            channel = Channel(
-                id="ce",
-                name="Charger Enabled",
-                read_only=(circuit.switch_type == 0 if circuit is not None else True),
-                type=ChannelType.NUMBER,
-                unit=Unit.NONE,
-                tags=[f"{Constants.empower}:{Constants.charger}.{Constants.enabled}"],
-            )
-            self._define_channel(channel)
+        channel = Channel(
+            id="ce",
+            name="Charger Enabled",
+            read_only=(circuit.switch_type == 0 if circuit is not None else True),
+            type=ChannelType.NUMBER,
+            unit=Unit.NONE,
+            tags=[f"{Constants.empower}:{Constants.charger}.{Constants.enabled}"],
+        )
+        self._define_channel(channel)
 
-            circuit_level_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.CIRCUIT}.{self.charger_circuit}",
-                JsonKeys.Level,
-                N2kDeviceType.CIRCUIT,
-            )
+        circuit_level_subject = n2k_devices.get_channel_subject(
+            f"{JsonKeys.CIRCUIT}.{self.charger_circuit}",
+            CircuitStates.Level.value,
+            N2kDeviceType.CIRCUIT,
+        )
 
-            charger_enable = circuit_level_subject.pipe(
-                ops.filter(lambda state: state is not None),
-                ops.map(lambda level: 1 if level > 0 else 0),
-                ops.distinct_until_changed(),
-            )
-            n2k_devices.set_subscription(channel.id, charger_enable)
+        charger_enable = circuit_level_subject.pipe(
+            ops.filter(lambda state: state is not None),
+            ops.map(lambda level: 1 if level > 0 else 0),
+            ops.distinct_until_changed(),
+        )
+        n2k_devices.set_subscription(channel.id, charger_enable)
 
+    def define_ac_meter_charger_status_channel(
+        self, ac_line1: AC, ac_line2: AC, ac_line3: AC, n2k_devices: N2kDevices
+    ):
         ####################
         #  Charger Status
         ####################
@@ -540,7 +369,7 @@ class ACMeterCharger(ACMeterThingBase):
                 self.line_state_subject.on_next(self._calc_charger_state())
 
             ac_line1_state_subject = n2k_devices.get_channel_subject(
-                ac_id, f"{JsonKeys.Voltage}.{1}", N2kDeviceType.AC
+                ac_id, f"{ACMeterStates.Voltage.value}.{1}", N2kDeviceType.AC
             )
 
             ac_line1_state = ac_line1_state_subject.pipe(
@@ -556,7 +385,7 @@ class ACMeterCharger(ACMeterThingBase):
                 self.line_state_subject.on_next(self._calc_charger_state())
 
             ac_line2_state_subject = n2k_devices.get_channel_subject(
-                ac_id, f"{JsonKeys.Voltage}.{2}", N2kDeviceType.AC
+                ac_id, f"{ACMeterStates.Voltage.value}.{2}", N2kDeviceType.AC
             )
 
             ac_line2_state = ac_line2_state_subject.pipe(
@@ -571,7 +400,7 @@ class ACMeterCharger(ACMeterThingBase):
                 self.line_state_subject.on_next(self._calc_charger_state())
 
             ac_line3_state_subject = n2k_devices.get_channel_subject(
-                ac_id, f"{JsonKeys.Voltage}.{3}", N2kDeviceType.AC
+                ac_id, f"{ACMeterStates.Voltage.value}.{3}", N2kDeviceType.AC
             )
 
             ac_line3_state = ac_line3_state_subject.pipe(

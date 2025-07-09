@@ -10,7 +10,7 @@ from N2KClient.models.empower_system.location_state import LocationState
 from reactivex import operators as ops
 import reactivex as rx
 from N2KClient.models.filters import Location
-from N2KClient.models.common_enums import N2kDeviceType
+from N2KClient.models.common_enums import N2kDeviceType, GNSSStates
 
 
 class GNSS(Thing):
@@ -28,12 +28,20 @@ class GNSS(Thing):
             categories,
         )
         self.instance = gnss.instance.instance
-        gnss_device_id = f"{JsonKeys.GNSS}.{self.instance}"
+        self.gnss_device_id = f"{JsonKeys.GNSS}.{self.instance}"
 
         self.metadata[
             f"{Constants.empower}:{Constants.location}.{Constants.external}"
         ] = gnss.is_external
 
+        self.define_gnss_channels(n2k_devices)
+
+    def define_gnss_channels(self, n2k_devices: N2kDevices):
+        self.define_component_status(n2k_devices)
+        self.define_fix_type_channel(n2k_devices)
+        self.define_location_channel(n2k_devices)
+
+    def define_component_status(self, n2k_devices: N2kDevices):
         ##########################
         # Component Status
         ##########################
@@ -49,7 +57,7 @@ class GNSS(Thing):
         )
         self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
-            gnss_device_id, JsonKeys.ComponentStatus, N2kDeviceType.GNSS
+            self.gnss_device_id, GNSSStates.ComponentStatus.value, N2kDeviceType.GNSS
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -67,6 +75,7 @@ class GNSS(Thing):
             ),
         )
 
+    def define_fix_type_channel(self, n2k_devices: N2kDevices):
         ##########################
         # Fix Type
         ##########################
@@ -80,7 +89,7 @@ class GNSS(Thing):
         )
         self._define_channel(channel)
         fix_type_subject = n2k_devices.get_channel_subject(
-            gnss_device_id, JsonKeys.FixType, N2kDeviceType.GNSS
+            self.gnss_device_id, GNSSStates.FixType.value, N2kDeviceType.GNSS
         )
         n2k_devices.set_subscription(
             channel.id,
@@ -100,6 +109,7 @@ class GNSS(Thing):
             ),
         )
 
+    def define_location_channel(self, n2k_devices: N2kDevices):
         ##########################
         # Location
         ##########################
@@ -113,15 +123,15 @@ class GNSS(Thing):
         )
         self._define_channel(channel)
         lattitude_subject = n2k_devices.get_channel_subject(
-            gnss_device_id, JsonKeys.LatitudeDeg, N2kDeviceType.GNSS
+            self.gnss_device_id, GNSSStates.LatitudeDeg.value, N2kDeviceType.GNSS
         )
 
         longitude_subject = n2k_devices.get_channel_subject(
-            gnss_device_id, JsonKeys.LongitudeDeg, N2kDeviceType.GNSS
+            self.gnss_device_id, GNSSStates.LongitudeDeg.value, N2kDeviceType.GNSS
         )
 
         sog_subject = n2k_devices.get_channel_subject(
-            gnss_device_id, JsonKeys.Sog, N2kDeviceType.GNSS
+            self.gnss_device_id, GNSSStates.Sog.value, N2kDeviceType.GNSS
         )
 
         n2k_devices.set_subscription(

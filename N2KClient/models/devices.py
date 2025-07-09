@@ -33,9 +33,13 @@ class N2kDevice:
             self._channel_subjects[channel_key] = BehaviorSubject(initial_value)
         return self._channel_subjects[channel_key]
 
+    def __del__(self):
+        self.dispose()
+
     def dispose(self):
         """Clean up subjects"""
         self._channel_subjects.clear()
+        self.channels.clear()
 
     def to_dict(self) -> Dict[str, Any]:
         return {"type": self.type.value, "channels": self.channels}
@@ -59,7 +63,9 @@ class N2kDevices:
     def add(self, key: str, device: N2kDevice):
         """Add a device"""
         if key in self.devices:
-            # Update type, but keep the same object and subjects
+            # Update type, but keep the same object and subjects.
+            # If config is processed prior to device creation, it will have been created with type assumed from config.
+            # This allows the device type to be updated later if needed.
             self.devices[key].type = device.type
             # Optionally update other metadata here
         else:
@@ -107,3 +113,6 @@ class N2kDevices:
         self._pipe_subscriptions.clear()
         for device in self.devices.values():
             device.dispose()
+
+    def __del__(self):
+        self.dispose()
