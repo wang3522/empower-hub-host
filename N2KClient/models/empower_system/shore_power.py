@@ -192,6 +192,7 @@ class ShorePower(ACMeterThingBase):
                 self.ac_id, f"{ACMeterStates.Voltage.value}.{2}", N2kDeviceType.AC
             )
             line2_connected = ac_line2_Voltage.pipe(
+                ops.filter(lambda voltage: voltage is not None),
                 ops.map(
                     lambda voltage: (
                         ConnectionStatus.CONNECTED
@@ -214,6 +215,7 @@ class ShorePower(ACMeterThingBase):
                 self.ac_id, f"{ACMeterStates.Voltage.value}.{3}", N2kDeviceType.AC
             )
             line3_connected = ac_line3_Voltage.pipe(
+                ops.filter(lambda voltage: voltage is not None),
                 ops.map(
                     lambda voltage: (
                         ConnectionStatus.CONNECTED
