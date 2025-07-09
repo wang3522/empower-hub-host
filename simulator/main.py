@@ -53,13 +53,13 @@ class N2KDBusSimulator(dbus.service.Object):
     def GetState(self, id: str):
         self.get_state_count += 1
         if id == "DC.6":
-            return '{"ComponentStatus": "Connected", "Voltage": 12.0, "Current": 2.0, "StateOfCharge": 75, "Temperature": 23.11, "CapacityRemaining": 1000.0, "TimeRemaining": 120, "TimeToCharge": 60}'
+            return '{"ComponentStatus": "Disconnected", "Voltage": 12.0, "Current": 2.0, "StateOfCharge": 75, "Temperature": 23.11, "CapacityRemaining": 1000.0, "TimeRemaining": 120, "TimeToCharge": 60}'
         elif id == "DC.7":
             return '{"ComponentStatus": "Connected", "Voltage": 11.0, "Current": 12.0, "StateOfCharge": 13, "Temperature": 14.11, "CapacityRemaining": 15555.0, "TimeRemaining": 1444, "TimeToCharge": 124}'
         elif id == "Tank.17":
             return '{"ComponentStatus": "Connected", "Level": 200, "LevelPercent": 87}'
         elif id == "AC.1":
-            return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
+            return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 11.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Disconnected", "Voltage": 11.0, "Current": 59.8, "Frequency": 50.0, "Power": 5555.0}}}'
         elif id == "Tank.81":
             return '{"ComponentStatus": "Connected", "Level": 300, "LevelPercent": 92}'
         elif id == "Engine.0":

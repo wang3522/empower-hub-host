@@ -72,6 +72,7 @@ class ShorePower(ACMeterThingBase):
     def define_shorepower_connected_pipe_inverter_charger(
         self, n2k_devices: N2kDevices, ac_line1: AC, ac_line2: AC, ac_line3: AC
     ):
+        print("Defining shorepower connected pipe for inverter/charger")
         if ac_line1 is not None:
 
             def update_line1_status(status: ConnectionStatus):
@@ -93,7 +94,6 @@ class ShorePower(ACMeterThingBase):
                         else ConnectionStatus.DISCONNECTED
                     )
                 ),
-                ops.map(lambda status: StateWithTS(status).to_json()),
                 ops.distinct_until_changed(),
             )
             disposable = line1_connected.subscribe(update_line1_status)
@@ -120,7 +120,6 @@ class ShorePower(ACMeterThingBase):
                         else ConnectionStatus.DISCONNECTED
                     )
                 ),
-                ops.map(lambda status: StateWithTS(status).to_json()),
                 ops.distinct_until_changed(),
             )
             disposable = line2_connected.subscribe(update_line2_connected)
@@ -147,7 +146,6 @@ class ShorePower(ACMeterThingBase):
                         else ConnectionStatus.DISCONNECTED
                     )
                 ),
-                ops.map(lambda status: StateWithTS(status).to_json()),
                 ops.distinct_until_changed(),
             )
             disposable = line3_connected.subscribe(update_line3_connected)
@@ -156,6 +154,7 @@ class ShorePower(ACMeterThingBase):
     def define_shorepower_connected_pipe_non_inverter_charger(
         self, n2k_devices: N2kDevices, ac_line1: AC, ac_line2: AC, ac_line3: AC
     ):
+        print("Defining shorepower connected pipe for non-inverter/charger")
         # Report connected if ANY line voltage is greater than 0
         if ac_line1 is not None:
 

@@ -149,7 +149,7 @@ class ACMeterThingBase(Thing):
                     )
                 ),
                 ops.map(lambda status: StateWithTS(status).to_json()),
-                ops.distinct_until_changed(),
+                ops.distinct_until_changed(lambda state: state[Constants.state]),
             )
 
         n2k_devices.set_subscription(channel.id, line_component_status)
