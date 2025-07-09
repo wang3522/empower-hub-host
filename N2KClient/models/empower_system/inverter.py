@@ -521,11 +521,17 @@ class CombiInverter(InverterBase):
             self.inverter_circuit_control_id = inverter_circuit.control_id
 
         self.n2k_device_id = f"{JsonKeys.INVERTER_CHARGER}.{instance}"
+        self.define_inverter_state_channel(
+            n2k_devices=n2k_devices,
+        )
+        self.define_inverter_enable_channel(
+            inverter_circuit=inverter_circuit,
+            n2k_devices=n2k_devices,
+        )
 
     def define_inverter_state_channel(
         self,
         n2k_devices: N2kDevices,
-        inverter_circuit: Optional[Circuit],
     ):
 
         ##########################

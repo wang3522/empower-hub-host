@@ -71,7 +71,7 @@ class N2KDBusSimulator(dbus.service.Object):
         elif id == "GNSS.128":
             return '{"ComponentStatus": "Connected", "FixType": "2D Fix", "LatitudeDeg": 8.5, "LongitudeDeg": 100, "Sog": 5.5}'
         elif id == "InverterCharger.0":
-            return '{"ComponentStatus": "Connected", "InverterState": "Inverting", "ChargerState": "Float"}'
+            return '{"ComponentStatus": "Connected", "InverterEnable": 1, "ChargerEnable": 1, "InverterState": "Inverting", "ChargerState": "Float"}'
         elif id == "AC.5":
             return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 1110.0, "Current": 11.5, "Frequency": 11.0, "Power": 1111.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 111.0, "Current": 11.8, "Frequency": 111.0, "Power": 111.0}}}'
         # if self.get_state_count < 160:

@@ -44,3 +44,7 @@ class EmpowerSystem:
             },
             "metadata": self.metadata,
         }
+
+    def __del__(self):
+        for disposable in self.things.values():
+            disposable.dispose()

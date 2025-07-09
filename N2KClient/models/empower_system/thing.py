@@ -28,6 +28,9 @@ class Thing(ABC):
         self._disposable_list = []
 
     def __del__(self):
+        self.dispose()
+
+    def dispose(self):
         for disposable in self._disposable_list:
             disposable.dispose()
         self.channels.clear()

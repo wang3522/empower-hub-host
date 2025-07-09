@@ -587,7 +587,7 @@ class ConfigProcessor:
             return system
 
         except Exception as error:
-            logger.error(error)
+            logger.error(error, exc_info=True)
             raise
 
     def build_engine_list(

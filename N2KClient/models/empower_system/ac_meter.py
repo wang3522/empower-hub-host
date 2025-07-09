@@ -50,7 +50,6 @@ class ACMeterThingBase(Thing):
         )
 
         self.ac_id = f"{JsonKeys.AC}.{ac_line1.instance.instance}"
-        self.type = type
 
         self.define_ac_channels(
             ac_line1,

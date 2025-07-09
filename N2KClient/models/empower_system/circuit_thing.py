@@ -45,7 +45,6 @@ class CircuitThing(Thing):
         self.circuit_id = circuit.id.value
 
         self.circuit_device_id = f"{JsonKeys.CIRCUIT}.{self.circuit_id}"
-        self.type = type.value
 
         ###############################
         # Channels
@@ -62,7 +61,7 @@ class CircuitThing(Thing):
             type=ChannelType.STRING,
             unit=Unit.NONE,
             read_only=False,
-            tags=[f"{Constants.empower}:{self.type.value}.{Constants.componentStatus}"],
+            tags=[f"{Constants.empower}:{self.type}.{Constants.componentStatus}"],
         )
         self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
@@ -180,7 +179,7 @@ class CircuitThing(Thing):
             type=ChannelType.BOOLEAN,
             unit=Unit.NONE,
             read_only=circuit.switch_type == 0,
-            tags=[f"{Constants.empower}:{type.value}.power"],
+            tags=[f"{Constants.empower}:{self.type}.power"],
         )
         self._define_channel(channel)
         n2k_devices.set_subscription(

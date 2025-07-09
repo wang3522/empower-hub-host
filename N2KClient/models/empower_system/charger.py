@@ -80,6 +80,7 @@ class CombiCharger(Thing):
         # DC Lines
         ############################
         self.define_dc_lines(dc1, dc2, dc3, n2k_devices)
+        self.define_combi_channels(charger_circuit, n2k_devices)
 
     def define_dc_lines(self, dc1: DC, dc2: DC, dc3: DC, n2k_devices: N2kDevices):
         if dc1 is not None:

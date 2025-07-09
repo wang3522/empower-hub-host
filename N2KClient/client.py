@@ -311,7 +311,9 @@ class N2KClient(dbus.service.Object):
             )
             self._empower_system.on_next(processed_config)
         except Exception as e:
-            self._logger.error(f"Error reading dbus Get Config response: {e}")
+            self._logger.error(
+                f"Error reading dbus Get Config response: {e}", exc_info=True
+            )
 
     def _scan_marine_engine_config(self, should_reset: bool = False):
         """
