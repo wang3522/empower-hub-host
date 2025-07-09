@@ -87,11 +87,12 @@ class ShorePower(ACMeterThingBase):
             )
 
             line1_connected = ac_line1_connected_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda status: (
                         ConnectionStatus.CONNECTED
                         if status == "Connected"
-                        else "Disconnected"
+                        else ConnectionStatus.DISCONNECTED
                     )
                 ),
                 ops.map(lambda status: StateWithTS(status).to_json()),
@@ -113,11 +114,12 @@ class ShorePower(ACMeterThingBase):
             )
 
             line2_connected = ac_line2_connected_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda status: (
                         ConnectionStatus.CONNECTED
                         if status == "Connected"
-                        else "Disconnected"
+                        else ConnectionStatus.DISCONNECTED
                     )
                 ),
                 ops.map(lambda status: StateWithTS(status).to_json()),
@@ -139,11 +141,12 @@ class ShorePower(ACMeterThingBase):
             )
 
             line3_connected = ac_line3_connected_subject.pipe(
+                ops.filter(lambda state: state is not None),
                 ops.map(
                     lambda status: (
                         ConnectionStatus.CONNECTED
                         if status == "Connected"
-                        else "Disconnected"
+                        else ConnectionStatus.DISCONNECTED
                     )
                 ),
                 ops.map(lambda status: StateWithTS(status).to_json()),
@@ -166,6 +169,7 @@ class ShorePower(ACMeterThingBase):
                 self.ac_id, f"{ACMeterStates.Voltage.value}.{1}", N2kDeviceType.AC
             )
             line1_connected = ac_line1_Voltage.pipe(
+                ops.filter(lambda voltage: voltage is not None),
                 ops.map(
                     lambda voltage: (
                         ConnectionStatus.CONNECTED

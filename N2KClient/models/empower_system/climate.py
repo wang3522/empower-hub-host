@@ -53,7 +53,7 @@ class Climate(Thing):
                     lambda status: (
                         ConnectionStatus.CONNECTED
                         if status == "Connected"
-                        else "Disconnected"
+                        else ConnectionStatus.DISCONNECTED
                     )
                 ),
                 ops.map(lambda status: StateWithTS(status).to_json()),
