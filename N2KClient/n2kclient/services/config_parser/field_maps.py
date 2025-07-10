@@ -37,6 +37,11 @@ DATA_ID_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
 }
 
+VALUE_U32_FIELD_MAP = {
+    AttrNames.VALID: JsonKeys.VALID,
+    AttrNames.VALUE: JsonKeys.VALUE,
+}
+
 INSTANCE_FIELD_MAP = {
     AttrNames.ENABLED: JsonKeys.ENABLED,
     AttrNames.INSTANCE: JsonKeys.INSTANCE,
