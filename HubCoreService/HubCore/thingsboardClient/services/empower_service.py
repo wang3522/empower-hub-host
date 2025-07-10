@@ -298,7 +298,7 @@ class EmpowerService:
                and not re.match(location_filter_pattern, key)
         }
 
-        # If you want to keep the location filter block for future logic, you can add a comment:
+        # TODO: Handle state dependent telemetry
         # elif re.match(location_filter_pattern, key):
         #     # Location-specific logic can be added here in the future.
 
