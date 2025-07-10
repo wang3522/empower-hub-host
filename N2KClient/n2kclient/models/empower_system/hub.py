@@ -1,7 +1,7 @@
 import reactivex as rx
-from N2KClient.models.devices import N2kDevices
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
-from N2KClient.models.empower_system.state_ts import StateWithTS
+from ..devices import N2kDevices
+from ..empower_system.connection_status import ConnectionStatus
+from ..empower_system.state_ts import StateWithTS
 from .thing import Thing
 from ..common_enums import ThingType
 from ..n2k_configuration.device import Device
@@ -9,7 +9,7 @@ from ..constants import Constants, JsonKeys
 from .channel import Channel
 from ..common_enums import ChannelType, ConnectionType, Unit
 from reactivex import operators as ops
-from N2KClient.models.common_enums import N2kDeviceType, HubStates
+from ..common_enums import N2kDeviceType, HubStates
 
 
 class Hub(Thing):

@@ -47,8 +47,8 @@ from ...models.empower_system.circuit_power_switch import CircuitPowerSwitch
 from ...models.empower_system.engine_list import EngineList
 from ...models.n2k_configuration.engine_configuration import EngineConfiguration
 from ...models.empower_system.marine_engines import MarineEngine
-from N2KClient.models.devices import N2kDevices
-from N2KClient.services.config_processor.config_processor_helpers import (
+from ...models.devices import N2kDevices
+from .config_processor_helpers import (
     calculate_inverter_charger_instance,
 )
 

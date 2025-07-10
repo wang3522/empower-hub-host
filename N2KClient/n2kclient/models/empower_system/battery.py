@@ -1,8 +1,8 @@
 from typing import Optional, Union
 
-from N2KClient.models.devices import N2kDevices
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
-from N2KClient.models.empower_system.state_ts import StateWithTS
+from ..devices import N2kDevices
+from ..empower_system.connection_status import ConnectionStatus
+from ..empower_system.state_ts import StateWithTS
 from .thing import Thing
 from ..common_enums import ThingType, BatteryStatus
 from ..n2k_configuration.dc import DC
@@ -11,10 +11,10 @@ from ..constants import Constants, JsonKeys
 from .channel import Channel
 from ..common_enums import ChannelType, Unit
 from reactivex import operators as ops
-import N2KClient.util.rx as rxu
-from N2KClient.models.filters import Current, Voltage, Temperature, CapacityRemaining
+from ...util import rx as rxu
+from ..filters import Current, Voltage, Temperature, CapacityRemaining
 import reactivex as rx
-from N2KClient.models.common_enums import N2kDeviceType, DCMeterStates, CircuitStates
+from ..common_enums import N2kDeviceType, DCMeterStates, CircuitStates
 
 
 class Battery(Thing):

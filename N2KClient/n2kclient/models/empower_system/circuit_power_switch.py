@@ -1,4 +1,4 @@
-from N2KClient.models.devices import N2kDevices
+from ..devices import N2kDevices
 from .circuit_thing import CircuitThing
 from ..n2k_configuration.circuit import Circuit
 from ..common_enums import ThingType

@@ -1,8 +1,8 @@
 import reactivex as rx
-from N2KClient.models.devices import N2kDevices
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
-from N2KClient.models.empower_system.state_ts import StateWithTS
-from N2KClient.util.state_util import StateUtil
+from ..devices import N2kDevices
+from ..empower_system.connection_status import ConnectionStatus
+from ..empower_system.state_ts import StateWithTS
+from ...util.state_util import StateUtil
 from .thing import Thing
 from ..n2k_configuration.circuit import Circuit
 from ..common_enums import ChannelType, ThingType, Unit
@@ -12,9 +12,9 @@ from .link import Link
 from ..n2k_configuration.binary_logic_state import BinaryLogicState
 from ..n2k_configuration.category_item import CategoryItem
 from reactivex import operators as ops
-from N2KClient.models.filters import Current
-import N2KClient.util.rx as rxu
-from N2KClient.models.common_enums import N2kDeviceType, CircuitStates, BLSStates
+from ..filters import Current
+from ...util import rx as rxu
+from ..common_enums import N2kDeviceType, CircuitStates, BLSStates
 
 
 def get_enabled_categories(categories: list[CategoryItem]):

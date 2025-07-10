@@ -1,16 +1,16 @@
-from N2KClient.models.devices import N2kDevices
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
-from N2KClient.models.empower_system.state_ts import StateWithTS
+from ..devices import N2kDevices
+from .connection_status import ConnectionStatus
+from .state_ts import StateWithTS
 from .thing import Thing
 from ..common_enums import ChannelType, ThingType, Unit, EngineState, MarineEngineStatus
 from ..constants import Constants, JsonKeys
 from .channel import Channel
 from ..n2k_configuration.engine import EngineDevice, EngineType
 from reactivex import operators as ops
-from N2KClient.models.filters import Engine, Temperature, Pressure
-import N2KClient.util.rx as rxu
+from ..filters import Engine, Temperature, Pressure
+from ...util import rx as rxu
 import reactivex as rx
-from N2KClient.models.common_enums import N2kDeviceType, MarineEngineStates
+from ..common_enums import N2kDeviceType, MarineEngineStates
 
 
 def _map_engine_type(type: EngineType) -> str:

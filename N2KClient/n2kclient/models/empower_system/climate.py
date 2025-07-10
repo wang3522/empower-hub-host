@@ -1,15 +1,15 @@
-from N2KClient.models.devices import N2kDevices
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
-from N2KClient.models.empower_system.state_ts import StateWithTS
+from ..devices import N2kDevices
+from ..empower_system.connection_status import ConnectionStatus
+from ..empower_system.state_ts import StateWithTS
 from .thing import Thing
 from ..common_enums import ChannelType, ThingType, Unit
 from ..constants import Constants
 from .channel import Channel
 from ..n2k_configuration.hvac import HVACDevice
 from reactivex import operators as ops
-import N2KClient.util.rx as rxu
-from N2KClient.models.filters import Temperature
-from N2KClient.models.common_enums import N2kDeviceType, ClimateStates
+from ...util import rx as rxu
+from ..filters import Temperature
+from ..common_enums import N2kDeviceType, ClimateStates
 
 
 class Climate(Thing):

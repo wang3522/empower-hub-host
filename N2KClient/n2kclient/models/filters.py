@@ -1,5 +1,5 @@
-from N2KClient.models.constants import Constants, JsonKeys, AttrNames
-from N2KClient.util.settings_util import SettingsUtil
+from ..models.constants import Constants, JsonKeys, AttrNames
+from ..util.settings_util import SettingsUtil
 from reactivex import operators as ops
 
 

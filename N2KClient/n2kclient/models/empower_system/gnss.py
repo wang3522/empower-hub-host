@@ -1,16 +1,16 @@
 from ..constants import Constants, JsonKeys
-from N2KClient.models.devices import N2kDevices
+from ..devices import N2kDevices
 from .channel import Channel
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
-from N2KClient.models.empower_system.state_ts import StateWithTS
+from ..empower_system.connection_status import ConnectionStatus
+from ..empower_system.state_ts import StateWithTS
 from .thing import Thing
 from ..common_enums import ChannelType, ThingType, Unit
 from ..n2k_configuration.gnss import GNSSDevice
-from N2KClient.models.empower_system.location_state import LocationState
+from ..empower_system.location_state import LocationState
 from reactivex import operators as ops
 import reactivex as rx
-from N2KClient.models.filters import Location
-from N2KClient.models.common_enums import N2kDeviceType, GNSSStates
+from ..filters import Location
+from ..common_enums import N2kDeviceType, GNSSStates
 
 
 class GNSS(Thing):

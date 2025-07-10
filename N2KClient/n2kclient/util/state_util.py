@@ -1,5 +1,5 @@
-from N2KClient.models.constants import JsonKeys
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
+from ..models.constants import JsonKeys
+from ..models.empower_system.connection_status import ConnectionStatus
 
 
 class StateUtil:

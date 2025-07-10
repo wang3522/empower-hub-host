@@ -1,9 +1,7 @@
 from typing import Any
 
-# Update the import path below if Constants is located elsewhere
-# Example: from N2KClient.models.constants import Constants
-from N2KClient.models.constants import Constants
-from N2KClient.util.time_util import TimeUtil
+from ..constants import Constants
+from ...util.time_util import TimeUtil
 
 
 class StateWithTS:

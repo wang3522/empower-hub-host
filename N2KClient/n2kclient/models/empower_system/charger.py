@@ -2,10 +2,10 @@ from typing import Optional
 
 from reactivex import operators as ops
 import reactivex as rx
-from N2KClient.models.devices import N2kDevices
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
-from N2KClient.models.empower_system.state_ts import StateWithTS
-from N2KClient.util.state_util import StateUtil
+from ..devices import N2kDevices
+from ..empower_system.connection_status import ConnectionStatus
+from ..empower_system.state_ts import StateWithTS
+from ...util.state_util import StateUtil
 from .thing import Thing
 from ..n2k_configuration.inverter_charger import InverterChargerDevice
 from ..n2k_configuration.ac import AC
@@ -18,10 +18,10 @@ from .ac_meter import ACMeterThingBase
 from ...services.config_processor.config_processor_helpers import (
     calculate_inverter_charger_instance,
 )
-from N2KClient.models.empower_system.ac_meter import ACMeterThingBase
-import N2KClient.util.rx as rxu
-from N2KClient.models.filters import Current, Voltage
-from N2KClient.models.common_enums import (
+from ..empower_system.ac_meter import ACMeterThingBase
+from ...util import rx as rxu
+from ..filters import Current, Voltage
+from ..common_enums import (
     N2kDeviceType,
     CombiChargerStates,
     CircuitStates,

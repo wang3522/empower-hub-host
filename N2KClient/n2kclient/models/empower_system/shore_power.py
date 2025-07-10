@@ -1,11 +1,11 @@
 from typing import Optional
 from ..common_enums import ThingType
-from N2KClient.models.devices import N2kDevices
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
-from N2KClient.models.empower_system.state_ts import StateWithTS
+from ..devices import N2kDevices
+from ..empower_system.connection_status import ConnectionStatus
+from ..empower_system.state_ts import StateWithTS
 from ..n2k_configuration.ac import AC
 from ..n2k_configuration.circuit import Circuit
-from N2KClient.util.state_util import StateUtil
+from ...util.state_util import StateUtil
 from ..constants import Constants, JsonKeys
 from .channel import Channel
 from ..common_enums import ChannelType, Unit
@@ -13,7 +13,7 @@ from ..n2k_configuration.binary_logic_state import BinaryLogicState
 from .ac_meter import ACMeterThingBase
 from reactivex import operators as ops
 import reactivex as rx
-from N2KClient.models.common_enums import (
+from ..common_enums import (
     N2kDeviceType,
     ACMeterStates,
     BLSStates,

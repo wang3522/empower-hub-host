@@ -1,9 +1,9 @@
 from typing import Optional
 
-from N2KClient.models.devices import N2kDevices
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
-from N2KClient.models.empower_system.state_ts import StateWithTS
-from N2KClient.util.state_util import StateUtil
+from ..devices import N2kDevices
+from ..empower_system.connection_status import ConnectionStatus
+from ..empower_system.state_ts import StateWithTS
+from ...util.state_util import StateUtil
 from .thing import Thing
 from ..common_enums import ThingType
 from ..n2k_configuration.ac import AC
@@ -11,10 +11,10 @@ from ..constants import Constants, JsonKeys, LINE_CONST_MAP
 from .channel import Channel
 from ..common_enums import ChannelType, Unit
 from reactivex import operators as ops
-import N2KClient.util.rx as rxu
-from N2KClient.models.filters import Current, Voltage, Frequency, Power
+from ...util import rx as rxu
+from ...models.filters import Current, Voltage, Frequency, Power
 import reactivex as rx
-from N2KClient.models.common_enums import N2kDeviceType, ACMeterStates
+from ...models.common_enums import N2kDeviceType, ACMeterStates
 
 
 class ACMeterThingBase(Thing):

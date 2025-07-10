@@ -1,6 +1,6 @@
-from N2KClient.models.devices import N2kDevices
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
-from N2KClient.models.empower_system.state_ts import StateWithTS
+from ..devices import N2kDevices
+from ..empower_system.connection_status import ConnectionStatus
+from ..empower_system.state_ts import StateWithTS
 from .thing import Thing
 from ..common_enums import ChannelType, ThingType, Unit
 from ..constants import Constants, JsonKeys
@@ -10,8 +10,8 @@ from ..n2k_configuration.tank import Tank
 from ..common_enums import WaterTankType
 from reactivex import operators as ops
 import reactivex as rx
-from N2KClient.models.filters import Volume
-from N2KClient.models.common_enums import N2kDeviceType, TankStates
+from ..filters import Volume
+from ..common_enums import N2kDeviceType, TankStates
 
 
 class TankBase(Thing):

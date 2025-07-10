@@ -26,7 +26,7 @@ from ...models.n2k_configuration.sequential_name import SequentialName
 from ...models.n2k_configuration.instance import Instance
 from ...models.n2k_configuration.data_id import DataId
 from ...models.constants import Constants, JsonKeys, AttrNames
-from N2KClient.models.n2k_configuration.value_u32 import ValueU32
+from ...models.n2k_configuration.value_u32 import ValueU32
 from .field_maps import *
 from .config_parser_helpers import (
     map_enum_fields,

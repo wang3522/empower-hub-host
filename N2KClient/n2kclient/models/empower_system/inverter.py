@@ -2,7 +2,7 @@ from typing import Optional
 from reactivex import operators as ops
 import reactivex as rx
 
-from N2KClient.models.empower_system.state_ts import StateWithTS
+from .state_ts import StateWithTS
 from .thing import Thing
 from ..n2k_configuration.ac import AC
 from ..n2k_configuration.circuit import Circuit, SwitchType
@@ -10,14 +10,12 @@ from ..common_enums import ThingType, Unit
 from .channel import Channel, ChannelType
 from ..constants import Constants, JsonKeys, LINE_CONST_MAP
 from ..n2k_configuration.inverter_charger import InverterChargerDevice
-from ...models.devices import (
-    N2kDevices,
-)
-import N2KClient.util.rx as rxu
-from N2KClient.models.filters import Current, Voltage, Frequency, Power
-from N2KClient.models.empower_system.connection_status import ConnectionStatus
-from N2KClient.util.state_util import StateUtil
-from N2KClient.models.common_enums import (
+from ..devices import N2kDevices
+from ...util import rx as rxu
+from ..filters import Current, Voltage, Frequency, Power
+from .connection_status import ConnectionStatus
+from ...util.state_util import StateUtil
+from ..common_enums import (
     N2kDeviceType,
     ACMeterStates,
     CircuitStates,
