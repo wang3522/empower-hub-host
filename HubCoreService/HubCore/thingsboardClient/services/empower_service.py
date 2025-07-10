@@ -30,6 +30,7 @@ from services.config import (
 from n2kclient.models.empower_system.engine_list import EngineList
 from n2kclient.models.empower_system.empower_system import EmpowerSystem
 from n2kclient.client import N2KClient
+from n2kclient.models.devices import N2kDevice, N2kDevices
 
 class EmpowerService:
     """
@@ -81,101 +82,6 @@ class EmpowerService:
 
         # consent = self.thingsboard_client.subscribe_all_attributes(None)
         # self._service_init_disposables.append(consent.subscribe(callback))
-
-        # def __publish_state_changes(changes: list[ChannelStateChange]):
-        def __publish_state_changes(changes: list):
-            state_attrs = {}
-            telemetry_attrs = {}
-            telemetry_changes = []
-            state_changes = []
-            # Directly categorize changes into telemetry and state
-            for change in changes:
-                if any(
-                    re.match(pattern, change.channel_id)
-                    for pattern in telemetry_filter_patterns
-                ):
-                    telemetry_changes.append(change)
-                elif re.match(location_filter_pattern, change.channel_id):
-                    # Ignore gnss updates on connect1 so we don't modify last_known_location
-                    # Keep it for non connect1 platforms to test gps from simulator.
-                    if os.environ["RUNNING_PLATFORM"] != "CONNECT1":
-                        # Give location service the telemetry object
-                        pass
-                else:
-                    state_changes.append(change)
-
-            def send_state_dependent_telemetry(state_dependent_changes: dict):
-                state_dependent_telemetry_to_send = {}
-                telemetry_timestamp = None
-                for id_name, value in list(state_dependent_changes.items()):
-                    if re.match(bilge_pump_power_filter_pattern, id_name):
-                        state_dependent_telemetry_to_send[id_name] = value
-                        # Confirm that entry is a dictionary and has the timestamp attribtue
-                        if isinstance(value, dict) and Constants.ts in value:
-                            # Set the telemetry timestamp to the value we got from state
-                            telemetry_timestamp = value[Constants.ts]
-                if len(state_dependent_telemetry_to_send) > 0:
-                    # Pass in the telemetry timestamp if it is on an attribute
-                    # we would like to override the server timestamp.
-                    # If telemetry_timestamp is None, then it will use
-                    # the time that server had received the telemetry message
-                    self.thingsboard_client.send_telemetry(
-                        state_dependent_telemetry_to_send,
-                        telemetry_timestamp,
-                    )
-
-            def process_changes(
-                # changes_group: list[ChannelStateChange],
-                changes_group: list,
-                attrs,
-                last_attrs: dict[str],
-                log_message,
-            ):
-                for change in changes_group:
-                    attrs[change.channel_id] = change.state
-
-                attrs_to_send = None
-                if not last_attrs:
-                    last_attrs.update(attrs)
-                    attrs_to_send = attrs
-                else:
-                    diff_attrs = dict_diff(last_attrs, attrs)
-                    if diff_attrs:
-                        last_attrs.update(attrs)
-                        attrs_to_send = diff_attrs
-
-                if attrs_to_send:
-                    self._logger.debug("%s %s", log_message, json.dumps(attrs_to_send))
-                    return attrs_to_send
-                return None
-
-            # Process telemetry and state changes
-            telemetry_to_send = process_changes(
-                telemetry_changes,
-                telemetry_attrs,
-                self.last_telemetry,
-                "Attempting to add telemetry",
-            )
-            if telemetry_to_send:
-                self.thingsboard_client.send_telemetry(
-                    telemetry_to_send
-                )
-
-            # Determine any state change and return the
-            # new values to send to thingsboard
-            state_to_send = process_changes(
-                state_changes,
-                state_attrs,
-                self.last_state_attrs,
-                "Attempting to update state",
-            )
-            # If this is not None, then device has updated values, need to send it to state
-            # If it is None, then the device did not change since last cloud sync
-            if state_to_send:
-                send_state_dependent_telemetry(state_to_send)
-                self.thingsboard_client.update_attributes(
-                    state_to_send
-                )
 
         #TODO: Subscribe to active alarms
 
@@ -373,6 +279,41 @@ class EmpowerService:
         if self.thingsboard_client is not None:
             self.thingsboard_client.__del__()
 
+    def device_state_changes(self, devices: N2kDevices):
+        """
+        Handle state changes for the given devices.
+        """
+        mobile_dict = devices.to_mobile_dict()
+        state_attrs = {}
+        telemetry_attrs = {}
+        # Directly categorize changes into telemetry and state
+        for key, value in mobile_dict.items():
+            if any(
+                re.match(pattern, key)
+                for pattern in telemetry_filter_patterns
+            ):
+                telemetry_attrs[key] = value
+            elif re.match(location_filter_pattern, key):
+                # Ignore gnss updates on connect1 so we don't modify last_known_location
+                # Keep it for non connect1 platforms to test gps from simulator.
+                # if os.environ["RUNNING_PLATFORM"] != "CONNECT1":
+                #     # Give location service the telemetry object
+                pass
+            else:
+                state_attrs[key] = value
+
+        #TODO: Handle state driven telemetry
+
+        # Send telemetry updates
+        if telemetry_attrs:
+            print("Sending telemetry updates:", telemetry_attrs)
+            self.thingsboard_client.send_telemetry(telemetry_attrs)
+
+        # Send state updates
+        if state_attrs:
+            print("Sending state updates:", state_attrs)
+            self.thingsboard_client.update_attributes(state_attrs)
+
     # TODO: Set up some sort of n2k_server_connection state
 
     def __setup_subscriptions(self):
@@ -390,6 +331,8 @@ class EmpowerService:
         # Subscribe to metadata updates
         disposable = (self.n2k_client.get_factory_metadata_observable()
                       .subscribe(self._update_metadata))
+        self._service_init_disposables.append(disposable)
+        disposable = self.n2k_client.devices.subscribe(self.device_state_changes)
         self._service_init_disposables.append(disposable)
 
     def _update_metadata(self, metadata: dict[str, Any]):
@@ -536,4 +479,3 @@ class EmpowerService:
         #TODO: Start n2k client
         self._logger.debug("Starting N2K Client")
         self.n2k_client.start()
-        time.sleep(10)
