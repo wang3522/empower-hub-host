@@ -284,25 +284,23 @@ class EmpowerService:
         Handle state changes for the given devices.
         """
         mobile_dict = devices.to_mobile_dict()
-        state_attrs = {}
-        telemetry_attrs = {}
-        # Directly categorize changes into telemetry and state
-        for key, value in mobile_dict.items():
-            if any(
-                re.match(pattern, key)
-                for pattern in telemetry_filter_patterns
-            ):
-                telemetry_attrs[key] = value
-            elif re.match(location_filter_pattern, key):
-                # Ignore gnss updates on connect1 so we don't modify last_known_location
-                # Keep it for non connect1 platforms to test gps from simulator.
-                # if os.environ["RUNNING_PLATFORM"] != "CONNECT1":
-                #     # Give location service the telemetry object
-                pass
-            else:
-                state_attrs[key] = value
 
-        #TODO: Handle state driven telemetry
+        telemetry_attrs = {
+            key: value
+            for key, value in mobile_dict.items()
+            if any(re.match(pattern, key) for pattern in telemetry_filter_patterns)
+        }
+
+        state_attrs = {
+            key: value
+            for key, value in mobile_dict.items()
+            if not any(re.match(pattern, key) for pattern in telemetry_filter_patterns)
+               and not re.match(location_filter_pattern, key)
+        }
+
+        # If you want to keep the location filter block for future logic, you can add a comment:
+        # elif re.match(location_filter_pattern, key):
+        #     # Location-specific logic can be added here in the future.
 
         # Send telemetry updates
         if telemetry_attrs:
