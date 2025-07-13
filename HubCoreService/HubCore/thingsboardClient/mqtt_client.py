@@ -615,11 +615,32 @@ class ThingsBoardClient:
                     telemetry
                 )
 
+        telemetry_keys = list(telemetry.keys())
+        # Check to see if the telemetry is in the last sent state. This prevents us from
+        # sending the same telemetry multiple times.
+        for key in telemetry_keys:
+            if (
+                (key != Constants.ts or key != values_key)
+                and self.last_telemetry.get(key) == telemetry[key]
+            ):
+                # If the value is the same as the last known telemetry, skip sending it
+                self._logger.debug(
+                    "Skipping sending telemetry for key %s, value is the same as last known",
+                    key,
+                )
+                telemetry.pop(key)
+
+        if len(telemetry) == 0:
+            # If there is no telemetry to send, return
+            self._logger.debug("No telemetry to send")
+            return
+
         # If we are connected, then send the telemetry off to mqtt
         # If we are not, then add it to the telemetry queue.
         if self._is_connected_internal.value:
             try:
                 _ = self._client.send_telemetry(telemetry, wait_for_publish=False)
+                self.last_telemetry.update(telemetry)
             except Exception as error:
                 self._logger.error("Failed to send telemetry")
                 self._logger.error(error)
@@ -631,6 +652,7 @@ class ThingsBoardClient:
             try:
                 self._logger.info("putting telemetry to offline queue")
                 self.offline_telemetry_queue.put_nowait(telemetry)
+                self.last_telemetry.update(telemetry)
             except queue.Full:
                 # Queue was full when attempting to add
                 # Remove the oldest value in order to add the newest value in
@@ -644,6 +666,7 @@ class ThingsBoardClient:
                 self._logger.info("Removed Telemetry Item %s", dequeue_value)
                 # Insert the newest value into thte queue
                 self.offline_telemetry_queue.put_nowait(telemetry)
+                self.last_telemetry.update(telemetry)
 
     def request_attributes_state(
         self,
