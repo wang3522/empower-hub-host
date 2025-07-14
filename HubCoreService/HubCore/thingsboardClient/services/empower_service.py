@@ -330,6 +330,7 @@ class EmpowerService:
         disposable = (self.n2k_client.get_factory_metadata_observable()
                       .subscribe(self._update_metadata))
         self._service_init_disposables.append(disposable)
+        # Subscribe to the state changes
         disposable = self.n2k_client.devices.subscribe(self.device_state_changes)
         self._service_init_disposables.append(disposable)
 
