@@ -57,6 +57,7 @@ set(SOURCES
     src/modules/czone/monitoringdata.cpp
     src/modules/dbus/dbusservice.cpp
     src/modules/n2k/canservice.cpp
+    src/utils/asyncworker.cpp
     src/utils/fileutil.cpp
     src/utils/logger.cpp
     src/main.cpp

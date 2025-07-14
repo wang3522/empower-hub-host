@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <future>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -13,6 +14,7 @@
 #include "modules/czone/czonesettings.h"
 #include "modules/dbus/dbusservice.h"
 #include "utils/common.h"
+#include "utils/asyncworker.h"
 
 class CzoneInterface {
 public:
@@ -87,8 +89,10 @@ public:
                           const uint8_t data3, const uint8_t data4);
 
   void factoryReset();
-  void registerEventCallback(std::function<void(const Event &Event)> callback);
-  void publishEvent(const Event &event);
+  void registerEventCallback(std::function<void(const std::shared_ptr<Event> event)> callback);
+  void publishEvent(const std::shared_ptr<Event> event); // sync call (avoid)
+  void publishEventAsync(const std::shared_ptr<Event> event); // use worker queue
+  void publishEventOnThread(const std::shared_ptr<Event> event); // use thread
   void registerEventClientsConnectedCallback(std::function<bool(void)> callback);
   bool isEventClientsConnected();
   uint32_t highestEnabledSeverity() const { return m_highestEnabledSeverity; }
@@ -200,7 +204,7 @@ private:
   uint8_t m_dipswitch;
   ConfigResult m_config;
   bool m_configReady;
-  std::vector<std::function<void(const Event &event)>> m_eventCallbacks;
+  std::vector<std::function<void(const std::shared_ptr<Event> event)>> m_eventCallbacks;
   std::function<bool(void)> m_eventClientsConnectedCallback;
   std::mutex m_alarmStringMutex;
   std::map<uint8_t, EngineDevice> m_engineList;
@@ -215,6 +219,8 @@ private:
   bool m_czoneSleepFlag;
   bool m_wakeUp = false;
   AlarmsList m_wakeUpAlarmList;
+
+  WorkerPool m_workerpool;
 
   ConfigResult genConfig(const ConfigRequest &request);
 };
