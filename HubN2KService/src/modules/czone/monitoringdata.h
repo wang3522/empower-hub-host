@@ -272,11 +272,11 @@ namespace JsonHelpers {
   template<typename T>
   json valueToJson(const Value<T>& value) {
     json result;
-    result["valid"] = value.m_valid;
+    result["Valid"] = value.m_valid;
     if constexpr (std::is_enum_v<T>) {
-      result["value"] = toString(value.m_value);
+      result["Value"] = toString(value.m_value);
     } else {
-      result["value"] = value.m_value;
+      result["Value"] = value.m_value;
     }
     return result;
   }
