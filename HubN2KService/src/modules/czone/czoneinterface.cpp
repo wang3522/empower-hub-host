@@ -1300,6 +1300,7 @@ ConfigResult CzoneInterface::genConfig(const ConfigRequest &request) {
         circuit.set_sequentialStates(c.Circuit.SequentialStates);
         circuit.set_controlId(c.Circuit.ControlId);
         circuit.set_systemsOnAnd(c.Circuit.SystemsOnAnd);
+        circuit.set_nonVisibleCircuit(c.Circuit.NonVisibleCircuit == CZONE_TRUE);
 
         auto loads = displayListNoLock(eCZoneStructDisplayCircuitLoad, c.Circuit.ControlId, 0);
         for (auto &l : loads) {
