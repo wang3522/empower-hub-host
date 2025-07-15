@@ -2646,7 +2646,7 @@ json CategoryItem::tojson() const {
 
 json ConfigResult::tojson() const {
   json result;
-  result["status"] = to_string(m_status);
+  result["Status"] = to_string(m_status);
 
   if (m_alarms.size() > 0) {
     result["Alarms"] = m_alarms;
