@@ -30,11 +30,10 @@ class StateUtil:
         Returns:
         True if any attribute is True, otherwise False.
         """
-        any_connected = False
         for status in bools.values():
             if status:
-                any_connected = True
-        return any_connected
+                return True
+        return False
 
     @staticmethod
     def any_valid(values, attributes_to_check):

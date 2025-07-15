@@ -257,7 +257,7 @@ class N2KClient(dbus.service.Object):
             device_id = device[JsonKeys.ID]
             if device_id not in device_list_copy.devices:
                 # Actually do JSON/ENUM mapping here here
-                device_type = N2kDeviceType(device[JsonKeys.TYPE])
+                device_type = N2kDeviceType(device.get(JsonKeys.TYPE, "unknown"))
                 device_list_copy.add(device_id, N2kDevice(device_type))
                 is_list_updated = True
 
