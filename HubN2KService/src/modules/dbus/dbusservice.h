@@ -87,13 +87,6 @@ private:
   void throwError(const std::string &errorMessage);
 
   void initializeServiceMethods();
-  void emitConcatenatedSignal(const std::string &result);
-
-  // template<typename Func>
-  // void registerMethod(const std::string& methodName, Func methodImplementation, const std::string& interface);
-
-  // template <typename... Args>
-  // void registerSignal(const std::string& signalName, const std::string& interface);
 
   template <typename Func>
   void addMethodToVTable(const std::string &methodName, Func methodImplementation, const std::string &interfaceSuffix) {
@@ -106,9 +99,6 @@ private:
     m_object->addVTable(sdbus::registerSignal(signalName).withParameters<Args...>())
         .forInterface(m_servicename + "." + interfaceSuffix);
   }
-
-  std::string echo(const std::string &message) { return "Echo: " + message; }
-  std::string version();
 };
 
 #endif // DBUS_SERVICE_H

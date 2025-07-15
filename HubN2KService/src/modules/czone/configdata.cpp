@@ -3327,6 +3327,18 @@ json ScreenConfigPageImageItem::tojson() const {
 json Event::tojson() const {
   json result;
 
+  auto toHexString = [](const std::vector<std::byte> &data) -> std::string {
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+    for (size_t i = 0; i < data.size(); ++i) {
+      if (i > 0) {
+        oss << " ";
+      }
+      oss << std::setw(2) << static_cast<unsigned>(std::to_integer<uint8_t>(data[i]));
+    }
+    return oss.str();
+  };
+
   result["Type"] = to_string(m_type);
   result["Content"] = m_content;
   result["AlarmItem"] = m_alarmItem;
@@ -3336,12 +3348,9 @@ json Event::tojson() const {
       Alarm::to_string(m_globalStatus.get_highestAcknowledgedSeverity());
   result["CZoneEvent"] = json::object();
   result["CZoneEvent"]["Type"] = m_czoneEvent.get_type();
-  result["CZoneEvent"]["Content"] =
-      std::string(reinterpret_cast<const char *>(m_czoneEvent.get_content().data()), m_czoneEvent.get_content().size());
-  result["CZoneEvent"]["RawAlarm"] = std::string(reinterpret_cast<const char *>(m_czoneEvent.get_rawAlarm().data()),
-                                                 m_czoneEvent.get_rawAlarm().size());
-  result["CZoneEvent"]["DeviceItem"] = std::string(reinterpret_cast<const char *>(m_czoneEvent.get_deviceItem().data()),
-                                                   m_czoneEvent.get_deviceItem().size());
+  result["CZoneEvent"]["Content"] = toHexString(m_czoneEvent.get_content());
+  result["CZoneEvent"]["RawAlarm"] = toHexString(m_czoneEvent.get_rawAlarm());
+  result["CZoneEvent"]["DeviceItem"] = toHexString(m_czoneEvent.get_deviceItem());
 
   result["TimeStamp"] = m_timeStamp;
 

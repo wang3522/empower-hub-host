@@ -996,258 +996,252 @@ auto N2KMonitoring::BinaryLogicState::get(const std::string &memberName) const
 
 // Helper function implementations for enum to string conversion
 namespace N2KMonitoring::JsonHelpers {
-  std::string toString(eSystemOnState value) {
-    switch (value) {
-      case eSystemOnState::StateOff: return "StateOff";
-      case eSystemOnState::StateOn: return "StateOn";
-      case eSystemOnState::StateOnTimer: return "StateOnTimer";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eFaultState value) {
-    switch (value) {
-      case eFaultState::None: return "None";
-      case eFaultState::ConfigurationConflict: return "ConfigurationConflict";
-      case eFaultState::DipswitchConflict: return "DipswitchConflict";
-      case eFaultState::EepromFailure: return "EepromFailure";
-      case eFaultState::NoCZoneNetwork: return "NoCZoneNetwork";
-      case eFaultState::LowRunCurrent: return "LowRunCurrent";
-      case eFaultState::OverCurrent: return "OverCurrent";
-      case eFaultState::ShortCircuit: return "ShortCircuit";
-      case eFaultState::MissingCommander: return "MissingCommander";
-      case eFaultState::MissingModeCommander: return "MissingModeCommander";
-      case eFaultState::ReverseCurrent: return "ReverseCurrent";
-      case eFaultState::CurrentCalibration: return "CurrentCalibration";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eSourceAvailable value) {
-    switch (value) {
-      case eSourceAvailable::SourceInvalid: return "SourceInvalid";
-      case eSourceAvailable::SourceUnAvailable: return "SourceUnAvailable";
-      case eSourceAvailable::SourceAvailable: return "SourceAvailable";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eEngineState value) {
-    switch (value) {
-      case eEngineState::Dead: return "Dead";
-      case eEngineState::Stall: return "Stall";
-      case eEngineState::Crank: return "Crank";
-      case eEngineState::Run: return "Run";
-      case eEngineState::PowerOff: return "PowerOff";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eHVACOperatingMode value) {
-    switch (value) {
-      case eHVACOperatingMode::NoChange: return "NoChange";
-      case eHVACOperatingMode::Off: return "Off";
-      case eHVACOperatingMode::Moisture: return "Moisture";
-      case eHVACOperatingMode::Auto: return "Auto";
-      case eHVACOperatingMode::Heat: return "Heat";
-      case eHVACOperatingMode::Cool: return "Cool";
-      case eHVACOperatingMode::AutoAux: return "AutoAux";
-      case eHVACOperatingMode::Aux: return "Aux";
-      case eHVACOperatingMode::FanOnly: return "FanOnly";
-      case eHVACOperatingMode::Pet: return "Pet";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eAwningState value) {
-    switch (value) {
-      case eAwningState::AwningNoPower: return "AwningNoPower";
-      case eAwningState::AwningParked: return "AwningParked";
-      case eAwningState::AwningTiltedLeft: return "AwningTiltedLeft";
-      case eAwningState::AwningTiltedLeftRight: return "AwningTiltedLeftRight";
-      case eAwningState::AwningTiltedRight: return "AwningTiltedRight";
-      case eAwningState::AwningOpenUnknown: return "AwningOpenUnknown";
-      case eAwningState::AwningOpenFull: return "AwningOpenFull";
-      case eAwningState::AwningMoving: return "AwningMoving";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eGeneratorState value) {
-    switch (value) {
-      case eGeneratorState::GeneratorOff: return "GeneratorOff";
-      case eGeneratorState::GeneratorOn: return "GeneratorOn";
-      case eGeneratorState::GeneratorUnknown: return "GeneratorUnknown";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eInverterChargerEnabled value) {
-    switch (value) {
-      case eInverterChargerEnabled::Off: return "Off";
-      case eInverterChargerEnabled::On: return "On";
-      case eInverterChargerEnabled::Error: return "Error";
-      case eInverterChargerEnabled::Unavailable: return "Unavailable";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eInverterState value) {
-    switch (value) {
-      case eInverterState::Inverting: return "Inverting";
-      case eInverterState::ACPassthru: return "ACPassthru";
-      case eInverterState::LoadSense: return "LoadSense";
-      case eInverterState::Fault: return "Fault";
-      case eInverterState::Disabled: return "Disabled";
-      case eInverterState::Charging: return "Charging";
-      case eInverterState::EnergySaving: return "EnergySaving";
-      case eInverterState::Supporting: return "Supporting";
-      case eInverterState::EnergySaving2: return "EnergySaving2";
-      case eInverterState::Supporting2: return "Supporting2";
-      case eInverterState::Error: return "Error";
-      case eInverterState::DataNotAvailable: return "DataNotAvailable";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eChargerState value) {
-    switch (value) {
-      case eChargerState::NotCharging: return "NotCharging";
-      case eChargerState::Bulk: return "Bulk";
-      case eChargerState::Absorption: return "Absorption";
-      case eChargerState::Overcharge: return "Overcharge";
-      case eChargerState::Equalize: return "Equalize";
-      case eChargerState::Float: return "Float";
-      case eChargerState::NoFloat: return "NoFloat";
-      case eChargerState::ConstantVI: return "ConstantVI";
-      case eChargerState::Disabled: return "Disabled";
-      case eChargerState::Fault: return "Fault";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eTyreStatus value) {
-    switch (value) {
-      case eTyreStatus::Ok: return "Ok";
-      case eTyreStatus::Leak: return "Leak";
-      case eTyreStatus::Error: return "Error";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eTyreLimitStatus value) {
-    switch (value) {
-      case eTyreLimitStatus::ExtremeOverPressure: return "ExtremeOverPressure";
-      case eTyreLimitStatus::OverPressure: return "OverPressure";
-      case eTyreLimitStatus::NoAlarm: return "NoAlarm";
-      case eTyreLimitStatus::LowPressure: return "LowPressure";
-      case eTyreLimitStatus::ExtremeLowPressure: return "ExtremeLowPressure";
-      case eTyreLimitStatus::NA: return "NA";
-      case eTyreLimitStatus::Error: return "Error";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eAudioStatus value) {
-    switch (value) {
-      case eAudioStatus::AudioStatusInitialising: return "AudioStatusInitialising";
-      case eAudioStatus::AudioStatusReady: return "AudioStatusReady";
-      case eAudioStatus::AudioStatusUnknown: return "AudioStatusUnknown";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eAudioSource value) {
-    switch (value) {
-      case eAudioSource::VesselAlarm: return "VesselAlarm";
-      case eAudioSource::AM: return "AM";
-      case eAudioSource::FM: return "FM";
-      case eAudioSource::Weather: return "Weather";
-      case eAudioSource::DAB: return "DAB";
-      case eAudioSource::AUX: return "AUX";
-      case eAudioSource::USB: return "USB";
-      case eAudioSource::CD: return "CD";
-      case eAudioSource::MP3: return "MP3";
-      case eAudioSource::AppleiOS: return "AppleiOS";
-      case eAudioSource::Android: return "Android";
-      case eAudioSource::Bluetooth: return "Bluetooth";
-      case eAudioSource::SiriusXM: return "SiriusXM";
-      case eAudioSource::Pandora: return "Pandora";
-      case eAudioSource::Spotify: return "Spotify";
-      case eAudioSource::Slacker: return "Slacker";
-      case eAudioSource::Songza: return "Songza";
-      case eAudioSource::AppleRadio: return "AppleRadio";
-      case eAudioSource::LastFM: return "LastFM";
-      case eAudioSource::Ethernet: return "Ethernet";
-      case eAudioSource::VideoMP4: return "VideoMP4";
-      case eAudioSource::VideoDVD: return "VideoDVD";
-      case eAudioSource::VideoBlueRay: return "VideoBlueRay";
-      case eAudioSource::HDMI: return "HDMI";
-      case eAudioSource::Video: return "Video";
-      case eAudioSource::NoSource: return "NoSource";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eContactorOnState value) {
-    switch (value) {
-      case eContactorOnState::ContactorOff: return "ContactorOff";
-      case eContactorOnState::ContactorOn: return "ContactorOn";
-      case eContactorOnState::ContactorAvailable: return "ContactorAvailable";
-      case eContactorOnState::ContactorUnAvailable: return "ContactorUnAvailable";
-      case eContactorOnState::ContactorFault: return "ContactorFault";
-      case eContactorOnState::ContactorOverride: return "ContactorOverride";
-      case eContactorOnState::ContactorStarting: return "ContactorStarting";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eGNSSMethod value) {
-    switch (value) {
-      case eGNSSMethod::NoFix: return "NoFix";
-      case eGNSSMethod::StandardFix: return "StandardFix";
-      case eGNSSMethod::DifferentialFix: return "DifferentialFix";
-      case eGNSSMethod::PreciseFix: return "PreciseFix";
-      case eGNSSMethod::RtkInt: return "RtkInt";
-      case eGNSSMethod::RtkFloat: return "RtkFloat";
-      case eGNSSMethod::Estimated: return "Estimated";
-      case eGNSSMethod::Manual: return "Manual";
-      case eGNSSMethod::Simulator: return "Simulator";
-      case eGNSSMethod::Error: return "Error";
-      case eGNSSMethod::Null: return "Null";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eGNSSFixType value) {
-    switch (value) {
-      case eGNSSFixType::FixNA: return "FixNA";
-      case eGNSSFixType::Fix2D: return "Fix2D";
-      case eGNSSFixType::Fix3D: return "Fix3D";
-      default: return "Unknown";
-    }
-  }
-  
-  std::string toString(eHealth value) {
-    switch (value) {
-      case eHealth::HealthOk: return "HealthOk";
-      case eHealth::HealthBad: return "HealthBad";
-      case eHealth::HealthNone: return "HealthNone";
-      default: return "Unknown";
-    }
-  }
-  
-  // External enum types from configdata.h
-  std::string toString(MonitoringType::eTankType value) {
-    return MonitoringType::to_string(value);
-  }
-  
-  std::string toString(MeteringDevice::eACLine value) {
-    return MeteringDevice::to_string(value);
+std::string toString(eSystemOnState value) {
+  switch (value) {
+  case eSystemOnState::StateOff: return "StateOff";
+  case eSystemOnState::StateOn: return "StateOn";
+  case eSystemOnState::StateOnTimer: return "StateOnTimer";
+  default: return "Unknown";
   }
 }
 
-// Class tojson() method implementations
+std::string toString(eFaultState value) {
+  switch (value) {
+  case eFaultState::None: return "None";
+  case eFaultState::ConfigurationConflict: return "ConfigurationConflict";
+  case eFaultState::DipswitchConflict: return "DipswitchConflict";
+  case eFaultState::EepromFailure: return "EepromFailure";
+  case eFaultState::NoCZoneNetwork: return "NoCZoneNetwork";
+  case eFaultState::LowRunCurrent: return "LowRunCurrent";
+  case eFaultState::OverCurrent: return "OverCurrent";
+  case eFaultState::ShortCircuit: return "ShortCircuit";
+  case eFaultState::MissingCommander: return "MissingCommander";
+  case eFaultState::MissingModeCommander: return "MissingModeCommander";
+  case eFaultState::ReverseCurrent: return "ReverseCurrent";
+  case eFaultState::CurrentCalibration: return "CurrentCalibration";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eSourceAvailable value) {
+  switch (value) {
+  case eSourceAvailable::SourceInvalid: return "SourceInvalid";
+  case eSourceAvailable::SourceUnAvailable: return "SourceUnAvailable";
+  case eSourceAvailable::SourceAvailable: return "SourceAvailable";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eEngineState value) {
+  switch (value) {
+  case eEngineState::Dead: return "Dead";
+  case eEngineState::Stall: return "Stall";
+  case eEngineState::Crank: return "Crank";
+  case eEngineState::Run: return "Run";
+  case eEngineState::PowerOff: return "PowerOff";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eHVACOperatingMode value) {
+  switch (value) {
+  case eHVACOperatingMode::NoChange: return "NoChange";
+  case eHVACOperatingMode::Off: return "Off";
+  case eHVACOperatingMode::Moisture: return "Moisture";
+  case eHVACOperatingMode::Auto: return "Auto";
+  case eHVACOperatingMode::Heat: return "Heat";
+  case eHVACOperatingMode::Cool: return "Cool";
+  case eHVACOperatingMode::AutoAux: return "AutoAux";
+  case eHVACOperatingMode::Aux: return "Aux";
+  case eHVACOperatingMode::FanOnly: return "FanOnly";
+  case eHVACOperatingMode::Pet: return "Pet";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eAwningState value) {
+  switch (value) {
+  case eAwningState::AwningNoPower: return "AwningNoPower";
+  case eAwningState::AwningParked: return "AwningParked";
+  case eAwningState::AwningTiltedLeft: return "AwningTiltedLeft";
+  case eAwningState::AwningTiltedLeftRight: return "AwningTiltedLeftRight";
+  case eAwningState::AwningTiltedRight: return "AwningTiltedRight";
+  case eAwningState::AwningOpenUnknown: return "AwningOpenUnknown";
+  case eAwningState::AwningOpenFull: return "AwningOpenFull";
+  case eAwningState::AwningMoving: return "AwningMoving";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eGeneratorState value) {
+  switch (value) {
+  case eGeneratorState::GeneratorOff: return "GeneratorOff";
+  case eGeneratorState::GeneratorOn: return "GeneratorOn";
+  case eGeneratorState::GeneratorUnknown: return "GeneratorUnknown";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eInverterChargerEnabled value) {
+  switch (value) {
+  case eInverterChargerEnabled::Off: return "Off";
+  case eInverterChargerEnabled::On: return "On";
+  case eInverterChargerEnabled::Error: return "Error";
+  case eInverterChargerEnabled::Unavailable: return "Unavailable";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eInverterState value) {
+  switch (value) {
+  case eInverterState::Inverting: return "Inverting";
+  case eInverterState::ACPassthru: return "ACPassthru";
+  case eInverterState::LoadSense: return "LoadSense";
+  case eInverterState::Fault: return "Fault";
+  case eInverterState::Disabled: return "Disabled";
+  case eInverterState::Charging: return "Charging";
+  case eInverterState::EnergySaving: return "EnergySaving";
+  case eInverterState::Supporting: return "Supporting";
+  case eInverterState::EnergySaving2: return "EnergySaving2";
+  case eInverterState::Supporting2: return "Supporting2";
+  case eInverterState::Error: return "Error";
+  case eInverterState::DataNotAvailable: return "DataNotAvailable";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eChargerState value) {
+  switch (value) {
+  case eChargerState::NotCharging: return "NotCharging";
+  case eChargerState::Bulk: return "Bulk";
+  case eChargerState::Absorption: return "Absorption";
+  case eChargerState::Overcharge: return "Overcharge";
+  case eChargerState::Equalize: return "Equalize";
+  case eChargerState::Float: return "Float";
+  case eChargerState::NoFloat: return "NoFloat";
+  case eChargerState::ConstantVI: return "ConstantVI";
+  case eChargerState::Disabled: return "Disabled";
+  case eChargerState::Fault: return "Fault";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eTyreStatus value) {
+  switch (value) {
+  case eTyreStatus::Ok: return "Ok";
+  case eTyreStatus::Leak: return "Leak";
+  case eTyreStatus::Error: return "Error";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eTyreLimitStatus value) {
+  switch (value) {
+  case eTyreLimitStatus::ExtremeOverPressure: return "ExtremeOverPressure";
+  case eTyreLimitStatus::OverPressure: return "OverPressure";
+  case eTyreLimitStatus::NoAlarm: return "NoAlarm";
+  case eTyreLimitStatus::LowPressure: return "LowPressure";
+  case eTyreLimitStatus::ExtremeLowPressure: return "ExtremeLowPressure";
+  case eTyreLimitStatus::NA: return "NA";
+  case eTyreLimitStatus::Error: return "Error";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eAudioStatus value) {
+  switch (value) {
+  case eAudioStatus::AudioStatusInitialising: return "AudioStatusInitialising";
+  case eAudioStatus::AudioStatusReady: return "AudioStatusReady";
+  case eAudioStatus::AudioStatusUnknown: return "AudioStatusUnknown";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eAudioSource value) {
+  switch (value) {
+  case eAudioSource::VesselAlarm: return "VesselAlarm";
+  case eAudioSource::AM: return "AM";
+  case eAudioSource::FM: return "FM";
+  case eAudioSource::Weather: return "Weather";
+  case eAudioSource::DAB: return "DAB";
+  case eAudioSource::AUX: return "AUX";
+  case eAudioSource::USB: return "USB";
+  case eAudioSource::CD: return "CD";
+  case eAudioSource::MP3: return "MP3";
+  case eAudioSource::AppleiOS: return "AppleiOS";
+  case eAudioSource::Android: return "Android";
+  case eAudioSource::Bluetooth: return "Bluetooth";
+  case eAudioSource::SiriusXM: return "SiriusXM";
+  case eAudioSource::Pandora: return "Pandora";
+  case eAudioSource::Spotify: return "Spotify";
+  case eAudioSource::Slacker: return "Slacker";
+  case eAudioSource::Songza: return "Songza";
+  case eAudioSource::AppleRadio: return "AppleRadio";
+  case eAudioSource::LastFM: return "LastFM";
+  case eAudioSource::Ethernet: return "Ethernet";
+  case eAudioSource::VideoMP4: return "VideoMP4";
+  case eAudioSource::VideoDVD: return "VideoDVD";
+  case eAudioSource::VideoBlueRay: return "VideoBlueRay";
+  case eAudioSource::HDMI: return "HDMI";
+  case eAudioSource::Video: return "Video";
+  case eAudioSource::NoSource: return "NoSource";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eContactorOnState value) {
+  switch (value) {
+  case eContactorOnState::ContactorOff: return "ContactorOff";
+  case eContactorOnState::ContactorOn: return "ContactorOn";
+  case eContactorOnState::ContactorAvailable: return "ContactorAvailable";
+  case eContactorOnState::ContactorUnAvailable: return "ContactorUnAvailable";
+  case eContactorOnState::ContactorFault: return "ContactorFault";
+  case eContactorOnState::ContactorOverride: return "ContactorOverride";
+  case eContactorOnState::ContactorStarting: return "ContactorStarting";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eGNSSMethod value) {
+  switch (value) {
+  case eGNSSMethod::NoFix: return "NoFix";
+  case eGNSSMethod::StandardFix: return "StandardFix";
+  case eGNSSMethod::DifferentialFix: return "DifferentialFix";
+  case eGNSSMethod::PreciseFix: return "PreciseFix";
+  case eGNSSMethod::RtkInt: return "RtkInt";
+  case eGNSSMethod::RtkFloat: return "RtkFloat";
+  case eGNSSMethod::Estimated: return "Estimated";
+  case eGNSSMethod::Manual: return "Manual";
+  case eGNSSMethod::Simulator: return "Simulator";
+  case eGNSSMethod::Error: return "Error";
+  case eGNSSMethod::Null: return "Null";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eGNSSFixType value) {
+  switch (value) {
+  case eGNSSFixType::FixNA: return "FixNA";
+  case eGNSSFixType::Fix2D: return "Fix2D";
+  case eGNSSFixType::Fix3D: return "Fix3D";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(eHealth value) {
+  switch (value) {
+  case eHealth::HealthOk: return "HealthOk";
+  case eHealth::HealthBad: return "HealthBad";
+  case eHealth::HealthNone: return "HealthNone";
+  default: return "Unknown";
+  }
+}
+
+std::string toString(MonitoringType::eTankType value) { return MonitoringType::to_string(value); }
+
+std::string toString(MeteringDevice::eACLine value) { return MeteringDevice::to_string(value); }
+}
+
 json N2KMonitoring::Circuit::tojson() const {
   json result;
   result["id"] = m_id;
@@ -1491,24 +1485,61 @@ json N2KMonitoring::NetworkStatus::tojson() const {
 
 json N2KMonitoring::SnapshotInstanceIdMap::tojson() const {
   json result;
-  result["circuits"] = JsonHelpers::idMapToJson(m_circuits);
-  result["modes"] = JsonHelpers::idMapToJson(m_modes);
-  result["tanks"] = JsonHelpers::idMapToJson(m_tanks);
-  result["engines"] = JsonHelpers::idMapToJson(m_engines);
-  result["ac"] = JsonHelpers::idMapToJson(m_ac);
-  result["dc"] = JsonHelpers::idMapToJson(m_dc);
-  result["temperatures"] = JsonHelpers::idMapToJson(m_temperatures);
-  result["pressures"] = JsonHelpers::idMapToJson(m_pressures);
-  result["hvacs"] = JsonHelpers::idMapToJson(m_hvacs);
-  result["awnings"] = JsonHelpers::idMapToJson(m_awnings);
-  result["thirdPartyGenerators"] = JsonHelpers::idMapToJson(m_thirdPartyGenerators);
-  result["inverterChargers"] = JsonHelpers::idMapToJson(m_inverterChargers);
-  result["tyrepressures"] = JsonHelpers::idMapToJson(m_tyrepressures);
-  result["audioStereos"] = JsonHelpers::idMapToJson(m_audioStereos);
-  result["acMainContactors"] = JsonHelpers::idMapToJson(m_acMainContactors);
-  result["gnss"] = JsonHelpers::idMapToJson(m_gnss);
-  result["monitoringKeyValue"] = JsonHelpers::idMapToJson(m_monitoringKeyValue);
-  result["binaryLogicState"] = JsonHelpers::idMapToJson(m_binaryLogicState);
+
+  if (m_circuits.size() > 0) {
+    result["circuits"] = JsonHelpers::idMapToJson(m_circuits);
+  }
+  if (m_modes.size() > 0) {
+    result["modes"] = JsonHelpers::idMapToJson(m_modes);
+  }
+  if (m_tanks.size() > 0) {
+    result["tanks"] = JsonHelpers::idMapToJson(m_tanks);
+  }
+  if (m_engines.size() > 0) {
+    result["engines"] = JsonHelpers::idMapToJson(m_engines);
+  }
+  if (m_ac.size() > 0) {
+    result["ac"] = JsonHelpers::idMapToJson(m_ac);
+  }
+  if (m_dc.size() > 0) {
+    result["dc"] = JsonHelpers::idMapToJson(m_dc);
+  }
+  if (m_temperatures.size() > 0) {
+    result["temperatures"] = JsonHelpers::idMapToJson(m_temperatures);
+  }
+  if (m_pressures.size() > 0) {
+    result["pressures"] = JsonHelpers::idMapToJson(m_pressures);
+  }
+  if (m_hvacs.size() > 0) {
+    result["hvacs"] = JsonHelpers::idMapToJson(m_hvacs);
+  }
+  if (m_awnings.size() > 0) {
+    result["awnings"] = JsonHelpers::idMapToJson(m_awnings);
+  }
+  if (m_thirdPartyGenerators.size() > 0) {
+    result["thirdPartyGenerators"] = JsonHelpers::idMapToJson(m_thirdPartyGenerators);
+  }
+  if (m_inverterChargers.size() > 0) {
+    result["inverterChargers"] = JsonHelpers::idMapToJson(m_inverterChargers);
+  }
+  if (m_tyrepressures.size() > 0) {
+    result["tyrepressures"] = JsonHelpers::idMapToJson(m_tyrepressures);
+  }
+  if (m_audioStereos.size() > 0) {
+    result["audioStereos"] = JsonHelpers::idMapToJson(m_audioStereos);
+  }
+  if (m_acMainContactors.size() > 0) {
+    result["acMainContactors"] = JsonHelpers::idMapToJson(m_acMainContactors);
+  }
+  if (m_gnss.size() > 0) {
+    result["gnss"] = JsonHelpers::idMapToJson(m_gnss);
+  }
+  if (m_monitoringKeyValue.size() > 0) {
+    result["monitoringKeyValue"] = JsonHelpers::idMapToJson(m_monitoringKeyValue);
+  }
+  if (m_binaryLogicState.size() > 0) {
+    result["binaryLogicState"] = JsonHelpers::idMapToJson(m_binaryLogicState);
+  }
   if (m_networkStatus) {
     result["networkStatus"] = m_networkStatus->tojson();
   } else {
