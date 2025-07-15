@@ -1,19 +1,28 @@
 class JsonKeys:
     GNSS = "GNSS"
     CIRCUITS = "Circuits"
+    CIRCUIT = "Circuit"
     NONVISIBLE_CIRCUITS = "NonVisibleCircuits"
     DCS = "DCs"
+    DC = "DC"
     ACS = "ACs"
+    AC = "AC"
     TANKS = "Tanks"
+    TANK = "Tank"
     INVERTER_CHARGERS = "InverterChargers"
+    INVERTER_CHARGER = "InverterCharger"
     DEVICES = "Devices"
+    DEVICE = "Device"
     HVACS = "HVACs"
+    HVAC = "HVAC"
     AUDIO_STEREOS = "AudioStereos"
     BINARY_LOGIC_STATES = "BinaryLogicStates"
+    BINARY_LOGIC_STATE = "BinaryLogicState"
     UI_RELATIONSHIPS = "UiRelationships"
     PRESSURES = "Pressures"
     MODES = "Modes"
     ENGINES = "Engines"
+    ENGINE = "Engine"
     ENABLED = "Enabled"
     ID = "Id"
     VALUE = "Value"
@@ -141,7 +150,6 @@ class JsonKeys:
     CONFIG_VERSION = "ConfigVersion"
     CONFIG_FILE_VERSION = "ConfigFileVersion"
     CONFIG_NAME = "ConfigName"
-    SERIAL_NUMBER = "SerialNumber"
     RT_FIRMWARE_VERSION = "RTFirmwareVersion"
     MENDER_ARTIFACT_INFO = "MenderArtifactInfo"
     Items = "Items"
@@ -394,3 +402,45 @@ class Constants:
     ConfigMetadata = "ConfigMetadata"
     Config = "Config"
     FactoryDataSettings = "FactoryDataSettings"
+    ts = "ts"
+    ENGINE = "Engine"
+    SPEED = "SPEED"
+    MIN_CHANGE = "MIN_CHANGE"
+    MIN_SAMPLE_FREQ_IN_SECONDS = "MIN_SAMPLE_FREQ_IN_SECONDS"
+    ENGINE_HOURS_IN_MINUTES = "ENGINE_HOURS_IN_MINUTES"
+    HUB = "HUB"
+    SIGNAL_STRENGTH = "SIGNAL_STRENGTH"
+    VOLTAGE = "VOLTAGE"
+    ROUND = "ROUND"
+    CURRENT = "CURRENT"
+    TEMPERATURE = "TEMPERATURE"
+    PRESSURE = "PRESSURE"
+    FREQUENCY = "FREQUENCY"
+    POWER = "POWER"
+    VOLUME = "VOLUME"
+    LEVEL_ABSOLUTE = "LEVEL_ABSOLUTE"
+    GNSS = "GNSS"
+    LOCATION = "LOCATION"
+    GNSS_UPDATE_INTERVAL = "GNSS_UPDATE_INTERVAL"
+    CAPACITY_REMAINING = "CAPACITY_REMAINING"
+    TWO_D_FIX = "2D Fix"
+    THREE_D_FIX = "3D Fix"
+    NONE = "None"
+    lat = "lat"
+    long = "long"
+    sp = "sp"
+    primaryBattery = "primaryBattery"
+    fallbackBattery = "fallbackBattery"
+
+
+LINE_CONST_MAP = {
+    1: Constants.line1,
+    2: Constants.line2,
+    3: Constants.line3,
+}
+
+BATTERY_CONST_MAP = {
+    1: Constants.battery1,
+    2: Constants.battery2,
+    3: Constants.battery3,
+}

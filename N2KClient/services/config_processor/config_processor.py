@@ -47,6 +47,10 @@ from N2KClient.models.empower_system.circuit_power_switch import CircuitPowerSwi
 from N2KClient.models.empower_system.engine_list import EngineList
 from N2KClient.models.n2k_configuration.engine_configuration import EngineConfiguration
 from N2KClient.models.empower_system.marine_engines import MarineEngine
+from N2KClient.models.devices import N2kDevices
+from N2KClient.services.config_processor.config_processor_helpers import (
+    calculate_inverter_charger_instance,
+)
 
 
 class ConfigProcessor:
@@ -74,17 +78,21 @@ class ConfigProcessor:
     # ###################################################
     #     Devices
     # ###################################################
-    def process_devices(self, config: N2kConfiguration) -> None:
+    def process_devices(
+        self, config: N2kConfiguration, n2k_devices: N2kDevices
+    ) -> None:
         for device in config.device.values():
             if device.device_type == DeviceType.Europa:
-                hub = Hub(device)
+                hub = Hub(device, n2k_devices)
                 self._things.append(hub)
 
     # ###################################################
     #     Inverter/Chargers
     # ###################################################
     def process_inverter_circuit(
-        self, inverter_charger: InverterChargerDevice, config: N2kConfiguration
+        self,
+        inverter_charger: InverterChargerDevice,
+        config: N2kConfiguration,
     ):
         inverter_visible_circuit = None
         if (
@@ -146,6 +154,8 @@ class ConfigProcessor:
         config: N2kConfiguration,
         inverter_charger: InverterChargerDevice,
         categories: list[CategoryItem],
+        n2k_devices: N2kDevices,
+        instance: int,
     ) -> None:
 
         ac_meter = None
@@ -189,8 +199,10 @@ class ConfigProcessor:
             ac_line2=ac_meter.line[2] if ac_meter and 2 in ac_meter.line else None,
             ac_line3=ac_meter.line[3] if ac_meter and 3 in ac_meter.line else None,
             categories=categories,
-            status_ac_line=inverter_associated_ac_line,
+            instance=instance,
             inverter_circuit=inverter_visible_circuit,
+            status_ac_line=inverter_associated_ac_line,
+            n2k_devices=n2k_devices,
         )
         self._things.append(inverter_thing)
         if ac_meter is not None:
@@ -201,6 +213,8 @@ class ConfigProcessor:
         inverter_charger: InverterChargerDevice,
         config: N2kConfiguration,
         categories: list[CategoryItem],
+        n2k_devices: N2kDevices,
+        instance: int,
     ) -> None:
         charger_visible_circuit = self.process_charger_circuit(inverter_charger, config)
 
@@ -242,7 +256,6 @@ class ConfigProcessor:
             )
             if dc_meter3 is not None:
                 self._dcMeter_charger_instances.append(dc_meter3.instance.instance)
-
         charger_thing = CombiCharger(
             inverter_charger=inverter_charger,
             dc1=dc_meter1 if dc_meter1 is not None else None,
@@ -250,6 +263,8 @@ class ConfigProcessor:
             dc3=dc_meter3 if dc_meter3 is not None else None,
             categories=categories,
             charger_circuit=charger_visible_circuit,
+            instance=instance,
+            n2k_devices=n2k_devices,
         )
 
         shorepower = None
@@ -267,13 +282,15 @@ class ConfigProcessor:
         if shorepower is not None:
             self._ic_component_status[shorepower.line[1].instance.instance] = (
                 # charger_thing.component_status
-                charger_thing,
+                charger_thing.component_status,
                 shore_key,
             )
 
         self._things.append(charger_thing)
 
-    def process_inverter_chargers(self, config: N2kConfiguration) -> None:
+    def process_inverter_chargers(
+        self, config: N2kConfiguration, n2k_devices: N2kDevices
+    ) -> None:
         # For each inverter/charger we will create both an inverter and
         # charger thing.
         for id, inverter_charger in config.inverter_charger.items():
@@ -282,18 +299,20 @@ class ConfigProcessor:
                 inverter_charger.id,
                 config,
             )
-
+            instance = calculate_inverter_charger_instance(inverter_charger)
             self.process_inverters(
-                config,
-                inverter_charger,
-                categories,
+                config, inverter_charger, categories, n2k_devices, instance
             )
-            self.process_chargers(inverter_charger, config, categories)
+            self.process_chargers(
+                inverter_charger, config, categories, n2k_devices, instance
+            )
 
     # ###################################################
     #     DC Meters
     # ###################################################
-    def process_dc_meters(self, config: N2kConfiguration) -> None:
+    def process_dc_meters(
+        self, config: N2kConfiguration, n2k_devices: N2kDevices
+    ) -> None:
         for dc_meter in config.dc.values():
             circuit = None
             if dc_meter.instance.instance in self._dcMeter_charger_instances:
@@ -319,28 +338,30 @@ class ConfigProcessor:
                 battery_circuit=circuit,
                 primary_battery=primary_dc,
                 fallback_battery=secondary_dc,
+                n2k_devices=n2k_devices,
             )
             self._things.append(dc_thing)
 
     # ###################################################
     #     GNSS
     # ###################################################
-    def process_gnss(self, config: N2kConfiguration) -> None:
+    def process_gnss(self, config: N2kConfiguration, n2k_devices: N2kDevices) -> None:
         for gnss in config.gnss.values():
-            gnss_thing = GNSS(
-                gnss,
-            )
+            gnss_thing = GNSS(gnss, n2k_devices)
             self._things.append(gnss_thing)
 
     # ###################################################
     #     AC Meters
     # ###################################################
-    def process_ac_meters(self, config: N2kConfiguration) -> None:
+    def process_ac_meters(
+        self, config: N2kConfiguration, n2k_devices: N2kDevices
+    ) -> None:
         for ac_meter in config.ac.values():
             if ac_meter.line[1].instance.instance in self._acMeter_inverter_instances:
                 continue
 
             ic_associated_line = None
+            component_status = None
             if ac_meter.line[1].instance.instance in self._ic_component_status:
                 component_status, ic_associated_line = self._ic_component_status[
                     ac_meter.line[1].instance.instance
@@ -406,10 +427,12 @@ class ConfigProcessor:
                     ac_meter.line[1] if 1 in ac_meter.line else None,
                     ac_meter.line[2] if 2 in ac_meter.line else None,
                     ac_meter.line[3] if 3 in ac_meter.line else None,
+                    n2k_devices=n2k_devices,
                     categories=categories,
                     circuit=circuit,
                     ic_associated_line=ic_associated_line,
                     bls=ac_bls,
+                    component_status=component_status,
                 )
 
             if ac_type == ACType.Inverter:
@@ -417,6 +440,7 @@ class ConfigProcessor:
                     ac_meter.line[1] if 1 in ac_meter.line else None,
                     ac_meter.line[2] if 2 in ac_meter.line else None,
                     ac_meter.line[3] if 3 in ac_meter.line else None,
+                    n2k_devices=n2k_devices,
                     categories=categories,
                     circuit=circuit,
                 )
@@ -425,6 +449,7 @@ class ConfigProcessor:
                     ac_meter.line[1] if 1 in ac_meter.line else None,
                     ac_meter.line[2] if 2 in ac_meter.line else None,
                     ac_meter.line[3] if 3 in ac_meter.line else None,
+                    n2k_devices=n2k_devices,
                     categories=categories,
                     circuit=circuit,
                 )
@@ -433,7 +458,7 @@ class ConfigProcessor:
     # ###################################################
     #     Tanks
     # ###################################################
-    def process_tanks(self, config: N2kConfiguration) -> None:
+    def process_tanks(self, config: N2kConfiguration, n2k_devices: N2kDevices) -> None:
         for tank in config.tank.values():
             links = []
             # Fuel tanks
@@ -460,6 +485,7 @@ class ConfigProcessor:
                     tank_thing = FreshWaterTank(
                         tank=tank,
                         links=links,
+                        n2k_devices=n2k_devices,
                     )
                     self._things.append(tank_thing)
 
@@ -467,6 +493,7 @@ class ConfigProcessor:
                     tank_thing = WasteWaterTank(
                         tank=tank,
                         links=links,
+                        n2k_devices=n2k_devices,
                     )
                     self._things.append(tank_thing)
 
@@ -474,25 +501,29 @@ class ConfigProcessor:
                     tank_thing = BlackWaterTank(
                         tank=tank,
                         links=links,
+                        n2k_devices=n2k_devices,
                     )
                     self._things.append(tank_thing)
 
     # ###################################################
     #     Hvac
     # ###################################################
-    def process_hvac(self, config: N2kConfiguration) -> None:
+    def process_hvac(self, config: N2kConfiguration, n2k_devices: N2kDevices) -> None:
         for hvac in config.hvac.values():
             categories = get_category_list(ItemType.Temperature, hvac.id, config)
             climate_thing = Climate(
                 hvac=hvac,
                 categories=categories,
+                n2k_devices=n2k_devices,
             )
             self._things.append(climate_thing)
 
     # ###################################################
     #     Circuits
     # ###################################################
-    def process_circuits(self, config: N2kConfiguration) -> None:
+    def process_circuits(
+        self, config: N2kConfiguration, n2k_devices: N2kDevices
+    ) -> None:
         for circuit in config.circuit.values():
             links = []
             # 1 - LocalAndRemove, 2 - RemoteOnly
@@ -511,6 +542,7 @@ class ConfigProcessor:
                     circuit=circuit,
                     links=links,
                     bls=bls,
+                    n2k_devices=n2k_devices,
                 )
                 self._things.append(circuit_thing)
 
@@ -519,32 +551,34 @@ class ConfigProcessor:
                 if circuit.control_id in self._associated_circuit_instances:
                     continue
 
-                circuit_thing = CircuitBilgePump(circuit, links, bls)
+                circuit_thing = CircuitBilgePump(circuit, links, n2k_devices, bls)
                 circuit_thing.circuit = circuit
                 self._things.append(circuit_thing)
 
             if is_in_category(circuit.categories, Constants.Pumps):
-                circuit_thing = CircuitWaterPump(circuit, links, bls)
+                circuit_thing = CircuitWaterPump(circuit, links, n2k_devices, bls)
                 self._things.append(circuit_thing)
             if (
                 is_in_category(circuit.categories, Constants.Power)
                 and circuit.control_id not in self._associated_circuit_instances
             ):
-                circuit_thing = CircuitPowerSwitch(ThingType.PUMP, circuit, links, bls)
+                circuit_thing = CircuitPowerSwitch(circuit, links, n2k_devices, bls)
                 self._things.append(circuit_thing)
 
-    def build_empower_system(self, config: N2kConfiguration) -> EmpowerSystem:
+    def build_empower_system(
+        self, config: N2kConfiguration, devices: N2kDevices
+    ) -> EmpowerSystem:
         logger = logging.getLogger("Config Processor")
         self._things.clear()
         try:
-            self.process_devices(config)
-            self.process_inverter_chargers(config)
-            self.process_dc_meters(config)
-            self.process_gnss(config)
-            self.process_ac_meters(config)
-            self.process_tanks(config)
-            self.process_hvac(config)
-            self.process_circuits(config)
+            self.process_devices(config, devices)
+            self.process_inverter_chargers(config, devices)
+            self.process_dc_meters(config, devices)
+            self.process_gnss(config, devices)
+            self.process_ac_meters(config, devices)
+            self.process_tanks(config, devices)
+            self.process_hvac(config, devices)
+            self.process_circuits(config, devices)
 
             # Config metadata?
             system = EmpowerSystem(config.config_metadata)
@@ -553,15 +587,17 @@ class ConfigProcessor:
             return system
 
         except Exception as error:
-            logger.error(error)
+            logger.error(error, exc_info=True)
             raise
 
-    def build_engine_list(self, config: EngineConfiguration):
+    def build_engine_list(
+        self, config: EngineConfiguration, devices: N2kDevices
+    ) -> EngineList:
         logger = logging.getLogger("Engine Config Processor")
         engines: list[Thing] = []
         try:
             for device in config.devices.values():
-                thing = MarineEngine(device)
+                thing = MarineEngine(device, devices)
                 engines.append(thing)
 
         except Exception as error:
