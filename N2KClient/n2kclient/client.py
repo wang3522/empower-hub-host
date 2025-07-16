@@ -287,7 +287,7 @@ class N2KClient(dbus.service.Object):
             factory_metadata = self._config_parser.parse_factory_metadata(
                 factory_metadata_json
             )
-            self._factory_metaadata.on_next(factory_metadata)
+            self._factory_metadata.on_next(factory_metadata)
         except Exception as e:
             self._logger.error(f"Error reading dbus Get Factory Metadata response: {e}")
 
