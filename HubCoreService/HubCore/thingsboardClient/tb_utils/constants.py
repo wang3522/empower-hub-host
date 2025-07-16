@@ -30,3 +30,8 @@ class Constants:
     TS = "ts"
     LAT = "lat"
     LONG = "long"
+    THINGSBOARD_SETTINGS_KEY = "ThingsboardSettings"
+    TB_ACCESS_TOKEN_PATH = "/data/tb_access_token"
+    SN_PATH = "/data/factory/serial_number"
+    TB_CONSENTS_PATH = "/data/tb_consents/"
+    BLE_SECRET_AUTH_KEY_PATH = "/data/ble_secret.json"

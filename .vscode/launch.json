@@ -6,9 +6,9 @@
       "type": "debugpy",
       "request": "launch",
       "env": {
-        "TB_HOST": "{YOUR TB HOST ENDPOINT}",
-        "TB_PORT": "{YOUR TB HOST PORT}",
-        "TB_ACCESS_TOKEN": "{YOUR ACCESS TOKEN}",
+        "TB_HOST": "192.168.2.54",
+        "TB_PORT": "1883",
+        "TB_ACCESS_TOKEN": "billy-test",
       },
       "program": "${workspaceFolder}/HubCoreService/HubCore/thingsboardClient/main.py",
       "console": "integratedTerminal",
