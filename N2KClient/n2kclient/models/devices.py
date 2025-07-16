@@ -26,6 +26,8 @@ class N2kDevice:
         # Update subject if it exists
         if channel_key in self._channel_subjects:
             self._channel_subjects[channel_key].on_next(value)
+        else:
+            self._channel_subjects[channel_key] = BehaviorSubject(value)
 
     def get_channel_subject(self, channel_key: str) -> BehaviorSubject:
         if channel_key not in self._channel_subjects:
