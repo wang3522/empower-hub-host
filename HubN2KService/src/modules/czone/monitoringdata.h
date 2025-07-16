@@ -719,7 +719,7 @@ public:
   std::string m_hotspotType;
   int32_t m_hotspotChannel;
   std::string m_cellularStatus;
-  bool m_celllularInternetConnectivity;
+  bool m_cellularInternetConnectivity;
   std::string m_cellularIp;
   std::string m_cellularOperator;
   std::string m_cellularType;

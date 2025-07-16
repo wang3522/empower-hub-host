@@ -92,7 +92,7 @@ void N2KMonitoring::NetworkStatus::clear() {
   m_hotspotType = "";
   m_hotspotChannel = 0;
   m_cellularStatus = "";
-  m_celllularInternetConnectivity = false;
+  m_cellularInternetConnectivity = false;
   m_cellularIp = "";
   m_cellularOperator = "";
   m_cellularType = "";
@@ -1436,7 +1436,7 @@ json N2KMonitoring::MonitoringKeyValue::tojson() const {
   result["Value"] = m_value;
   result["LimitValid"] = m_limitValid;
   result["Min"] = m_min;
-  result["Min"] = m_max;
+  result["Max"] = m_max;
   result["WarnLow"] = m_warnLow;
   result["WarnHigh"] = m_warnHigh;
   return result;
@@ -1446,7 +1446,7 @@ json N2KMonitoring::BinaryLogicState::tojson() const {
   json result;
   result["Dipswitch"] = m_dipswitch;
   result["Instance"] = m_instance;
-  result["Instance"] = JsonHelpers::valueToJson(m_states);
+  result["States"] = JsonHelpers::valueToJson(m_states);
   return result;
 }
 
@@ -1472,7 +1472,7 @@ json N2KMonitoring::NetworkStatus::tojson() const {
   result["HotspotType"] = m_hotspotType;
   result["HotspotChannel"] = m_hotspotChannel;
   result["CellularStatus"] = m_cellularStatus;
-  result["CelllularInternetConnectivity"] = m_celllularInternetConnectivity;
+  result["CellularInternetConnectivity"] = m_cellularInternetConnectivity;
   result["CellularIp"] = m_cellularIp;
   result["CellularOperator"] = m_cellularOperator;
   result["CellularType"] = m_cellularType;
