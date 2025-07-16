@@ -12,6 +12,7 @@
 class WorkerPool {
 public:
   WorkerPool();
+  WorkerPool(int size);
   ~WorkerPool();
 
   bool isShutdown() const { return m_shutdown.load(); }
@@ -30,7 +31,8 @@ private:
   std::mutex m_threadTrackingMutex;
 
   // Thread pool size
-  static constexpr size_t THREAD_POOL_SIZE = 4;
+  static constexpr int THREAD_POOL_SIZE = 4;
+  int m_threadPoolSize;
 
   void initializeThreadPool();
   void shutdownThreadPool();

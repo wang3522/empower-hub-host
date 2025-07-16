@@ -7,6 +7,7 @@
 #include "modules/czone/monitoringdata.h"
 #include "modules/dbus/dbusservice.h"
 #include "modules/n2k/canservice.h"
+#include "utils/asyncworker.h"
 #include "utils/json.hpp"
 
 #include "DevelopmentLib/Utils/tUnitConversion.h"
@@ -40,7 +41,7 @@ public:
   void Update(N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);
   void Clear();
 
-  std::string Snapshot();
+  bool Snapshot();
 
   bool GetSetting(CZoneDbSettingsType type, int32_t &value) const;
   bool GetSetting(CZoneDbSettingsType type, float &value) const;
@@ -69,6 +70,7 @@ public:
 
 private:
   CanService &m_canService;
+  WorkerPool m_workerpool;
 
   void UpdateMonitoringCircuits(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
                                 N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot);

@@ -1,7 +1,9 @@
 #include "utils/asyncworker.h"
 #include "utils/logger.h"
 
-WorkerPool::WorkerPool() { initializeThreadPool(); }
+WorkerPool::WorkerPool() : m_threadPoolSize(THREAD_POOL_SIZE) { initializeThreadPool(); }
+
+WorkerPool::WorkerPool(int size) : m_threadPoolSize(size) { initializeThreadPool(); }
 
 WorkerPool::~WorkerPool() {
   shutdownThreadPool();
@@ -20,7 +22,7 @@ WorkerPool::~WorkerPool() {
 void WorkerPool::initializeThreadPool() {
   m_shutdown = false;
 
-  for (size_t i = 0; i < THREAD_POOL_SIZE; ++i) {
+  for (int i = 0; i < m_threadPoolSize; ++i) {
     m_eventThreadPool.emplace_back(&WorkerPool::eventWorker, this);
   }
 }

@@ -349,7 +349,7 @@ void CzoneDatabase::ProcessFields(std::vector<Field> &fields, T1 instance, N2KMo
  * These unit settings determine how raw sensor data is converted for display to users.
  * All measurements are converted from internal system units to user-friendly units.
  */
-CzoneDatabase::CzoneDatabase(CanService &canService) : m_canService(canService) {
+CzoneDatabase::CzoneDatabase(CanService &canService) : m_canService(canService), m_workerpool(2) {
   // Initialize unit conversion system with default settings
   m_UnitConversion.SetDefaults();
 
@@ -436,10 +436,7 @@ void CzoneDatabase::Update(N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot) {
  *
  * @return N2KMonitoring::SnapshotInstanceIdMap Complete snapshot of current monitoring state
  */
-std::string CzoneDatabase::Snapshot() {
-  // Thread-safe snapshot generation
-  const std::lock_guard<std::mutex> lock(m_SnapshotMutex);
-
+bool CzoneDatabase::Snapshot() {
   // Clear previous snapshot data to start fresh
   m_Snapshot.clear();
   m_SnapshotKeyValue.clear();
@@ -464,10 +461,10 @@ std::string CzoneDatabase::Snapshot() {
         m_Snapshot.m_monitoringKeyValue[it.first] = it.second;
       }
     }
+    return true;
   }
 
-  // TODO: Convert to JSON format if needed (marked for future implementation)
-  return m_Snapshot.tojson().dump();
+  return false;
 }
 
 bool CzoneDatabase::GetSetting(CZoneDbSettingsType type, int32_t &value) const {
@@ -1244,5 +1241,27 @@ void CzoneDatabase::UpdateNetworkStatus(N2KMonitoring::SnapshotInstanceIdMap &sn
 }
 
 void CzoneDatabase::registerDbus(std::shared_ptr<DbusService> dbusService) {
-  dbusService->registerService("SingleSnapshot", "czone", [ptr = this]() -> std::string { return ptr->Snapshot(); });
+  dbusService->registerService("SingleSnapshot", "czone",
+                               [ptr = this]() -> std::string { return ptr->m_LastSnapshot.tojson().dump(); });
+
+  dbusService->registerSignal("Snapshot", "czone");
+
+  auto task = [this, &dbusService]() {
+    while (!this->m_workerpool.isShutdown()) {
+      try {
+        {
+          const std::lock_guard<std::mutex> lock(m_SnapshotMutex);
+          auto delta = this->Snapshot();
+          if (delta) {
+            BOOST_LOG_TRIVIAL(debug) << "CzoneDatabase::registerDbus::Task delta detected.";
+            dbusService->emitSignal("Snapshot", "czone", this->m_Snapshot.tojson().dump());
+          }
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+      } catch (const std::exception &e) {
+        BOOST_LOG_TRIVIAL(error) << "CzoneDatabase::registerDbus::Task snapshot scan exception: " << e.what();
+      }
+    }
+  };
+  m_workerpool.addTask(std::move(task));
 }

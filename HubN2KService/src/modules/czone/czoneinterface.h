@@ -13,8 +13,8 @@
 #include "modules/czone/configdata.h"
 #include "modules/czone/czonesettings.h"
 #include "modules/dbus/dbusservice.h"
-#include "utils/common.h"
 #include "utils/asyncworker.h"
+#include "utils/common.h"
 
 class CzoneInterface {
 public:
@@ -90,8 +90,8 @@ public:
 
   void factoryReset();
   void registerEventCallback(std::function<void(const std::shared_ptr<Event> event)> callback);
-  void publishEvent(const std::shared_ptr<Event> event); // sync call (avoid)
-  void publishEventAsync(const std::shared_ptr<Event> event); // use worker queue
+  void publishEvent(const std::shared_ptr<Event> event);         // sync call (avoid)
+  void publishEventAsync(const std::shared_ptr<Event> event);    // use worker queue
   void publishEventOnThread(const std::shared_ptr<Event> event); // use thread
   void registerEventClientsConnectedCallback(std::function<bool(void)> callback);
   bool isEventClientsConnected();
