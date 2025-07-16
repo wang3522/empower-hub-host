@@ -17,11 +17,6 @@ public:
   void run();
   void stop();
 
-  // template<typename Func, typename... SignalArgs>
-  // void registerService(const std::string& methodName, const std::string& interfaceSuffix, Func methodImplemented,
-  // const std::string& signalName); template<typename Func, typename... SignalArgs> void registerService(const
-  // std::string& methodName, const std::string& interfaceSuffix, Func methodImplemented);
-
   template <typename... SignalArgs>
   void registerSignal(const std::string &signalName, const std::string &interfaceSuffix) {
     if (interfaceSuffix.empty()) {
@@ -74,6 +69,8 @@ public:
     }
   }
 
+  void throwError(const std::string &errorMessage);
+
 private:
   const std::string m_objectpath = "/org/navico/HubN2K";
   const std::string m_servicename = "org.navico.HubN2K";
@@ -83,10 +80,6 @@ private:
 
   std::unordered_set<std::string> m_registeredSignals;
   std::unordered_set<std::string> m_registeredMethods;
-
-  void throwError(const std::string &errorMessage);
-
-  void initializeServiceMethods();
 
   template <typename Func>
   void addMethodToVTable(const std::string &methodName, Func methodImplementation, const std::string &interfaceSuffix) {

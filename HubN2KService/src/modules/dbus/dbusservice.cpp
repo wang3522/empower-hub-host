@@ -1,5 +1,4 @@
 #include "modules/dbus/dbusservice.h"
-#include "N2KCoreApp_version.h"
 #include "utils/logger.h"
 
 #include <thread>
@@ -33,7 +32,6 @@ void DbusService::initialize() {
     BOOST_LOG_TRIVIAL(error) << "DbusService object is not initialized";
     throwError("Failed to initialize DbusService");
   }
-  initializeServiceMethods();
   BOOST_LOG_TRIVIAL(debug) << "DbusService methods registered...";
 }
 
@@ -59,8 +57,4 @@ void DbusService::stop() {
 
 void DbusService::throwError(const std::string &errorMessage) {
   throw sdbus::Error(sdbus::Error::Name{m_servicename + ".Error"}, errorMessage);
-}
-
-void DbusService::initializeServiceMethods() {
-  registerService("version", "status", [this]() { return std::string(N2KCoreApp::VERSION_STRING); });
 }

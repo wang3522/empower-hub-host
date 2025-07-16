@@ -1241,8 +1241,14 @@ void CzoneDatabase::UpdateNetworkStatus(N2KMonitoring::SnapshotInstanceIdMap &sn
 }
 
 void CzoneDatabase::registerDbus(std::shared_ptr<DbusService> dbusService) {
-  dbusService->registerService("SingleSnapshot", "czone",
-                               [ptr = this]() -> std::string { return ptr->m_LastSnapshot.tojson().dump(); });
+  dbusService->registerService("SingleSnapshot", "czone", [ptr = this, dbusService]() -> std::string {
+    try {
+      return ptr->m_LastSnapshot.tojson().dump();
+    } catch (const std::exception &e) {
+      BOOST_LOG_TRIVIAL(error) << "SingleSnapshot:Error " << e.what();
+      dbusService->throwError("SingleSnapshot:Error " + std::string(e.what()));
+    }
+  });
 
   dbusService->registerSignal("Snapshot", "czone");
 

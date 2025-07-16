@@ -422,6 +422,81 @@ private:
   uint32_t m_subType;
 };
 
+class SettingRequest {
+public:
+  enum eSettingType : int {
+    eConfig = 0,
+    eDipswitch = 1,
+    eDepthOffset = 2,
+    eMagneticVariation = 3,
+    eTimeOffset = 4,
+    eGlobal = 5,
+    eDateTime = 6,
+    eBacklightLevel = 7,
+    eBatteryFull = 8,
+    eAlarmGlobal = 9,
+    eFactoryData = 10,
+  };
+  static std::string to_string(eSettingType type) {
+    switch (type) {
+    case eConfig: return "Config";
+    case eDipswitch: return "Dipswitch";
+    case eDepthOffset: return "DepthOffset";
+    case eMagneticVariation: return "MagneticVariation";
+    case eTimeOffset: return "TimeOffset";
+    case eGlobal: return "Global";
+    case eDateTime: return "DateTime";
+    case eBacklightLevel: return "BacklightLevel";
+    case eBatteryFull: return "BatteryFull";
+    case eAlarmGlobal: return "AlarmGlobal";
+    case eFactoryData: return "FactoryData";
+    default: return "Unknown";
+    }
+  }
+  static eSettingType from_string(const std::string &type) {
+    if (type == "Config")
+      return eConfig;
+    if (type == "Dipswitch")
+      return eDipswitch;
+    if (type == "DepthOffset")
+      return eDepthOffset;
+    if (type == "MagneticVariation")
+      return eMagneticVariation;
+    if (type == "TimeOffset")
+      return eTimeOffset;
+    if (type == "Global")
+      return eGlobal;
+    if (type == "DateTime")
+      return eDateTime;
+    if (type == "BacklightLevel")
+      return eBacklightLevel;
+    if (type == "BatteryFull")
+      return eBatteryFull;
+    if (type == "AlarmGlobal")
+      return eAlarmGlobal;
+    if (type == "FactoryData")
+      return eFactoryData;
+    return eConfig;
+  }
+
+  eSettingType m_Type;
+  std::unique_ptr<uint32_t> m_DipswitchValue;
+  std::unique_ptr<float> m_TimeOffsetValue;
+  std::unique_ptr<float> m_MagneticVariationValue;
+  std::unique_ptr<float> m_DepthOffsetValue;
+  std::unique_ptr<float> m_BacklightValue;
+  std::unique_ptr<uint32_t> m_BatteryFullValue;
+  std::unique_ptr<std::vector<std::byte>> m_Payload;
+
+  SettingRequest(const json &j);
+  SettingRequest() = delete;
+  SettingRequest(const SettingRequest &other);
+  SettingRequest(SettingRequest &&other) = default;
+  SettingRequest &operator=(const SettingRequest &other);
+  SettingRequest &operator=(SettingRequest &&other) = default;
+  ~SettingRequest() = default;
+};
+
 class DataId {
 public:
   DataId();
@@ -2468,7 +2543,7 @@ private:
   std::string m_displayName;
   std::string m_relativePath;
 
-  public:
+public:
   ScreenConfig();
   ScreenConfig(const ScreenConfig &rhs);
   ScreenConfig(ScreenConfig &&rhs);

@@ -3356,3 +3356,124 @@ json Event::tojson() const {
 
   return result;
 }
+
+SettingRequest::SettingRequest(const json &j) : m_Type(eConfig) {
+  try {
+    if (j.contains("Type")) {
+      m_Type = from_string(j["Type"].get<std::string>());
+    } else {
+      throw std::invalid_argument("SettingRequest::SettingRequest [Type] argument is missing");
+    }
+
+    if (j.contains("DipswitchValue")) {
+      m_DipswitchValue = std::make_unique<uint32_t>(j["DipswitchValue"].get<uint32_t>());
+    }
+
+    if (j.contains("TimeOffsetValue")) {
+      m_TimeOffsetValue = std::make_unique<float>(j["TimeOffsetValue"].get<float>());
+    }
+
+    if (j.contains("MagneticVariationValue")) {
+      m_MagneticVariationValue = std::make_unique<float>(j["MagneticVariationValue"].get<float>());
+    }
+
+    if (j.contains("DepthOffsetValue")) {
+      m_DepthOffsetValue = std::make_unique<float>(j["DepthOffsetValue"].get<float>());
+    }
+
+    if (j.contains("BacklightValue")) {
+      m_BacklightValue = std::make_unique<float>(j["BacklightValue"].get<float>());
+    }
+
+    if (j.contains("BatteryFullValue")) {
+      m_BatteryFullValue = std::make_unique<uint32_t>(j["BatteryFullValue"].get<uint32_t>());
+    }
+
+    if (j.contains("Payload")) {
+      auto payloadArray = j["Payload"]; // [x] need confirm payload example
+      m_Payload = std::make_unique<std::vector<std::byte>>();
+      m_Payload->clear();
+      m_Payload->reserve(payloadArray.size());
+      for (const auto &byte : payloadArray) {
+        m_Payload->push_back(static_cast<std::byte>(byte.get<uint8_t>()));
+      }
+    }
+  } catch (const std::invalid_argument &e) {
+    throw std::invalid_argument(e.what());
+  } catch (const std::exception &e) {
+    throw std::runtime_error("ettingRequest::SettingRequest error while generating SettingRequest object.");
+  }
+}
+
+SettingRequest::SettingRequest(const SettingRequest& other) : m_Type(other.m_Type) {
+  if (other.m_DipswitchValue) {
+    m_DipswitchValue = std::make_unique<uint32_t>(*other.m_DipswitchValue);
+  }
+  
+  if (other.m_TimeOffsetValue) {
+    m_TimeOffsetValue = std::make_unique<float>(*other.m_TimeOffsetValue);
+  }
+  
+  if (other.m_MagneticVariationValue) {
+    m_MagneticVariationValue = std::make_unique<float>(*other.m_MagneticVariationValue);
+  }
+  
+  if (other.m_DepthOffsetValue) {
+    m_DepthOffsetValue = std::make_unique<float>(*other.m_DepthOffsetValue);
+  }
+  
+  if (other.m_BacklightValue) {
+    m_BacklightValue = std::make_unique<float>(*other.m_BacklightValue);
+  }
+  
+  if (other.m_BatteryFullValue) {
+    m_BatteryFullValue = std::make_unique<uint32_t>(*other.m_BatteryFullValue);
+  }
+  
+  if (other.m_Payload) {
+    m_Payload = std::make_unique<std::vector<std::byte>>(*other.m_Payload);
+  }
+}
+
+SettingRequest& SettingRequest::operator=(const SettingRequest& other) {
+  if (this != &other) {
+    m_Type = other.m_Type;
+    
+    // Reset and reassign all unique_ptr members
+    m_DipswitchValue.reset();
+    if (other.m_DipswitchValue) {
+      m_DipswitchValue = std::make_unique<uint32_t>(*other.m_DipswitchValue);
+    }
+    
+    m_TimeOffsetValue.reset();
+    if (other.m_TimeOffsetValue) {
+      m_TimeOffsetValue = std::make_unique<float>(*other.m_TimeOffsetValue);
+    }
+    
+    m_MagneticVariationValue.reset();
+    if (other.m_MagneticVariationValue) {
+      m_MagneticVariationValue = std::make_unique<float>(*other.m_MagneticVariationValue);
+    }
+    
+    m_DepthOffsetValue.reset();
+    if (other.m_DepthOffsetValue) {
+      m_DepthOffsetValue = std::make_unique<float>(*other.m_DepthOffsetValue);
+    }
+    
+    m_BacklightValue.reset();
+    if (other.m_BacklightValue) {
+      m_BacklightValue = std::make_unique<float>(*other.m_BacklightValue);
+    }
+    
+    m_BatteryFullValue.reset();
+    if (other.m_BatteryFullValue) {
+      m_BatteryFullValue = std::make_unique<uint32_t>(*other.m_BatteryFullValue);
+    }
+    
+    m_Payload.reset();
+    if (other.m_Payload) {
+      m_Payload = std::make_unique<std::vector<std::byte>>(*other.m_Payload);
+    }
+  }
+  return *this;
+}

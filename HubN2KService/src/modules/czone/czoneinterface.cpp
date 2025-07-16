@@ -2887,24 +2887,42 @@ ConfigResult CzoneInterface::getAllConfig() {
 }
 
 void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
-  dbusService->registerService("GetConfigAll", "czone", [ptr = this]() -> std::string {
-    auto r = ptr->getAllConfig();
-    return r.tojson().dump();
+  dbusService->registerService("GetConfigAll", "czone", [ptr = this, dbusService]() -> std::string {
+    try {
+      auto r = ptr->getAllConfig();
+      return r.tojson().dump();
+    } catch (const std::exception &e) {
+      json r;
+      BOOST_LOG_TRIVIAL(error) << "GetConfigAll:Error " << e.what();
+      dbusService->throwError("GetConfigAll:Error " + std::string(e.what()));
+    }
   });
 
-  dbusService->registerService("GetConfig", "czone", [ptr = this](std::string type) -> std::string {
-    auto r = ptr->getConfig(ConfigRequest::from_string(type));
-    return r.tojson().dump();
+  dbusService->registerService("GetConfig", "czone", [ptr = this, dbusService](std::string type) -> std::string {
+    try {
+      auto r = ptr->getConfig(ConfigRequest::from_string(type));
+      return r.tojson().dump();
+    } catch (const std::exception &e) {
+      json r;
+      BOOST_LOG_TRIVIAL(error) << "GetConfig:Error " << e.what();
+      dbusService->throwError("GetConfig:Error " + std::string(e.what()));
+    }
   });
 
-  dbusService->registerService("GetCategories", "czone", [ptr = this](std::string type) -> std::string {
-    auto r = ptr->getCategories(CategoryRequest::from_string(type));
-    return r.tojson().dump();
+  dbusService->registerService("GetCategories", "czone", [ptr = this, dbusService](std::string type) -> std::string {
+    try {
+      auto r = ptr->getCategories(CategoryRequest::from_string(type));
+      return r.tojson().dump();
+    } catch (const std::exception &e) {
+      json r;
+      BOOST_LOG_TRIVIAL(error) << "GetCategories:Error " << e.what();
+      dbusService->throwError("GetCategories:Error " + std::string(e.what()));
+    }
   });
 
   dbusService->registerSignal("Event", "czone");
   registerEventCallback([&dbusService](std::shared_ptr<Event> event) {
-    BOOST_LOG_TRIVIAL(info) << "Event callback for signal (dbus) " << Event::to_string(event->get_type());
+    BOOST_LOG_TRIVIAL(debug) << "Event callback for signal (dbus) " << Event::to_string(event->get_type());
     dbusService->emitSignal("Event", "czone", event->tojson().dump());
   });
 }
