@@ -244,57 +244,68 @@ using ValueGNSSFixType = Value<eGNSSFixType>;
 
 // JSON conversion helper functions
 namespace JsonHelpers {
-  // Enum to string conversion functions
-  std::string toString(eSystemOnState value);
-  std::string toString(eFaultState value);
-  std::string toString(eSourceAvailable value);
-  std::string toString(eEngineState value);
-  std::string toString(eHVACOperatingMode value);
-  std::string toString(eAwningState value);
-  std::string toString(eGeneratorState value);
-  std::string toString(eInverterChargerEnabled value);
-  std::string toString(eInverterState value);
-  std::string toString(eChargerState value);
-  std::string toString(eTyreStatus value);
-  std::string toString(eTyreLimitStatus value);
-  std::string toString(eAudioStatus value);
-  std::string toString(eAudioSource value);
-  std::string toString(eContactorOnState value);
-  std::string toString(eGNSSMethod value);
-  std::string toString(eGNSSFixType value);
-  std::string toString(eHealth value);
-  
-  // External enum types from configdata.h
-  std::string toString(MonitoringType::eTankType value);
-  std::string toString(MeteringDevice::eACLine value);
-  
-  // Template function for Value<T> JSON serialization
-  template<typename T>
-  json valueToJson(const Value<T>& value) {
-    json result;
-    result["Valid"] = value.m_valid;
-    if constexpr (std::is_enum_v<T>) {
-      result["Value"] = toString(value.m_value);
-    } else {
-      result["Value"] = value.m_value;
-    }
-    return result;
+// Enum to string conversion functions
+std::string toString(eSystemOnState value);
+std::string toString(eFaultState value);
+std::string toString(eSourceAvailable value);
+std::string toString(eEngineState value);
+std::string toString(eHVACOperatingMode value);
+std::string toString(eAwningState value);
+std::string toString(eGeneratorState value);
+std::string toString(eInverterChargerEnabled value);
+std::string toString(eInverterState value);
+std::string toString(eChargerState value);
+std::string toString(eTyreStatus value);
+std::string toString(eTyreLimitStatus value);
+std::string toString(eAudioStatus value);
+std::string toString(eAudioSource value);
+std::string toString(eContactorOnState value);
+std::string toString(eGNSSMethod value);
+std::string toString(eGNSSFixType value);
+std::string toString(eHealth value);
+
+// External enum types from configdata.h
+std::string toString(MonitoringType::eTankType value);
+std::string toString(MeteringDevice::eACLine value);
+
+// Template function for Value<T> JSON serialization
+template <typename T>
+json valueToJson(const Value<T> &value) {
+  json result;
+  result["Valid"] = value.m_valid;
+  if constexpr (std::is_enum_v<T>) {
+    result["Value"] = toString(value.m_value);
+  } else {
+    result["Value"] = value.m_value;
   }
-  
-  // Template function for IdMap<T> JSON serialization
-  template<typename T>
-  json idMapToJson(const IdMap<T>& map) {
-    json result = json::array();
-    for (const auto& [id, item] : map) {
+  return result;
+}
+
+// Template function for IdMap<T> JSON serialization
+template <typename T>
+json idMapToJson(const IdMap<T> &map) {
+  json result = json::array();
+  for (const auto &[id, item] : map) {
+    if (item) {
+      json entry = item->tojson();
+      entry["id"] = id;
+      result.push_back(entry);
+    }
+  }
+  return result;
+}
+
+template <typename T>
+void idMapToJson(json &result, const std::string &key, const IdMap<T> &map) {
+  if (map.size() > 0) {
+    for (const auto &[id, item] : map) {
       if (item) {
-        json entry = item->tojson();
-        entry["id"] = id;
-        result.push_back(entry);
+        result[key + "." + std::to_string(id)] = item->tojson();
       }
     }
-    return result;
   }
 }
+} // namespace JsonHelpers
 
 class Circuit {
 public:
@@ -319,7 +330,7 @@ public:
 
   auto get(const std::string &memberName) -> CircuitValue;
   auto get(const std::string &memberName) const -> CircuitValueConst;
-  
+
   json tojson() const;
 };
 
@@ -338,7 +349,7 @@ public:
 
   auto get(const std::string &memberName) -> TankValue;
   auto get(const std::string &memberName) const -> TankValueConst;
-  
+
   json tojson() const;
 };
 
@@ -380,7 +391,7 @@ public:
 
   auto get(const std::string &memberName) -> EngineValue;
   auto get(const std::string &memberName) const -> EngineValueConst;
-  
+
   json tojson() const;
 };
 
@@ -400,7 +411,7 @@ public:
 
   auto get(const std::string &memberName) -> ACLineValue;
   auto get(const std::string &memberName) const -> ACLineValueConst;
-  
+
   json tojson() const;
 };
 
@@ -416,7 +427,7 @@ public:
 
   auto get(const std::string &memberName) -> ACValue;
   auto get(const std::string &memberName) const -> ACValueConst;
-  
+
   json tojson() const;
 };
 
@@ -439,7 +450,7 @@ public:
 
   auto get(const std::string &memberName) -> DCValue;
   auto get(const std::string &memberName) const -> DCValueConst;
-  
+
   json tojson() const;
 };
 
@@ -455,7 +466,7 @@ public:
 
   auto get(const std::string &memberName) -> TemperatureValue;
   auto get(const std::string &memberName) const -> TemperatureValueConst;
-  
+
   json tojson() const;
 };
 
@@ -471,7 +482,7 @@ public:
 
   auto get(const std::string &memberName) -> PressureValue;
   auto get(const std::string &memberName) const -> PressureValueConst;
-  
+
   json tojson() const;
 };
 
@@ -492,7 +503,7 @@ public:
 
   auto get(const std::string &memberName) -> HVACValue;
   auto get(const std::string &memberName) const -> HVACValueConst;
-  
+
   json tojson() const;
 };
 
@@ -508,7 +519,7 @@ public:
 
   auto get(const std::string &memberName) -> ZipdeeAwningValue;
   auto get(const std::string &memberName) const -> ZipdeeAwningValueConst;
-  
+
   json tojson() const;
 };
 
@@ -525,7 +536,7 @@ public:
 
   auto get(const std::string &memberName) -> ThirdPartyGeneratorValue;
   auto get(const std::string &memberName) const -> ThirdPartyGeneratorValueConst;
-  
+
   json tojson() const;
 };
 
@@ -549,7 +560,7 @@ public:
 
   auto get(const std::string &memberName) -> InverterChargerValue;
   auto get(const std::string &memberName) const -> InverterChargerValueConst;
-  
+
   json tojson() const;
 };
 
@@ -569,7 +580,7 @@ public:
 
   auto get(const std::string &memberName) -> TyrePressureValue;
   auto get(const std::string &memberName) const -> TyrePressureValueConst;
-  
+
   json tojson() const;
 };
 
@@ -590,7 +601,7 @@ public:
 
   auto get(const std::string &memberName) -> AudioStereoValue;
   auto get(const std::string &memberName) const -> AudioStereoValueConst;
-  
+
   json tojson() const;
 };
 
@@ -610,7 +621,7 @@ public:
 
   auto get(const std::string &memberName) -> ACMainContactorValue;
   auto get(const std::string &memberName) const -> ACMainContactorValueConst;
-  
+
   json tojson() const;
 };
 
@@ -644,7 +655,7 @@ public:
 
   auto get(const std::string &memberName) -> GNSSValue;
   auto get(const std::string &memberName) const -> GNSSValueConst;
-  
+
   json tojson() const;
 };
 
@@ -665,7 +676,7 @@ public:
 
   auto get(const std::string &memberName) -> MonitoringKeyValueValue;
   auto get(const std::string &memberName) const -> MonitoringKeyValueValueConst;
-  
+
   json tojson() const;
 };
 
@@ -682,7 +693,7 @@ public:
 
   auto get(const std::string &memberName) -> BinaryLogicStateValue;
   auto get(const std::string &memberName) const -> BinaryLogicStateValueConst;
-  
+
   json tojson() const;
 };
 
@@ -719,7 +730,7 @@ public:
 
   bool operator==(const NetworkStatus &other) const = default;
   void clear();
-  
+
   json tojson() const;
 };
 
@@ -751,7 +762,7 @@ public:
 
   bool operator==(const SnapshotInstanceIdMap &other) const;
   void clear();
-  
+
   json tojson() const;
 };
 
@@ -765,7 +776,7 @@ public:
   eHealth m_gnssFix;
 
   bool operator==(const HealthStatus &other) const = default;
-  
+
   json tojson() const;
 };
 
@@ -775,7 +786,7 @@ public:
 
   bool operator==(const MonitoringKeyValueMap &other) const;
   void clear();
-  
+
   json tojson() const;
 };
 

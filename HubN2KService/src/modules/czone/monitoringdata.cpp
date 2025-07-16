@@ -1240,7 +1240,7 @@ std::string toString(eHealth value) {
 std::string toString(MonitoringType::eTankType value) { return MonitoringType::to_string(value); }
 
 std::string toString(MeteringDevice::eACLine value) { return MeteringDevice::to_string(value); }
-}
+} // namespace N2KMonitoring::JsonHelpers
 
 json N2KMonitoring::Circuit::tojson() const {
   json result;
@@ -1486,64 +1486,29 @@ json N2KMonitoring::NetworkStatus::tojson() const {
 json N2KMonitoring::SnapshotInstanceIdMap::tojson() const {
   json result;
 
-  if (m_circuits.size() > 0) {
-    result["Circuits"] = JsonHelpers::idMapToJson(m_circuits);
-  }
-  if (m_modes.size() > 0) {
-    result["Modes"] = JsonHelpers::idMapToJson(m_modes);
-  }
-  if (m_tanks.size() > 0) {
-    result["Tanks"] = JsonHelpers::idMapToJson(m_tanks);
-  }
-  if (m_engines.size() > 0) {
-    result["Engines"] = JsonHelpers::idMapToJson(m_engines);
-  }
-  if (m_ac.size() > 0) {
-    result["AC"] = JsonHelpers::idMapToJson(m_ac);
-  }
-  if (m_dc.size() > 0) {
-    result["DC"] = JsonHelpers::idMapToJson(m_dc);
-  }
-  if (m_temperatures.size() > 0) {
-    result["Temperatures"] = JsonHelpers::idMapToJson(m_temperatures);
-  }
-  if (m_pressures.size() > 0) {
-    result["Pressures"] = JsonHelpers::idMapToJson(m_pressures);
-  }
-  if (m_hvacs.size() > 0) {
-    result["Hvacs"] = JsonHelpers::idMapToJson(m_hvacs);
-  }
-  if (m_awnings.size() > 0) {
-    result["Awnings"] = JsonHelpers::idMapToJson(m_awnings);
-  }
-  if (m_thirdPartyGenerators.size() > 0) {
-    result["ThirdPartyGenerators"] = JsonHelpers::idMapToJson(m_thirdPartyGenerators);
-  }
-  if (m_inverterChargers.size() > 0) {
-    result["InverterChargers"] = JsonHelpers::idMapToJson(m_inverterChargers);
-  }
-  if (m_tyrepressures.size() > 0) {
-    result["Tyrepressures"] = JsonHelpers::idMapToJson(m_tyrepressures);
-  }
-  if (m_audioStereos.size() > 0) {
-    result["AudioStereos"] = JsonHelpers::idMapToJson(m_audioStereos);
-  }
-  if (m_acMainContactors.size() > 0) {
-    result["ACMainContactors"] = JsonHelpers::idMapToJson(m_acMainContactors);
-  }
-  if (m_gnss.size() > 0) {
-    result["GNSS"] = JsonHelpers::idMapToJson(m_gnss);
-  }
-  if (m_monitoringKeyValue.size() > 0) {
-    result["MonitoringKeyValue"] = JsonHelpers::idMapToJson(m_monitoringKeyValue);
-  }
-  if (m_binaryLogicState.size() > 0) {
-    result["BinaryLogicState"] = JsonHelpers::idMapToJson(m_binaryLogicState);
-  }
+  JsonHelpers::idMapToJson(result, "Circuits", m_circuits);
+  JsonHelpers::idMapToJson(result, "Modes", m_modes);
+  JsonHelpers::idMapToJson(result, "Tanks", m_tanks);
+  JsonHelpers::idMapToJson(result, "Engines", m_engines);
+  JsonHelpers::idMapToJson(result, "AC", m_ac);
+  JsonHelpers::idMapToJson(result, "DC", m_dc);
+  JsonHelpers::idMapToJson(result, "Temperatures", m_temperatures);
+  JsonHelpers::idMapToJson(result, "Pressures", m_pressures);
+  JsonHelpers::idMapToJson(result, "Hvacs", m_hvacs);
+  JsonHelpers::idMapToJson(result, "Awnings", m_awnings);
+  JsonHelpers::idMapToJson(result, "ThirdPartyGenerators", m_thirdPartyGenerators);
+  JsonHelpers::idMapToJson(result, "InverterChargers", m_inverterChargers);
+  JsonHelpers::idMapToJson(result, "Tyrepressures", m_tyrepressures);
+  JsonHelpers::idMapToJson(result, "AudioStereos", m_audioStereos);
+  JsonHelpers::idMapToJson(result, "ACMainContactors", m_acMainContactors);
+  JsonHelpers::idMapToJson(result, "GNSS", m_gnss);
+  JsonHelpers::idMapToJson(result, "MonitoringKeyValue", m_monitoringKeyValue);
+  JsonHelpers::idMapToJson(result, "BinaryLogicState", m_binaryLogicState);
+
   if (m_networkStatus) {
     result["NetworkStatus"] = m_networkStatus->tojson();
   }
-  result["NetworkStatus"] = m_timeStamp;
+  result["TimeStamp"] = m_timeStamp;
   return result;
 }
 
