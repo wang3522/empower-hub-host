@@ -9,7 +9,7 @@ bool deepCompareMap(const MapType &a, const MapType &b) {
     return false;
   for (const auto &[key, value] : a) {
     auto it = b.find(key);
-    if (it == b.end() || value == nullptr != (it->second == nullptr))
+    if (it == b.end() || ((value == nullptr) != (it->second == nullptr)))
       return false;
     if (value && it->second && *value != *(it->second))
       return false;
