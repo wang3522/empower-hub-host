@@ -2,9 +2,10 @@ import json
 import logging
 import dbus
 import dbus.service
+import platform
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
-from simulator.models.config import CONFIG_JSON_STRING
+from models.config import CONFIG_JSON_STRING
 
 DBusGMainLoop(set_as_default=True)
 
@@ -35,7 +36,8 @@ class N2KDBusSimulator(dbus.service.Object):
             {"Id": "AC.1", "Type": "ac"},
             {"Id": "DC.7", "Type": "dc"},
         ]
-        bus = dbus.SystemBus()
+        # bus = dbus.SystemBus()
+        bus = dbus.SessionBus() if platform.system() == "Darwin" else dbus.SystemBus()
         bus.request_name(BUS_NAME)
         bus_name = dbus.service.BusName(BUS_NAME, bus=bus)
         dbus.service.Object.__init__(self, bus_name, OPATH)
@@ -173,9 +175,8 @@ class N2KDBusSimulator(dbus.service.Object):
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetConfig(self, type: str):
         if type == "Engines":
-            return '{"Engines":[{"DisplayType":41,"Id":0,"NameUTF8":"Starboard Engine","Instance":{"Enabled":true,"Instance":0},"SoftwareId":"Software_Id_0","CalibrationId":"CalibrationId_0","SerialNumber":"TESTSERIAL","ECUSerialNumber":"TESTECU","EngineType":1}]}'
+            return '{"Engines":[{"DisplayType":41,"Id":0,"NameUTF8":"Starboard Engine","Instance":{"Enabled":true,"Instance":0},"SoftwareId":"Software_Id_0","CalibrationId":"CalibrationId_0","SerialNumber":"TESTSERIALTESTSERIAL","ECUSerialNumber":"TESTECUTESTECU","EngineType":1}]}'
         return ""
-
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetSetting(self, type: str):
         if type == "FactoryData":
@@ -184,7 +185,6 @@ class N2KDBusSimulator(dbus.service.Object):
         elif type == "Config":
             return '{"ConfigId":726930,"ConfigVersion":0,"ConfigFileVersion":6,"ConfigName":"test-bench-qa-ui-rel"}'
         return ""
-
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def GetCategories(self):
         # Fill in below with categories
