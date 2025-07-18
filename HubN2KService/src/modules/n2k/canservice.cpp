@@ -15,8 +15,8 @@
 #include "utils/common.h"
 #include "utils/logger.h"
 
-#include <tCZoneFirmwareVersion.h>
 #include <ZoneConfiguration/tCZoneModuleTypes.h>
+#include <tCZoneFirmwareVersion.h>
 #include <tCZoneInterface.h>
 
 CzoneInterface *CanService::m_interface = nullptr;
@@ -297,6 +297,7 @@ bool CanService::checkSystemHealth(const int64_t timeout) {
 }
 
 void CanService::sourceAddressChanged(const uint8_t address) {
+  BOOST_LOG_TRIVIAL(debug) << "CanService::sourceAddressChanged source address changed, " << address;
   CanService::getInstance().Settings()->setSourceAddress(address);
   CZoneSetValue(eCZoneLastSourceAddress, static_cast<float>(address));
 }
@@ -342,12 +343,13 @@ void CanService::event(const tCZoneEventType czoneEvent, void *data, const uint3
 }
 
 bool CanService::TransmitPGN(const uint32_t pgn, void *data) {
+  // Attempt to find the PGN in the transmit info map
   auto info = m_TxCanInfo.find(pgn);
   if (info != m_TxCanInfo.end()) {
-    info->second->Data = (void *)data;
-    return TransmitCanPgn(info->second->Handle, info->second) == CZONE_TRUE;;
+    info->second->Data = data; // data is already void*, no cast needed
+    return TransmitCanPgn(info->second->Handle, info->second) == CZONE_TRUE;
   } else {
-    BOOST_LOG_TRIVIAL(warning) << "CanService::TransmitPGN: unknow pgn[" << std::to_string(pgn) << "]";
+    BOOST_LOG_TRIVIAL(warning) << "CanService::TransmitPGN: unknown pgn[" << std::to_string(pgn) << "]";
   }
   return false;
 }
@@ -433,3 +435,17 @@ void CanService::PGNTxPack(tCZoneNetworkMsg *msg, const void *data) {
 }
 
 void CanService::setShutdownSignal(bool flag) { m_shutdownSignal = flag; }
+
+bool CanService::HealthStatus(const int64_t timeout) {
+  if (m_running) {
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_lastThreadTimestamp)
+            .count() < timeout) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    // Device is in low-power mode, health assumed ok...
+    return true;
+  }
+}
