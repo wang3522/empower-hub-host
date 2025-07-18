@@ -251,3 +251,38 @@ def calculate_inverter_charger_instance(inverter_charger: InverterChargerDevice)
         inverter_charger.inverter_instance.instance << 8
         | inverter_charger.charger_instance.instance
     )
+
+
+def get_associated_tank(id: int, config: N2kConfiguration):
+    hidden_circuit = next(
+        (
+            circuit
+            for circuit in config.hidden_circuit.values()
+            if circuit.control_id == id
+        ),
+        None,
+    )
+
+    if hidden_circuit is not None:
+        tank_pump_relationship = next(
+            (
+                rel
+                for rel in config.ui_relationships
+                if rel.primary_type == ItemType.FluidLevel
+                and rel.secondary_type == ItemType.Circuit
+                and rel.secondary_id == hidden_circuit.id.value
+            ),
+            None,
+        )
+
+        if tank_pump_relationship is not None:
+            tank = next(
+                (
+                    tank
+                    for tank in config.tank.values()
+                    if tank.id == tank_pump_relationship.primary_id
+                ),
+                None,
+            )
+            return tank
+    return None

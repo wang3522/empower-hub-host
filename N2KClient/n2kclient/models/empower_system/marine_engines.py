@@ -172,7 +172,7 @@ class MarineEngine(Thing):
             channel.id,
             coolant_temp_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Temperature.ROUND_VALUE),
+                rxu.round_float(Temperature.ROUND_VALUE),
                 Temperature.FILTER,
             ),
         )
@@ -211,7 +211,7 @@ class MarineEngine(Thing):
             coolant_pressure_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(lambda state: state * pressureGain),
-                rxu.round(Pressure.ROUND_VALUE),
+                rxu.round_float(Pressure.ROUND_VALUE),
                 Pressure.FILTER,
             ),
         )

@@ -100,7 +100,7 @@ class CircuitThing(Thing):
             channel.id,
             current_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Current.ROUND_VALUE),
+                rxu.round_float(Current.ROUND_VALUE),
                 Current.FILTER,
             ),
         )

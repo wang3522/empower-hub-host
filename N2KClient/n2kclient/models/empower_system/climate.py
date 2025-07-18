@@ -105,7 +105,7 @@ class Climate(Thing):
             channel.id,
             set_point_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(2),
+                rxu.round_float(2),
                 ops.distinct_until_changed(),
             ),
         )
@@ -134,7 +134,7 @@ class Climate(Thing):
             channel.id,
             ambient_temp_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Temperature.ROUND_VALUE),
+                rxu.round_float(Temperature.ROUND_VALUE),
                 ops.distinct_until_changed(),
             ),
         )
@@ -159,7 +159,7 @@ class Climate(Thing):
             channel.id,
             fan_speed_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(2),
+                rxu.round_float(2),
                 ops.distinct_until_changed(),
             ),
         )

@@ -20,22 +20,22 @@ from .config_metadata import ConfigMetadata
 
 class N2kConfiguration:
     metadata: ConfigMetadata
-    gnss: dict[str, GNSSDevice]
-    circuit: dict[str, Circuit]
+    gnss: dict[int, GNSSDevice]
+    circuit: dict[int, Circuit]
     hidden_circuit: dict[str, Circuit]
-    dc: dict[str, DC]
-    ac: dict[str, ACMeter]
-    tank: dict[str, Tank]
-    inverter_charger: dict[str, InverterChargerDevice]
-    device: dict[str, Device]
-    hvac: dict[str, HVACDevice]
-    audio_stereo: dict[str, AudioStereoDevice]
-    binary_logic_state: dict[str, BinaryLogicState]
+    dc: dict[int, DC]
+    ac: dict[int, ACMeter]
+    tank: dict[int, Tank]
+    inverter_charger: dict[int, InverterChargerDevice]
+    device: dict[int, Device]
+    hvac: dict[int, HVACDevice]
+    audio_stereo: dict[int, AudioStereoDevice]
+    binary_logic_state: dict[int, BinaryLogicState]
     ui_relationships: list[UiRelationShipMsg]
     category: list[CategoryItem]
 
-    pressure: dict[str, Pressure]
-    mode: dict[str, Circuit]
+    pressure: dict[int, Pressure]
+    mode: dict[int, Circuit]
 
     config_metadata: ConfigMetadata
 

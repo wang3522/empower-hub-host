@@ -2,7 +2,6 @@ class JsonKeys:
     GNSS = "GNSS"
     CIRCUITS = "Circuits"
     CIRCUIT = "Circuit"
-    NONVISIBLE_CIRCUITS = "NonVisibleCircuits"
     DCS = "DCs"
     DC = "DC"
     ACS = "ACs"
@@ -153,6 +152,7 @@ class JsonKeys:
     RT_FIRMWARE_VERSION = "RTFirmwareVersion"
     MENDER_ARTIFACT_INFO = "MenderArtifactInfo"
     Items = "Items"
+    Result = "Result"
 
 
 class AttrNames:
@@ -316,6 +316,7 @@ class Constants:
     GET_CONFIG_ALL_SERVICE_METHOD_NAME = "GetConfigAll"
     GET_CATEGORIES_SERVICE_METHOD_NAME = "GetCategories"
     GET_SETTING_SERVICE_METHOD_NAME = "GetSetting"
+    Control = "Control"
     WORKER_KEY = "N2K_WORKER"
     STATE_TIMEOUT_KEY = "STATE_TIMEOUT"
     DEVICE_TIMEOUT_KEY = "DEVICE_TIMEOUT"
@@ -431,6 +432,9 @@ class Constants:
     sp = "sp"
     primaryBattery = "primaryBattery"
     fallbackBattery = "fallbackBattery"
+    NonVisibleCircuits = "NonVisibleCircuits"
+
+    N2K_CONTROL_SERVICE = "N2K_CONTROL_SERVICE"
 
 
 LINE_CONST_MAP = {

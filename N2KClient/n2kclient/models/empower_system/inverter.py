@@ -211,7 +211,7 @@ class InverterBase(Thing):
             channel.id,
             ac_voltage_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Voltage.ROUND_VALUE),
+                rxu.round_float(Voltage.ROUND_VALUE),
                 Voltage.FILTER,
             ),
         )
@@ -237,7 +237,7 @@ class InverterBase(Thing):
             channel.id,
             ac_current_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Current.ROUND_VALUE),
+                rxu.round_float(Current.ROUND_VALUE),
                 Current.FILTER,
             ),
         )
@@ -265,7 +265,7 @@ class InverterBase(Thing):
             channel.id,
             ac_frequency_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Frequency.ROUND_VALUE),
+                rxu.round_float(Frequency.ROUND_VALUE),
                 Frequency.FILTER,
             ),
         )
@@ -291,7 +291,7 @@ class InverterBase(Thing):
             channel.id,
             ac_power_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Power.ROUND_VALUE),
+                rxu.round_float(Power.ROUND_VALUE),
                 Power.FILTER,
             ),
         )
@@ -518,12 +518,17 @@ class CombiInverter(InverterBase):
             self.inverter_circuit_control_id = inverter_circuit.control_id
 
         self.n2k_device_id = f"{JsonKeys.INVERTER_CHARGER}.{instance}"
-        self.define_inverter_state_channel(
-            n2k_devices=n2k_devices,
+        self.define_inverter_channels(
+            n2k_devices=n2k_devices, inverter_circuit=inverter_circuit
         )
+
+    def define_inverter_channels(
+        self, n2k_devices: N2kDevices, inverter_circuit: Optional[Circuit]
+    ):
+        self.define_inverter_state_channel(n2k_devices=n2k_devices)
+        self.define_inverter_component_status_channel(n2k_devices=n2k_devices)
         self.define_inverter_enable_channel(
-            inverter_circuit=inverter_circuit,
-            n2k_devices=n2k_devices,
+            inverter_circuit=inverter_circuit, n2k_devices=n2k_devices
         )
 
     def define_inverter_state_channel(
@@ -558,7 +563,7 @@ class CombiInverter(InverterBase):
             ),
         )
 
-    def define_inverter_enable_channel(
+    def define_inverter_component_status_channel(
         self,
         n2k_devices: N2kDevices,
     ):
@@ -606,7 +611,6 @@ class CombiInverter(InverterBase):
         inverter_circuit: Optional[Circuit],
         n2k_devices: N2kDevices,
     ):
-
         #############################
         # Inverter Enable
         #############################

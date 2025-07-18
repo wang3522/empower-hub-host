@@ -16,6 +16,8 @@ from .config_processor_helpers import (
     get_circuit_associated_bls,
     is_in_category,
     get_child_circuits,
+    calculate_inverter_charger_instance,
+    get_associated_tank,
 )
 
 from ...models.n2k_configuration.ui_relationship_msg import ItemType
@@ -63,7 +65,7 @@ class ConfigProcessor:
 
     # Keep track of IC Status. Shorepower Component Status for Combi Shorepower is same as Combi Component Status.
     # Shorepower connected logic changes for shorepower depending on if it is associated with Combi
-    _ic_component_status = {}
+    _ic_component_status: dict
 
     # Mark associated circuits whose status is tracked by other component
     # i.e. shorepower circuit, so that these are not created as duplicate, independant circuits
@@ -74,6 +76,8 @@ class ConfigProcessor:
         self._things = []
         self._acMeter_inverter_instances = []
         self._dcMeter_charger_instances = []
+        self._ic_component_status = {}
+        self._associated_circuit_instances = []
 
     # ###################################################
     #     Devices
@@ -556,6 +560,14 @@ class ConfigProcessor:
                 self._things.append(circuit_thing)
 
             if is_in_category(circuit.categories, Constants.Pumps):
+                associated_tank = get_associated_tank(circuit.control_id, config)
+                if associated_tank is not None:
+                    link = create_link(
+                        ThingType.WATER_TANK,
+                        ThingType.PUMP,
+                        associated_tank.instance.instance,
+                    )
+                    links.append(link)
                 circuit_thing = CircuitWaterPump(circuit, links, n2k_devices, bls)
                 self._things.append(circuit_thing)
             if (

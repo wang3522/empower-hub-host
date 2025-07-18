@@ -547,155 +547,136 @@ class ConfigParser:
             # GNSS
             if JsonKeys.GNSS in config_json:
                 for gnss_json in config_json[JsonKeys.GNSS]:
-                    gnss_id = gnss_json.get(JsonKeys.ID)
-                    if gnss_id is not None:
-                        device_id = f"{AttrNames.GNSS}.{gnss_id}"
-                        n2k_configuration.gnss[device_id] = self.parse_gnss(gnss_json)
+                    gnss = self.parse_gnss(gnss_json)
+                    if (gnss.instance is None) or (gnss.instance.enabled == False):
+                        continue
+                    n2k_configuration.gnss[gnss.instance.instance] = gnss
 
             # Circuit
             if JsonKeys.CIRCUITS in config_json:
                 for circuit_json in config_json[JsonKeys.CIRCUITS]:
-                    circuit_id = circuit_json.get(JsonKeys.ID)
-                    if circuit_id is not None:
-                        device_id = f"{AttrNames.CIRCUIT}.{circuit_id}"
-                        n2k_configuration.circuit[device_id] = self.parse_circuit(
-                            circuit_json
-                        )
-
-            if JsonKeys.NONVISIBLE_CIRCUITS in config_json:
-                for circuit_json in config_json[JsonKeys.NONVISIBLE_CIRCUITS]:
-                    circuit_id = circuit_json.get(JsonKeys.ID)
-                    if circuit_id is not None:
-                        device_id = f"{AttrNames.CIRCUIT}.{circuit_id}"
-                        n2k_configuration.circuit[device_id] = self.parse_circuit(
-                            circuit_json
-                        )
+                    circuit = self.parse_circuit(circuit_json)
+                    if (circuit.id is None) or (circuit.id.valid == False):
+                        continue
+                    if circuit.non_visible_circuit:
+                        n2k_configuration.hidden_circuit[circuit.id.value] = circuit
+                    else:
+                        n2k_configuration.circuit[circuit.control_id] = circuit
 
             # DC
             if JsonKeys.DCS in config_json:
                 for dc_json in config_json[JsonKeys.DCS]:
-                    dc_instance = get_device_instance_value(dc_json)
-                    if dc_instance is not None:
-                        device_id = f"{AttrNames.DC}.{dc_instance}"
-                        n2k_configuration.dc[device_id] = self.parse_dc(dc_json)
+                    dc = self.parse_dc(dc_json)
+                    if (dc.instance is None) or dc.instance.enabled == False:
+                        continue
+                    n2k_configuration.dc[dc.instance.instance] = dc
 
             # AC
             if JsonKeys.ACS in config_json:
                 for ac_json in config_json[JsonKeys.ACS]:
-                    ac_instance = get_device_instance_value(ac_json)
-                    if ac_instance is not None:
-                        device_id = f"{AttrNames.AC}.{ac_instance}"
-                        ac_line = self.parse_ac(ac_json)
-                        if not device_id in n2k_configuration.ac:
-                            n2k_configuration.ac[device_id] = ACMeter()
-                        if ac_line.line == ACLine.Line1:
-                            n2k_configuration.ac[device_id].line[1] = ac_line
-                        elif ac_line.line == ACLine.Line2:
-                            n2k_configuration.ac[device_id].line[2] = ac_line
-                        elif ac_line.line == ACLine.Line3:
-                            n2k_configuration.ac[device_id].line[3] = ac_line
+                    ac_line = self.parse_ac(ac_json)
+                    if ac_line.instance is None or ac_line.instance.enabled == False:
+                        continue
+                    resolved_instance = (
+                        ac_line.instance.instance
+                        if ac_line.instance.instance is not None
+                        else 0
+                    )
+                    if not resolved_instance in n2k_configuration.ac:
+                        n2k_configuration.ac[resolved_instance] = ACMeter()
+                    if ac_line.line == ACLine.Line1:
+                        n2k_configuration.ac[resolved_instance].line[1] = ac_line
+                    elif ac_line.line == ACLine.Line2:
+                        n2k_configuration.ac[resolved_instance].line[2] = ac_line
+                    elif ac_line.line == ACLine.Line3:
+                        n2k_configuration.ac[resolved_instance].line[3] = ac_line
 
             # Tank
             if JsonKeys.TANKS in config_json:
                 for tank_json in config_json[JsonKeys.TANKS]:
-                    tank_instance = get_device_instance_value(tank_json)
-                    if tank_instance is not None:
-                        device_id = f"{AttrNames.TANK}.{tank_instance}"
-                        n2k_configuration.tank[device_id] = self.parse_tank(tank_json)
+                    tank = self.parse_tank(tank_json)
+                    if (tank.instance is None) or (tank.instance.enabled == False):
+                        continue
+                    n2k_configuration.tank[tank.instance.instance] = tank
 
             # Inverter Charger
             if JsonKeys.INVERTER_CHARGERS in config_json:
                 for inverter_charger_json in config_json[JsonKeys.INVERTER_CHARGERS]:
-                    inverter_charger_instance = (
-                        self.calculate_inverter_charger_instance(inverter_charger_json)
+                    inverter_charger = self.parse_inverter_charger(
+                        inverter_charger_json
                     )
-                    if inverter_charger_instance is not None:
-                        inverter_charger_device_id = (
-                            f"{AttrNames.INVERTER_CHARGER}.{inverter_charger_instance}"
-                        )
-                        # Add the Inverter Charger device to the configuration
-                        n2k_configuration.inverter_charger[
-                            inverter_charger_device_id
-                        ] = self.parse_inverter_charger(inverter_charger_json)
+                    instance = self.calculate_inverter_charger_instance(
+                        inverter_charger_json
+                    )
+                    n2k_configuration.inverter_charger[instance] = inverter_charger
 
             # Device
             if JsonKeys.DEVICES in config_json:
                 for device_json in config_json[JsonKeys.DEVICES]:
-                    device_dipswitch = device_json.get(JsonKeys.DIPSWITCH)
-                    if device_dipswitch is not None:
-                        device_id = f"{AttrNames.DEVICE}.{device_dipswitch}"
-                        # Add the Device to the configuration
-                        n2k_configuration.device[device_id] = self.parse_device(
-                            device_json
-                        )
+                    device = self.parse_device(device_json)
+                    if (device.dipswitch is None) or (device.dipswitch == False):
+                        continue
+                    n2k_configuration.device[device.dipswitch] = device
 
             # HVAC
             if JsonKeys.HVACS in config_json:
                 for hvac_json in config_json[JsonKeys.HVACS]:
-                    hvac_instance = get_device_instance_value(hvac_json)
-                    if hvac_instance is not None:
-                        device_id = f"{AttrNames.HVAC}.{hvac_instance}"
-                        n2k_configuration.hvac[device_id] = self.parse_hvac(hvac_json)
+                    hvac = self.parse_hvac(hvac_json)
+                    if hvac.instance is None or hvac.instance.enabled == False:
+                        continue
+                    n2k_configuration.hvac[hvac.instance.instance] = hvac
 
             # Audio Stereo
             if JsonKeys.AUDIO_STEREOS in config_json:
                 for audio_stereo_json in config_json[JsonKeys.AUDIO_STEREOS]:
-                    audio_stereo_instance = get_device_instance_value(audio_stereo_json)
-                    if audio_stereo_instance is not None:
-                        device_id = f"{AttrNames.AUDIO_STEREO}.{audio_stereo_instance}"
-
-                        n2k_configuration.audio_stereo[device_id] = (
-                            self.parse_audio_stereo(audio_stereo_json)
-                        )
+                    audio = self.parse_audio_stereo(audio_stereo_json)
+                    if audio.instance is None or audio.instance.enabled == False:
+                        continue
+                    n2k_configuration.audio_stereo[audio.instance.instance] = audio
 
             # Binary Logic State
             if JsonKeys.BINARY_LOGIC_STATES in config_json:
                 for binary_logic_state_json in config_json[
                     JsonKeys.BINARY_LOGIC_STATES
                 ]:
-                    binary_logic_state_id = binary_logic_state_json.get(JsonKeys.ID)
-                    if binary_logic_state_id is not None:
-                        device_id = (
-                            f"{AttrNames.BINARY_LOGIC_STATE}.{binary_logic_state_id}"
-                        )
-                        n2k_configuration.binary_logic_state[device_id] = (
-                            self.parse_binary_logic_state(binary_logic_state_json)
-                        )
+                    binary_logic_state = self.parse_binary_logic_state(
+                        binary_logic_state_json
+                    )
+                    n2k_configuration.binary_logic_state[binary_logic_state.id] = (
+                        binary_logic_state
+                    )
+
             # UI Relationships
             if JsonKeys.UI_RELATIONSHIPS in config_json:
                 for ui_relationship_json in config_json[JsonKeys.UI_RELATIONSHIPS]:
-                    ui_relationship_id = ui_relationship_json.get(JsonKeys.ID)
-                    if ui_relationship_id is not None:
-                        n2k_configuration.ui_relationships.append(
-                            self.parse_ui_relationship(ui_relationship_json)
-                        )
+                    n2k_configuration.ui_relationships.append(
+                        self.parse_ui_relationship(ui_relationship_json)
+                    )
+
             # Pressure
             if JsonKeys.PRESSURES in config_json:
                 for pressure_json in config_json[JsonKeys.PRESSURES]:
-                    pressure_instance = get_device_instance_value(pressure_json)
-                    if pressure_instance is not None:
-                        device_id = f"{AttrNames.PRESSURE}.{pressure_instance}"
-                        # Add the Pressure device to the configuration
-                        n2k_configuration.pressure[device_id] = self.parse_pressure(
-                            pressure_json
-                        )
+                    pressure = self.parse_pressure(pressure_json)
+                    if pressure.instance is None or pressure.instance.enabled == False:
+                        continue
+                    n2k_configuration.pressure[pressure.instance.instance] = pressure
 
             # Mode
             if JsonKeys.MODES in config_json:
                 for mode_json in config_json[JsonKeys.MODES]:
-                    mode_id = mode_json.get(JsonKeys.ID)
-                    if mode_id is not None:
-                        device_id = f"{AttrNames.MODE}.{mode_id}"
-                        n2k_configuration.mode[device_id] = self.parse_circuit(
-                            mode_json
-                        )
+                    mode = self.parse_circuit(mode_json)
+                    if (mode.id is None) or (mode.id.valid == False):
+                        continue
+                    n2k_configuration.mode[mode.id.value] = mode
 
             # Categories
             if JsonKeys.Items in categories_json:
                 for category_json in categories_json[JsonKeys.Items]:
-                    n2k_configuration.category.append(
-                        self.parse_categories(category_json)
-                    )
+                    category = self.parse_category(category_json)
+
+                    if category.name_utf8 == "":
+                        continue
+                    n2k_configuration.category.append(category)
 
             # Config Metadata
             n2k_configuration.config_metadata = self.parse_config_metadata(

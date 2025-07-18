@@ -26,6 +26,7 @@ from .models.n2k_configuration.engine_configuration import (
 )
 from .models.empower_system.engine_list import EngineList
 from .models.n2k_configuration.factory_metadata import FactoryMetadata
+from .services.control_service.control_service import ControlService
 
 
 class N2KClient(dbus.service.Object):
@@ -57,6 +58,7 @@ class N2KClient(dbus.service.Object):
     dbus_get_setting: dbus.proxies._ProxyMethod
     dbus_get_state: dbus.proxies._ProxyMethod
     dbus_get_devices: dbus.proxies._ProxyMethod
+    dbus_control: dbus.proxies._ProxyMethod
 
     _get_devices_thread: threading.Thread
     _get_state_thread: threading.Thread
@@ -69,6 +71,7 @@ class N2KClient(dbus.service.Object):
 
     _config_parser: ConfigParser
     _config_processor: ConfigProcessor
+    control_service: ControlService
 
     _get_state_timeout = SettingsUtil.get_setting(
         Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, default_value=1
@@ -136,6 +139,8 @@ class N2KClient(dbus.service.Object):
             Constants.GET_SETTING_SERVICE_METHOD_NAME
         )
 
+        self.dbus_control = self.n2k_dbus_interface.get_dbus_method(Constants.Control)
+
         # Threads
         self._get_devices_thread = threading.Thread(
             target=self._get_devices, name="__get_devices"
@@ -149,12 +154,22 @@ class N2KClient(dbus.service.Object):
         def update_latest_devices(devices: N2kDevices):
             self._latest_devices = devices
             # change to indent = 2 for better readability when debugging
+            # for id, device in devices.devices.items():
+            #     self._logger.debug(
+            #         f"Device {id} channels: { json.dumps(device.channels, indent=2) }"
+            #     )
             self._logger.info(
                 f"Latest devices: { json.dumps(devices.to_mobile_dict(), indent=None) }\n\n"
             )
 
+        # Service initialization
         self._config_parser = ConfigParser()
         self._config_processor = ConfigProcessor()
+        self.control_service = ControlService(
+            get_config_func=self.get_config,
+            get_devices_func=self.get_devices,
+            send_control_func=self.dbus_control,
+        )
 
         # Handler to update the latest config internally
         def update_latest_config(config: N2kConfiguration):
