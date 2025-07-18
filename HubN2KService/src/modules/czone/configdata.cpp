@@ -3401,7 +3401,7 @@ SettingRequest::SettingRequest(const json &j) : m_Type(eConfig) {
   } catch (const std::invalid_argument &e) {
     throw std::invalid_argument(e.what());
   } catch (const std::exception &e) {
-    throw std::runtime_error("ettingRequest::SettingRequest error while generating SettingRequest object.");
+    throw std::runtime_error("SettingRequest::SettingRequest error while generating SettingRequest object.");
   }
 }
 
