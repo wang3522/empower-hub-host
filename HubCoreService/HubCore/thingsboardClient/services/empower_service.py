@@ -31,6 +31,7 @@ from n2kclient.models.empower_system.engine_list import EngineList
 from n2kclient.models.empower_system.empower_system import EmpowerSystem
 from n2kclient.client import N2KClient
 from n2kclient.models.devices import N2kDevice, N2kDevices
+from .location_service import LocationService
 
 class EmpowerService:
     """
@@ -40,6 +41,7 @@ class EmpowerService:
 
     thingsboard_client: ThingsBoardClient
     n2k_client: N2KClient = N2KClient()
+    location_service: LocationService
     # active_alarms: rx.Observable[AlarmList]
     # engine_alerts: rx.Observable[EngineAlertList]
     discovered_engines: rx.Observable[EngineList]
@@ -64,6 +66,7 @@ class EmpowerService:
         self.last_telemetry = {}
         self.last_state_attrs = {}
         self.sync_service = SyncService()
+        self.location_service = LocationService(self.n2k_client)
 
         #TODO: Callback for controlling value, is this needed here?
         # def callback(result, *args):
@@ -466,7 +469,8 @@ class EmpowerService:
         self._logger.debug("Starting ThingsBoard client...")
         self.thingsboard_client.connect()
         self._logger.debug("Starting location service")
-        # TODO: Connect to thingsboard, start locaiton service, setup n2k connection status
+        # TODO: Connect to thingsboard, start location service, setup n2k connection status
+        self.location_service.start()
 
         # TODO: Subscribe to active alarms
         # TODO: Subscribe to engine config attribute

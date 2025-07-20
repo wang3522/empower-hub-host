@@ -17,10 +17,10 @@ from .models.geofence import GeoPoint, Geofence
 from .sync_service import SyncService
 
 # pylint: disable=relative-beyond-top-level
-from ..tb_utils.geo_util import GeoUtil
-from ..mqtt_client import ThingsBoardClient
+from tb_utils.geo_util import GeoUtil
+from mqtt_client import ThingsBoardClient
 from .config import location_priority_sources, location_filter_pattern
-from ..tb_utils.constants import Constants
+from tb_utils.constants import Constants
 
 # # Cloud publish interval in seconds
 LOCATION_CLOUD_PUBLISH_INTERVAL = SettingsUtil.get_setting(
@@ -184,12 +184,12 @@ class LocationService:
         self._flush_timer.name = self.location_thread_timer_name
         self._flush_timer.start()
         try:
-            if os.environ["RUNNING_PLATFORM"] == "CONNECT1":
-                self.gpsd_thread_event = threading.Event()
-                self.gpsd_data_thread = threading.Thread(
-                    target=self.get_gpsd_data, name="__gpsdDataThread"
-                )
-                self.gpsd_data_thread.start()
+            # if os.environ["RUNNING_PLATFORM"] == "CONNECT1":
+            self.gpsd_thread_event = threading.Event()
+            self.gpsd_data_thread = threading.Thread(
+                target=self.get_gpsd_data, name="__gpsdDataThread"
+            )
+            self.gpsd_data_thread.start()
         except Exception as e:
             self._logger.error("Error starting gpsd thread: %s", e)
 
@@ -936,6 +936,7 @@ class LocationService:
 
         sleep_time = 0
         while not self.gpsd_thread_event.wait(sleep_time):
+            print("Waiting for gpsd thread event to be set")
             try:
                 # Fetch the current GPS data
                 # TODO: Get current gps coordinate from telit
