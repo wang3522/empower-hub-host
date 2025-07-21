@@ -43,6 +43,8 @@ class N2KDBusSimulator(dbus.service.Object):
         bus.request_name(BUS_NAME)
         bus_name = dbus.service.BusName(BUS_NAME, bus=bus)
         dbus.service.Object.__init__(self, bus_name, OPATH)
+        self.get_config_fail_count = 0
+        self.control_fail_count = 0
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def GetDevices(self):
@@ -51,6 +53,9 @@ class N2KDBusSimulator(dbus.service.Object):
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def GetConfigAll(self):
+        if self.get_config_fail_count < 5:
+            self.get_config_fail_count += 1
+            raise dbus.exceptions.DBusException("DBus call failed")
         return CONFIG_JSON_STRING
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
@@ -157,6 +162,9 @@ class N2KDBusSimulator(dbus.service.Object):
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def Control(self, control_request: str):
+        if self.control_fail_count < 11:
+            self.control_fail_count += 1
+            raise dbus.exceptions.DBusException("DBus call failed")
         try:
             control_json = json.loads(control_request)
             if "Type" in control_json and control_json["Type"] in (

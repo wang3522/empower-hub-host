@@ -10,7 +10,7 @@ import json
 import copy
 import platform
 
-from .models.devices import N2kDevice, N2kDevices
+from .models.devices import N2kDevices
 from .models.constants import Constants, JsonKeys
 from reactivex import operators as ops
 from gi.repository import GLib
@@ -30,6 +30,7 @@ from .services.control_service.control_service import ControlService
 
 
 class N2KClient(dbus.service.Object):
+
     _logger = logging.getLogger(Constants.DBUS_N2K_CLIENT)
     _disposable_list: List[rx.abc.DisposableBase]
     _latest_devices: N2kDevices
@@ -39,28 +40,26 @@ class N2KClient(dbus.service.Object):
     _empower_system: rx.subject.BehaviorSubject
     _engine_config: rx.subject.BehaviorSubject
     _engine_list: rx.subject.BehaviorSubject
-    _factory_metadata: rx.Subject
+    _factory_metadata: rx.subject.BehaviorSubject
 
     devices: rx.subject.BehaviorSubject
     config: rx.subject.BehaviorSubject
     empower_system: rx.subject.BehaviorSubject
     engine_config: rx.subject.BehaviorSubject
     engine_list: rx.subject.BehaviorSubject
-    factory_metadata: rx.Observable[FactoryMetadata]
+    factory_metadata: rx.subject.BehaviorSubject
 
     bus: dbus.SystemBus
     n2k_dbus_interface: dbus.Interface
     n2k_dbus_object: dbus.proxies.ProxyObject
 
-    dbus_get_config: dbus.proxies._ProxyMethod
-    dbus_get_config_all: dbus.proxies._ProxyMethod
-    dbus_get_categories: dbus.proxies._ProxyMethod
-    dbus_get_setting: dbus.proxies._ProxyMethod
-    dbus_get_state: dbus.proxies._ProxyMethod
-    dbus_get_devices: dbus.proxies._ProxyMethod
-    dbus_control: dbus.proxies._ProxyMethod
+    _dbus_get_config: dbus.proxies._ProxyMethod
+    _dbus_get_config_all: dbus.proxies._ProxyMethod
+    _dbus_get_categories: dbus.proxies._ProxyMethod
+    _dbus_get_setting: dbus.proxies._ProxyMethod
+    _dbus_get_state: dbus.proxies._ProxyMethod
+    _dbus_control: dbus.proxies._ProxyMethod
 
-    _get_devices_thread: threading.Thread
     _get_state_thread: threading.Thread
 
     _latest_config: N2kConfiguration
@@ -76,13 +75,19 @@ class N2KClient(dbus.service.Object):
     _get_state_timeout = SettingsUtil.get_setting(
         Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, default_value=1
     )
-    _get_devices_timeout = SettingsUtil.get_setting(
-        Constants.WORKER_KEY, Constants.DEVICE_TIMEOUT_KEY, default_value=1
+
+    _dbus_retry_delay = SettingsUtil.get_setting(
+        Constants.WORKER_KEY, Constants.DBUS_RETRY_DELAY_KEY, default_value=5
     )
-    _latest_config: N2kConfiguration
+
+    _control_dbus_max_attempts = SettingsUtil.get_setting(
+        Constants.WORKER_KEY, Constants.CONTROL_DBUS_MAX_ATTEMPTS_KEY, default_value=3
+    )
+
     lock: threading.Lock
 
     def __init__(self):
+        self.lock = threading.Lock()
         self._disposable_list = []
 
         self._latest_devices = N2kDevices()
@@ -119,48 +124,24 @@ class N2KClient(dbus.service.Object):
         )
 
         # Initialize N2k dbus Service Methods
-        self.dbus_get_config = self.n2k_dbus_interface.get_dbus_method(
+        self._dbus_get_config = self.n2k_dbus_interface.get_dbus_method(
             Constants.GET_CONFIG_SERVICE_METHOD_NAME
         )
-        self.dbus_get_state = self.n2k_dbus_interface.get_dbus_method(
+        self._dbus_get_state = self.n2k_dbus_interface.get_dbus_method(
             Constants.GET_STATE_SERVICE_METHOD_NAME
         )
-        self.dbus_get_devices = self.n2k_dbus_interface.get_dbus_method(
-            Constants.GET_DEVICES_SERVICE_METHOD_NAME
-        )
-        self.dbus_get_config_all = self.n2k_dbus_interface.get_dbus_method(
+        self._dbus_get_config_all = self.n2k_dbus_interface.get_dbus_method(
             Constants.GET_CONFIG_ALL_SERVICE_METHOD_NAME
         )
-        self.dbus_get_categories = self.n2k_dbus_interface.get_dbus_method(
+        self._dbus_get_categories = self.n2k_dbus_interface.get_dbus_method(
             Constants.GET_CATEGORIES_SERVICE_METHOD_NAME
         )
 
-        self.dbus_get_setting = self.n2k_dbus_interface.get_dbus_method(
+        self._dbus_get_setting = self.n2k_dbus_interface.get_dbus_method(
             Constants.GET_SETTING_SERVICE_METHOD_NAME
         )
 
-        self.dbus_control = self.n2k_dbus_interface.get_dbus_method(Constants.Control)
-
-        # Threads
-        self._get_devices_thread = threading.Thread(
-            target=self._get_devices, name="__get_devices"
-        )
-
-        self._get_state_thread = threading.Thread(
-            target=self._get_state, name="__get_state"
-        )
-
-        # Handler to update the latest device list internally
-        def update_latest_devices(devices: N2kDevices):
-            self._latest_devices = devices
-            # change to indent = 2 for better readability when debugging
-            # for id, device in devices.devices.items():
-            #     self._logger.debug(
-            #         f"Device {id} channels: { json.dumps(device.channels, indent=2) }"
-            #     )
-            self._logger.info(
-                f"Latest devices: { json.dumps(devices.to_mobile_dict(), indent=None) }\n\n"
-            )
+        self._dbus_control = self.n2k_dbus_interface.get_dbus_method(Constants.Control)
 
         # Service initialization
         self._config_parser = ConfigParser()
@@ -171,43 +152,127 @@ class N2KClient(dbus.service.Object):
             send_control_func=self.dbus_control,
         )
 
-        # Handler to update the latest config internally
-        def update_latest_config(config: N2kConfiguration):
-            self._latest_config = config
-            self._log_config_item("config", config)
+        self._setup_subscriptions()
 
-        def update_latest_empower_system(empower_system: EmpowerSystem):
-            self._latest_empower_system = empower_system
-            self._log_config_item("empower system", empower_system)
-
-        def update_latest_engine_config(config: EngineConfiguration):
-            self._latest_engine_config = config
-            self._log_config_item("engine config", config)
-
-        def update_latest_engine_list(engine_list: EngineList):
-            self._latest_engine_list = engine_list
-            self._log_config_item("engine list", engine_list)
-
-        def update_latest_factory_metadata(factory_metadata: FactoryMetadata):
-            self._latest_factory_metadata = factory_metadata
-            self._log_config_item("factory metadata", factory_metadata)
-
-        self._disposable_list.append(self.devices.subscribe(update_latest_devices))
-        self._disposable_list.append(self.config.subscribe(update_latest_config))
+    def _setup_subscriptions(self):
         self._disposable_list.append(
-            self._empower_system.subscribe(update_latest_empower_system)
+            self.devices.subscribe(self._update_latest_devices)
+        )
+        self._disposable_list.append(self.config.subscribe(self._update_latest_config))
+        self._disposable_list.append(
+            self._empower_system.subscribe(self._update_latest_empower_system)
         )
         self._disposable_list.append(
-            self.engine_config.subscribe(update_latest_engine_config)
+            self.engine_config.subscribe(self._update_latest_engine_config)
         )
         self._disposable_list.append(
-            self.engine_list.subscribe(update_latest_engine_list)
+            self.engine_list.subscribe(self._update_latest_engine_list)
         )
         self._disposable_list.append(
-            self.factory_metadata.subscribe(update_latest_factory_metadata)
+            self.factory_metadata.subscribe(self._update_latest_factory_metadata)
         )
 
-        self.lock = threading.Lock()
+    def _update_latest_devices(self, devices: N2kDevices):
+        self._latest_devices = devices
+        self._logger.info(
+            f"Latest devices: {json.dumps(devices.to_mobile_dict(), indent=None)}\n\n"
+        )
+
+    def _update_latest_config(self, config: N2kConfiguration):
+        self._latest_config = config
+        self._log_config_item("config", config)
+
+    def _update_latest_empower_system(self, empower_system: EmpowerSystem):
+        self._latest_empower_system = empower_system
+        self._log_config_item("empower system", empower_system)
+
+    def _update_latest_engine_config(self, config: EngineConfiguration):
+        self._latest_engine_config = config
+        self._log_config_item("engine config", config)
+
+    def _update_latest_engine_list(self, engine_list: EngineList):
+        self._latest_engine_list = engine_list
+        self._log_config_item("engine list", engine_list)
+
+    def _update_latest_factory_metadata(self, factory_metadata: FactoryMetadata):
+        self._latest_factory_metadata = factory_metadata
+        self._log_config_item("factory metadata", factory_metadata)
+
+    def _retry_dbus_call(self, func, *args, delay=None, max_attempts=None, **kwargs):
+        """
+        Retry a DBus call indefinitely with a configurable delay.
+        Logs the DBus method name, interface, and error on each failure.
+        """
+        if delay is None:
+            delay = self._dbus_retry_delay
+        attempt = 0
+        # Try to extract DBus method name and interface if available
+        method_name = (
+            getattr(func, "_method_name", None)
+            or getattr(func, "__name__", None)
+            or str(func)
+        )
+        while True:
+            try:
+                return func(*args, **kwargs)
+            except dbus.exceptions.DBusException as e:
+                attempt += 1
+                self._logger.warning(
+                    f"DBus call '{method_name}' failed (attempt {attempt}): {e}"
+                )
+                if max_attempts and attempt >= max_attempts:
+                    self._logger.error(
+                        f"DBus call '{method_name}' failed after {attempt} attempts. Giving up."
+                    )
+                    raise
+                sleep(delay)
+
+    def dbus_get_config(self, *args, **kwargs) -> Any:
+        """
+        Call the DBus GetConfig method with retry.
+        Returns the configuration for a given key.
+        """
+        return self._retry_dbus_call(self._dbus_get_config, *args, **kwargs)
+
+    def dbus_get_state(self, *args, **kwargs) -> Any:
+        """
+        Call the DBus GetState method with retry.
+        Returns the state for a given device key.
+        """
+        return self._retry_dbus_call(self._dbus_get_state, *args, **kwargs)
+
+    def dbus_get_config_all(self, *args, **kwargs) -> Any:
+        """
+        Call the DBus GetConfigAll method with retry.
+        Returns the full configuration.
+        """
+        return self._retry_dbus_call(self._dbus_get_config_all, *args, **kwargs)
+
+    def dbus_get_categories(self, *args, **kwargs) -> Any:
+        """
+        Call the DBus GetCategories method with retry.
+        Returns the categories configuration.
+        """
+        return self._retry_dbus_call(self._dbus_get_categories, *args, **kwargs)
+
+    def dbus_get_setting(self, *args, **kwargs) -> Any:
+        """
+        Call the DBus GetSetting method with retry.
+        Returns the requested setting.
+        """
+        return self._retry_dbus_call(self._dbus_get_setting, *args, **kwargs)
+
+    def dbus_control(self, *args, **kwargs) -> Any:
+        """
+        Call the DBus Control method with retry.
+        Sends a control request to the DBus service.
+        """
+        return self._retry_dbus_call(
+            self._dbus_control,
+            *args,
+            **kwargs,
+            max_attempts=self._control_dbus_max_attempts,
+        )
 
     def _log_config_item(self, config_type: str, config_obj: Any):
         if config_obj is not None:
@@ -222,65 +287,75 @@ class N2KClient(dbus.service.Object):
                 f"Latest {config_type}: { json.dumps(config_dict, indent=2) }\n\n"
             )
 
-    # GETTERS
-
-    # Devices
-    def get_devices(self):
+    # Public API methods
+    def get_devices(self) -> N2kDevices:
+        """
+        Get the latest N2kDevices object.
+        """
         return self._latest_devices
 
-    def get_devices_observable(self):
+    def get_devices_observable(self) -> rx.Observable:
+        """
+        Get the observable for N2kDevices updates.
+        """
         return self.devices
 
-    # Config
-    def get_config(self):
+    def get_config(self) -> N2kConfiguration:
+        """
+        Get the latest N2kConfiguration object.
+        """
         return self._latest_config
 
-    def get_config_observable(self):
+    def get_config_observable(self) -> rx.Observable:
+        """
+        Get the observable for N2kConfiguration updates.
+        """
         return self.config
 
-    # Empower System
-    def get_empower_system(self):
+    def get_empower_system(self) -> EmpowerSystem:
+        """
+        Get the latest EmpowerSystem object.
+        """
         return self._latest_empower_system
 
-    def get_empower_system_observable(self):
+    def get_empower_system_observable(self) -> rx.Observable:
+        """
+        Get the observable for EmpowerSystem updates.
+        """
         return self.empower_system
 
-    # Factory Metadata
-    def get_factory_metadata(self):
+    def get_factory_metadata(self) -> FactoryMetadata:
+        """
+        Get the latest FactoryMetadata object.
+        """
         return self._latest_factory_metadata
 
-    def get_factory_metadata_observable(self):
+    def get_factory_metadata_observable(self) -> rx.Observable:
+        """
+        Get the observable for FactoryMetadata updates.
+        """
         return self.factory_metadata
 
-    # Engine List
-    def get_engine_list(self):
-        return self._engine_list
+    def get_engine_list(self) -> EngineList:
+        """
+        Get the latest EngineList object.
+        """
+        return self._latest_engine_list
 
-    def get_engine_list_observable(self):
+    def get_engine_list_observable(self) -> rx.Observable:
+        """
+        Get the observable for EngineList updates.
+        """
         return self.engine_list
 
     def start(self):
+        self._get_state_thread = threading.Thread(
+            target=self._get_state, name="__get_state"
+        )
         self._scan_factory_metadata()
-        self._get_devices_thread.start()
+        self._get_configuration()
+        self._scan_marine_engine_config(should_reset=False)
         self._get_state_thread.start()
-
-    def __merge_device_list(self, device_json):
-        with self.lock:
-            device_list_copy = self._latest_devices
-        is_list_updated = False
-        for device in device_json:
-            device_id = device[JsonKeys.ID]
-            if device_id not in device_list_copy.devices:
-                # Actually do JSON/ENUM mapping here here
-                device_type = N2kDeviceType(device.get(JsonKeys.TYPE, "unknown"))
-                device_list_copy.add(device_id, N2kDevice(device_type))
-                is_list_updated = True
-
-        if is_list_updated:
-            with self.lock:
-                self._devices.on_next(device_list_copy)
-            self._get_configuration()
-            self._scan_marine_engine_config()
 
     def scan_marine_engines(self, should_clear: bool):
         self._logger.info(
@@ -370,17 +445,6 @@ class N2KClient(dbus.service.Object):
             self._engine_list.on_next(engine_list)
         except Exception as e:
             self._logger.error(f"Error reading dbus Get Engine response: {e}")
-
-    def _get_devices(self):
-        self._logger.info("Starting Get Device thread")
-        while True:
-            try:
-                devices = self.dbus_get_devices()
-                devices_json = json.loads(devices)
-                self.__merge_device_list(devices_json)
-            except Exception as e:
-                self._logger.error(f"Error reading dbus device response:{e}")
-            sleep(self._get_devices_timeout)
 
     def _get_state(self):
         self._logger.info("Starting Get State thread")
