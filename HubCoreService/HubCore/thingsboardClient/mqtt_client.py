@@ -46,6 +46,8 @@ class ThingsBoardClient:
     telemetry_thread_event: threading.Event
     attributes_thread: threading.Thread
     attributes_thread_event: threading.Event
+    connect_thread: threading.Thread = None
+    connect_thread_event: threading.Event = None
     # Get the max queue size from appsettings.json
     queue_size = 3000
     telemetry_chunk_size = 100
@@ -84,6 +86,9 @@ class ThingsBoardClient:
         # listen to. Set Paho's on_disconnect function to client.py
         # on_disconnect, then pass it to Thingsboard SDK.
         self._client._client.on_disconnect = self.__on_disconnect
+        # Need to overwrite and remove the __add_metadata_to_data_dict_from_device functionality
+        # as it was adding a timestamp to the metadata entry which causes each config to be different.
+        self._client._TBDeviceMqttClient__add_metadata_to_data_dict_from_device = lambda x: x
 
         self._client.set_server_side_rpc_request_handler(
             self.__on_server_side_rpc_request
@@ -226,13 +231,31 @@ class ThingsBoardClient:
         if self._is_connected:
             self._client.disconnect()
 
-    # TODO Add some sort of backoff retry logic to this
+        if self.connect_thread_event is not None:
+            self.connect_thread_event.set()
+            self.connect_thread = None
+
     def connect(self):
         """
         Connect to Thingsboard.
         """
-        self._client.connect(callback=self.__on_connect, tls=True)
-        self._logger.info("Initiating connection to ThingsBoard...")
+        if self.connect_thread is not None and self.connect_thread.is_alive():
+            self._logger.info("Connect thread is already running, skipping connect")
+            return
+        self.connect_thread_event = threading.Event()
+        self.connect_thread = threading.Thread(
+            target=self._start_connect_thread, name="Thingsboard Connect"
+        )
+        self.connect_thread.start()
+
+    def _start_connect_thread(self):
+        while not self.connect_thread_event.wait(5) and not self._is_connected_internal.value:
+            try:
+                self._logger.info("Connecting to thingsboard...")
+                self._client.connect(callback=self.__on_connect, tls=True)
+            except OSError as error:
+                self._logger.error("Failed to connect to Thingsboard")
+                self._logger.error(error)
 
     def disconnect(self):
         """
@@ -240,6 +263,8 @@ class ThingsBoardClient:
         """
         self._client.disconnect()
         self._logger.info("Disconnecting from ThingsBoard...")
+        self.connect_thread_event.set()
+        self.connect_thread = None
 
     def request_state_and_update_cloud(self):
         """
@@ -418,6 +443,7 @@ class ThingsBoardClient:
                     "Requesting attributes from cloud to check for changes %s",
                     json.dumps(not_cached)
                 )
+                #TODO: Check to see if the requested value is config, grab checksum instead to compare
                 # Request the attributes from Thingsboard and update
                 # the attributes with the new values.
                 self.request_then_update_attributes(
@@ -589,11 +615,32 @@ class ThingsBoardClient:
                     telemetry
                 )
 
+        telemetry_keys = list(telemetry.keys())
+        # Check to see if the telemetry is in the last sent state. This prevents us from
+        # sending the same telemetry multiple times.
+        for key in telemetry_keys:
+            if (
+                (key != Constants.ts or key != values_key)
+                and self.last_telemetry.get(key) == telemetry[key]
+            ):
+                # If the value is the same as the last known telemetry, skip sending it
+                self._logger.debug(
+                    "Skipping sending telemetry for key %s, value is the same as last known",
+                    key,
+                )
+                telemetry.pop(key)
+
+        if len(telemetry) == 0:
+            # If there is no telemetry to send, return
+            self._logger.debug("No telemetry to send")
+            return
+
         # If we are connected, then send the telemetry off to mqtt
         # If we are not, then add it to the telemetry queue.
         if self._is_connected_internal.value:
             try:
                 _ = self._client.send_telemetry(telemetry, wait_for_publish=False)
+                self.last_telemetry.update(telemetry)
             except Exception as error:
                 self._logger.error("Failed to send telemetry")
                 self._logger.error(error)
@@ -605,6 +652,7 @@ class ThingsBoardClient:
             try:
                 self._logger.info("putting telemetry to offline queue")
                 self.offline_telemetry_queue.put_nowait(telemetry)
+                self.last_telemetry.update(telemetry)
             except queue.Full:
                 # Queue was full when attempting to add
                 # Remove the oldest value in order to add the newest value in
@@ -618,6 +666,7 @@ class ThingsBoardClient:
                 self._logger.info("Removed Telemetry Item %s", dequeue_value)
                 # Insert the newest value into thte queue
                 self.offline_telemetry_queue.put_nowait(telemetry)
+                self.last_telemetry.update(telemetry)
 
     def request_attributes_state(
         self,

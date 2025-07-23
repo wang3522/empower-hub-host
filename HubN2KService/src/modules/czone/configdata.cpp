@@ -1,4 +1,5 @@
 #include "modules/czone/configdata.h"
+#include "utils/timestamp.h"
 #include <cstring>
 
 Instance::Instance() : m_enabled(false), m_instance(0) {}
@@ -573,7 +574,7 @@ AlarmGlobalStatus &AlarmGlobalStatus::operator=(AlarmGlobalStatus &&rhs) {
 }
 
 Event::Event(eEventType type)
-    : m_type(type), m_content(), m_alarmItem(), m_globalStatus(), m_czoneEvent(), m_timeStamp() {}
+    : m_type(type), m_content(), m_alarmItem(), m_globalStatus(), m_czoneEvent(), m_timeStamp(getCurrentTimeString()) {}
 
 Event::Event(const Event &rhs)
     : m_type(rhs.m_type),
@@ -2612,6 +2613,7 @@ void to_json(nlohmann::json &j, const ShoreFuseDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const CircuitDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const CircuitLoad &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const FantasticFanDevice &c) { j = c.tojson(); }
+void to_json(nlohmann::json &j, const ScreenConfigPageImageItem &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const ScreenConfigMode &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const ScreenConfigHeader &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const ScreenConfigPageGridItem &c) { j = c.tojson(); }
@@ -2624,6 +2626,7 @@ void to_json(nlohmann::json &j, const GNSSDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const EngineDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const UiRelationshipMsg &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const BinaryLogicStateMsg &c) { j = c.tojson(); }
+void to_json(nlohmann::json &j, const Event &c) { j = c.tojson(); }
 
 json Categories::tojson() const {
   json result;
@@ -2643,7 +2646,7 @@ json CategoryItem::tojson() const {
 
 json ConfigResult::tojson() const {
   json result;
-  result["status"] = to_string(m_status);
+  result["Status"] = to_string(m_status);
 
   if (m_alarms.size() > 0) {
     result["Alarms"] = m_alarms;
@@ -2696,8 +2699,8 @@ json ConfigResult::tojson() const {
   if (m_fantasticFans.size() > 0) {
     result["FantasticFans"] = m_fantasticFans;
   }
-  if (m_screenConfigModes.size() > 0) {
-    result["ScreenConfigPageImageItems"] = m_screenConfigModes;
+  if (m_screenConfigPageImageItems.size() > 0) {
+    result["ScreenConfigPageImageItems"] = m_screenConfigPageImageItems;
   }
   if (m_screenConfigPageGridItems.size() > 0) {
     result["ScreenConfigPageGridItems"] = m_screenConfigPageGridItems;
@@ -2734,9 +2737,6 @@ json ConfigResult::tojson() const {
   }
   if (m_favouritesBoatViews.size() > 0) {
     result["FavouritesBoatViews"] = m_favouritesBoatViews;
-  }
-  if (m_alarms.size() > 0) {
-    result["Alarms"] = m_alarms;
   }
   if (m_devices.size() > 0) {
     result["Devices"] = m_devices;
@@ -3307,4 +3307,173 @@ json BinaryLogicStateMsg::tojson() const {
   result["NameUTF8"] = m_nameutf8;
 
   return result;
+}
+
+json ScreenConfigPageImageItem::tojson() const {
+  json result;
+
+  result["Header"] = m_header;
+  result["LocationX"] = m_locationX;
+  result["LocationY"] = m_locationY;
+  result["TargetX"] = m_targetX;
+  result["TargetY"] = m_targetY;
+  result["Icon"] = m_icon;
+  result["Name"] = m_name;
+  result["HideWhenOff"] = m_hideWhenOff;
+
+  return result;
+}
+
+json Event::tojson() const {
+  json result;
+
+  auto toHexString = [](const std::vector<std::byte> &data) -> std::string {
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+    for (size_t i = 0; i < data.size(); ++i) {
+      if (i > 0) {
+        oss << " ";
+      }
+      oss << std::setw(2) << static_cast<unsigned>(std::to_integer<uint8_t>(data[i]));
+    }
+    return oss.str();
+  };
+
+  result["Type"] = to_string(m_type);
+  result["Content"] = m_content;
+  result["AlarmItem"] = m_alarmItem;
+  result["GlobalStatus"] = json::object();
+  result["GlobalStatus"]["HighestEnabledSeverity"] = Alarm::to_string(m_globalStatus.get_highestEnabledSeverity());
+  result["GlobalStatus"]["HighestAcknowledgedSeverity"] =
+      Alarm::to_string(m_globalStatus.get_highestAcknowledgedSeverity());
+  result["CZoneEvent"] = json::object();
+  result["CZoneEvent"]["Type"] = m_czoneEvent.get_type();
+  result["CZoneEvent"]["Content"] = toHexString(m_czoneEvent.get_content());
+  result["CZoneEvent"]["RawAlarm"] = toHexString(m_czoneEvent.get_rawAlarm());
+  result["CZoneEvent"]["DeviceItem"] = toHexString(m_czoneEvent.get_deviceItem());
+
+  result["TimeStamp"] = m_timeStamp;
+
+  return result;
+}
+
+SettingRequest::SettingRequest(const json &j) : m_Type(eConfig) {
+  try {
+    if (j.contains("Type")) {
+      m_Type = from_string(j["Type"].get<std::string>());
+    } else {
+      throw std::invalid_argument("SettingRequest::SettingRequest [Type] argument is missing");
+    }
+
+    if (j.contains("DipswitchValue")) {
+      m_DipswitchValue = std::make_unique<uint32_t>(j["DipswitchValue"].get<uint32_t>());
+    }
+
+    if (j.contains("TimeOffsetValue")) {
+      m_TimeOffsetValue = std::make_unique<float>(j["TimeOffsetValue"].get<float>());
+    }
+
+    if (j.contains("MagneticVariationValue")) {
+      m_MagneticVariationValue = std::make_unique<float>(j["MagneticVariationValue"].get<float>());
+    }
+
+    if (j.contains("DepthOffsetValue")) {
+      m_DepthOffsetValue = std::make_unique<float>(j["DepthOffsetValue"].get<float>());
+    }
+
+    if (j.contains("BacklightValue")) {
+      m_BacklightValue = std::make_unique<float>(j["BacklightValue"].get<float>());
+    }
+
+    if (j.contains("BatteryFullValue")) {
+      m_BatteryFullValue = std::make_unique<uint32_t>(j["BatteryFullValue"].get<uint32_t>());
+    }
+
+    if (j.contains("Payload")) {
+      auto payloadArray = j["Payload"]; // [x] need confirm payload example
+      m_Payload = std::make_unique<std::vector<std::byte>>();
+      m_Payload->clear();
+      m_Payload->reserve(payloadArray.size());
+      for (const auto &byte : payloadArray) {
+        m_Payload->push_back(static_cast<std::byte>(byte.get<uint8_t>()));
+      }
+    }
+  } catch (const std::invalid_argument &e) {
+    throw std::invalid_argument(e.what());
+  } catch (const std::exception &e) {
+    throw std::runtime_error("SettingRequest::SettingRequest error while generating SettingRequest object.");
+  }
+}
+
+SettingRequest::SettingRequest(const SettingRequest& other) : m_Type(other.m_Type) {
+  if (other.m_DipswitchValue) {
+    m_DipswitchValue = std::make_unique<uint32_t>(*other.m_DipswitchValue);
+  }
+  
+  if (other.m_TimeOffsetValue) {
+    m_TimeOffsetValue = std::make_unique<float>(*other.m_TimeOffsetValue);
+  }
+  
+  if (other.m_MagneticVariationValue) {
+    m_MagneticVariationValue = std::make_unique<float>(*other.m_MagneticVariationValue);
+  }
+  
+  if (other.m_DepthOffsetValue) {
+    m_DepthOffsetValue = std::make_unique<float>(*other.m_DepthOffsetValue);
+  }
+  
+  if (other.m_BacklightValue) {
+    m_BacklightValue = std::make_unique<float>(*other.m_BacklightValue);
+  }
+  
+  if (other.m_BatteryFullValue) {
+    m_BatteryFullValue = std::make_unique<uint32_t>(*other.m_BatteryFullValue);
+  }
+  
+  if (other.m_Payload) {
+    m_Payload = std::make_unique<std::vector<std::byte>>(*other.m_Payload);
+  }
+}
+
+SettingRequest& SettingRequest::operator=(const SettingRequest& other) {
+  if (this != &other) {
+    m_Type = other.m_Type;
+    
+    // Reset and reassign all unique_ptr members
+    m_DipswitchValue.reset();
+    if (other.m_DipswitchValue) {
+      m_DipswitchValue = std::make_unique<uint32_t>(*other.m_DipswitchValue);
+    }
+    
+    m_TimeOffsetValue.reset();
+    if (other.m_TimeOffsetValue) {
+      m_TimeOffsetValue = std::make_unique<float>(*other.m_TimeOffsetValue);
+    }
+    
+    m_MagneticVariationValue.reset();
+    if (other.m_MagneticVariationValue) {
+      m_MagneticVariationValue = std::make_unique<float>(*other.m_MagneticVariationValue);
+    }
+    
+    m_DepthOffsetValue.reset();
+    if (other.m_DepthOffsetValue) {
+      m_DepthOffsetValue = std::make_unique<float>(*other.m_DepthOffsetValue);
+    }
+    
+    m_BacklightValue.reset();
+    if (other.m_BacklightValue) {
+      m_BacklightValue = std::make_unique<float>(*other.m_BacklightValue);
+    }
+    
+    m_BatteryFullValue.reset();
+    if (other.m_BatteryFullValue) {
+      m_BatteryFullValue = std::make_unique<uint32_t>(*other.m_BatteryFullValue);
+    }
+    
+    m_Payload.reset();
+    if (other.m_Payload) {
+      m_Payload = std::make_unique<std::vector<std::byte>>(*other.m_Payload);
+    }
+  }
+  return *this;
 }

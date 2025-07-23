@@ -7,8 +7,12 @@ cd "$(dirname "$0")/.."
 
 service dbus start &
 
-python3 -m simulator.main &
+cd simulator
+python3 main.py &
 
-python3 -m N2KClient.main &
+cd ..
+cd N2KClient
+
+python3 main.py &
 
 tail -f /dev/null
