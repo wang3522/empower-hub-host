@@ -90,7 +90,7 @@ def main():
 
         wifi_ap_setup()
         ble = initialize_ble()  # [x]
-        lte = initialize_lte()
+        # lte = initialize_lte()
 
         tb = TB()
         tb.start()
