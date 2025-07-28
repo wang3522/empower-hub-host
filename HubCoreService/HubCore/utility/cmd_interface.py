@@ -3,9 +3,9 @@ import sys
 import json
 import hmac
 import hashlib
-import random
 import string
 import logging
+import secrets 
 
 from .config import SystemConfig as HubConfig, T_WIFI_CONFIG
 from ..network.wifi import configure_wifi_settings, WIFI
@@ -55,7 +55,7 @@ def handle_auth_chal(data: str):
 
     challenge_1 = data.strip()
     response_for_app = hmac.new(key.encode("utf-8"), challenge_1.encode("utf-8"), hashlib.sha256).hexdigest()
-    challenge_2 = ''.join(random.choices(string.ascii_uppercase, k=8))
+    challenge_2 = ''.join(secrets.choice(string.ascii_uppercase) for _ in range(8))
 
     expected_hash_2 = hmac.new(key.encode("utf-8"), challenge_2.encode("utf-8"), hashlib.sha256).hexdigest()
 
