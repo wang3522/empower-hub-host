@@ -73,7 +73,7 @@ def connect_to_wifi(ssid, password):
     system = platform.system()
     ssid = ssid.strip()  # Ensure no leading/trailing whitespace
     if system == "Linux":
-        cmd = f"echo {ROOT_PASSWORD} | sudo -S nmcli dev wifi connect '{ssid}' password '{password}'"
+        cmd = f"echo {ROOT_PASSWORD} | sudo -S nmcli dev wifi connect '{ssid}' password '{password}' ifname wlan0"
     else:
         return {"error": "Unsupported OS"}
     return run_command(cmd)
