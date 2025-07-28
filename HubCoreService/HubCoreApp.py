@@ -14,7 +14,7 @@ from HubCore.bleService.bleuart import BLE_UART
 from HubCore.thingsBoardService.tb import TB
 from HubCore.network.lte import LTE
 from HubCore.utility.config import SystemConfig as HubConfig
-from HubCore.dbusService.server import DBusServer
+from HubCore.dbusService.server import initialize_dbus_server
 
 logger = logging.getLogger()
 
@@ -95,7 +95,7 @@ def main():
         tb = TB()
         tb.start()
 
-        dbus_server = DBusServer()
+        dbus_server = initialize_dbus_server()
         dbus_server.start()
 
         main_loop()

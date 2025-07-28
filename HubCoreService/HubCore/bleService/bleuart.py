@@ -94,34 +94,46 @@ class BLE_UART:
             logger.error("Failed to unzip OTA package: {}".format(e))
             return
 
-        total_files = sum(len(files) for _, _, files in os.walk(extract_dir))
-        self._send_data(f"BL/OTA_UPDATE_METADATA/{total_files}\n")
+        sorted_files = sorted(
+            (os.path.join(root, f), os.path.relpath(os.path.join(root, f), extract_dir).replace("\\", "/"))
+            for root, _, files in os.walk(extract_dir)
+            for f in sorted(files)
+        )
+
+        session_hash = hashlib.sha256()
+        for full_path, _ in sorted_files:
+            try:
+                with open(full_path, "rb") as f:
+                    session_hash.update(f.read())
+            except Exception as e:
+                logger.error(f"Failed to read for checksum: {full_path}: {e}")
+                return
+
+        ota_checksum = session_hash.hexdigest()
+        total_files = len(sorted_files)
+
+        self._send_data(f"BL/OTA_UPDATE_METADATA/{total_files},{ota_checksum}\n")
         time.sleep(3)
 
-        for root, _, files in os.walk(extract_dir):
-            for file in files:
-                full_path = os.path.join(root, file)
-                rel_path = os.path.relpath(full_path, extract_dir).replace("\\", "/")
+        for full_path, rel_path in sorted_files:
+            try:
+                with open(full_path, "rb") as f:
+                    content = f.read()
+            except Exception as e:
+                logger.error("Failed to read file {}: {}".format(rel_path, e))
+                continue
 
-                try:
-                    with open(full_path, "rb") as f:
-                        content = f.read()
-                except Exception as e:
-                    logger.error("Failed to read file {}: {}".format(rel_path, e))
-                    continue
+            chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
+            checksum = hashlib.sha256(content).hexdigest()
+            header_cmd = "BL/OTA_HEADER/{},{},{},{}".format(rel_path, len(chunks), len(content), checksum)
+            self._send_data(header_cmd + "\n")
+            time.sleep(0.25)
 
-                chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
-                checksum = hashlib.sha256(content).hexdigest()
-                header_cmd = "BL/OTA_HEADER/{},{},{},{}".format(rel_path, len(chunks), len(content), checksum)
-                self._send_data(header_cmd + "\n")
-                time.sleep(0.25)
-
-                for idx, chunk in enumerate(chunks):
-                    hex_chunk = chunk.hex()
-                    data_cmd = "BL/OTA_DATA/{}/{}".format(idx, hex_chunk)
-                    self._send_data(data_cmd + "\n")
-                    time.sleep(0.2)
-
+            for idx, chunk in enumerate(chunks):
+                hex_chunk = chunk.hex()
+                data_cmd = "BL/OTA_DATA/{}/{}".format(idx, hex_chunk)
+                self._send_data(data_cmd + "\n")
+                time.sleep(0.2)
         return
 
     def _read_thread(self):
@@ -138,14 +150,14 @@ class BLE_UART:
                         split_data = data.split("/")
                         data_cmd = split_data[0].lower()
                         cleaned_data = ""
-                        if len(split_data) > 1:
-                            data_payload = split_data[1].lower()
-                            if (self.is_authenticated):
-                                encrypted_bytes = bytes.fromhex(data_payload)
-                                cleaned_data = decrypt_data(encrypted_bytes).decode("utf-8", errors="ignore")
-                            else:
-                                cleaned_data = data_payload
                         if cmd in CMD_INTERFACE:
+                            if len(split_data) > 1:
+                                data_payload = split_data[1].lower()
+                                if (self.is_authenticated):
+                                    encrypted_bytes = bytes.fromhex(data_payload)
+                                    cleaned_data = decrypt_data(encrypted_bytes).decode("utf-8", errors="ignore")
+                                else:
+                                    cleaned_data = data_payload
                             res = CMD_INTERFACE[cmd](data_cmd + "/" + cleaned_data)
                         else:
                             logger.error(f"Unknown cmd, {cmd}")
@@ -159,6 +171,27 @@ class BLE_UART:
                                 f.write("")
                         except Exception as e:
                             logger.error(f"Failed to write OTA consent file: {e}")
+                        continue
+                    if res.startswith("OTA_STATUS/"):
+                        from ..dbusService.server import get_dbus_server_instance
+                        dbus_obj = get_dbus_server_instance()
+                        status = res.split("/")[1].strip()
+                        if status == "success":
+                            if dbus_obj:
+                                dbus_obj.bl654_object.ota_complete("success")
+                            else:
+                                logger.warning("Dbus not set, could not signal ota_complete")
+                        elif status == "error":
+                            if dbus_obj:
+                                dbus_obj.bl654_object.ota_error("error")
+                            else:
+                                logger.warning("DBus not set; could not signal ota_error")
+                        continue
+                    if res.startswith("NOTIFY_AR/"):
+                        from ..dbusService.server import get_dbus_server_instance
+                        dbus_obj = get_dbus_server_instance()
+                        if dbus_obj:
+                            dbus_obj.bl654_object.notify_version(res.split("/")[1].strip())
                         continue
                     self._send_data(res)
                     
@@ -187,3 +220,11 @@ class BLE_UART:
             self.thread.join()
         self._disconnect()
         logger.debug("BLE UART stopped")
+
+    def set_is_authenticated(self, authenticated: bool):
+        self.is_authenticated = authenticated
+        logger.debug(f"BLE UART authentication status set to {authenticated}")
+
+    def request_application_version(self):
+        self._send_data("MX93/AR\n")
+        logger.debug("Requested application version from BL654")

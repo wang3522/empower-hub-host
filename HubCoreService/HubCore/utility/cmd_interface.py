@@ -42,7 +42,11 @@ def handle_get_fr(data: str):
 def handle_get_hr(data: str):
     logger.debug(f"handle_get_hr {data}")
     return f"MX93/HR/{_device_info['hardware_rev']}"
-    
+
+def handle_notify_ar(data: str):
+    logger.debug(f"handle_notify_ar {data}")
+    return f"NOTIFY_AR/{data.strip()}"
+
 def handle_auth_chal(data: str):
     global expected_hash_2
     logger.debug("handle_auth_chal {}".format(data))
@@ -85,6 +89,10 @@ def handle_unsub(data: str):
 def handle_get_fw_dl_status(data: str):
     logger.debug(f"handle_get_fw_dl_status {data}")
     return f"MX93/NOT_IMPLEMENTED"
+
+def handle_notify_fw_dl_status(data: str):
+    logger.debug(f"handle_notify_fw_dl_status {data}")
+    return f"OTA_STATUS/{data.strip()}"
 
 def handle_go_fw_update(data: str):
     logger.debug(f"handle_go_fw_update {data}")
@@ -145,6 +153,7 @@ def _bl_cmd_interface(data: str):
             "GET_MN": handle_get_mn,
             "GET_FR": handle_get_fr,
             "GET_HR": handle_get_hr,
+            "NOTIFY_AR": handle_notify_ar,
             "AUTH_CHAL": handle_auth_chal,
             "AUTH_RESP_CLIENT": handle_auth_resp_client,
             "GET_ENC_TYPE": handle_get_enc_type,
@@ -152,6 +161,7 @@ def _bl_cmd_interface(data: str):
             "PUB": handle_pub,
             "UNSUB": handle_unsub,
             "GET_FW_DL_STATUS": handle_get_fw_dl_status,
+            "NOTIFY_FW_DL_STATUS": handle_notify_fw_dl_status,
             "GO_FW_UPDATE": handle_go_fw_update,
             "SET_SSID": handle_set_ssid,
             "SET_PW": handle_set_pw,

@@ -17,17 +17,18 @@ class DBusBl654(dbus.service.Object):
         super().__init__(bus_name, self.DBUS_OBJECT)
 
     @dbus.service.signal(DBUS_INTERFACE, signature='s')
-    def ota_progress(self, message): pass
-
-    @dbus.service.signal(DBUS_INTERFACE, signature='s')
     def ota_error(self, message): pass
 
     @dbus.service.signal(DBUS_INTERFACE, signature='s')
     def ota_complete(self, message): pass
 
+    @dbus.service.signal(DBUS_INTERFACE, signature='s')
+    def notify_version(self, message): pass
+
     @dbus.service.method(DBUS_INTERFACE, in_signature="", out_signature="s")
-    def version(self):
-        return "v1"
+    def get_version(self):
+        BLE_UART().request_application_version()
+        return "Requesting version from BL654..."
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="s", out_signature="s")
     def initiate_ota(self, filepath):

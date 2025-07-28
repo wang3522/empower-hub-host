@@ -40,3 +40,14 @@ class DBusServer(dbus.service.Object):
     @dbus.service.method(DBUS_INTERFACE, in_signature="", out_signature="s")
     def version(self):
         return self.DBUS_SERVER_VERSION
+
+_dbus_server_instance = None
+
+def initialize_dbus_server():
+    global _dbus_server_instance
+    if _dbus_server_instance is None:
+        _dbus_server_instance = DBusServer()
+    return _dbus_server_instance
+
+def get_dbus_server_instance():
+    return _dbus_server_instance
