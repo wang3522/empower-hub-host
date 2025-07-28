@@ -119,20 +119,12 @@ org.navico.HubUtility.bl654
 
 ### Signals
 
-#### `ota_progress(message: str)`
-
-**Example**
-
-```
-ota_progress("2/4 files transferred")
-```
-
 #### `ota_error(message: str)`
 
 **Example**
 
 ```
-ota_error("Failed to write chunk {num} of {file}")
+"error"
 ```
 
 #### `ota_complete(message: str)`
@@ -140,19 +132,29 @@ ota_error("Failed to write chunk {num} of {file}")
 **Example**
 
 ```
-ota_complete("OTA transfer completed successfully")
+"success"
+```
+
+#### `notify_version(message: str)`
+
+Handles notifying application version when requested from BL654
+
+**Example**
+
+```
+"v1"
 ```
 
 ### Methods
 
-#### `version() -> str`
+#### `get_version() -> str`
 
-Returns the version of the BL654.
+Initiates fetching application version from BL654
 
 **Response:**
 
 ```
-('v1',)
+('Requesting version from BL654...',)
 ```
 
 ---
