@@ -21,7 +21,9 @@ _device_info = {
     "firmware_rev": "undefined",
 }
 
-expected_hash_2 = None
+_auth_state = {
+    "expected_hash_2": None
+}
 
 def handle_hello(data: str):
     logger.debug(f"handle_hello {data}")
@@ -48,7 +50,6 @@ def handle_notify_ar(data: str):
     return f"NOTIFY_AR/{data.strip()}"
 
 def handle_auth_chal(data: str):
-    global expected_hash_2
     logger.debug("handle_auth_chal {}".format(data))
 
     key = get_key()
@@ -57,14 +58,14 @@ def handle_auth_chal(data: str):
     response_for_app = hmac.new(key.encode("utf-8"), challenge_1.encode("utf-8"), hashlib.sha256).hexdigest()
     challenge_2 = ''.join(secrets.choice(string.ascii_uppercase) for _ in range(8))
 
-    expected_hash_2 = hmac.new(key.encode("utf-8"), challenge_2.encode("utf-8"), hashlib.sha256).hexdigest()
+    _auth_state["expected_hash_2"] = hmac.new(key.encode("utf-8"), challenge_2.encode("utf-8"), hashlib.sha256).hexdigest()
 
     combined = response_for_app + challenge_2
     return f"MX93/AUTH_RESP_SERVER/{combined}"
 
 def handle_auth_resp_client(data: str):
     logger.debug(f"handle_auth_resp_client {data}")
-    if data.strip() == expected_hash_2:
+    if data.strip() == _auth_state["expected_hash_2"]:
         grant_level = "01"
     else:
         grant_level = "00"
