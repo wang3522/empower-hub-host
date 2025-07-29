@@ -21,32 +21,35 @@ from tb_utils.geo_util import GeoUtil
 from mqtt_client import ThingsBoardClient
 from .config import location_priority_sources, location_filter_pattern
 from tb_utils.constants import Constants
+from tb_utils.gps_parser import GPSParser
 
+# Port for GNSS connection
+SERIAL_PORT = SettingsUtil.get_setting(
+    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.SERIAL_PORT, default_value="/dev/ttyUSB1"
+)
 # # Cloud publish interval in seconds
 LOCATION_CLOUD_PUBLISH_INTERVAL = SettingsUtil.get_setting(
-    Constants.GNSS,
-    Constants.LOCATION,
-    Constants.CLOUD_PUBLISH_INTERVAL,
-    default_value=600,
+    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.LOCATION, Constants.CLOUD_PUBLISH_INTERVAL, default_value=600
 )
 # number of updates to flush (i.e. if any one gps thing has 20 updates, flush all)
 LOCATION_FLUSH_MAX_UPDATES = SettingsUtil.get_setting(
-    Constants.GNSS, Constants.LOCATION, Constants.FLUSH_MAX_UPDATES, default_value=20
+    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.LOCATION, Constants.FLUSH_MAX_UPDATES, default_value=20
 )
 # GPSD update interval in seconds
 LOCATION_GPSD_UPDATE_INTERVAL = SettingsUtil.get_setting(
-    Constants.GNSS, Constants.LOCATION, Constants.GPSD_UPDATE_INTERVAL, default_value=10
+    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.LOCATION, Constants.GPSD_UPDATE_INTERVAL, default_value=10
 )
 # Minimum distance in meters
 MINIMUM_DISTANCE = SettingsUtil.get_setting(
-    Constants.GNSS, Constants.DISTANCE, Constants.MIN_CHANGE, default_value=50
+    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.DISTANCE, Constants.MIN_CHANGE, default_value=50
 )
 # Minimum speed in m/s
 MINIMUM_SPEED = SettingsUtil.get_setting(
-    Constants.GNSS, Constants.SPEED, Constants.MIN_CHANGE, default_value=5
+    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.SPEED, Constants.MIN_CHANGE, default_value=5
 )
 # Acceptable error margin for stationary gps coord reading
 STATIONARY_ERR = SettingsUtil.get_setting(
+    Constants.THINGSBOARD_SETTINGS_KEY,
     Constants.GNSS,
     Constants.LOCATION,
     Constants.GPSD_STATIONARY_ERR_MARGIN,
@@ -54,6 +57,7 @@ STATIONARY_ERR = SettingsUtil.get_setting(
 )
 # Acceptable error margin for moving gps coord reading
 MOVING_ERR = SettingsUtil.get_setting(
+    Constants.THINGSBOARD_SETTINGS_KEY,
     Constants.GNSS,
     Constants.LOCATION,
     Constants.GPSD_MOVING_ERR_MARGIN,
@@ -61,6 +65,7 @@ MOVING_ERR = SettingsUtil.get_setting(
 )
 # How many times in a row we need to be out of the geofence before sending the push notification
 OUT_OF_GEOFENCE_COUNT = SettingsUtil.get_setting(
+    Constants.THINGSBOARD_SETTINGS_KEY,
     Constants.GNSS,
     Constants.LOCATION,
     Constants.OUT_OF_GEOFENCE_COUNT,
@@ -71,8 +76,6 @@ OUTSIDE_GEOFENCE_TITLE = "Geofence Update"
 # Geofence alarm push notification description
 OUTSIDE_GEOFENCE_DESCRIPTION = "Your boat moved outside of its geofence boundaries"
 
-
-
 class LocationService:
     location_thread_timer_name = "Location Flush Timer"
     dispose_array: list[rx.abc.DisposableBase] = []
@@ -80,6 +83,7 @@ class LocationService:
     thingsboard_client: ThingsBoardClient = ThingsBoardClient()
     sync_service: SyncService = SyncService()
     n2k_client: N2KClient
+    gnss_connection: GPSParser = GPSParser(SERIAL_PORT)
 
     gpsd_data_thread: threading.Thread
     gpsd_thread_event: threading.Event
@@ -476,6 +480,7 @@ class LocationService:
             value (dict): A dictionary containing 'latitude', 'longitude', and 'radius'.
 
         """
+        self._logger.info("Setting geofence point and radius from value: %s", value)
         if value is not None:
             geofence_center = value.get(Constants.center)
             self.geofence_point = GeoPoint(
@@ -509,11 +514,7 @@ class LocationService:
             self._logger.warning("Geofence or location consent is set to disabled")
             return False
 
-        if not self.geofence:
-            self._logger.warning("Geofence is not set.")
-            return False
-
-        if not change or not change.state:
+        if not change or len(change) == 0:
             self._logger.warning("No change or state data provided.")
             return False
 
@@ -521,8 +522,8 @@ class LocationService:
             distance = GeoUtil.calculate_distance(
                 self.geofence_point.longitude,
                 self.geofence_point.latitude,
-                change.state[Constants.LAT],
-                change.state[Constants.LONG],
+                change[Constants.LAT],
+                change[Constants.LONG],
             )
             geofence_alarm = {}
 
@@ -592,7 +593,7 @@ class LocationService:
         except Exception as e:
             self._logger.error("Error processing geofence: %s", e)
 
-    def queue_location_update(self, change: Dict[str, Any]) -> None:
+    def queue_location_update(self, change: Dict[str, Any], channel_id: str) -> None:
         """
         Queues a location update for the given channel state change.
 
@@ -606,6 +607,7 @@ class LocationService:
 
         # Check if location consent is True
         if self.location_consent is None or not self.location_consent:
+            self._logger.warning("Location consent is set to disabled")
             return
 
         publish = False
@@ -619,10 +621,10 @@ class LocationService:
             new_location = self.__convert_channel_state_to_location_state(change=change)
 
             if (
-                change.channel_id in self._location_updates
-                and self._location_updates[change.channel_id]
+                channel_id in self._location_updates
+                and self._location_updates[channel_id]
             ):
-                last_update = self._location_updates[change.channel_id][-1]
+                last_update = self._location_updates[channel_id][-1]
 
                 last_update_location_state = LocationState(
                     lat=last_update[Constants.LAT],
@@ -634,19 +636,19 @@ class LocationService:
                     last_update_location_state,
                     new_location,
                 ):
-                    self._location_updates[change.channel_id].append(change.state)
+                    self._location_updates[channel_id].append(change)
 
             else:
                 if self.last_known_trip_location is None:
                     # We had no last location, add the coord to the list
-                    self._location_updates[change.channel_id] = [change.state]
+                    self._location_updates[channel_id] = [change]
                 else:
                     if self.__is_past_threshold(
                         self.last_known_trip_location,
                         new_location,
                     ):
                         # Change in gps data, add it to the list
-                        self._location_updates[change.channel_id] = [change.state]
+                        self._location_updates[channel_id] = [change]
 
             self._update_position(change)
 
@@ -927,7 +929,7 @@ class LocationService:
         successfully_connected = False
         while not successfully_connected:
             try:
-                # gpsd.connect(host=self._get_host_ip_address(), port=GPSD_PORT)
+                self.gnss_connection.connect_serial_and_start_gnss()
                 successfully_connected = True
             except Exception as e:
                 successfully_connected = False
@@ -936,18 +938,17 @@ class LocationService:
 
         sleep_time = 0
         while not self.gpsd_thread_event.wait(sleep_time):
-            print("Waiting for gpsd thread event to be set")
+            self._logger.debug("sleeping for %s seconds", sleep_time)
             try:
                 # Fetch the current GPS data
-                # TODO: Get current gps coordinate from telit
-                # packet = gpsd.get_current()
-                packet = {}
+                packet = self.gnss_connection.get_location()
                 # Initialize default data
                 data = LocationState(0, 0, 0)
-                # Check if we have a valid fix
+                # Check if we have a valid 3d fix
                 if packet["mode"] >= 3 or (packet[Constants.LAT] != 0.0) or (packet[Constants.LONG] != 0.0):
                     data.lat = round(packet[Constants.LAT], 5)
                     data.long = round(packet[Constants.LONG], 5)
+                    data.ts = packet[Constants.ts]
                     if packet["mode"] >= 3:
                         data.sp = round(packet[Constants.sp], 2)  # Horizontal speed
 
@@ -1024,18 +1025,8 @@ class LocationService:
                         "Previous GPS Data: %s", self._previous_coordinate
                     )
                     self.queue_location_update(
-                        # TODO: Add previous coordinate into the queue
-                        {}
-                        # ChannelStateChange(
-                        #     channel_id=Constants.gnss
-                        #     + "."
-                        #     + Constants.gpsd
-                        #     + "."
-                        #     + Constants.loc,
-                        #     state=self._previous_coordinate,
-                        #     thing_id=Constants.gnss + "." + Constants.gpsd,
-                        #     thing_type=Constants.gnss,
-                        # )
+                        self._previous_coordinate,
+                        "gnss.gpsd.loc"
                     )
                     if (
                         self._previous_coordinate[Constants.sp] != 0
