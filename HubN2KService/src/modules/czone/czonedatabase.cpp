@@ -314,15 +314,6 @@ void CzoneDatabase::ProcessFields(std::vector<Field> &fields, T1 instance, N2KMo
     // Compare with last known state and update only if different
     if (UpdateMessageIfDifferent(newItem.get(), lastSnapShotEntry->second.get(), fields, false)) {
       // Changes detected - update current snapshot
-      // [x] debug
-      BOOST_LOG_TRIVIAL(debug) << "CzoneDatabase::ProcessFields: delta detected, "
-                               << [](const std::vector<CzoneDatabase::Field> &_f) -> std::string {
-        std::string r = "";
-        for (auto &i : _f) {
-          r += i.FieldName + ", ";
-        }
-        return r;
-      }(fields);
       snapshot[instance] = newItem;
 
       // Update global monitoring key-value map with new monitoring information
@@ -453,7 +444,8 @@ bool CzoneDatabase::Snapshot() {
       m_Snapshot.m_modes.size() > 0 || m_Snapshot.m_pressures.size() > 0 || m_Snapshot.m_tanks.size() > 0 ||
       m_Snapshot.m_temperatures.size() > 0 || m_Snapshot.m_thirdPartyGenerators.size() > 0 ||
       m_Snapshot.m_tyrepressures.size() > 0 || m_Snapshot.m_gnss.size() > 0 ||
-      m_Snapshot.m_binaryLogicState.size() > 0 || m_Snapshot.m_networkStatus != nullptr) {
+      // m_Snapshot.m_binaryLogicState.size() > 0 || m_Snapshot.m_networkStatus != nullptr) {
+      m_Snapshot.m_binaryLogicState.size() > 0) {
     for (auto &it : m_SnapshotKeyValue.m_keyValueMap) {
       if (it.second) {
         m_Snapshot.m_monitoringKeyValue[it.first] = it.second;
@@ -1222,21 +1214,21 @@ void CzoneDatabase::UpdateMonitoringBinaryLogicStates(N2KMonitoring::SnapshotIns
 
 void CzoneDatabase::UpdateNetworkStatus(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
                                         N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot) {
-  const std::lock_guard<std::mutex> lock(m_NetworkStatusMutex);
-  if (m_NetworkStatus.m_ethernetStatus.length() == 0) {
-    // BOOST_LOG_TRIVIAL(debug) << "UpdateNetworkStatus: No NetworkStatus received yet"; // [x] debug
-    return;
-  }
+  // const std::lock_guard<std::mutex> lock(m_NetworkStatusMutex);
+  // if (m_NetworkStatus.m_ethernetStatus.length() == 0) {
+  //   // BOOST_LOG_TRIVIAL(debug) << "UpdateNetworkStatus: No NetworkStatus received yet"; // [x] debug
+  //   return;
+  // }
 
-  if (lastSnapshot.m_networkStatus == nullptr) {
-    lastSnapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
-    snapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
-  } else {
-    if (*lastSnapshot.m_networkStatus != m_NetworkStatus) {
-      lastSnapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
-      snapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
-    }
-  }
+  // if (lastSnapshot.m_networkStatus == nullptr) {
+  //   lastSnapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
+  //   snapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
+  // } else {
+  //   if (*lastSnapshot.m_networkStatus != m_NetworkStatus) {
+  //     lastSnapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
+  //     snapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
+  //   }
+  // }
 }
 
 void CzoneDatabase::registerDbus(std::shared_ptr<DbusService> dbusService) {

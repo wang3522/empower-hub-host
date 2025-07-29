@@ -38,7 +38,7 @@ N2KMonitoring::SnapshotInstanceIdMap::SnapshotInstanceIdMap() {
   m_monitoringKeyValue.clear();
   m_binaryLogicState.clear();
 
-  m_networkStatus = nullptr;
+  // m_networkStatus = nullptr;
   m_timeStamp = "";
 }
 
@@ -64,10 +64,10 @@ void N2KMonitoring::SnapshotInstanceIdMap::clear() {
   m_monitoringKeyValue.clear();
   m_binaryLogicState.clear();
 
-  if (m_networkStatus != nullptr) {
-    m_networkStatus->clear();
-  }
-  m_networkStatus = nullptr;
+  // if (m_networkStatus != nullptr) {
+  //   m_networkStatus->clear();
+  // }
+  // m_networkStatus = nullptr;
   m_timeStamp = "";
 }
 
@@ -120,8 +120,7 @@ bool N2KMonitoring::SnapshotInstanceIdMap::operator==(const N2KMonitoring::Snaps
          deepCompareMap(m_audioStereos, other.m_audioStereos) &&
          deepCompareMap(m_acMainContactors, other.m_acMainContactors) && deepCompareMap(m_gnss, other.m_gnss) &&
          deepCompareMap(m_monitoringKeyValue, other.m_monitoringKeyValue) &&
-         deepCompareMap(m_binaryLogicState, other.m_binaryLogicState) &&
-         std::tie(m_networkStatus, m_timeStamp) == std::tie(other.m_networkStatus, other.m_timeStamp);
+         deepCompareMap(m_binaryLogicState, other.m_binaryLogicState);
 }
 
 bool N2KMonitoring::MonitoringKeyValueMap::operator==(const MonitoringKeyValueMap &other) const {
@@ -1521,9 +1520,9 @@ json N2KMonitoring::SnapshotInstanceIdMap::tojson() const {
   JsonHelpers::idMapToJson(result, "MonitoringKeyValue", m_monitoringKeyValue);
   JsonHelpers::idMapToJson(result, "BinaryLogicState", m_binaryLogicState);
 
-  if (m_networkStatus) {
-    result["NetworkStatus"] = m_networkStatus->tojson();
-  }
+  // if (m_networkStatus) {
+  //   result["NetworkStatus"] = m_networkStatus->tojson();
+  // }
   result["TimeStamp"] = m_timeStamp;
   return result;
 }

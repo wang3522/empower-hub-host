@@ -768,7 +768,7 @@ public:
   IdMap<GNSS> m_gnss;
   IdMap<MonitoringKeyValue> m_monitoringKeyValue;
   IdMap<BinaryLogicState> m_binaryLogicState;
-  std::shared_ptr<NetworkStatus> m_networkStatus;
+  // std::shared_ptr<NetworkStatus> m_networkStatus;
   std::string m_timeStamp;
 
   bool operator==(const SnapshotInstanceIdMap &other) const;
