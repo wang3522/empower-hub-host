@@ -89,7 +89,7 @@ private:
   std::string _getFactoryIMEI();
   std::string _getRTFirmwareVersion();
   std::string _getHostArtifactInfo();
-  std::string _getEuropaHardwareVersions();
+  std::string _getHardwareVersions();
 
   template <typename T>
   inline void GetJsonValue(const std::string &item, T &ret) {

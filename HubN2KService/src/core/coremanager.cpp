@@ -95,15 +95,18 @@ void CoreManager::start() {
   m_dbusService->registerService(
       "GetSetting", "czone",
       [ptr = this, &czonesettings, czoneInterface, czoneData](std::string settingRequestStr) -> std::string {
+        BOOST_LOG_TRIVIAL(debug) << settingRequestStr; // [x] debug
         try {
-          SettingRequest request(json::parse(settingRequestStr));
+          json req;
+          req["Type"] = settingRequestStr;
+          SettingRequest request(req);
           auto r = ptr->getSettings(request, czonesettings, *czoneInterface.get(), *czoneData.get());
           return r.dump();
         } catch (const std::exception &e) {
           BOOST_LOG_TRIVIAL(error) << "GetSetting:Error " << e.what();
           ptr->m_dbusService->throwError("GetSetting:Error " + std::string(e.what()));
         }
-        return "{}";
+        return "";
       });
 
   m_dbusService->registerService(
@@ -119,7 +122,7 @@ void CoreManager::start() {
 
   czoneInterface->registerDbus(m_dbusService);
   czoneData->registerDbus(m_dbusService);
-  
+
   m_dbusService->run();
 
   // Mark as running and enter main loop
@@ -166,7 +169,8 @@ json CoreManager::getSettings(const SettingRequest &request, CzoneSettings &czon
     factoryData["FactoryICCID"] = czoneSettings.getFactoryICCID();
     factoryData["FactoryIMEI"] = czoneSettings.getFactoryIMEI();
     factoryData["RTFirmwareVersion"] = czoneSettings.getRTFirmwareVersion();
-    factoryData["MenderArtifactInfo"] = czoneSettings.getHostArtifactInfo();
+    factoryData["ArtifactInfo"] = czoneSettings.getHostArtifactInfo();
+    factoryData["ApplicationVersion"] = std::string(N2KCoreApp::VERSION_STRING);
   } break;
   case SettingRequest::eSettingType::eGlobal: {
     CzoneInterface::ConfigGlobalInformation info;

@@ -281,15 +281,26 @@ json valueToJson(const Value<T> &value) {
   return result;
 }
 
+template <typename T>
+void valueToJson(json &result, const std::string &key, const Value<T> &value) {
+  if (value.m_valid) {
+    if constexpr (std::is_enum_v<T>) {
+      result[key + "str"] = toString(value.m_value);
+      result[key] = static_cast<int>(value.m_value);
+    } else {
+      result[key] = value.m_value;
+    }
+    result["ComponentStatus"] = "Connected";
+  }
+}
+
 // Template function for IdMap<T> JSON serialization
 template <typename T>
 json idMapToJson(const IdMap<T> &map) {
-  json result = json::array();
+  json result = json::object();
   for (const auto &[id, item] : map) {
     if (item) {
-      json entry = item->tojson();
-      entry["id"] = id;
-      result.push_back(entry);
+      result[std::to_string(id)] = item->tojson();
     }
   }
   return result;
@@ -757,7 +768,7 @@ public:
   IdMap<GNSS> m_gnss;
   IdMap<MonitoringKeyValue> m_monitoringKeyValue;
   IdMap<BinaryLogicState> m_binaryLogicState;
-  std::shared_ptr<NetworkStatus> m_networkStatus;
+  // std::shared_ptr<NetworkStatus> m_networkStatus;
   std::string m_timeStamp;
 
   bool operator==(const SnapshotInstanceIdMap &other) const;

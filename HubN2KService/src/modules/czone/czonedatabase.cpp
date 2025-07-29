@@ -1,3 +1,4 @@
+#include <format>
 #include <typeinfo>
 #include <variant>
 
@@ -166,7 +167,6 @@ bool CzoneDatabase::UpdateMessageIfDifferent(T *messageNew, T *messageLast, cons
                     *lastPtr != static_cast<int>(field.Value)) {
                   *newPtr = static_cast<int>(field.Value);
                   *lastPtr = static_cast<int>(field.Value);
-                  fieldChanged = true;
                 }
               } else if constexpr (std::is_same_v<NewType, int32_t *>) {
                 // Handle primitive int32_t type
@@ -174,7 +174,6 @@ bool CzoneDatabase::UpdateMessageIfDifferent(T *messageNew, T *messageLast, cons
                     *lastPtr != static_cast<int32_t>(field.Value)) {
                   *newPtr = static_cast<int32_t>(field.Value);
                   *lastPtr = static_cast<int32_t>(field.Value);
-                  fieldChanged = true;
                 }
               } else if constexpr (std::is_same_v<NewType, int64_t *>) {
                 // Handle primitive int64_t type
@@ -182,7 +181,6 @@ bool CzoneDatabase::UpdateMessageIfDifferent(T *messageNew, T *messageLast, cons
                     *lastPtr != static_cast<int64_t>(field.Value)) {
                   *newPtr = static_cast<int64_t>(field.Value);
                   *lastPtr = static_cast<int64_t>(field.Value);
-                  fieldChanged = true;
                 }
               } else if constexpr (std::is_same_v<NewType, uint32_t *>) {
                 // Handle primitive uint32_t type
@@ -190,7 +188,6 @@ bool CzoneDatabase::UpdateMessageIfDifferent(T *messageNew, T *messageLast, cons
                     *lastPtr != static_cast<uint32_t>(field.Value)) {
                   *newPtr = static_cast<uint32_t>(field.Value);
                   *lastPtr = static_cast<uint32_t>(field.Value);
-                  fieldChanged = true;
                 }
               } else if constexpr (std::is_same_v<NewType, uint64_t *>) {
                 // Handle primitive uint64_t type
@@ -198,14 +195,12 @@ bool CzoneDatabase::UpdateMessageIfDifferent(T *messageNew, T *messageLast, cons
                     *lastPtr != static_cast<uint64_t>(field.Value)) {
                   *newPtr = static_cast<uint64_t>(field.Value);
                   *lastPtr = static_cast<uint64_t>(field.Value);
-                  fieldChanged = true;
                 }
               } else if constexpr (std::is_same_v<NewType, float *>) {
                 // Handle primitive float type
                 if (forceUpdate || *newPtr != field.Value || *lastPtr != field.Value) {
                   *newPtr = field.Value;
                   *lastPtr = field.Value;
-                  fieldChanged = true;
                 }
               } else if constexpr (std::is_same_v<NewType, double *>) {
                 // Handle primitive double type
@@ -213,7 +208,6 @@ bool CzoneDatabase::UpdateMessageIfDifferent(T *messageNew, T *messageLast, cons
                     *lastPtr != static_cast<double>(field.Value)) {
                   *newPtr = static_cast<double>(field.Value);
                   *lastPtr = static_cast<double>(field.Value);
-                  fieldChanged = true;
                 }
               } else if constexpr (std::is_same_v<NewType, bool *>) {
                 // Handle primitive bool type
@@ -221,7 +215,6 @@ bool CzoneDatabase::UpdateMessageIfDifferent(T *messageNew, T *messageLast, cons
                 if (forceUpdate || *newPtr != newValue || *lastPtr != newValue) {
                   *newPtr = newValue;
                   *lastPtr = newValue;
-                  fieldChanged = true;
                 }
               } else if constexpr (std::is_enum_v<std::remove_pointer_t<NewType>>) {
                 // Handle enum types by casting float value to appropriate enum
@@ -230,7 +223,6 @@ bool CzoneDatabase::UpdateMessageIfDifferent(T *messageNew, T *messageLast, cons
                 if (forceUpdate || *newPtr != newValue || *lastPtr != newValue) {
                   *newPtr = newValue;
                   *lastPtr = newValue;
-                  fieldChanged = true;
                 }
               } else {
                 // Handle complex objects with m_valid and m_value members (like ValueTypes)
@@ -242,8 +234,7 @@ bool CzoneDatabase::UpdateMessageIfDifferent(T *messageNew, T *messageLast, cons
                   auto newValue = static_cast<ValueType>(field.Value);
 
                   // Update both validity flag and value if either has changed
-                  if (forceUpdate || newPtr->m_valid != field.Valid || newPtr->m_value != newValue ||
-                      lastPtr->m_valid != field.Valid || lastPtr->m_value != newValue) {
+                  if (forceUpdate || lastPtr->m_valid != field.Valid || lastPtr->m_value != newValue) {
                     newPtr->m_valid = field.Valid;
                     newPtr->m_value = newValue;
                     lastPtr->m_valid = field.Valid;
@@ -453,12 +444,12 @@ bool CzoneDatabase::Snapshot() {
       m_Snapshot.m_modes.size() > 0 || m_Snapshot.m_pressures.size() > 0 || m_Snapshot.m_tanks.size() > 0 ||
       m_Snapshot.m_temperatures.size() > 0 || m_Snapshot.m_thirdPartyGenerators.size() > 0 ||
       m_Snapshot.m_tyrepressures.size() > 0 || m_Snapshot.m_gnss.size() > 0 ||
-      m_Snapshot.m_binaryLogicState.size() > 0 || m_Snapshot.m_networkStatus != nullptr) {
-
-    // Include detailed monitoring key-value data in the final snapshot
+      // m_Snapshot.m_binaryLogicState.size() > 0 || m_Snapshot.m_networkStatus != nullptr) {
+      m_Snapshot.m_binaryLogicState.size() > 0) {
     for (auto &it : m_SnapshotKeyValue.m_keyValueMap) {
       if (it.second) {
         m_Snapshot.m_monitoringKeyValue[it.first] = it.second;
+        m_LastSnapshot.m_monitoringKeyValue[it.first] = it.second;
       }
     }
     return true;
@@ -1223,21 +1214,21 @@ void CzoneDatabase::UpdateMonitoringBinaryLogicStates(N2KMonitoring::SnapshotIns
 
 void CzoneDatabase::UpdateNetworkStatus(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
                                         N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot) {
-  const std::lock_guard<std::mutex> lock(m_NetworkStatusMutex);
-  if (m_NetworkStatus.m_ethernetStatus.length() == 0) {
-    BOOST_LOG_TRIVIAL(error) << "UpdateNetworkStatus: No NetworkStatus received yet";
-    return;
-  }
+  // const std::lock_guard<std::mutex> lock(m_NetworkStatusMutex);
+  // if (m_NetworkStatus.m_ethernetStatus.length() == 0) {
+  //   // BOOST_LOG_TRIVIAL(debug) << "UpdateNetworkStatus: No NetworkStatus received yet"; // [x] debug
+  //   return;
+  // }
 
-  if (lastSnapshot.m_networkStatus == nullptr) {
-    lastSnapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
-    snapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
-  } else {
-    if (*lastSnapshot.m_networkStatus != m_NetworkStatus) {
-      lastSnapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
-      snapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
-    }
-  }
+  // if (lastSnapshot.m_networkStatus == nullptr) {
+  //   lastSnapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
+  //   snapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
+  // } else {
+  //   if (*lastSnapshot.m_networkStatus != m_NetworkStatus) {
+  //     lastSnapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
+  //     snapshot.m_networkStatus = std::make_shared<N2KMonitoring::NetworkStatus>(m_NetworkStatus);
+  //   }
+  // }
 }
 
 void CzoneDatabase::registerDbus(std::shared_ptr<DbusService> dbusService) {
@@ -1245,8 +1236,24 @@ void CzoneDatabase::registerDbus(std::shared_ptr<DbusService> dbusService) {
     try {
       return ptr->m_LastSnapshot.tojson().dump();
     } catch (const std::exception &e) {
-      BOOST_LOG_TRIVIAL(error) << "SingleSnapshot:Error " << e.what();
-      dbusService->throwError("SingleSnapshot:Error " + std::string(e.what()));
+      BOOST_LOG_TRIVIAL(error) << "SingleSnapshot: " << e.what();
+      dbusService->throwError("SingleSnapshot: " + std::string(e.what()));
+      return ""; // warning
+    }
+  });
+
+  dbusService->registerService("GetState", "czone", [ptr = this, dbusService](std::string deviceid) -> std::string {
+    try {
+      // BOOST_LOG_TRIVIAL(debug) << "GetState call with id, " << deviceid; // [x] debug
+      auto response = ptr->m_LastSnapshot.tojson();
+      if (!response.contains(deviceid)) {
+        throw std::invalid_argument(std::format("Invalid state request, {}.", deviceid));
+      }
+      return response[deviceid].dump();
+    } catch (const std::exception &e) {
+      BOOST_LOG_TRIVIAL(error) << "GetState: " << e.what();
+      dbusService->throwError("GetState: " + std::string(e.what()));
+      return ""; // warning
     }
   });
 
@@ -1263,7 +1270,7 @@ void CzoneDatabase::registerDbus(std::shared_ptr<DbusService> dbusService) {
             dbusService->emitSignal("Snapshot", "czone", this->m_Snapshot.tojson().dump());
           }
         }
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
       } catch (const std::exception &e) {
         BOOST_LOG_TRIVIAL(error) << "CzoneDatabase::registerDbus::Task snapshot scan exception: " << e.what();
       }

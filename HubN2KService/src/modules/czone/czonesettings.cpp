@@ -239,7 +239,7 @@ std::string CzoneSettings::_getHostArtifactInfo() {
   return (output);
 }
 
-std::string CzoneSettings::_getEuropaHardwareVersions() { return "unknown"; }
+std::string CzoneSettings::_getHardwareVersions() { return "unknown"; }
 
 void CzoneSettings::factoryReset() {
   std::lock_guard<std::mutex> lock(m_settingsmutex);
@@ -274,8 +274,8 @@ void CzoneSettings::factoryReset() {
   m_settings["FactoryICCID"] = _getFactoryICCID();
   m_settings["FactoryIMEI"] = _getFactoryIMEI();
   m_settings["RTFirmwareVersion"] = _getRTFirmwareVersion();
-  m_settings["MenderArtifactInfo"] = _getHostArtifactInfo();
-  m_settings["EuropaHardwareVersions"] = _getEuropaHardwareVersions();
+  m_settings["HostArtifactInfo"] = _getHostArtifactInfo();
+  m_settings["HardwareVersions"] = _getHardwareVersions();
   m_settings["EnableBatteryCharger"] = false;
   for (uint32_t i = 0; i < eNumUnitTypes; i++) {
     m_settings["Units" + std::to_string(i)] = boost::any_cast<int32_t>(m_t_czonesettings.Setting(tUnitTypes(i)).Value);
