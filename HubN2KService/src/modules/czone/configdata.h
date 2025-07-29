@@ -101,19 +101,48 @@ public:
     }
   }
 
-  ControlRequest();
-  ControlRequest(const ControlRequest &) = delete;
-  ControlRequest(ControlRequest &&) = delete;
-  ControlRequest &operator=(const ControlRequest &) = delete;
-  ControlRequest &operator=(ControlRequest &&) = delete;
+  static eControlType from_string_control(const std::string &str) {
+    if (str == "Activate")
+      return eActivate;
+    if (str == "Release")
+      return eRelease;
+    if (str == "Ping")
+      return ePing;
+    if (str == "SetAbsolute")
+      return eSetAbsolute;
+    return eActivate;
+  }
 
-private:
-  eControlType m_type;
-  eThrowType m_throwType;
-  eButtonInfoType m_buttonType;
-  uint32_t m_id;
-  uint32_t m_value;
-  std::string m_token;
+  static eButtonInfoType from_string_button(const std::string &str) {
+    if (str == "ButtonInfo0")
+      return eButtonInfo0;
+    if (str == "ButtonInfo1")
+      return eButtonInfo1;
+    return eButtonInfo0;
+  }
+
+  static eThrowType from_string_throw(const std::string &str) {
+    if (str == "DoubleThrow")
+      return eDoubleThrow;
+    if (str == "SingleThrow")
+      return eSingleThrow;
+    return eDoubleThrow;
+  }
+
+  std::unique_ptr<eControlType> m_type = nullptr;
+  std::unique_ptr<eThrowType> m_throwType = nullptr;
+  std::unique_ptr<eButtonInfoType> m_buttonType = nullptr;
+  std::unique_ptr<uint32_t> m_id = nullptr;
+  std::unique_ptr<uint32_t> m_value = nullptr;
+  std::unique_ptr<std::string> m_token = nullptr;
+
+  ControlRequest() = delete;
+  ControlRequest(const json &j);
+  ControlRequest(const ControlRequest &other);
+  ControlRequest(ControlRequest &&other) = default;
+  ControlRequest &operator=(const ControlRequest &other) = default;
+  ControlRequest &operator=(ControlRequest &&other) = default;
+  ~ControlRequest() = default;
 };
 
 class ControlTypeValueRequest {

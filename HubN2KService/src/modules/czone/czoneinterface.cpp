@@ -2894,7 +2894,8 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
     } catch (const std::exception &e) {
       json r;
       BOOST_LOG_TRIVIAL(error) << "GetConfigAll:Error " << e.what();
-      dbusService->throwError("GetConfigAll:Error " + std::string(e.what()));
+      dbusService->throwError("GetConfigAll: " + std::string(e.what()));
+      return ""; // warning
     }
   });
 
@@ -2905,24 +2906,118 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
     } catch (const std::exception &e) {
       json r;
       BOOST_LOG_TRIVIAL(error) << "GetConfig:Error " << e.what();
-      dbusService->throwError("GetConfig:Error " + std::string(e.what()));
+      dbusService->throwError("GetConfig: " + std::string(e.what()));
+      return ""; // warning
     }
   });
 
-  dbusService->registerService("GetCategories", "czone", [ptr = this, dbusService](std::string type) -> std::string {
+  dbusService->registerService("GetCategories", "czone", [ptr = this, dbusService]() -> std::string {
     try {
-      auto r = ptr->getCategories(CategoryRequest::from_string(type));
+      auto r = ptr->getCategories(CategoryRequest::eCategoriesAll);
       return r.tojson().dump();
     } catch (const std::exception &e) {
       json r;
       BOOST_LOG_TRIVIAL(error) << "GetCategories:Error " << e.what();
-      dbusService->throwError("GetCategories:Error " + std::string(e.what()));
+      dbusService->throwError("GetCategories: " + std::string(e.what()));
+      return ""; // warning
     }
   });
 
+  dbusService->registerService(
+      "Control", "czone", [ptr = this, dbusService](std::string controlRequestStr) -> std::string {
+        // BOOST_LOG_TRIVIAL(debug) << "Control: received request, " << controlRequestStr; //[x] debug
+        try {
+          json r;
+          r["Result"] = "Ok";
+          ControlRequest request(json::parse(controlRequestStr));
+
+          if (request.m_id == nullptr || request.m_type == nullptr) {
+            throw std::invalid_argument("[Id, Type] argument is required.");
+          }
+
+          if (*request.m_type == ControlRequest::eControlType::eActivate) {
+            if (request.m_throwType == nullptr) {
+              throw std::invalid_argument("[ThrowType] argument is required.");
+            }
+            ptr->keyPressed(*request.m_id, *request.m_throwType == ControlRequest::eThrowType::eDoubleThrow);
+          } else if (*request.m_type == ControlRequest::eControlType::ePing) {
+            ptr->keyHolding(*request.m_id);
+          } else if (*request.m_type == ControlRequest::eControlType::eRelease) {
+            ptr->keyReleasedOrLostKeyFocus(*request.m_id);
+          } else if (*request.m_type == ControlRequest::eControlType::eSetAbsolute) {
+            if (request.m_value == nullptr) {
+              throw std::invalid_argument("[Level] argument is required.");
+            }
+            ptr->setLevel(*request.m_id, *request.m_value);
+          } else {
+            r["Result"] = "Error";
+          }
+
+          return r.dump();
+        } catch (const std::exception &e) {
+          BOOST_LOG_TRIVIAL(error) << "Control:Error " << e.what();
+          dbusService->throwError("Control " + std::string(e.what()));
+          return "";
+        }
+      });
+
+  dbusService->registerService(
+      "ControlCircuitButtonInfo", "czone", [ptr = this, dbusService](std::string controlRequestStr) -> std::string {
+        try {
+          json response;
+          ControlRequest request(json::parse(controlRequestStr));
+
+          if (request.m_id == nullptr || request.m_buttonType == nullptr || request.m_throwType == nullptr) {
+            throw std::invalid_argument("[Id, ButtonType, ThrowType] argument is required.");
+          }
+
+          char *name = NULL;
+          uint32_t nameLength = 0;
+          tCZoneCircuitButtonIconType iconType;
+          uint8_t invert = 0;
+          CZoneCircuitButtonInfo(*request.m_id,
+                                 *request.m_buttonType == ControlRequest::eButtonInfoType::eButtonInfo0
+                                     ? eCZoneCircuitButtonInfo_0
+                                     : eCZoneCircuitButtonInfo_1,
+                                 &name, &nameLength, &iconType, &invert);
+          std::unique_ptr<char[], void (*)(char *)> nameGuard(name, [](char *p) {
+            if (p)
+              delete[] p;
+          });
+
+          tCZoneScreenConfigSingleThrowIconTypes singleThrowType;
+          tCZoneScreenConfigDoubleThrowIconTypes doubleThrowType;
+          CZoneCircuitButtonType(*request.m_id, &singleThrowType, &doubleThrowType,
+                                 *request.m_throwType == ControlRequest::eThrowType::eSingleThrow);
+
+          response["Name"] = name ? std::string(name) : std::string("");
+          response["IconType"] = iconType;
+          response["Invert"] = (invert ? true : false);
+          response["SingleThrowIconType"] = (singleThrowType);
+          response["DoubleThrowIconType"] = (doubleThrowType);
+
+          return response.dump();
+        } catch (const std::exception &e) {
+          BOOST_LOG_TRIVIAL(error) << "ControlCircuitButtonInfo:Error " << e.what();
+          dbusService->throwError("ControlCircuitButtonInfo: " + std::string(e.what()));
+          return ""; // warning
+        }
+      });
+
   dbusService->registerSignal("Event", "czone");
   registerEventCallback([&dbusService](std::shared_ptr<Event> event) {
-    BOOST_LOG_TRIVIAL(debug) << "Event callback for signal (dbus) " << Event::to_string(event->get_type());
-    dbusService->emitSignal("Event", "czone", event->tojson().dump());
+    switch (event->get_type()) {
+    case Event::eEventType::eEngineConfigChanged:
+    case Event::eEventType::eConfigChange:
+    case Event::eEventType::eAlarmAdded:
+    case Event::eEventType::eAlarmRemoved:
+    case Event::eEventType::eAlarmChanged:
+    case Event::eEventType::eAlarmActivated:
+    case Event::eEventType::eAlarmDeactivated:
+      BOOST_LOG_TRIVIAL(debug) << "Event callback for signal (dbus) " << Event::to_string(event->get_type());
+      dbusService->emitSignal("Event", "czone", event->tojson().dump());
+      break;
+    default: break;
+    }
   });
 }

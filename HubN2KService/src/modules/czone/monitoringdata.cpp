@@ -1245,61 +1245,65 @@ std::string toString(MeteringDevice::eACLine value) { return MeteringDevice::to_
 json N2KMonitoring::Circuit::tojson() const {
   json result;
   result["id"] = m_id;
-  result["SystemsOn"] = JsonHelpers::valueToJson(m_systemsOn);
-  result["Level"] = JsonHelpers::valueToJson(m_level);
-  result["Current"] = JsonHelpers::valueToJson(m_current);
-  result["Fault"] = JsonHelpers::valueToJson(m_fault);
-  result["OnCount"] = JsonHelpers::valueToJson(m_onCount);
-  result["OnTime"] = JsonHelpers::valueToJson(m_onTime);
-  result["SequentialState"] = JsonHelpers::valueToJson(m_sequentialState);
-  result["ModesSystemOn"] = JsonHelpers::valueToJson(m_modesSystemOn);
-  result["ACSourceAvailable"] = JsonHelpers::valueToJson(m_aCSourceAvailable);
-  result["IsOffline"] = JsonHelpers::valueToJson(m_isOffline);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "SystemsOn", m_systemsOn);
+  JsonHelpers::valueToJson(result, "Level", m_level);
+  JsonHelpers::valueToJson(result, "Current", m_current);
+  JsonHelpers::valueToJson(result, "Fault", m_fault);
+  JsonHelpers::valueToJson(result, "OnCount", m_onCount);
+  JsonHelpers::valueToJson(result, "OnTime", m_onTime);
+  JsonHelpers::valueToJson(result, "SequentialState", m_sequentialState);
+  JsonHelpers::valueToJson(result, "ModesSystemOn", m_modesSystemOn);
+  JsonHelpers::valueToJson(result, "ACSourceAvailable", m_aCSourceAvailable);
+  JsonHelpers::valueToJson(result, "IsOffline", m_isOffline);
   return result;
 }
 
 json N2KMonitoring::Tank::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["LevelPercent"] = JsonHelpers::valueToJson(m_levelPercent);
-  result["Level"] = JsonHelpers::valueToJson(m_level);
-  result["Capacity"] = JsonHelpers::valueToJson(m_capacity);
-  result["TankType"] = JsonHelpers::valueToJson(m_tankType);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "LevelPercent", m_levelPercent);
+  JsonHelpers::valueToJson(result, "Level", m_level);
+  JsonHelpers::valueToJson(result, "Capacity", m_capacity);
+  JsonHelpers::valueToJson(result, "TankType", m_tankType);
   return result;
 }
 
 json N2KMonitoring::Engine::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["Speed"] = JsonHelpers::valueToJson(m_speed);
-  result["BoostPressure"] = JsonHelpers::valueToJson(m_boostPressure);
-  result["Trim"] = JsonHelpers::valueToJson(m_trim);
-  result["OilPressure"] = JsonHelpers::valueToJson(m_oilPressure);
-  result["OilTemperature"] = JsonHelpers::valueToJson(m_oilTemperature);
-  result["Temperature"] = JsonHelpers::valueToJson(m_temperature);
-  result["AlternatorPotential"] = JsonHelpers::valueToJson(m_alternatorPotential);
-  result["FuelRate"] = JsonHelpers::valueToJson(m_fuelRate);
-  result["TotalEngineHours"] = JsonHelpers::valueToJson(m_totalEngineHours);
-  result["CoolantPressure"] = JsonHelpers::valueToJson(m_coolantPressure);
-  result["CoolantTemperature"] = JsonHelpers::valueToJson(m_coolantTemperature);
-  result["FuelPressure"] = JsonHelpers::valueToJson(m_fuelPressure);
-  result["DiscreteStatus1"] = JsonHelpers::valueToJson(m_discreteStatus1);
-  result["DiscreteStatus2"] = JsonHelpers::valueToJson(m_discreteStatus2);
-  result["PercentEngineLoad"] = JsonHelpers::valueToJson(m_percentEngineLoad);
-  result["PercentEngineTorque"] = JsonHelpers::valueToJson(m_percentEngineTorque);
-  result["EngineState"] = JsonHelpers::valueToJson(m_engineState);
-  result["ActiveEnginesId"] = JsonHelpers::valueToJson(m_activeEnginesId);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "Speed", m_speed);
+  JsonHelpers::valueToJson(result, "BoostPressure", m_boostPressure);
+  JsonHelpers::valueToJson(result, "Trim", m_trim);
+  JsonHelpers::valueToJson(result, "OilPressure", m_oilPressure);
+  JsonHelpers::valueToJson(result, "OilTemperature", m_oilTemperature);
+  JsonHelpers::valueToJson(result, "Temperature", m_temperature);
+  JsonHelpers::valueToJson(result, "AlternatorPotential", m_alternatorPotential);
+  JsonHelpers::valueToJson(result, "FuelRate", m_fuelRate);
+  JsonHelpers::valueToJson(result, "TotalEngineHours", m_totalEngineHours);
+  JsonHelpers::valueToJson(result, "CoolantPressure", m_coolantPressure);
+  JsonHelpers::valueToJson(result, "CoolantTemperature", m_coolantTemperature);
+  JsonHelpers::valueToJson(result, "FuelPressure", m_fuelPressure);
+  JsonHelpers::valueToJson(result, "DiscreteStatus1", m_discreteStatus1);
+  JsonHelpers::valueToJson(result, "DiscreteStatus2", m_discreteStatus2);
+  JsonHelpers::valueToJson(result, "PercentEngineLoad", m_percentEngineLoad);
+  JsonHelpers::valueToJson(result, "PercentEngineTorque", m_percentEngineTorque);
+  JsonHelpers::valueToJson(result, "EngineState", m_engineState);
+  JsonHelpers::valueToJson(result, "ActiveEnginesId", m_activeEnginesId);
   return result;
 }
 
 json N2KMonitoring::ACLine::tojson() const {
   json result;
   result["Instance"] = m_instance;
+  result["ComponentStatus"] = "Disconnected";
   result["Line"] = static_cast<int>(m_line);
-  result["Voltage"] = JsonHelpers::valueToJson(m_voltage);
-  result["Current"] = JsonHelpers::valueToJson(m_current);
-  result["Frequency"] = JsonHelpers::valueToJson(m_frequency);
-  result["Power"] = JsonHelpers::valueToJson(m_power);
+  JsonHelpers::valueToJson(result, "Voltage", m_voltage);
+  JsonHelpers::valueToJson(result, "Current", m_current);
+  JsonHelpers::valueToJson(result, "Frequency", m_frequency);
+  JsonHelpers::valueToJson(result, "Power", m_power);
   return result;
 }
 
@@ -1313,120 +1317,131 @@ json N2KMonitoring::AC::tojson() const {
 json N2KMonitoring::DC::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["Voltage"] = JsonHelpers::valueToJson(m_voltage);
-  result["Current"] = JsonHelpers::valueToJson(m_current);
-  result["Temperature"] = JsonHelpers::valueToJson(m_temperature);
-  result["StateOfCharge"] = JsonHelpers::valueToJson(m_stateOfCharge);
-  result["CapacityRemaining"] = JsonHelpers::valueToJson(m_capacityRemaining);
-  result["TimeRemaining"] = JsonHelpers::valueToJson(m_timeRemaining);
-  result["TimeToCharge"] = JsonHelpers::valueToJson(m_timeToCharge);
-  result["TimeRemainingOrToCharge"] = JsonHelpers::valueToJson(m_timeRemainingOrToCharge);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "Voltage", m_voltage);
+  JsonHelpers::valueToJson(result, "Current", m_current);
+  JsonHelpers::valueToJson(result, "Temperature", m_temperature);
+  JsonHelpers::valueToJson(result, "StateOfCharge", m_stateOfCharge);
+  JsonHelpers::valueToJson(result, "CapacityRemaining", m_capacityRemaining);
+  JsonHelpers::valueToJson(result, "TimeRemaining", m_timeRemaining);
+  JsonHelpers::valueToJson(result, "TimeToCharge", m_timeToCharge);
+  JsonHelpers::valueToJson(result, "TimeRemainingOrToCharge", m_timeRemainingOrToCharge);
   return result;
 }
 
 json N2KMonitoring::Temperature::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["Temperature"] = JsonHelpers::valueToJson(m_temperature);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "Temperature", m_temperature);
   return result;
 }
 
 json N2KMonitoring::Pressure::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["Pressure"] = JsonHelpers::valueToJson(m_pressure);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "Pressure", m_pressure);
   return result;
 }
 
 json N2KMonitoring::HVAC::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["OperationMode"] = JsonHelpers::valueToJson(m_operationMode);
-  result["FanMode"] = JsonHelpers::valueToJson(m_fanMode);
-  result["FanSpeed"] = JsonHelpers::valueToJson(m_fanSpeed);
-  result["EnvironmentSetTemperature"] = JsonHelpers::valueToJson(m_environmentSetTemperature);
-  result["EnvironmentTemperature"] = JsonHelpers::valueToJson(m_environmentTemperature);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "OperationMode", m_operationMode);
+  JsonHelpers::valueToJson(result, "FanMode", m_fanMode);
+  JsonHelpers::valueToJson(result, "FanSpeed", m_fanSpeed);
+  JsonHelpers::valueToJson(result, "EnvironmentSetTemperature", m_environmentSetTemperature);
+  JsonHelpers::valueToJson(result, "EnvironmentTemperature", m_environmentTemperature);
   return result;
 }
 
 json N2KMonitoring::ZipdeeAwning::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["State"] = JsonHelpers::valueToJson(m_state);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "State", m_state);
   return result;
 }
 
 json N2KMonitoring::ThirdPartyGenerator::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["OnTime"] = JsonHelpers::valueToJson(m_onTime);
-  result["State"] = JsonHelpers::valueToJson(m_status);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "OnTime", m_onTime);
+  JsonHelpers::valueToJson(result, "State", m_status);
   return result;
 }
 
 json N2KMonitoring::InverterCharger::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["InverterInstance"] = JsonHelpers::valueToJson(m_inverterInstance);
-  result["ChargerInstance"] = JsonHelpers::valueToJson(m_chargerInstance);
-  result["InverterEnable"] = JsonHelpers::valueToJson(m_inverterEnable);
-  result["InverterState"] = JsonHelpers::valueToJson(m_inverterState);
-  result["ChargerEnable"] = JsonHelpers::valueToJson(m_chargerEnable);
-  result["ChargerState"] = JsonHelpers::valueToJson(m_chargerState);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "InverterInstance", m_inverterInstance);
+  JsonHelpers::valueToJson(result, "ChargerInstance", m_chargerInstance);
+  JsonHelpers::valueToJson(result, "InverterEnable", m_inverterEnable);
+  JsonHelpers::valueToJson(result, "InverterState", m_inverterState);
+  JsonHelpers::valueToJson(result, "ChargerEnable", m_chargerEnable);
+  JsonHelpers::valueToJson(result, "ChargerState", m_chargerState);
   return result;
 }
 
 json N2KMonitoring::TyrePressure::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["Pressure"] = JsonHelpers::valueToJson(m_pressure);
-  result["Temperature"] = JsonHelpers::valueToJson(m_temperature);
-  result["Status"] = JsonHelpers::valueToJson(m_status);
-  result["LimitStatus"] = JsonHelpers::valueToJson(m_limitStatus);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "Pressure", m_pressure);
+  JsonHelpers::valueToJson(result, "Temperature", m_temperature);
+  JsonHelpers::valueToJson(result, "Status", m_status);
+  JsonHelpers::valueToJson(result, "LimitStatus", m_limitStatus);
   return result;
 }
 
 json N2KMonitoring::AudioStereo::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["Power"] = JsonHelpers::valueToJson(m_power);
-  result["Mute"] = JsonHelpers::valueToJson(m_mute);
-  result["AudioStatus"] = JsonHelpers::valueToJson(m_audioStatus);
-  result["SourceMode"] = JsonHelpers::valueToJson(m_sourceMode);
-  result["Volume"] = JsonHelpers::valueToJson(m_volume);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "Power", m_power);
+  JsonHelpers::valueToJson(result, "Mute", m_mute);
+  JsonHelpers::valueToJson(result, "AudioStatus", m_audioStatus);
+  JsonHelpers::valueToJson(result, "SourceMode", m_sourceMode);
+  JsonHelpers::valueToJson(result, "Volume", m_volume);
   return result;
 }
 
 json N2KMonitoring::ACMainContactor::tojson() const {
   json result;
   result["SystemStateId"] = m_systemStateId;
-  result["ACContactorSystemsState"] = JsonHelpers::valueToJson(m_acContactorSystemsState);
-  result["ACContactorSourceAvailable"] = JsonHelpers::valueToJson(m_acContactorSourceAvailable);
-  result["ReversePolarity"] = JsonHelpers::valueToJson(m_reversePolarity);
-  result["ACContactorAutoChangeOver"] = JsonHelpers::valueToJson(m_acContactorAutoChangeOver);
-  result["ManualOverride"] = JsonHelpers::valueToJson(m_manualOverride);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "ACContactorSystemsState", m_acContactorSystemsState);
+  JsonHelpers::valueToJson(result, "ACContactorSourceAvailable", m_acContactorSourceAvailable);
+  JsonHelpers::valueToJson(result, "ReversePolarity", m_reversePolarity);
+  JsonHelpers::valueToJson(result, "ACContactorAutoChangeOver", m_acContactorAutoChangeOver);
+  JsonHelpers::valueToJson(result, "ManualOverride", m_manualOverride);
   return result;
 }
 
 json N2KMonitoring::GNSS::tojson() const {
   json result;
   result["Instance"] = m_instance;
-  result["Latitude"] = JsonHelpers::valueToJson(m_latitude);
-  result["Longitude"] = JsonHelpers::valueToJson(m_longitude);
-  result["Cog"] = JsonHelpers::valueToJson(m_cog);
-  result["Sog"] = JsonHelpers::valueToJson(m_sog);
-  result["MagneticVariation"] = JsonHelpers::valueToJson(m_magneticVariation);
+  result["ComponentStatus"] = "Disconnected";
   result["UTCDateTime"] = m_utcDateTime;
-  result["TimeOffset"] = JsonHelpers::valueToJson(m_timeOffset);
-  result["SatellitesInFix"] = JsonHelpers::valueToJson(m_satellitesInFix);
-  result["BestOfFourSatellitesSNR"] = JsonHelpers::valueToJson(m_bestOfFourSatellitesSNR);
-  result["Method"] = JsonHelpers::valueToJson(m_method);
-  result["FixType"] = JsonHelpers::valueToJson(m_fixType);
-  result["Hdop"] = JsonHelpers::valueToJson(m_hdop);
-  result["Pdop"] = JsonHelpers::valueToJson(m_pdop);
-  result["Vdop"] = JsonHelpers::valueToJson(m_vdop);
-  result["LatitudeDeg"] = JsonHelpers::valueToJson(m_latitudeDeg);
-  result["LongitudeDeg"] = JsonHelpers::valueToJson(m_longitudeDeg);
+  JsonHelpers::valueToJson(result, "Latitude", m_latitude);
+  JsonHelpers::valueToJson(result, "Longitude", m_longitude);
+  JsonHelpers::valueToJson(result, "Cog", m_cog);
+  JsonHelpers::valueToJson(result, "Sog", m_sog);
+  JsonHelpers::valueToJson(result, "MagneticVariation", m_magneticVariation);
+  JsonHelpers::valueToJson(result, "TimeOffset", m_timeOffset);
+  JsonHelpers::valueToJson(result, "SatellitesInFix", m_satellitesInFix);
+  JsonHelpers::valueToJson(result, "BestOfFourSatellitesSNR", m_bestOfFourSatellitesSNR);
+  JsonHelpers::valueToJson(result, "Method", m_method);
+  JsonHelpers::valueToJson(result, "FixType", m_fixType);
+  JsonHelpers::valueToJson(result, "Hdop", m_hdop);
+  JsonHelpers::valueToJson(result, "Pdop", m_pdop);
+  JsonHelpers::valueToJson(result, "Vdop", m_vdop);
+  JsonHelpers::valueToJson(result, "LatitudeDeg", m_latitudeDeg);
+  JsonHelpers::valueToJson(result, "LongitudeDeg", m_longitudeDeg);
   return result;
 }
 
@@ -1446,7 +1461,8 @@ json N2KMonitoring::BinaryLogicState::tojson() const {
   json result;
   result["Dipswitch"] = m_dipswitch;
   result["Instance"] = m_instance;
-  result["States"] = JsonHelpers::valueToJson(m_states);
+  result["ComponentStatus"] = "Disconnected";
+  JsonHelpers::valueToJson(result, "States", m_states);
   return result;
 }
 
@@ -1514,12 +1530,12 @@ json N2KMonitoring::SnapshotInstanceIdMap::tojson() const {
 
 json N2KMonitoring::HealthStatus::tojson() const {
   json result;
-  result["ServiceThread"] = JsonHelpers::toString(m_serviceThread);
-  result["NetworkThread"] = JsonHelpers::toString(m_networkThread);
-  result["SCThread"] = JsonHelpers::toString(m_scThread);
-  result["GNSSThread"] = JsonHelpers::toString(m_gnssThread);
-  result["GNSSLatLon"] = JsonHelpers::toString(m_gnssLatLon);
-  result["GNSSFix"] = JsonHelpers::toString(m_gnssFix);
+  result["ServiceThread"] = static_cast<int>(m_serviceThread);
+  result["NetworkThread"] = static_cast<int>(m_networkThread);
+  result["SCThread"] = static_cast<int>(m_scThread);
+  result["GNSSThread"] = static_cast<int>(m_gnssThread);
+  result["GNSSLatLon"] = static_cast<int>(m_gnssLatLon);
+  result["GNSSFix"] = static_cast<int>(m_gnssFix);
   return result;
 }
 
