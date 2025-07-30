@@ -93,7 +93,7 @@ class LocationService:
     geofence_ready = rx.subject.BehaviorSubject(None)
     # configuration: N2kConfiguration
 
-    # geofence_point: the center point of the geofence
+    # geofence_point: the center point of the geofence.
     geofence_point: GeoPoint = GeoPoint(None, None)
     # geofence_radius: the radius of the geofence circle
     geofence_radius: float = None
@@ -296,8 +296,8 @@ class LocationService:
             distance = GeoUtil.calculate_distance(
                 self.geofence_point.longitude,
                 self.geofence_point.latitude,
-                change[Constants.LAT],
                 change[Constants.LONG],
+                change[Constants.LAT],
             )
             geofence_alarm = {}
 
@@ -498,10 +498,10 @@ class LocationService:
     ):
         # Calculate the distance between the last known location and the new location
         distance = GeoUtil.calculate_distance(
-            prev_point.lat,
             prev_point.long,
-            latest_point.lat,
+            prev_point.lat,
             latest_point.long,
+            latest_point.lat,
         )
 
         # Check if the distance is greater than the minimum distance or
