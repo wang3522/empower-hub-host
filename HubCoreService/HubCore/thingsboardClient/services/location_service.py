@@ -498,10 +498,10 @@ class LocationService:
     ):
         # Calculate the distance between the last known location and the new location
         distance = GeoUtil.calculate_distance(
-            prev_point.lat,
             prev_point.long,
-            latest_point.lat,
+            prev_point.lat,
             latest_point.long,
+            latest_point.lat,
         )
 
         # Check if the distance is greater than the minimum distance or
