@@ -15,9 +15,6 @@ from ..common_enums import ChannelType, ThingType, Unit
 from ..constants import Constants, JsonKeys, BATTERY_CONST_MAP
 from .channel import Channel
 from .ac_meter import ACMeterThingBase
-from ...services.config_processor.config_processor_helpers import (
-    calculate_inverter_charger_instance,
-)
 from ..empower_system.ac_meter import ACMeterThingBase
 from ...util import rx as rxu
 from ..filters import Current, Voltage
@@ -172,7 +169,7 @@ class CombiCharger(Thing):
             channel.id,
             dc_voltage_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Voltage.ROUND_VALUE),
+                rxu.round_float(Voltage.ROUND_VALUE),
                 Voltage.FILTER,
             ),
         )
@@ -198,7 +195,7 @@ class CombiCharger(Thing):
             channel.id,
             dc_current_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Current.ROUND_VALUE),
+                rxu.round_float(Current.ROUND_VALUE),
                 Current.FILTER,
             ),
         )

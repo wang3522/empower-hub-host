@@ -1,4 +1,5 @@
 #include "modules/czone/configdata.h"
+#include "utils/timestamp.h"
 #include <cstring>
 
 Instance::Instance() : m_enabled(false), m_instance(0) {}
@@ -27,13 +28,53 @@ Instance &Instance::operator=(Instance &&rhs) {
 
 CategoryRequest::CategoryRequest() : m_type(CategoryRequest::eCategoryType::eCategoriesAll), m_token() {}
 
-ControlRequest::ControlRequest()
-    : m_type(ControlRequest::eControlType::eActivate),
-      m_throwType(ControlRequest::eThrowType::eDoubleThrow),
-      m_buttonType(ControlRequest::eButtonInfoType::eButtonInfo0),
-      m_id(0),
-      m_value(0),
-      m_token() {}
+ControlRequest::ControlRequest(const json &j) {
+  try {
+    if (j.contains("Type")) {
+      m_type = std::make_unique<eControlType>(from_string_control(j["Type"].get<std::string>()));
+    }
+
+    if (j.contains("Id")) {
+      m_id = std::make_unique<uint32_t>(j["Id"].get<uint32_t>());
+    }
+
+    if (j.contains("ThrowType")) {
+      m_throwType = std::make_unique<eThrowType>(from_string_throw(j["ThrowType"].get<std::string>()));
+    }
+
+    if (j.contains("Level")) {
+      m_value = std::make_unique<uint32_t>(j["Level"].get<uint32_t>());
+    }
+
+    if (j.contains("ButtonType")) {
+      m_buttonType = std::make_unique<eButtonInfoType>(from_string_button(j["ButtonType"].get<std::string>()));
+    }
+
+    if (j.contains("Token")) {
+      m_token = std::make_unique<std::string>(j["Token"].get<std::string>());
+    }
+
+  } catch (const std::invalid_argument &e) {
+    throw std::invalid_argument(e.what());
+  } catch (const std::exception &e) {
+    throw std::runtime_error("ControlRequest::ControlRequest error while generating ControlRequest object.");
+  }
+}
+
+ControlRequest::ControlRequest(const ControlRequest &other) {
+  if (other.m_type)
+    m_type = std::make_unique<eControlType>(*other.m_type);
+  if (other.m_throwType)
+    m_throwType = std::make_unique<eThrowType>(*other.m_throwType);
+  if (other.m_buttonType)
+    m_buttonType = std::make_unique<eButtonInfoType>(*other.m_buttonType);
+  if (other.m_id)
+    m_id = std::make_unique<uint32_t>(*other.m_id);
+  if (other.m_value)
+    m_value = std::make_unique<uint32_t>(*other.m_value);
+  if (other.m_token)
+    m_token = std::make_unique<std::string>(*other.m_token);
+}
 
 ControlTypeValueRequest::ControlTypeValueRequest() : m_instance(0), m_type(0), m_value(0), m_token() {}
 
@@ -573,7 +614,7 @@ AlarmGlobalStatus &AlarmGlobalStatus::operator=(AlarmGlobalStatus &&rhs) {
 }
 
 Event::Event(eEventType type)
-    : m_type(type), m_content(), m_alarmItem(), m_globalStatus(), m_czoneEvent(), m_timeStamp() {}
+    : m_type(type), m_content(), m_alarmItem(), m_globalStatus(), m_czoneEvent(), m_timeStamp(getCurrentTimeString()) {}
 
 Event::Event(const Event &rhs)
     : m_type(rhs.m_type),
@@ -2612,6 +2653,7 @@ void to_json(nlohmann::json &j, const ShoreFuseDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const CircuitDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const CircuitLoad &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const FantasticFanDevice &c) { j = c.tojson(); }
+void to_json(nlohmann::json &j, const ScreenConfigPageImageItem &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const ScreenConfigMode &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const ScreenConfigHeader &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const ScreenConfigPageGridItem &c) { j = c.tojson(); }
@@ -2624,6 +2666,7 @@ void to_json(nlohmann::json &j, const GNSSDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const EngineDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const UiRelationshipMsg &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const BinaryLogicStateMsg &c) { j = c.tojson(); }
+void to_json(nlohmann::json &j, const Event &c) { j = c.tojson(); }
 
 json Categories::tojson() const {
   json result;
@@ -2643,7 +2686,7 @@ json CategoryItem::tojson() const {
 
 json ConfigResult::tojson() const {
   json result;
-  result["status"] = to_string(m_status);
+  result["Status"] = to_string(m_status);
 
   if (m_alarms.size() > 0) {
     result["Alarms"] = m_alarms;
@@ -2696,8 +2739,8 @@ json ConfigResult::tojson() const {
   if (m_fantasticFans.size() > 0) {
     result["FantasticFans"] = m_fantasticFans;
   }
-  if (m_screenConfigModes.size() > 0) {
-    result["ScreenConfigPageImageItems"] = m_screenConfigModes;
+  if (m_screenConfigPageImageItems.size() > 0) {
+    result["ScreenConfigPageImageItems"] = m_screenConfigPageImageItems;
   }
   if (m_screenConfigPageGridItems.size() > 0) {
     result["ScreenConfigPageGridItems"] = m_screenConfigPageGridItems;
@@ -2735,9 +2778,6 @@ json ConfigResult::tojson() const {
   if (m_favouritesBoatViews.size() > 0) {
     result["FavouritesBoatViews"] = m_favouritesBoatViews;
   }
-  if (m_alarms.size() > 0) {
-    result["Alarms"] = m_alarms;
-  }
   if (m_devices.size() > 0) {
     result["Devices"] = m_devices;
   }
@@ -2760,11 +2800,11 @@ json ConfigResult::tojson() const {
 json Alarm::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
-  result["AlarmType"] = to_string(m_alarmType);
-  result["Severity"] = to_string(m_severity);
-  result["CurrentState"] = to_string(m_currentState);
+  result["AlarmType"] = static_cast<int>(m_alarmType);
+  result["Severity"] = static_cast<int>(m_severity);
+  result["CurrentState"] = static_cast<int>(m_currentState);
   result["ChannelId"] = m_channelId;
   result["ExternalAlarmId"] = m_externalAlarmId;
   result["UniqueId"] = m_uniqueId;
@@ -2788,11 +2828,11 @@ json Alarm::tojson() const {
 json MeteringDevice::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["NameUTF8"] = m_nameUTF8;
   result["Instance"] = m_instance;
-  result["Line"] = to_string(m_line);
+  result["Line"] = static_cast<int>(m_line);
   result["Output"] = m_output;
   result["NominalVoltage"] = m_nominalVoltage;
   result["NominalFrequency"] = m_nominalFrequency;
@@ -2809,13 +2849,13 @@ json MeteringDevice::tojson() const {
   result["VeryLowVoltage"] = m_veryLowVoltage;
   result["HighVoltage"] = m_highVoltage;
   result["CanResetCapacity"] = m_canResetCapacity;
-  result["DCType"] = to_string(m_dcType);
+  result["DCType"] = static_cast<int>(m_dcType);
   result["ShowVoltage"] = m_showVoltage;
   result["ShowCurrent"] = m_showCurrent;
   result["ShowStateOfCharge"] = m_showStateOfCharge;
   result["ShowTemperature"] = m_showTemperature;
   result["ShowTimeOfRemaining"] = m_showTimeOfRemaining;
-  result["ACType"] = to_string(m_acType);
+  result["ACType"] = static_cast<int>(m_acType);
 
   return result;
 }
@@ -2843,16 +2883,16 @@ json AlarmLimit::tojson() const {
 json MonitoringDevice::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["NameUTF8"] = m_nameUTF8;
   result["Instance"] = m_instance;
-  result["TankType"] = MonitoringType::to_string(m_tankType);
-  result["PressureType"] = MonitoringType::to_string(m_pressureType);
-  result["TemperatureType"] = MonitoringType::to_string(m_temperatureType);
+  result["TankType"] = static_cast<int>(m_tankType);
+  result["PressureType"] = static_cast<int>(m_pressureType);
+  result["TemperatureType"] = static_cast<int>(m_temperatureType);
   result["CircuitId"] = m_circuitId;
-  result["SwitchType"] = CircuitDevice::to_string(m_switchType);
-  result["ConfirmDialog"] = CircuitDevice::to_string(m_confirmDialog);
+  result["SwitchType"] = static_cast<int>(m_switchType);
+  result["ConfirmDialog"] = static_cast<int>(m_confirmDialog);
   result["CircuitNameUTF8"] = m_circuitNameUTF8;
   result["HighTemperature"] = m_highTemperature;
   result["AtmosphericPressure"] = m_atmosphericPressure;
@@ -2878,7 +2918,7 @@ json DataId::tojson() const {
 json ACMainDevice::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["NameUTF8"] = m_nameUTF8;
   result["Dipswitch"] = m_dipswitch;
@@ -2902,7 +2942,7 @@ json ACMainContactorDevice::tojson() const {
   result["LoadGroupIndex"] = m_loadGroupIndex;
   result["LoadGroupParallelIndex"] = m_loadGroupParallelIndex;
   result["IsParallel"] = m_isParallel;
-  result["ACInputType"] = to_string(m_acInputType);
+  result["ACInputType"] = static_cast<int>(m_acInputType);
 
   return result;
 }
@@ -2919,7 +2959,7 @@ json ACMainLoadGroupDevice::tojson() const {
 json InverterChargerDevice::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["NameUTF8"] = m_nameUTF8;
   result["Model"] = m_model;
@@ -2951,7 +2991,7 @@ json InverterChargerDevice::tojson() const {
 json HVACDevice::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["NameUTF8"] = m_nameUTF8;
   result["Instance"] = m_instance;
@@ -2980,7 +3020,7 @@ json HVACDevice::tojson() const {
 json ThirdPartyGeneratorDevice::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["NameUTF8"] = m_nameUTF8;
   result["Instance"] = m_instance;
@@ -3042,7 +3082,7 @@ json TyrePressureDevice::tojson() const {
 json AudioStereoDevice::tojson() const {
   json result;
 
-  result["DisplayType"] = m_displayType;
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["NameUTF8"] = m_nameUTF8;
   result["Instance"] = m_instance;
@@ -3055,7 +3095,7 @@ json AudioStereoDevice::tojson() const {
 json ShoreFuseDevice::tojson() const {
   json result;
 
-  result["DisplayType"] = m_displayType;
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["NameUTF8"] = m_nameUTF8;
   result["Instance"] = m_instance;
@@ -3067,17 +3107,23 @@ json ShoreFuseDevice::tojson() const {
 json CircuitDevice::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
-  result["Id"] = m_id;
+  result["DisplayType"] = static_cast<int>(m_displayType);
+  result["Id"] = json::object();
+  result["Id"]["Valid"] = m_id.second;
+  result["Id"]["Value"] = m_id.first;
   result["NameUTF8"] = m_nameUTF8;
   result["SingleThrowId"] = m_singleThrowId;
-  result["SequentialNamesUTF8"] = m_sequentialNamesUTF8;
+  result["SequentialNamesUTF8"] = json::array();
+  for (const auto &s : m_sequentialNamesUTF8) {
+    result["SequentialNamesUTF8"].emplace_back(json::object({{"Name", s}}));
+  }
+
   result["HasComplement"] = m_hasComplement;
   result["DisplayCategories"] = m_displayCategories;
-  result["ConfirmDialog"] = to_string(m_confirmDialog);
+  result["ConfirmDialog"] = static_cast<int>(m_confirmDialog);
   result["VoltageSource"] = m_voltageSource;
-  result["CircuitType"] = to_string(m_circuitType);
-  result["SwitchType"] = to_string(m_switchType);
+  result["CircuitType"] = static_cast<int>(m_circuitType);
+  result["SwitchType"] = static_cast<int>(m_switchType);
   result["MinLevel"] = m_minLevel;
   result["MaxLevel"] = m_maxLevel;
   result["NonVisibleCircuit"] = m_nonVisibleCircuit;
@@ -3091,9 +3137,9 @@ json CircuitDevice::tojson() const {
   result["Categories"] = m_categories;
   result["DCCircuit"] = m_dcCircuit;
   result["ACCircuit"] = m_acCircuit;
-  result["ModeIcon"] = to_string(m_modeIcon);
-  result["primaryCircuitId"] = m_primaryCircuitId;
-  result["remoteVisibility"] = m_remoteVisibility;
+  result["ModeIcon"] = static_cast<int>(m_modeIcon);
+  result["PrimaryCircuitId"] = m_primaryCircuitId;
+  result["RemoteVisibility"] = m_remoteVisibility;
   result["SwitchString"] = m_switchString;
   result["SystemsOnAnd"] = m_systemsOnAnd;
 
@@ -3103,7 +3149,7 @@ json CircuitDevice::tojson() const {
 json CircuitLoad::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["NameUTF8"] = m_nameUTF8;
   result["ChannelAddress"] = m_channelAddress;
@@ -3112,7 +3158,7 @@ json CircuitLoad::tojson() const {
   result["SystemOnCurrent"] = m_systemOnCurrent;
   result["ForceAcknowledgeOn"] = m_forceAcknowledgeOn;
   result["Level"] = m_level;
-  result["ControlType"] = to_string(m_controlType);
+  result["ControlType"] = static_cast<int>(m_controlType);
   result["IsSwitchedModule"] = m_isSwitchedModule;
 
   return result;
@@ -3146,7 +3192,7 @@ json ScreenConfigMode::tojson() const {
 json ScreenConfigHeader::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["TargetDisplayType"] = m_targetDisplayType;
   result["TargetId"] = m_targetId;
@@ -3226,7 +3272,7 @@ json ScreenConfig::tojson() const {
 json FavouritesInfo::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["TargetDisplayType"] = m_targetDisplayType;
   result["TargetId"] = m_targetId;
@@ -3239,12 +3285,12 @@ json FavouritesInfo::tojson() const {
 json Device::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["NameUTF8"] = m_nameUTF8;
   result["Dipswitch"] = m_dipswitch;
   result["SourceAddress"] = m_sourceAddress;
   result["Conflict"] = m_conflict;
-  result["DeviceType"] = to_string(m_deviceType);
+  result["DeviceType"] = static_cast<int>(m_deviceType);
   result["Valid"] = m_valid;
   result["Transient"] = m_transient;
   result["Version"] = m_version;
@@ -3255,7 +3301,7 @@ json Device::tojson() const {
 json GNSSDevice::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["NameUTF8"] = m_nameUTF8;
   result["Instance"] = m_instance;
@@ -3267,7 +3313,7 @@ json GNSSDevice::tojson() const {
 json EngineDevice::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displayType);
+  result["DisplayType"] = static_cast<int>(m_displayType);
   result["Id"] = m_id;
   result["NameUTF8"] = m_nameUTF8;
   result["Instance"] = m_instance;
@@ -3283,13 +3329,13 @@ json EngineDevice::tojson() const {
 json UiRelationshipMsg::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displaytype);
+  result["DisplayType"] = static_cast<int>(m_displaytype);
   result["Id"] = m_id;
-  result["PrimaryType"] = to_string(m_primarytype);
-  result["SecondaryType"] = to_string(m_secondarytype);
+  result["PrimaryType"] = static_cast<int>(m_primarytype);
+  result["SecondaryType"] = static_cast<int>(m_secondarytype);
   result["PrimaryId"] = m_primaryid;
   result["SecondaryId"] = m_secondaryid;
-  result["RelationshipType"] = to_string(m_relationshiptype);
+  result["RelationshipType"] = static_cast<int>(m_relationshiptype);
   result["PrimaryConfigAddress"] = m_primaryconfigaddress;
   result["SecondaryConfigAddress"] = m_secondaryconfigaddress;
   result["PrimaryChannelIndex"] = m_primarychannelindex;
@@ -3301,10 +3347,180 @@ json UiRelationshipMsg::tojson() const {
 json BinaryLogicStateMsg::tojson() const {
   json result;
 
-  result["DisplayType"] = ConfigRequest::to_string(m_displaytype);
+  result["DisplayType"] = static_cast<int>(m_displaytype);
   result["Id"] = m_id;
   result["Address"] = m_address;
   result["NameUTF8"] = m_nameutf8;
 
   return result;
+}
+
+json ScreenConfigPageImageItem::tojson() const {
+  json result;
+
+  result["Header"] = m_header;
+  result["LocationX"] = m_locationX;
+  result["LocationY"] = m_locationY;
+  result["TargetX"] = m_targetX;
+  result["TargetY"] = m_targetY;
+  result["Icon"] = m_icon;
+  result["Name"] = m_name;
+  result["HideWhenOff"] = m_hideWhenOff;
+
+  return result;
+}
+
+json Event::tojson() const {
+  json result;
+
+  auto toHexString = [](const std::vector<std::byte> &data) -> std::string {
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+    for (size_t i = 0; i < data.size(); ++i) {
+      if (i > 0) {
+        oss << " ";
+      }
+      oss << std::setw(2) << static_cast<unsigned>(std::to_integer<uint8_t>(data[i]));
+    }
+    return oss.str();
+  };
+
+  result["Type"] = static_cast<int>(m_type);
+  result["TypeName"] = to_string(m_type);
+  result["Content"] = m_content;
+  result["AlarmItem"] = m_alarmItem;
+  result["GlobalStatus"] = json::object();
+  result["GlobalStatus"]["HighestEnabledSeverity"] = static_cast<int>(m_globalStatus.get_highestEnabledSeverity());
+  result["GlobalStatus"]["HighestAcknowledgedSeverity"] =
+      static_cast<int>(m_globalStatus.get_highestAcknowledgedSeverity());
+  result["CZoneEvent"] = json::object();
+  result["CZoneEvent"]["Type"] = m_czoneEvent.get_type();
+  result["CZoneEvent"]["Content"] = toHexString(m_czoneEvent.get_content());
+  result["CZoneEvent"]["RawAlarm"] = toHexString(m_czoneEvent.get_rawAlarm());
+  result["CZoneEvent"]["DeviceItem"] = toHexString(m_czoneEvent.get_deviceItem());
+
+  result["TimeStamp"] = m_timeStamp;
+
+  return result;
+}
+
+SettingRequest::SettingRequest(const json &j) : m_Type(eConfig) {
+  try {
+    if (j.contains("Type")) {
+      m_Type = from_string(j["Type"].get<std::string>());
+    } else {
+      throw std::invalid_argument("SettingRequest::SettingRequest [Type] argument is missing");
+    }
+
+    if (j.contains("DipswitchValue")) {
+      m_DipswitchValue = std::make_unique<uint32_t>(j["DipswitchValue"].get<uint32_t>());
+    }
+
+    if (j.contains("TimeOffsetValue")) {
+      m_TimeOffsetValue = std::make_unique<float>(j["TimeOffsetValue"].get<float>());
+    }
+
+    if (j.contains("MagneticVariationValue")) {
+      m_MagneticVariationValue = std::make_unique<float>(j["MagneticVariationValue"].get<float>());
+    }
+
+    if (j.contains("DepthOffsetValue")) {
+      m_DepthOffsetValue = std::make_unique<float>(j["DepthOffsetValue"].get<float>());
+    }
+
+    if (j.contains("BacklightValue")) {
+      m_BacklightValue = std::make_unique<float>(j["BacklightValue"].get<float>());
+    }
+
+    if (j.contains("BatteryFullValue")) {
+      m_BatteryFullValue = std::make_unique<uint32_t>(j["BatteryFullValue"].get<uint32_t>());
+    }
+
+    if (j.contains("Payload")) {
+      auto payloadArray = j["Payload"]; // [x] need confirm payload example
+      m_Payload = std::make_unique<std::vector<std::byte>>();
+      m_Payload->clear();
+      m_Payload->reserve(payloadArray.size());
+      for (const auto &byte : payloadArray) {
+        m_Payload->push_back(static_cast<std::byte>(byte.get<uint8_t>()));
+      }
+    }
+  } catch (const std::invalid_argument &e) {
+    throw std::invalid_argument(e.what());
+  } catch (const std::exception &e) {
+    throw std::runtime_error("SettingRequest::SettingRequest error while generating SettingRequest object.");
+  }
+}
+
+SettingRequest::SettingRequest(const SettingRequest &other) : m_Type(other.m_Type) {
+  if (other.m_DipswitchValue) {
+    m_DipswitchValue = std::make_unique<uint32_t>(*other.m_DipswitchValue);
+  }
+
+  if (other.m_TimeOffsetValue) {
+    m_TimeOffsetValue = std::make_unique<float>(*other.m_TimeOffsetValue);
+  }
+
+  if (other.m_MagneticVariationValue) {
+    m_MagneticVariationValue = std::make_unique<float>(*other.m_MagneticVariationValue);
+  }
+
+  if (other.m_DepthOffsetValue) {
+    m_DepthOffsetValue = std::make_unique<float>(*other.m_DepthOffsetValue);
+  }
+
+  if (other.m_BacklightValue) {
+    m_BacklightValue = std::make_unique<float>(*other.m_BacklightValue);
+  }
+
+  if (other.m_BatteryFullValue) {
+    m_BatteryFullValue = std::make_unique<uint32_t>(*other.m_BatteryFullValue);
+  }
+
+  if (other.m_Payload) {
+    m_Payload = std::make_unique<std::vector<std::byte>>(*other.m_Payload);
+  }
+}
+
+SettingRequest &SettingRequest::operator=(const SettingRequest &other) {
+  if (this != &other) {
+    m_Type = other.m_Type;
+
+    // Reset and reassign all unique_ptr members
+    m_DipswitchValue.reset();
+    if (other.m_DipswitchValue) {
+      m_DipswitchValue = std::make_unique<uint32_t>(*other.m_DipswitchValue);
+    }
+
+    m_TimeOffsetValue.reset();
+    if (other.m_TimeOffsetValue) {
+      m_TimeOffsetValue = std::make_unique<float>(*other.m_TimeOffsetValue);
+    }
+
+    m_MagneticVariationValue.reset();
+    if (other.m_MagneticVariationValue) {
+      m_MagneticVariationValue = std::make_unique<float>(*other.m_MagneticVariationValue);
+    }
+
+    m_DepthOffsetValue.reset();
+    if (other.m_DepthOffsetValue) {
+      m_DepthOffsetValue = std::make_unique<float>(*other.m_DepthOffsetValue);
+    }
+
+    m_BacklightValue.reset();
+    if (other.m_BacklightValue) {
+      m_BacklightValue = std::make_unique<float>(*other.m_BacklightValue);
+    }
+
+    m_BatteryFullValue.reset();
+    if (other.m_BatteryFullValue) {
+      m_BatteryFullValue = std::make_unique<uint32_t>(*other.m_BatteryFullValue);
+    }
+
+    m_Payload.reset();
+    if (other.m_Payload) {
+      m_Payload = std::make_unique<std::vector<std::byte>>(*other.m_Payload);
+    }
+  }
+  return *this;
 }

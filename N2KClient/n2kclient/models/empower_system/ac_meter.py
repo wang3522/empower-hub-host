@@ -180,7 +180,7 @@ class ACMeterThingBase(Thing):
             channel.id,
             line_voltage_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Voltage.ROUND_VALUE),
+                rxu.round_float(Voltage.ROUND_VALUE),
                 Voltage.FILTER,
             ),
         )
@@ -207,7 +207,7 @@ class ACMeterThingBase(Thing):
             channel.id,
             line_current_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Current.ROUND_VALUE),
+                rxu.round_float(Current.ROUND_VALUE),
                 Current.FILTER,
             ),
         )
@@ -235,7 +235,7 @@ class ACMeterThingBase(Thing):
             channel.id,
             line_frequency_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Frequency.ROUND_VALUE),
+                rxu.round_float(Frequency.ROUND_VALUE),
                 Frequency.FILTER,
             ),
         )
@@ -262,7 +262,7 @@ class ACMeterThingBase(Thing):
             channel.id,
             line_power_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Power.ROUND_VALUE),
+                rxu.round_float(Power.ROUND_VALUE),
                 Power.FILTER,
             ),
         )

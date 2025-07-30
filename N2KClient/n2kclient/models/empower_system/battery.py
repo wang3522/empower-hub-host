@@ -144,7 +144,7 @@ class Battery(Thing):
             channel.id,
             dc_voltage_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Voltage.ROUND_VALUE),
+                rxu.round_float(Voltage.ROUND_VALUE),
                 Voltage.FILTER,
             ),
         )
@@ -169,7 +169,7 @@ class Battery(Thing):
             channel.id,
             dc_current_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Current.ROUND_VALUE),
+                rxu.round_float(Current.ROUND_VALUE),
                 Current.FILTER,
             ),
         )
@@ -240,7 +240,7 @@ class Battery(Thing):
             channel.id,
             dc_temperature_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(Temperature.ROUND_VALUE),
+                rxu.round_float(Temperature.ROUND_VALUE),
                 Temperature.FILTER,
             ),
         )
@@ -293,7 +293,7 @@ class Battery(Thing):
             channel.id,
             dc_capacity_remaining_subject.pipe(
                 ops.filter(lambda state: state is not None),
-                rxu.round(CapacityRemaining.ROUND_VALUE),
+                rxu.round_float(CapacityRemaining.ROUND_VALUE),
                 ops.distinct_until_changed(),
             ),
         )

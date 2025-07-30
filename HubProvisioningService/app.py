@@ -8,7 +8,7 @@ import os
 import time
 import platform
 import subprocess
-import json
+import argparse
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
@@ -73,7 +73,7 @@ def connect_to_wifi(ssid, password):
     system = platform.system()
     ssid = ssid.strip()  # Ensure no leading/trailing whitespace
     if system == "Linux":
-        cmd = f"echo {ROOT_PASSWORD} | sudo -S nmcli dev wifi connect '{ssid}' password '{password}'"
+        cmd = f"echo {ROOT_PASSWORD} | sudo -S nmcli dev wifi connect '{ssid}' password '{password}' ifname wlan0"
     else:
         return {"error": "Unsupported OS"}
     return run_command(cmd)
@@ -142,4 +142,11 @@ def upload_config():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    parser = argparse.ArgumentParser(description='Hub+ Server Application')
+    parser.add_argument('--host', default='0.0.0.0', help='Host to bind to (default: 0.0.0.0)')
+    parser.add_argument('--port', type=int, default=5001, help='Port to bind to (default: 5001)')
+    parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+    
+    args = parser.parse_args()
+    
+    app.run(host=args.host, port=args.port, debug=args.debug or False)

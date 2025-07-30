@@ -284,3 +284,15 @@ class InverterStatus(str, Enum):
     SUPPORTING2 = "Supporting2"
     ERROR = "Error"
     DATA_NOT_AVAILABLE = "DataNotAvailable"
+
+
+class ThrowType(str, Enum):
+    SingleThrow = "SingleThrow"
+    DoubleThrow = "DoubleThrow"
+
+
+class ControlRequest(str, Enum):
+    Activate = "Activate"
+    Release = "Release"
+    Ping = "Ping"
+    SetAbsolute = "SetAbsolute"

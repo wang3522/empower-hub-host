@@ -14,6 +14,7 @@ class Main:
         n2k_client = N2KClient()
         n2k_client.start()
         self.logger.info("N2K Client is running")
+        self.logger.info("Press Ctrl+C to stop")
 
 
 def main():

@@ -34,7 +34,7 @@ const char *CZoneApplicationStateStrings[NumCZoneLibNetworkStatusStrings] = {
 };
 
 CzoneInterface::CzoneInterface(CzoneSettings &settings, std::mutex &m_canMutex)
-    : m_czoneSettings(settings), m_canMutex(m_canMutex) {
+    : m_czoneSettings(settings), m_canMutex(m_canMutex), m_workerpool() {
   m_configReady = false;
   m_lastBacklight = 0xffff;
   m_lastShunt = UINT32_MAX;
@@ -44,6 +44,58 @@ CzoneInterface::CzoneInterface(CzoneSettings &settings, std::mutex &m_canMutex)
 
 CzoneInterface::~CzoneInterface() {}
 
+void CzoneInterface::publishEventAsync(const std::shared_ptr<Event> event) {
+  if (m_workerpool.isShutdown()) {
+    BOOST_LOG_TRIVIAL(warning) << "Cannot publish event: system is shutting down";
+    return;
+  }
+
+  if (m_eventCallbacks.empty()) {
+    BOOST_LOG_TRIVIAL(debug) << "No event callbacks registered";
+    return;
+  }
+
+  auto task = [this, event]() {
+    try {
+      for (auto &callback : m_eventCallbacks) {
+        if (callback) {
+          callback(event);
+        }
+      }
+    } catch (const std::exception &e) {
+      BOOST_LOG_TRIVIAL(error) << "Event callback exception: " << e.what();
+    }
+  };
+
+  m_workerpool.addTask(std::move(task));
+}
+
+void CzoneInterface::publishEventOnThread(const std::shared_ptr<Event> event) {
+  if (m_workerpool.isShutdown()) {
+    BOOST_LOG_TRIVIAL(warning) << "Cannot publish event: system is shutting down";
+    return;
+  }
+
+  if (m_eventCallbacks.empty()) {
+    BOOST_LOG_TRIVIAL(debug) << "No event callbacks registered";
+    return;
+  }
+
+  auto task = [this, event]() {
+    try {
+      for (auto &callback : m_eventCallbacks) {
+        if (callback && !m_workerpool.isShutdown()) {
+          callback(event);
+        }
+      }
+    } catch (const std::exception &e) {
+      BOOST_LOG_TRIVIAL(error) << "Event callback exception: " << e.what();
+    }
+  };
+
+  m_workerpool.addTaskOnThread(std::move(task));
+}
+
 void CzoneInterface::init(const uint8_t dipswitch, const uint8_t id) {
   m_uniqueIdBase = id;
   m_dipswitch = dipswitch;
@@ -51,7 +103,7 @@ void CzoneInterface::init(const uint8_t dipswitch, const uint8_t id) {
 
 void CzoneInterface::event(const tCZoneEventType czoneEvent, void *data, const uint32_t sizeOfData) {
   // BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::event, type " << std::to_string(czoneEvent);
-  Event rawEvent = Event(Event::eEventType::eCZoneRaw);
+  auto rawEvent = std::make_shared<Event>(Event(Event::eEventType::eCZoneRaw));
   CZoneRawEvent rawData;
 
   rawData.set_type(static_cast<uint32_t>(czoneEvent));
@@ -73,8 +125,8 @@ void CzoneInterface::event(const tCZoneEventType czoneEvent, void *data, const u
     rawData.set_deviceItem((void *)networkData->Device, sizeof(tCZoneDeviceItem));
   }
 
-  rawEvent.set_czoneEvent(std::move(rawData));
-  publishEvent(rawEvent);
+  rawEvent->set_czoneEvent(std::move(rawData));
+  publishEventAsync(rawEvent);
 
   // BOOST_LOG_TRIVIAL(debug) << "CzoneInterface: EVENT";
   switch (czoneEvent) {
@@ -85,10 +137,10 @@ void CzoneInterface::event(const tCZoneEventType czoneEvent, void *data, const u
   case eCZoneValidSystem: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::event::eCZoneValidSystem: Valid Configuration";
     m_configReady = true;
-    Event event = Event(Event::eEventType::eConfigChange);
+    auto event = std::make_shared<Event>(Event(Event::eEventType::eConfigChange));
 
-    event.set_content("Valid Configuration");
-    publishEvent(event);
+    event->set_content("Valid Configuration");
+    publishEventAsync(event);
     // ValidSystem.fire();
     processRTCoreConfig();
   } break;
@@ -120,10 +172,10 @@ void CzoneInterface::event(const tCZoneEventType czoneEvent, void *data, const u
       // BOOST_LOG_TRIVIAL(debug) << "CzoneInterface: " << CZoneApplicationStateStrings[statusData->Status] << " "
       //                          << statusData->Show << " " << statusData->Progress << ".";
       if (statusData->Status == 6) {
-        Event event = Event(Event::eEventType::eConfigChange);
+        auto event = std::make_shared<Event>(Event(Event::eEventType::eConfigChange));
         m_configReady = true;
-        event.set_content("Valid Configuration");
-        publishEvent(event);
+        event->set_content("Valid Configuration");
+        publishEventAsync(event);
         processRTCoreConfig();
       }
     }
@@ -166,33 +218,33 @@ void CzoneInterface::event(const tCZoneEventType czoneEvent, void *data, const u
     switch (alarmEventData->Action) {
     case eCZoneAlarmActionAdded: {
       BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::event::eCZoneAlarmEvent::eCZoneAlarmActionAdded";
-      Event event = Event(Event::eEventType::eAlarmAdded);
-      displayAlarmToEvent(alarmEventData->Alarm, event);
-      publishEvent(event);
+      auto event = std::make_shared<Event>(Event(Event::eEventType::eAlarmAdded));
+      displayAlarmToEvent(alarmEventData->Alarm, *event);
+      publishEventAsync(event);
       // Alarm has become active. Add it to an UI alarms table.
     } break;
 
     case eCZoneAlarmActionChanged: {
       BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::event::eCZoneAlarmEvent::eCZoneAlarmActionChanged";
-      Event event = Event(Event::eEventType::eAlarmChanged);
-      displayAlarmToEvent(alarmEventData->Alarm, event);
-      publishEvent(event);
+      auto event = std::make_shared<Event>(Event(Event::eEventType::eAlarmChanged));
+      displayAlarmToEvent(alarmEventData->Alarm, *event);
+      publishEventAsync(event);
       // Alarm status has changed. Eg acknowledged on another display. Update UI
       // alarms table.
     } break;
 
     case eCZoneAlarmActionRemoved: {
       BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::event::eCZoneAlarmEvent::eCZoneAlarmActionRemoved";
-      Event event = Event(Event::eEventType::eAlarmRemoved);
-      displayAlarmToEvent(alarmEventData->Alarm, event);
-      publishEvent(event);
+      auto event = std::make_shared<Event>(Event(Event::eEventType::eAlarmRemoved));
+      displayAlarmToEvent(alarmEventData->Alarm, *event);
+      publishEventAsync(event);
       // Alarm is no longer enabled. Remove from UI alarms table.
     } break;
 
     case eCZoneAlarmActionActivated: {
       BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::event::eCZoneAlarmEvent::eCZoneAlarmActionActivated";
-      Event event = Event(Event::eEventType::eAlarmActivated);
-      publishEvent(event);
+      auto event = std::make_shared<Event>(Event(Event::eEventType::eAlarmActivated));
+      publishEventAsync(event);
       // An alarm of Standard, Important or Critical has triggered. Use this
       // event to signal the UI to bring up an alarm dialog.
 
@@ -202,15 +254,15 @@ void CzoneInterface::event(const tCZoneEventType czoneEvent, void *data, const u
 
     case eCZoneAlarmActionDeactivated: {
       BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::event::eCZoneAlarmEvent::eCZoneAlarmActionDeactivated";
-      Event event = Event(Event::eEventType::eAlarmDeactivated);
-      publishEvent(event);
+      auto event = std::make_shared<Event>(Event(Event::eEventType::eAlarmDeactivated));
+      publishEventAsync(event);
       // Alarms have cleared, hide alarm dialog if visible.
     } break;
 
     case eCZoneAlarmActionLogUpdate: {
       BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::event::eCZoneAlarmEvent::eCZoneAlarmActionLogUpdate";
-      Event event = Event(Event::eEventType::eAlarmLogUpdate);
-      publishEvent(event);
+      auto event = std::make_shared<Event>(Event(Event::eEventType::eAlarmLogUpdate));
+      publishEventAsync(event);
       // Alarms have cleared, hide alarm dialog if visible.
     } break;
 
@@ -223,12 +275,12 @@ void CzoneInterface::event(const tCZoneEventType czoneEvent, void *data, const u
     tCZoneAlarmGlobalStatusData *alarmStatusData = (tCZoneAlarmGlobalStatusData *)data;
     m_highestEnabledSeverity = alarmStatusData->HighestEnabledSeverity;
     m_highestAcknowledgedSeverity = alarmStatusData->HighestAcknowledgedSeverity;
-    Event event = Event(Event::eEventType::eAlarmGlobalStatus);
-    event.mutable_globalStatus().set_highestEnabledSeverity(
+    auto event = std::make_shared<Event>(Event(Event::eEventType::eAlarmGlobalStatus));
+    event->mutable_globalStatus().set_highestEnabledSeverity(
         static_cast<Alarm::eSeverityType>(alarmStatusData->HighestEnabledSeverity));
-    event.mutable_globalStatus().set_highestAcknowledgedSeverity(
+    event->mutable_globalStatus().set_highestAcknowledgedSeverity(
         static_cast<Alarm::eSeverityType>(alarmStatusData->HighestAcknowledgedSeverity));
-    publishEvent(event);
+    publishEventAsync(event);
     // Outputs the highest enabled/active alarm severity and highest
     // acknowledged severity
   } break;
@@ -275,8 +327,8 @@ void CzoneInterface::event(const tCZoneEventType czoneEvent, void *data, const u
 
   case eCZoneStandby: {
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::event::eCZoneStandby";
-    Event event = Event(Event::eEventType::eSystemLowPowerMode);
-    publishEvent(event);
+    auto event = std::make_shared<Event>(Event(Event::eEventType::eSystemLowPowerMode));
+    publishEventAsync(event);
     // If supported, go into standby/low power mode.
   } break;
 
@@ -332,11 +384,11 @@ void CzoneInterface::event(const tCZoneEventType czoneEvent, void *data, const u
     BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::event::eCZoneDynamicDeviceChanged";
     tCZoneDisplayDynamicDevice *device = static_cast<tCZoneDisplayDynamicDevice *>(data);
     if (device->DisplayType == eCZoneStructDisplayGNSS) {
-      Event event = Event(Event::eEventType::eGNSSConfigChanged);
-      publishEvent(event);
+      auto event = std::make_shared<Event>(Event(Event::eEventType::eGNSSConfigChanged));
+      publishEventAsync(event);
     } else if (device->DisplayType == eCZoneStructDisplayEngines) {
-      Event event = Event(Event::eEventType::eEngineConfigChanged);
-      publishEvent(event);
+      auto event = std::make_shared<Event>(Event(Event::eEventType::eEngineConfigChanged));
+      publishEventAsync(event);
     }
   } break;
 
@@ -1248,6 +1300,7 @@ ConfigResult CzoneInterface::genConfig(const ConfigRequest &request) {
         circuit.set_sequentialStates(c.Circuit.SequentialStates);
         circuit.set_controlId(c.Circuit.ControlId);
         circuit.set_systemsOnAnd(c.Circuit.SystemsOnAnd);
+        circuit.set_nonVisibleCircuit(c.Circuit.NonVisibleCircuit == CZONE_TRUE);
 
         auto loads = displayListNoLock(eCZoneStructDisplayCircuitLoad, c.Circuit.ControlId, 0);
         for (auto &l : loads) {
@@ -2267,7 +2320,7 @@ void CzoneInterface::engineeringData(const tCZoneEngineeringData *data) {
   }
 }
 
-void CzoneInterface::registerEventCallback(std::function<void(const Event &Event)> Callback) {
+void CzoneInterface::registerEventCallback(std::function<void(const std::shared_ptr<Event> event)> Callback) {
   m_eventCallbacks.push_back(Callback);
 }
 
@@ -2282,15 +2335,13 @@ bool CzoneInterface::isEventClientsConnected() {
   return false;
 }
 
-void CzoneInterface::publishEvent(const Event &Event) {
+void CzoneInterface::publishEvent(const std::shared_ptr<Event> event) {
   if (m_eventCallbacks.size() > 0) {
     for (auto &it : m_eventCallbacks) {
-      BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::PublishEvent: event call back.";
-      it(Event);
+      it(event);
     }
   } else {
-    // BOOST_LOG_TRIVIAL(debug)
-    //     << "CzoneInterface::PublishEvent: no callback registered";
+    BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::PublishEvent: no callback registered";
   }
 }
 
@@ -2836,18 +2887,137 @@ ConfigResult CzoneInterface::getAllConfig() {
 }
 
 void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
-  dbusService->registerService("GetConfigAll", "czone", [ptr = this]() -> std::string {
-    auto r = ptr->getAllConfig();
-    return r.tojson().dump();
+  dbusService->registerService("GetConfigAll", "czone", [ptr = this, dbusService]() -> std::string {
+    try {
+      auto r = ptr->getAllConfig();
+      return r.tojson().dump();
+    } catch (const std::exception &e) {
+      json r;
+      BOOST_LOG_TRIVIAL(error) << "GetConfigAll:Error " << e.what();
+      dbusService->throwError("GetConfigAll: " + std::string(e.what()));
+      return ""; // warning
+    }
   });
 
-  dbusService->registerService("GetConfig", "czone", [ptr = this](std::string type) -> std::string {
-    auto r = ptr->getConfig(ConfigRequest::from_string(type));
-    return r.tojson().dump();
+  dbusService->registerService("GetConfig", "czone", [ptr = this, dbusService](std::string type) -> std::string {
+    try {
+      auto r = ptr->getConfig(ConfigRequest::from_string(type));
+      return r.tojson().dump();
+    } catch (const std::exception &e) {
+      json r;
+      BOOST_LOG_TRIVIAL(error) << "GetConfig:Error " << e.what();
+      dbusService->throwError("GetConfig: " + std::string(e.what()));
+      return ""; // warning
+    }
   });
 
-  dbusService->registerService("GetCategories", "czone", [ptr = this](std::string type) -> std::string {
-    auto r = ptr->getCategories(CategoryRequest::from_string(type));
-    return r.tojson().dump();
+  dbusService->registerService("GetCategories", "czone", [ptr = this, dbusService]() -> std::string {
+    try {
+      auto r = ptr->getCategories(CategoryRequest::eCategoriesAll);
+      return r.tojson().dump();
+    } catch (const std::exception &e) {
+      json r;
+      BOOST_LOG_TRIVIAL(error) << "GetCategories:Error " << e.what();
+      dbusService->throwError("GetCategories: " + std::string(e.what()));
+      return ""; // warning
+    }
+  });
+
+  dbusService->registerService(
+      "Control", "czone", [ptr = this, dbusService](std::string controlRequestStr) -> std::string {
+        // BOOST_LOG_TRIVIAL(debug) << "Control: received request, " << controlRequestStr; //[x] debug
+        try {
+          json r;
+          r["Result"] = "Ok";
+          ControlRequest request(json::parse(controlRequestStr));
+
+          if (request.m_id == nullptr || request.m_type == nullptr) {
+            throw std::invalid_argument("[Id, Type] argument is required.");
+          }
+
+          if (*request.m_type == ControlRequest::eControlType::eActivate) {
+            if (request.m_throwType == nullptr) {
+              throw std::invalid_argument("[ThrowType] argument is required.");
+            }
+            ptr->keyPressed(*request.m_id, *request.m_throwType == ControlRequest::eThrowType::eDoubleThrow);
+          } else if (*request.m_type == ControlRequest::eControlType::ePing) {
+            ptr->keyHolding(*request.m_id);
+          } else if (*request.m_type == ControlRequest::eControlType::eRelease) {
+            ptr->keyReleasedOrLostKeyFocus(*request.m_id);
+          } else if (*request.m_type == ControlRequest::eControlType::eSetAbsolute) {
+            if (request.m_value == nullptr) {
+              throw std::invalid_argument("[Level] argument is required.");
+            }
+            ptr->setLevel(*request.m_id, *request.m_value);
+          } else {
+            r["Result"] = "Error";
+          }
+
+          return r.dump();
+        } catch (const std::exception &e) {
+          BOOST_LOG_TRIVIAL(error) << "Control:Error " << e.what();
+          dbusService->throwError("Control " + std::string(e.what()));
+          return "";
+        }
+      });
+
+  dbusService->registerService(
+      "ControlCircuitButtonInfo", "czone", [ptr = this, dbusService](std::string controlRequestStr) -> std::string {
+        try {
+          json response;
+          ControlRequest request(json::parse(controlRequestStr));
+
+          if (request.m_id == nullptr || request.m_buttonType == nullptr || request.m_throwType == nullptr) {
+            throw std::invalid_argument("[Id, ButtonType, ThrowType] argument is required.");
+          }
+
+          char *name = NULL;
+          uint32_t nameLength = 0;
+          tCZoneCircuitButtonIconType iconType;
+          uint8_t invert = 0;
+          CZoneCircuitButtonInfo(*request.m_id,
+                                 *request.m_buttonType == ControlRequest::eButtonInfoType::eButtonInfo0
+                                     ? eCZoneCircuitButtonInfo_0
+                                     : eCZoneCircuitButtonInfo_1,
+                                 &name, &nameLength, &iconType, &invert);
+          std::unique_ptr<char[], void (*)(char *)> nameGuard(name, [](char *p) {
+            if (p)
+              delete[] p;
+          });
+
+          tCZoneScreenConfigSingleThrowIconTypes singleThrowType;
+          tCZoneScreenConfigDoubleThrowIconTypes doubleThrowType;
+          CZoneCircuitButtonType(*request.m_id, &singleThrowType, &doubleThrowType,
+                                 *request.m_throwType == ControlRequest::eThrowType::eSingleThrow);
+
+          response["Name"] = name ? std::string(name) : std::string("");
+          response["IconType"] = iconType;
+          response["Invert"] = (invert ? true : false);
+          response["SingleThrowIconType"] = (singleThrowType);
+          response["DoubleThrowIconType"] = (doubleThrowType);
+
+          return response.dump();
+        } catch (const std::exception &e) {
+          BOOST_LOG_TRIVIAL(error) << "ControlCircuitButtonInfo:Error " << e.what();
+          dbusService->throwError("ControlCircuitButtonInfo: " + std::string(e.what()));
+          return ""; // warning
+        }
+      });
+
+  dbusService->registerSignal("Event", "czone");
+  registerEventCallback([&dbusService](std::shared_ptr<Event> event) {
+    switch (event->get_type()) {
+    case Event::eEventType::eEngineConfigChanged:
+    case Event::eEventType::eConfigChange:
+    case Event::eEventType::eAlarmAdded:
+    case Event::eEventType::eAlarmRemoved:
+    case Event::eEventType::eAlarmChanged:
+    case Event::eEventType::eAlarmActivated:
+    case Event::eEventType::eAlarmDeactivated:
+      BOOST_LOG_TRIVIAL(debug) << "Event callback for signal (dbus) " << Event::to_string(event->get_type());
+      dbusService->emitSignal("Event", "czone", event->tojson().dump());
+      break;
+    default: break;
+    }
   });
 }

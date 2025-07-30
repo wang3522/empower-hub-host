@@ -2,7 +2,6 @@ class JsonKeys:
     GNSS = "GNSS"
     CIRCUITS = "Circuits"
     CIRCUIT = "Circuit"
-    NONVISIBLE_CIRCUITS = "NonVisibleCircuits"
     DCS = "DCs"
     DC = "DC"
     ACS = "ACs"
@@ -153,6 +152,7 @@ class JsonKeys:
     RT_FIRMWARE_VERSION = "RTFirmwareVersion"
     MENDER_ARTIFACT_INFO = "MenderArtifactInfo"
     Items = "Items"
+    Result = "Result"
 
 
 class AttrNames:
@@ -311,15 +311,14 @@ class Constants:
     N2K_OBJECT_PATH = "/org/navico/CzoneCpp"
     N2K_INTERFACE_NAME = "org.navico.CzoneCpp"
     GET_STATE_SERVICE_METHOD_NAME = "GetState"
-    GET_DEVICES_SERVICE_METHOD_NAME = "GetDevices"
     GET_CONFIG_SERVICE_METHOD_NAME = "GetConfig"
     GET_CONFIG_ALL_SERVICE_METHOD_NAME = "GetConfigAll"
     GET_CATEGORIES_SERVICE_METHOD_NAME = "GetCategories"
     GET_SETTING_SERVICE_METHOD_NAME = "GetSetting"
     N2K_SETTINGS_KEY = "N2KSettings"
+    Control = "Control"
     WORKER_KEY = "N2K_WORKER"
     STATE_TIMEOUT_KEY = "STATE_TIMEOUT"
-    DEVICE_TIMEOUT_KEY = "DEVICE_TIMEOUT"
     DBUS_N2K_CLIENT = "DBUS_N2K_CLIENT"
     Config_Parser = "Config Parser"
     empower = "empower"
@@ -432,6 +431,11 @@ class Constants:
     sp = "sp"
     primaryBattery = "primaryBattery"
     fallbackBattery = "fallbackBattery"
+    NonVisibleCircuits = "NonVisibleCircuits"
+
+    N2K_CONTROL_SERVICE = "N2K_CONTROL_SERVICE"
+    DBUS_RETRY_DELAY_KEY = "DBUS_RETRY_DELAY"
+    CONTROL_DBUS_MAX_ATTEMPTS_KEY = "CONTROL_DBUS_MAX_ATTEMPTS"
 
 
 LINE_CONST_MAP = {
