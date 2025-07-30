@@ -73,15 +73,15 @@ class N2KClient(dbus.service.Object):
     control_service: ControlService
 
     _get_state_timeout = SettingsUtil.get_setting(
-        Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, default_value=1
+        Constants.N2K_SETTINGS_KEY, Constants.WORKER_KEY, Constants.STATE_TIMEOUT_KEY, default_value=1
     )
 
     _dbus_retry_delay = SettingsUtil.get_setting(
-        Constants.WORKER_KEY, Constants.DBUS_RETRY_DELAY_KEY, default_value=5
+        Constants.N2K_SETTINGS_KEY, Constants.WORKER_KEY, Constants.DBUS_RETRY_DELAY_KEY, default_value=5
     )
 
     _control_dbus_max_attempts = SettingsUtil.get_setting(
-        Constants.WORKER_KEY, Constants.CONTROL_DBUS_MAX_ATTEMPTS_KEY, default_value=3
+        Constants.N2K_SETTINGS_KEY, Constants.WORKER_KEY, Constants.CONTROL_DBUS_MAX_ATTEMPTS_KEY, default_value=3
     )
 
     lock: threading.Lock

@@ -315,6 +315,7 @@ class Constants:
     GET_CONFIG_ALL_SERVICE_METHOD_NAME = "GetConfigAll"
     GET_CATEGORIES_SERVICE_METHOD_NAME = "GetCategories"
     GET_SETTING_SERVICE_METHOD_NAME = "GetSetting"
+    N2K_SETTINGS_KEY = "N2KSettings"
     Control = "Control"
     WORKER_KEY = "N2K_WORKER"
     STATE_TIMEOUT_KEY = "STATE_TIMEOUT"

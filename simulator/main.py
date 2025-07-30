@@ -145,7 +145,6 @@ class N2KDBusSimulator(dbus.service.Object):
                 "]}"
             )
         return ""
-
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetSetting(self, type: str):
         if type == "FactoryData":
@@ -154,7 +153,6 @@ class N2KDBusSimulator(dbus.service.Object):
         elif type == "Config":
             return '{"ConfigId":726930,"ConfigVersion":0,"ConfigFileVersion":6,"ConfigName":"test-bench-qa-ui-rel"}'
         return ""
-
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def GetCategories(self):
         # Fill in below with categories
