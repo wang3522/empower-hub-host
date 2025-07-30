@@ -523,7 +523,7 @@ class LocationService:
                 {
                     f"{Constants.POSITION}.{Constants.LAT}": self.last_attribute_location.lat,
                     f"{Constants.POSITION}.{Constants.LONG}": self.last_attribute_location.long,
-                    f"{Constants.POSITION}.{Constants.TS}": self.last_attribute_location.ts,
+                    f"{Constants.POSITION}.{Constants.ts}": self.last_attribute_location.ts,
                 }
             )
             self._logger.info(

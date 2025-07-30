@@ -28,7 +28,6 @@ class Constants:
     LOCATION = "LOCATION"
     SERIAL_PORT = "SERIAL_PORT"
     POSITION = "position"
-    TS = "ts"
     LAT = "lat"
     LONG = "long"
     THINGSBOARD_SETTINGS_KEY = "ThingsboardSettings"
