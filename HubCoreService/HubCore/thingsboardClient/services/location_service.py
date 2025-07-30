@@ -93,7 +93,7 @@ class LocationService:
     geofence_ready = rx.subject.BehaviorSubject(None)
     # configuration: N2kConfiguration
 
-    # geofence_point: the center point of the geofence
+    # geofence_point: the center point of the geofence.
     geofence_point: GeoPoint = GeoPoint(None, None)
     # geofence_radius: the radius of the geofence circle
     geofence_radius: float = None
