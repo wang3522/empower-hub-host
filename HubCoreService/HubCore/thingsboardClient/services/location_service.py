@@ -296,8 +296,8 @@ class LocationService:
             distance = GeoUtil.calculate_distance(
                 self.geofence_point.longitude,
                 self.geofence_point.latitude,
-                change[Constants.LAT],
                 change[Constants.LONG],
+                change[Constants.LAT],
             )
             geofence_alarm = {}
 
