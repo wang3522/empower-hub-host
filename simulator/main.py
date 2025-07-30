@@ -36,11 +36,8 @@ class N2KDBusSimulator(dbus.service.Object):
             {"Id": "AC.1", "Type": "ac"},
             {"Id": "DC.7", "Type": "dc"},
         ]
-        # Use session bus on Mac, system bus otherwise
-        if platform.system() == "Darwin":
-            bus = dbus.SessionBus()
-        else:
-            bus = dbus.SystemBus()
+        # bus = dbus.SystemBus()
+        bus = dbus.SessionBus() if platform.system() == "Darwin" else dbus.SystemBus()
         bus.request_name(BUS_NAME)
         bus_name = dbus.service.BusName(BUS_NAME, bus=bus)
         dbus.service.Object.__init__(self, bus_name, OPATH)
@@ -70,9 +67,9 @@ class N2KDBusSimulator(dbus.service.Object):
         elif id == "Engine.0":
             return '{"ComponentStatus": "Connected", "EngineState": 1, "Speed": 0, "CoolantPressure": 50, "CoolantTemperature": 80.0, "FuelLevel": 50, "EngineHours": 1000}'
         elif id == "Circuit.141":
-            return '{"ComponentStatus": "Connected", "Current": 1.5, "Voltage": 12.5, "Level": 100}'
+            return '{"IsOffline": false, "Current": 1.5, "Voltage": 12.5, "Level": 100}'
         elif id == "Circuit.114":
-            return '{"ComponentStatus": "Disconnected", "Current": 2.5, "Voltage": 8.5, "Level": 100}'
+            return '{"IsOffline": true, "Current": 2.5, "Voltage": 8.5, "Level": 100}'
         elif id == "GNSS.128":
             return '{"ComponentStatus": "Connected", "FixType": "2D Fix", "LatitudeDeg": 8.5, "LongitudeDeg": 100, "Sog": 5.5}'
         elif id == "InverterCharger.0":
@@ -178,9 +175,8 @@ class N2KDBusSimulator(dbus.service.Object):
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetConfig(self, type: str):
         if type == "Engines":
-            return '{"Engines":[{"DisplayType":41,"Id":0,"NameUTF8":"Starboard Engine","Instance":{"Enabled":true,"Instance":0},"SoftwareId":"Software_Id_0","CalibrationId":"CalibrationId_0","SerialNumber":"TESTSERIAL","ECUSerialNumber":"TESTECU","EngineType":1}]}'
+            return '{"Engines":[{"DisplayType":41,"Id":0,"NameUTF8":"Starboard Engine","Instance":{"Enabled":true,"Instance":0},"SoftwareId":"Software_Id_0","CalibrationId":"CalibrationId_0","SerialNumber":"TESTSERIALTESTSERIAL","ECUSerialNumber":"TESTECUTESTECU","EngineType":1}]}'
         return ""
-
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetSetting(self, type: str):
         if type == "FactoryData":
@@ -189,7 +185,6 @@ class N2KDBusSimulator(dbus.service.Object):
         elif type == "Config":
             return '{"ConfigId":726930,"ConfigVersion":0,"ConfigFileVersion":6,"ConfigName":"test-bench-qa-ui-rel"}'
         return ""
-
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def GetCategories(self):
         # Fill in below with categories
