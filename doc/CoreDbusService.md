@@ -142,14 +142,14 @@ Handles notifying application version when requested from BL654
 **Example**
 
 ```
-"v1"
+"ar:v1,fr:build.bl654_dvk.qspi_2.1.99.1752672495_merged.hex"
 ```
 
 ### Methods
 
 #### `get_version() -> str`
 
-Initiates fetching application version from BL654
+Initiates fetching application/firmware version from BL654
 
 **Response:**
 
