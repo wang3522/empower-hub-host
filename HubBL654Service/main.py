@@ -40,7 +40,6 @@ def main():
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
     ble = None
-    tb = None
     dbus_server = None
 
     try:
