@@ -8,9 +8,7 @@ import os
 import zipfile
 import shutil
 
-from ..utility.config import SystemConfig as HubConfig
-from ..utility.config import T_BLE_CONFIG
-from ..utility.cmd_interface import CMD_INTERFACE
+from utility.cmd_interface import CMD_INTERFACE
 from .uart_message_processor import load_key, decrypt_data
 
 logger = logging.getLogger(__name__)
@@ -21,7 +19,7 @@ class BLE_UART:
     baudrate = None
     timeout = None
     serial_connection = None
-    config:T_BLE_CONFIG = None
+    config = None
     thread = None
     is_authenticated = False
     stop_event = None
@@ -31,12 +29,19 @@ class BLE_UART:
             try:
                 logger.info("Creating BLE uart instance.")
                 cls._instance = super(BLE_UART, cls).__new__(cls)
+                
+                config_file_path = "/data/hub/conf/bl654.conf"
+                if os.path.exists(config_file_path):
+                    with open(config_file_path, 'r') as file:
+                        content = file.readlines()
+                        if len(content) >= 2:
+                            cls._instance.port = content[0].strip()
+                            cls._instance.baudrate = int(content[1].strip())
+                        else:
+                            raise Exception(f"invalid config file {config_file_path}")
+                else:
+                    raise Exception(f"config file not found, at {config_file_path}")
 
-                config = HubConfig()
-                cls._instance.config = config.get_config('ble')
-
-                cls._instance.port = f"/dev/{cls._instance.config['uart']['device_id']}"
-                cls._instance.baudrate = cls._instance.config["uart"]["baudrate"]
                 cls._instance.timeout = 1
 
             except Exception as error:

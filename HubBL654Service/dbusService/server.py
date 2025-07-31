@@ -4,7 +4,6 @@ import dbus.mainloop.glib
 import dbus.service
 from gi.repository import GLib
 
-from .wifi_obj import DBusWiFi
 from .bl654_obj import DBusBl654
 
 logger = logging.getLogger(__name__)
@@ -21,7 +20,6 @@ class DBusServer(dbus.service.Object):
         self.bus = dbus.SystemBus()
         bus_name = dbus.service.BusName(self.DBUS_INTERFACE, bus=self.bus)
         super().__init__(bus_name, self.DBUS_OBJECT)
-        self.wifi_object = DBusWiFi(self.bus)
         self.bl654_object = DBusBl654(self.bus)
 
         self.loop = GLib.MainLoop()
