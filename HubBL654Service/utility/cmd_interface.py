@@ -26,25 +26,14 @@ def handle_hello(data: str):
     logger.debug(f"handle_hello {data}")
     return f"MX93/HELLO"
 
-def handle_get_sn(data: str):
-    logger.debug(f"handle_get_sn {data}")
-    return f"MX93/SN/{_device_info['serial_number']}"
+def handle_get_device_information(data: str):
+    logger.debug(f"handle_get_device_information {data}")
+    device_info_json = json.dumps(_device_info, separators=(',', ':'))
+    return f"MX93/DEVICE_INFO/{device_info_json}"
 
-def handle_get_mn(data: str):
-    logger.debug(f"handle_get_mn {data}")
-    return f"MX93/MN/{_device_info['model_number']}"
-
-def handle_get_fr(data: str):
-    logger.debug(f"handle_get_fr {data}")
-    return f"MX93/FR/{_device_info['firmware_rev']}"
-
-def handle_get_hr(data: str):
-    logger.debug(f"handle_get_hr {data}")
-    return f"MX93/HR/{_device_info['hardware_rev']}"
-
-def handle_notify_ar(data: str):
-    logger.debug(f"handle_notify_ar {data}")
-    return f"NOTIFY_AR/{data.strip()}"
+def handle_notify_version(data: str):
+    logger.debug(f"handle_notify_version {data}")
+    return f"NOTIFY_VERSION/{data.strip()}"
 
 def handle_auth_chal(data: str):
     logger.debug("handle_auth_chal {}".format(data))
@@ -147,11 +136,8 @@ def _bl_cmd_interface(data: str):
 
         handlers = {
             "HELLO": handle_hello,
-            "GET_SN": handle_get_sn,
-            "GET_MN": handle_get_mn,
-            "GET_FR": handle_get_fr,
-            "GET_HR": handle_get_hr,
-            "NOTIFY_AR": handle_notify_ar,
+            "GET_DEVICE_INFORMATION": handle_get_device_information,
+            "NOTIFY_VERSION": handle_notify_version,
             "AUTH_CHAL": handle_auth_chal,
             "AUTH_RESP_CLIENT": handle_auth_resp_client,
             "GET_ENC_TYPE": handle_get_enc_type,
@@ -166,7 +152,6 @@ def _bl_cmd_interface(data: str):
             "GET_SSID": handle_get_ssid,
             "GET_ATTR_LIST": handle_get_attr_list,
             "UPDATE_ADC_VALUE": handle_update_adc_value,
-            "VERSION": handle_version,
             "SET_NAME": handle_set_name,
             "GET_NAMES": handle_get_names,
             "SET_RANGE": handle_set_range,

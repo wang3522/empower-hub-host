@@ -192,7 +192,7 @@ class BLE_UART:
                             else:
                                 logger.warning("DBus not set; could not signal ota_error")
                         continue
-                    if res.startswith("NOTIFY_AR/"):
+                    if res.startswith("NOTIFY_VERSION/"):
                         from ..dbusService.server import get_dbus_server_instance
                         dbus_obj = get_dbus_server_instance()
                         if dbus_obj:
@@ -231,5 +231,5 @@ class BLE_UART:
         logger.debug(f"BLE UART authentication status set to {authenticated}")
 
     def request_application_version(self):
-        self._send_data("MX93/AR\n")
+        self._send_data("MX93/VERSION\n")
         logger.debug("Requested application version from BL654")
