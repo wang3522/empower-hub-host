@@ -7,9 +7,9 @@ COPY HubTBClientService /app/HubTBClientService
 COPY N2KClient /app/N2KClient
 COPY simulator /app/simulator
 
-ENV TB_HOST=192.168.2.54
-ENV TB_PORT=1883
-ENV TB_ACCESS_TOKEN=billy-test
+ENV TB_HOST={YOUR TB HOST ENDPOINT}
+ENV TB_PORT={YOUR TB HOST PORT}
+ENV TB_ACCESS_TOKEN={YOUR ACCESS TOKEN}
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
