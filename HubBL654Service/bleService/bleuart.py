@@ -8,7 +8,7 @@ import os
 import zipfile
 import shutil
 
-from ..utility.cmd_interface import CMD_INTERFACE
+from utility.cmd_interface import CMD_INTERFACE
 from .uart_message_processor import load_key, decrypt_data
 
 logger = logging.getLogger(__name__)

@@ -4,7 +4,7 @@ import dbus
 import dbus.service
 import threading
 import time
-from ..bleService.bleuart import BLE_UART
+from bleService.bleuart import BLE_UART
 
 logger = logging.getLogger(__name__)
 

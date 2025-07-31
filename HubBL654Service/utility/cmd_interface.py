@@ -7,7 +7,7 @@ import string
 import logging
 import secrets 
 
-from ..bleService.uart_message_processor import encrypt_data, decrypt_data, get_key
+from bleService.uart_message_processor import encrypt_data, decrypt_data, get_key
 
 logger = logging.getLogger(__name__)
 

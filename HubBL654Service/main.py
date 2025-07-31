@@ -9,8 +9,8 @@ import traceback  # [x] debug
 
 from threading import Event
 
-from .bleService.bleuart import BLE_UART
-from .dbusService.server import initialize_dbus_server
+from bleService.bleuart import BLE_UART
+from dbusService.server import initialize_dbus_server
 
 logger = logging.getLogger()
 
