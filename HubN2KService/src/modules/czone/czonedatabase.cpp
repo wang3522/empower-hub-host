@@ -255,7 +255,7 @@ bool CzoneDatabase::UpdateMessageIfDifferent(T *messageNew, T *messageLast, cons
 
     } catch (const std::invalid_argument &e) {
       // Field not found in message structure - log error and continue with other fields
-      BOOST_LOG_TRIVIAL(error) << "Field not found in message: " << field.FieldName;
+      BOOST_LOG_TRIVIAL(error) << "CzoneDatabase::UpdateMessageIfDifferent: " << e.what();
     }
   }
 
