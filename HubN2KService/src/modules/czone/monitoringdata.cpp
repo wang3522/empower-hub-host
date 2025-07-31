@@ -150,7 +150,7 @@ auto N2KMonitoring::Circuit::get(const std::string &memberName) -> N2KMonitoring
     return &m_aCSourceAvailable;
   if (memberName == "IsOffline")
     return &m_isOffline;
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (Circuit): " + memberName);
 }
 
 auto N2KMonitoring::Circuit::get(const std::string &memberName) const -> N2KMonitoring::Circuit::CircuitValueConst {
@@ -176,7 +176,7 @@ auto N2KMonitoring::Circuit::get(const std::string &memberName) const -> N2KMoni
     return &m_aCSourceAvailable;
   if (memberName == "IsOffline")
     return &m_isOffline;
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (Circuit): " + memberName);
 }
 
 auto N2KMonitoring::Tank::get(const std::string &memberName) -> N2KMonitoring::Tank::TankValue {
@@ -195,7 +195,7 @@ auto N2KMonitoring::Tank::get(const std::string &memberName) -> N2KMonitoring::T
   if (memberName == "TankType") {
     return &m_tankType;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (Tank): " + memberName);
 }
 
 auto N2KMonitoring::Tank::get(const std::string &memberName) const -> N2KMonitoring::Tank::TankValueConst {
@@ -214,7 +214,7 @@ auto N2KMonitoring::Tank::get(const std::string &memberName) const -> N2KMonitor
   if (memberName == "TankType") {
     return &m_tankType;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (Tank): " + memberName);
 }
 
 auto N2KMonitoring::Engine::get(const std::string &memberName) -> N2KMonitoring::Engine::EngineValue {
@@ -275,7 +275,7 @@ auto N2KMonitoring::Engine::get(const std::string &memberName) -> N2KMonitoring:
   if (memberName == "ActiveEnginesId") {
     return &m_activeEnginesId;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (Engine): " + memberName);
 }
 
 auto N2KMonitoring::Engine::get(const std::string &memberName) const -> N2KMonitoring::Engine::EngineValueConst {
@@ -336,7 +336,7 @@ auto N2KMonitoring::Engine::get(const std::string &memberName) const -> N2KMonit
   if (memberName == "ActiveEnginesId") {
     return &m_activeEnginesId;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (Engine): " + memberName);
 }
 
 auto N2KMonitoring::ACLine::get(const std::string &memberName) -> N2KMonitoring::ACLine::ACLineValue {
@@ -359,7 +359,7 @@ auto N2KMonitoring::ACLine::get(const std::string &memberName) -> N2KMonitoring:
     return &m_power;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (ACLine): " + memberName);
 }
 
 auto N2KMonitoring::ACLine::get(const std::string &memberName) const -> N2KMonitoring::ACLine::ACLineValueConst {
@@ -382,7 +382,7 @@ auto N2KMonitoring::ACLine::get(const std::string &memberName) const -> N2KMonit
     return &m_power;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (ACLine): " + memberName);
 }
 
 auto N2KMonitoring::AC::get(const std::string &memberName) -> N2KMonitoring::AC::ACValue {
@@ -392,7 +392,7 @@ auto N2KMonitoring::AC::get(const std::string &memberName) -> N2KMonitoring::AC:
   if (memberName == "AClines") {
     return &m_acLines;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (AC): " + memberName);
 }
 
 auto N2KMonitoring::AC::get(const std::string &memberName) const -> N2KMonitoring::AC::ACValueConst {
@@ -402,7 +402,7 @@ auto N2KMonitoring::AC::get(const std::string &memberName) const -> N2KMonitorin
   if (memberName == "AClines") {
     return &m_acLines;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (AC): " + memberName);
 }
 
 auto N2KMonitoring::DC::get(const std::string &memberName) -> N2KMonitoring::DC::DCValue {
@@ -434,7 +434,7 @@ auto N2KMonitoring::DC::get(const std::string &memberName) -> N2KMonitoring::DC:
     return &m_timeRemainingOrToCharge;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (DC): " + memberName);
 }
 
 auto N2KMonitoring::DC::get(const std::string &memberName) const -> N2KMonitoring::DC::DCValueConst {
@@ -466,7 +466,7 @@ auto N2KMonitoring::DC::get(const std::string &memberName) const -> N2KMonitorin
     return &m_timeRemainingOrToCharge;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (DC): " + memberName);
 }
 
 auto N2KMonitoring::Temperature::get(const std::string &memberName) -> N2KMonitoring::Temperature::TemperatureValue {
@@ -477,7 +477,7 @@ auto N2KMonitoring::Temperature::get(const std::string &memberName) -> N2KMonito
     return &m_temperature;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (Temperature): " + memberName);
 }
 
 auto N2KMonitoring::Temperature::get(const std::string &memberName) const
@@ -489,7 +489,7 @@ auto N2KMonitoring::Temperature::get(const std::string &memberName) const
     return &m_temperature;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (Temperature): " + memberName);
 }
 
 auto N2KMonitoring::Pressure::get(const std::string &memberName) -> N2KMonitoring::Pressure::PressureValue {
@@ -500,7 +500,7 @@ auto N2KMonitoring::Pressure::get(const std::string &memberName) -> N2KMonitorin
     return &m_pressure;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (Pressure): " + memberName);
 }
 
 auto N2KMonitoring::Pressure::get(const std::string &memberName) const -> N2KMonitoring::Pressure::PressureValueConst {
@@ -511,7 +511,7 @@ auto N2KMonitoring::Pressure::get(const std::string &memberName) const -> N2KMon
     return &m_pressure;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (Pressure): " + memberName);
 }
 
 auto N2KMonitoring::HVAC::get(const std::string &memberName) -> N2KMonitoring::HVAC::HVACValue {
@@ -534,7 +534,7 @@ auto N2KMonitoring::HVAC::get(const std::string &memberName) -> N2KMonitoring::H
     return &m_environmentTemperature;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (HVAC): " + memberName);
 }
 
 auto N2KMonitoring::HVAC::get(const std::string &memberName) const -> N2KMonitoring::HVAC::HVACValueConst {
@@ -557,7 +557,7 @@ auto N2KMonitoring::HVAC::get(const std::string &memberName) const -> N2KMonitor
     return &m_environmentTemperature;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (HVAC): " + memberName);
 }
 
 auto N2KMonitoring::ZipdeeAwning::get(const std::string &memberName) -> N2KMonitoring::ZipdeeAwning::ZipdeeAwningValue {
@@ -568,7 +568,7 @@ auto N2KMonitoring::ZipdeeAwning::get(const std::string &memberName) -> N2KMonit
     return &m_state;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (ZipdeeAwning): " + memberName);
 }
 
 auto N2KMonitoring::ZipdeeAwning::get(const std::string &memberName) const
@@ -580,7 +580,7 @@ auto N2KMonitoring::ZipdeeAwning::get(const std::string &memberName) const
     return &m_state;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (ZipdeeAwning): " + memberName);
 }
 
 auto N2KMonitoring::ThirdPartyGenerator::get(const std::string &memberName)
@@ -595,7 +595,7 @@ auto N2KMonitoring::ThirdPartyGenerator::get(const std::string &memberName)
     return &m_status;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (ThirdPartyGenerator): " + memberName);
 }
 
 auto N2KMonitoring::ThirdPartyGenerator::get(const std::string &memberName) const
@@ -610,7 +610,7 @@ auto N2KMonitoring::ThirdPartyGenerator::get(const std::string &memberName) cons
     return &m_status;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (ThirdPartyGenerator): " + memberName);
 }
 
 auto N2KMonitoring::InverterCharger::get(const std::string &memberName)
@@ -636,7 +636,7 @@ auto N2KMonitoring::InverterCharger::get(const std::string &memberName)
   if (memberName == "ChargerState") {
     return &m_chargerState;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (InverterCharger): " + memberName);
 }
 
 auto N2KMonitoring::InverterCharger::get(const std::string &memberName) const
@@ -662,7 +662,7 @@ auto N2KMonitoring::InverterCharger::get(const std::string &memberName) const
   if (memberName == "ChargerState") {
     return &m_chargerState;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (InverterCharger): " + memberName);
 }
 
 auto N2KMonitoring::TyrePressure::get(const std::string &memberName) -> N2KMonitoring::TyrePressure::TyrePressureValue {
@@ -682,7 +682,7 @@ auto N2KMonitoring::TyrePressure::get(const std::string &memberName) -> N2KMonit
     return &m_limitStatus;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (TyrePressure): " + memberName);
 }
 
 auto N2KMonitoring::TyrePressure::get(const std::string &memberName) const
@@ -703,7 +703,7 @@ auto N2KMonitoring::TyrePressure::get(const std::string &memberName) const
     return &m_limitStatus;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (TyrePressure): " + memberName);
 }
 
 auto N2KMonitoring::AudioStereo::get(const std::string &memberName) -> N2KMonitoring::AudioStereo::AudioStereoValue {
@@ -726,7 +726,7 @@ auto N2KMonitoring::AudioStereo::get(const std::string &memberName) -> N2KMonito
     return &m_volume;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (AudioStereo): " + memberName);
 }
 
 auto N2KMonitoring::AudioStereo::get(const std::string &memberName) const
@@ -750,7 +750,7 @@ auto N2KMonitoring::AudioStereo::get(const std::string &memberName) const
     return &m_volume;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (AudioStereo): " + memberName);
 }
 
 auto N2KMonitoring::ACMainContactor::get(const std::string &memberName)
@@ -774,7 +774,7 @@ auto N2KMonitoring::ACMainContactor::get(const std::string &memberName)
     return &m_manualOverride;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (ACMainContactor): " + memberName);
 }
 
 auto N2KMonitoring::ACMainContactor::get(const std::string &memberName) const
@@ -798,7 +798,7 @@ auto N2KMonitoring::ACMainContactor::get(const std::string &memberName) const
     return &m_manualOverride;
   }
 
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (ACMainContactor): " + memberName);
 }
 
 auto N2KMonitoring::GNSS::get(const std::string &memberName) -> N2KMonitoring::GNSS::GNSSValue {
@@ -853,7 +853,7 @@ auto N2KMonitoring::GNSS::get(const std::string &memberName) -> N2KMonitoring::G
   if (memberName == "LongitudeDeg") {
     return &m_longitudeDeg;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (GNSS): " + memberName);
 }
 
 auto N2KMonitoring::GNSS::get(const std::string &memberName) const -> N2KMonitoring::GNSS::GNSSValueConst {
@@ -908,7 +908,7 @@ auto N2KMonitoring::GNSS::get(const std::string &memberName) const -> N2KMonitor
   if (memberName == "LongitudeDeg") {
     return &m_longitudeDeg;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (GNSS): " + memberName);
 }
 
 auto N2KMonitoring::MonitoringKeyValue::get(const std::string &memberName)
@@ -934,7 +934,7 @@ auto N2KMonitoring::MonitoringKeyValue::get(const std::string &memberName)
   if (memberName == "WarnHigh") {
     return &m_warnHigh;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (MonitoringKeyValue): " + memberName);
 }
 
 auto N2KMonitoring::MonitoringKeyValue::get(const std::string &memberName) const
@@ -960,7 +960,7 @@ auto N2KMonitoring::MonitoringKeyValue::get(const std::string &memberName) const
   if (memberName == "WarnHigh") {
     return &m_warnHigh;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (MonitoringKeyValue): " + memberName);
 }
 
 auto N2KMonitoring::BinaryLogicState::get(const std::string &memberName)
@@ -974,7 +974,7 @@ auto N2KMonitoring::BinaryLogicState::get(const std::string &memberName)
   if (memberName == "States") {
     return &m_states;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (BinaryLogicState): " + memberName);
 }
 
 auto N2KMonitoring::BinaryLogicState::get(const std::string &memberName) const
@@ -988,7 +988,7 @@ auto N2KMonitoring::BinaryLogicState::get(const std::string &memberName) const
   if (memberName == "States") {
     return &m_states;
   }
-  throw std::invalid_argument("Invalid member name: " + memberName);
+  throw std::invalid_argument("Invalid member name (BinaryLogicState): " + memberName);
 }
 
 // JSON conversion implementations
