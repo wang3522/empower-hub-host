@@ -3053,7 +3053,6 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
 
                                    return response.dump();
                                  } catch (const std::exception &e) {
-                                   BOOST_LOG_TRIVIAL(error) << "AlarmList:Error " << e.what();
                                    BOOST_LOG_TRIVIAL(error) << "AlarmAcknowledge:Error " << e.what();
                                    dbusService->throwError("AlarmAcknowledge: " + std::string(e.what()));
                                    return ""; // warning
