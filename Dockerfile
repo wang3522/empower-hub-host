@@ -25,8 +25,8 @@ RUN echo '<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuratio
 <busconfig>\
     <policy user="root">\
         <allow own="org.navico.CzoneCpp"/>\
-        <allow send_destination="org.navico.CzoneCpp"/>\
-        <allow receive_sender="org.navico.CzoneCpp"/>\
+        <allow send_destination="org.navico.HubN2K"/>\
+        <allow receive_sender="org.navico.HubN2K"/>\
     </policy>\
 </busconfig>' > /etc/dbus-1/system.d/czonecpp.conf
 
