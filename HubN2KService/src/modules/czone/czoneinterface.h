@@ -42,6 +42,7 @@ public:
   ConfigResult getAllConfig();
   Categories getCategories(const CategoryRequest::eCategoryType type);
   AlarmsList alarmList(const bool IsLog, const bool IsRaw = false);
+  AlarmsList alarmList();
 
   std::string libraryVersion() const;
   std::string configName() const;

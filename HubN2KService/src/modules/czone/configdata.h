@@ -59,6 +59,20 @@ private:
   std::string m_token;
 };
 
+class AlarmRequest {
+public:
+  std::unique_ptr<uint32_t> m_id = nullptr;
+  std::unique_ptr<bool> m_accepted = nullptr;
+
+  AlarmRequest() = delete;
+  AlarmRequest(const json &j);
+  AlarmRequest(const AlarmRequest &other);
+  AlarmRequest(AlarmRequest &&other) = default;
+  AlarmRequest &operator=(const AlarmRequest &other) = default;
+  AlarmRequest &operator=(AlarmRequest &&other) = default;
+  ~AlarmRequest() = default;
+};
+
 class ControlRequest {
 public:
   enum eControlType : int {
@@ -1053,6 +1067,7 @@ public:
   AlarmsList &operator=(AlarmsList &&rhs);
 
   Alarm &add_alarm();
+  const std::list<Alarm> &get_alarms() const { return m_alarms; }
 };
 
 class AlarmGlobalStatus {
