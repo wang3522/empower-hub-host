@@ -9,8 +9,9 @@
         "TB_HOST": "{YOUR TB HOST ENDPOINT}",
         "TB_PORT": "{YOUR TB HOST PORT}",
         "TB_ACCESS_TOKEN": "{YOUR ACCESS TOKEN}",
+        "DBUS_SESSION_BUS_ADDRESS": "unix:path=/tmp/mydbus/session_bus_socket"
       },
-      "program": "${workspaceFolder}/HubCoreService/HubCore/thingsboardClient/main.py",
+      "program": "${workspaceFolder}/HubTBClientService/main.py",
       "console": "integratedTerminal",
       "justMyCode": false
     }

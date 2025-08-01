@@ -160,12 +160,6 @@ class LocationService:
             thingsboard_client (client.ThingsBoardClient): The ThingsBoard client object.
 
         """
-
-        if len(self.dispose_array) > 0:
-            for item in self.dispose_array:
-                item.dispose()
-            self.dispose_array = []
-
         if self.gpsd_data_thread is not None:
             self.gpsd_thread_event.set()
             self.gpsd_data_thread.join()

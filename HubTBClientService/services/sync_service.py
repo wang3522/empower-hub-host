@@ -47,6 +47,11 @@ class SyncService:
 
         # Read files here and have connection subscription for thingsboard client
         try:
+            # Ensure the TB_CONSENTS_PATH directory exists before reading files
+            if not os.path.exists(Constants.TB_CONSENTS_PATH):
+                self._logger.info("Creating directory %s...", Constants.TB_CONSENTS_PATH)
+                os.makedirs(Constants.TB_CONSENTS_PATH, exist_ok=True)
+
             # Read the files from the local directory
             self._logger.info("Reading files for attributes...")
             files = os.listdir(Constants.TB_CONSENTS_PATH)
