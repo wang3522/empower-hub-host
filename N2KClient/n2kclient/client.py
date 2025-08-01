@@ -98,7 +98,7 @@ class N2KClient(dbus.service.Object):
         Constants.N2K_SETTINGS_KEY,
         Constants.WORKER_KEY,
         Constants.SNAPSHOT_INTERVAL_KEY,
-        default_value=2,
+        default_value=60,
     )
 
     lock: threading.Lock
