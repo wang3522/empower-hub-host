@@ -271,6 +271,7 @@ class ConfigProcessor:
         )
 
         shorepower = None
+        shore_key = None
         if inverter_charger.charger_ac_id.enabled:
             shorepower, shore_key = next(
                 (
@@ -282,9 +283,12 @@ class ConfigProcessor:
                 (None, None),
             )
 
-        if shorepower is not None:
+        if (
+            shorepower is not None
+            and shore_key is not None
+            and hasattr(charger_thing, "component_status")
+        ):
             self._ic_component_status[shorepower.line[1].instance.instance] = (
-                # charger_thing.component_status
                 charger_thing.component_status,
                 shore_key,
             )
@@ -466,7 +470,7 @@ class ConfigProcessor:
             links = []
             # Fuel tanks
             if tank.tank_type == TankType.Fuel or tank.tank_type == TankType.Oil:
-                tank_thing = FuelTank(tank=tank)
+                tank_thing = FuelTank(tank=tank, n2k_devices=n2k_devices)
                 self._things.append(tank_thing)
             # Water tanks (have associated circuits (pumps))
             else:
@@ -591,7 +595,6 @@ class ConfigProcessor:
             self.process_hvac(config, devices)
             self.process_circuits(config, devices)
 
-            # Config metadata?
             system = EmpowerSystem(config.config_metadata)
             [system.add_thing(thing) for thing in self._things]
 

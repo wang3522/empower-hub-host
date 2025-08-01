@@ -3,7 +3,6 @@ import platform
 import threading
 from typing import Any, List, Union
 import dbus
-import dbus.bus
 from dbus.mainloop.glib import DBusGMainLoop
 import dbus.proxies
 import dbus.service
@@ -13,12 +12,12 @@ import json
 from .models.empower_system.engine_alarm_list import EngineAlarmList
 
 from .models.devices import N2kDevices
-from .models.constants import Constants, JsonKeys, AttrNames
+from .models.constants import Constants, JsonKeys
 from reactivex import operators as ops
 from gi.repository import GLib
 from time import sleep
 from .util.settings_util import SettingsUtil
-from .models.common_enums import N2kDeviceType, eEventType
+from .models.common_enums import N2kDeviceType, eEventType, ConnectionStatus
 from .services.config_parser.config_parser import ConfigParser
 from .services.config_processor.config_processor import ConfigProcessor
 from .services.alarm_service.alarm_service import AlarmService
@@ -31,6 +30,8 @@ from .services.control_service.control_service import ControlService
 from .models.empower_system.alarm import Alarm
 from .services.signal_parser.event_parser import EventParser
 from .models.empower_system.alarm_list import AlarmList
+from .models.dbus_connection_status import DBUSConnectionStatus
+from .util.time_util import TimeUtil
 
 
 class N2KClient(dbus.service.Object):
@@ -43,6 +44,7 @@ class N2KClient(dbus.service.Object):
     _engine_config: rx.subject.BehaviorSubject
     _engine_list: rx.subject.BehaviorSubject
     _factory_metadata: rx.subject.BehaviorSubject
+    _n2k_dbus_connection_status: rx.subject.BehaviorSubject
 
     devices: rx.subject.BehaviorSubject
     config: rx.subject.BehaviorSubject
@@ -50,6 +52,7 @@ class N2KClient(dbus.service.Object):
     engine_config: rx.subject.BehaviorSubject
     engine_list: rx.subject.BehaviorSubject
     factory_metadata: rx.subject.BehaviorSubject
+    n2k_dbus_connection_status: rx.subject.BehaviorSubject
 
     bus: Union[dbus.SystemBus, dbus.SessionBus]
     n2k_dbus_interface: dbus.Interface
@@ -113,6 +116,19 @@ class N2KClient(dbus.service.Object):
         self._engine_config = rx.subject.BehaviorSubject(EngineConfiguration())
         self._engine_list = rx.subject.BehaviorSubject(EngineList(False))
         self._factory_metadata = rx.subject.Subject()
+
+        self._n2k_dbus_connection_status = rx.subject.BehaviorSubject(
+            DBUSConnectionStatus(
+                connection_state=ConnectionStatus.IDLE,
+                reason="",
+                timestamp=TimeUtil.current_time(),
+            )
+        )
+        self.previous_n2k_dbus_connection_status = DBUSConnectionStatus(
+            connection_state=ConnectionStatus.IDLE,
+            reason="",
+            timestamp=TimeUtil.current_time(),
+        )
         # Alarms
         self._active_alarms = rx.subject.BehaviorSubject(AlarmList())
         self._engine_alarms = rx.subject.BehaviorSubject(EngineAlarmList())
@@ -130,6 +146,14 @@ class N2KClient(dbus.service.Object):
         )
         self.active_alarms = self._active_alarms.pipe(ops.publish(), ops.ref_count())
         self.engine_alarms = self._engine_alarms.pipe(ops.publish(), ops.ref_count())
+        self.n2k_dbus_connection_status = self._n2k_dbus_connection_status.pipe(
+            ops.filter(lambda status: status is not None),
+            ops.distinct_until_changed(
+                lambda state: state.connection_state or state.reason
+            ),
+            ops.publish(),
+            ops.ref_count(),
+        )
         # Initialize N2k dbus Interface
         # Mac uses SessionBus, Linux uses SystemBus
         self.bus = dbus.SystemBus()
@@ -247,6 +271,11 @@ class N2KClient(dbus.service.Object):
         self._disposable_list.append(
             self.engine_alarms.subscribe(self._update_latest_engine_alarms)
         )
+        self._disposable_list.append(
+            self.n2k_dbus_connection_status.subscribe(
+                self._handle_dbus_connection_status_updated
+            )
+        )
 
     # === Update Handlers ===
     def _update_latest_engine_alarms(self, alarms: EngineAlarmList):
@@ -287,6 +316,26 @@ class N2KClient(dbus.service.Object):
         self._latest_factory_metadata = factory_metadata
         self._log_config_item("factory metadata", factory_metadata)
 
+    def _handle_dbus_connection_status_updated(self, status: DBUSConnectionStatus):
+        """
+        Refresh the active alarms and scan the marine engine config if the DBus status changes from "DISCONNECTED" to "CONNECTED".
+        """
+        self._logger.debug(
+            f"DBus connection status updated: {status.connection_state}, reason: {status.reason}, timestamp: {status.timestamp}"
+        )
+        if (
+            self.previous_n2k_dbus_connection_status is not None
+            and self.previous_n2k_dbus_connection_status.connection_state
+            == ConnectionStatus.DISCONNECTED
+            and status.connection_state == ConnectionStatus.CONNECTED
+        ):
+            self._logger.info(
+                f"Reconnected to DBus Service. Refreshing alarms and scanning marine engine config"
+            )
+            self._scan_marine_engine_config()
+            self._alarm_service.load_active_alarms()
+        self.previous_n2k_dbus_connection_status = status
+
     # === DBus Wrappers ===
     def _retry_dbus_call(self, func, *args, delay=None, max_attempts=None, **kwargs):
         """
@@ -304,11 +353,26 @@ class N2KClient(dbus.service.Object):
         )
         while True:
             try:
-                return func(*args, **kwargs)
+                result = func(*args, **kwargs)
+                self._n2k_dbus_connection_status.on_next(
+                    DBUSConnectionStatus(
+                        connection_state=ConnectionStatus.CONNECTED,
+                        reason="",
+                        timestamp=TimeUtil.current_time(),
+                    )
+                )
+                return result
             except dbus.exceptions.DBusException as e:
                 attempt += 1
                 self._logger.warning(
                     f"DBus call '{method_name}' failed (attempt {attempt}): {e}"
+                )
+                self._n2k_dbus_connection_status.on_next(
+                    DBUSConnectionStatus(
+                        connection_state=ConnectionStatus.DISCONNECTED,
+                        reason=str(e),
+                        timestamp=TimeUtil.current_time(),
+                    )
                 )
                 if max_attempts and attempt >= max_attempts:
                     self._logger.error(
