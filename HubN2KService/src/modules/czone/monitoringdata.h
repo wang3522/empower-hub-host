@@ -308,10 +308,11 @@ json idMapToJson(const IdMap<T> &map) {
 
 template <typename T>
 void idMapToJson(json &result, const std::string &key, const IdMap<T> &map) {
+  result[key] = json::object();
   if (map.size() > 0) {
     for (const auto &[id, item] : map) {
       if (item) {
-        result[key + "." + std::to_string(id)] = item->tojson();
+        result[key][key + "." + std::to_string(id)] = item->tojson();
       }
     }
   }
