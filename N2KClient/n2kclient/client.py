@@ -602,6 +602,7 @@ class N2KClient(dbus.service.Object):
     # === DBus Signal/Event Handlers ===
     def snapshot_handler(self, snapshot_json: str):
         try:
+            self._logger.info(f"Received snapshot.")
             self._start_snapshot_timer()
             snapshot_dict: dict[str, dict[str, Any]] = json.loads(snapshot_json)
 
