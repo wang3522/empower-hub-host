@@ -43,6 +43,7 @@ def main():
     dbus_server = None
 
     try:
+        ble = initialize_ble()
         dbus_server = initialize_dbus_server()
         dbus_server.start()
 
