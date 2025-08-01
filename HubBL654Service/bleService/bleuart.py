@@ -30,7 +30,7 @@ class BLE_UART:
                 logger.info("Creating BLE uart instance.")
                 cls._instance = super(BLE_UART, cls).__new__(cls)
                 
-                config_file_path = "/data/hub/conf/bl654.conf"
+                config_file_path = "/data/hub/config/bl654.conf"
                 if os.path.exists(config_file_path):
                     with open(config_file_path, 'r') as file:
                         content = file.readlines()
