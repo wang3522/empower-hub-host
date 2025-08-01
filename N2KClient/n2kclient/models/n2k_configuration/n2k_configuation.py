@@ -1,5 +1,9 @@
 import json
 from typing import Any
+
+from ..n2k_configuration.bls_alarm_mapping import (
+    BLSAlarmMapping,
+)
 from .dc import DC
 from .ac import AC
 from .pressure import Pressure
@@ -36,6 +40,7 @@ class N2kConfiguration:
 
     pressure: dict[int, Pressure]
     mode: dict[int, Circuit]
+    bls_alarm_mappings: dict[int, BLSAlarmMapping]
 
     config_metadata: ConfigMetadata
 
@@ -57,6 +62,7 @@ class N2kConfiguration:
         self.mode = {}
         self.category = []
         self.config_metadata = ConfigMetadata()
+        self.bls_alarm_mappings = {}
 
     def __del__(self):
         self.gnss.clear()
@@ -75,7 +81,8 @@ class N2kConfiguration:
         self.pressure.clear()
         self.mode.clear()
         self.category = []
-        self.config_metadata
+        self.config_metadata = ConfigMetadata()
+        self.bls_alarm_mappings.clear()
 
     def to_dict(self) -> dict[str, Any]:
         try:

@@ -254,7 +254,9 @@ class ShorePower(ACMeterThingBase):
             self.define_shorepower_connected_pipe_non_inverter_charger(
                 n2k_devices, ac_line1, ac_line2, ac_line3
             )
-        connected_state = self.ac_connected_state
+        connected_state = self.ac_connected_state.pipe(
+            ops.filter(lambda state: state is not None)
+        )
         if bls is not None:
             bls_states_subject = n2k_devices.get_channel_subject(
                 f"{JsonKeys.BINARY_LOGIC_STATE}.{bls.address}",

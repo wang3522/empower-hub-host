@@ -24,6 +24,7 @@ class JsonKeys:
     ENGINE = "Engine"
     ENABLED = "Enabled"
     ID = "Id"
+    ACCEPTED = "Accepted"
     VALUE = "Value"
     VALID = "Valid"
     NAMEUTF8 = "NameUTF8"
@@ -75,6 +76,7 @@ class JsonKeys:
     NOMINAL_FREQUENCY = "NominalFrequency"
     LINE = "Line"
     AC_TYPE = "ACType"
+    DC_TYPE = "DCType"
     CIRCUIT_ID = "CircuitId"
     CIRCUIT_NAME_UTF8 = "CircuitNameUTF8"
     TANK_CAPACITY = "TankCapacity"
@@ -153,6 +155,46 @@ class JsonKeys:
     MENDER_ARTIFACT_INFO = "MenderArtifactInfo"
     Items = "Items"
     Result = "Result"
+    Alarms = "Alarms"
+    CHANNEL_ID = "ChannelId"
+    EXTERNAL_ALARM_ID = "ExternalAlarmId"
+    UNIQUE_ID = "UniqueId"
+    ACTIVATED_TIME = "ActivatedTime"
+    ACKNOWLEDGED_TIME = "AcknowledgedTime"
+    CLEARED_TIME = "ClearedTime"
+    CHANNEL = "Channel"
+    TITLE = "Title"
+    DESCRIPTION = "Description"
+    CZONE_RAW_ALARM = "CZoneRawAlarm"
+    FAULT_ACTION = "FaultAction"
+    FAULT_TYPE = "FaultType"
+    FAULT_NUMBER = "FaultNumber"
+    ALARM_TYPE = "AlarmType"
+    SEVERITY = "Severity"
+    CURRENT_STATE = "CurrentState"
+
+    ON = "On"
+    OFF = "Off"
+
+    HIGH_VOLTAGE = "HighVoltage"
+    LOW_VOLTAGE = "LowVoltage"
+    VERY_LOW_VOLTAGE = "VeryLowVoltage"
+    HIGH_LIMIT = "HighLimit"
+    LOW_LIMIT = "LowLimit"
+    VERY_LOW_LIMIT = "VeryLowLimit"
+    VERY_HIGH_LIMIT = "VeryHighLimit"
+    FREQUENCY = "Frequency"
+
+    CONTENT = "Content"
+    ALARM_ITEM = "AlarmItem"
+    TIMESTAMP = "Timestamp"
+
+    DISCRETE_STATUS_1 = "DiscreteStatus1"
+    DISCRETE_STATUS_2 = "DiscreteStatus2"
+
+    THROW_TYPE = "ThrowType"
+
+    OK = "Ok"
 
 
 class AttrNames:
@@ -225,6 +267,7 @@ class AttrNames:
     NOMINAL_FREQUENCY = "nominal_frequency"
     LINE = "line"
     AC_TYPE = "ac_type"
+    DC_TYPE = "dc_type"
     CIRCUIT_ID = "circuit_id"
     CIRCUIT_NAME_UTF8 = "circuit_name_utf8"
     TANK_CAPACITY = "tank_capacity"
@@ -305,6 +348,38 @@ class AttrNames:
     MENDER_ARTIFACT_INFO = "mender_artifact_info"
     CONFIG_METADATA = "config_metadata"
 
+    ALARM_TYPE = "alarm_type"
+    SEVERITY = "severity"
+    CURRENT_STATE = "current_state"
+    CHANNEL_ID = "channel_id"
+    EXTERNAL_ALARM_ID = "external_alarm_id"
+    UNIQUE_ID = "unique_id"
+    ACTIVATED_TIME = "activated_time"
+    ACKNOWLEDGED_TIME = "acknowledged_time"
+    CLEARED_TIME = "cleared_time"
+    CHANNEL = "channel"
+    TITLE = "title"
+    DESCRIPTION = "description"
+    CZONE_RAW_ALARM = "czone_raw_alarm"
+    FAULT_ACTION = "fault_action"
+    FAULT_TYPE = "fault_type"
+    FAULT_NUMBER = "fault_number"
+
+    ON = "on"
+    OFF = "off"
+    HIGH_VOLTAGE = "high_voltage"
+    LOW_VOLTAGE = "low_voltage"
+    VERY_LOW_VOLTAGE = "very_low_voltage"
+    HIGH_LIMIT = "high_limit"
+    LOW_LIMIT = "low_limit"
+    VERY_LOW_LIMIT = "very_low_limit"
+    VERY_HIGH_LIMIT = "very_high_limit"
+    FREQUENCY = "frequency"
+
+    CONTENT = "content"
+    ALARM_ITEM = "alarm_item"
+    TIMESTAMP = "timestamp"
+
 
 class Constants:
     N2K_SERVICE_NAME = "org.navico.CzoneCpp"
@@ -315,12 +390,21 @@ class Constants:
     GET_CONFIG_ALL_SERVICE_METHOD_NAME = "GetConfigAll"
     GET_CATEGORIES_SERVICE_METHOD_NAME = "GetCategories"
     GET_SETTING_SERVICE_METHOD_NAME = "GetSetting"
+    ALARM_LIST_SERVICE_METHOD_NAME = "AlarmList"
+    CONTROL_SERVICE_METHOD_NAME = "Control"
+    SINGLE_SNAPSHOT_SERVICE_METHOD_NAME = "SingleSnapshot"
+    ALARM_ACKNOWLEDGE_SERVICE_METHOD_NAME = "AlarmAcknowledge"
+    EVENT_SIGNAL_NAME = "Event"
+    SNAPSHOT_SIGNAL_NAME = "Snapshot"
+    EVENT_PARSER = "EventParser"
+    SNAPSHOT_PARSER = "SnapshotParser"
     N2K_SETTINGS_KEY = "N2KSettings"
     Control = "Control"
     WORKER_KEY = "N2K_WORKER"
     STATE_TIMEOUT_KEY = "STATE_TIMEOUT"
     DBUS_N2K_CLIENT = "DBUS_N2K_CLIENT"
     Config_Parser = "Config Parser"
+    Alarm_Service = "Alarm Service"
     empower = "empower"
     configName = "configName"
     configId = "configId"
@@ -436,6 +520,49 @@ class Constants:
     N2K_CONTROL_SERVICE = "N2K_CONTROL_SERVICE"
     DBUS_RETRY_DELAY_KEY = "DBUS_RETRY_DELAY"
     CONTROL_DBUS_MAX_ATTEMPTS_KEY = "CONTROL_DBUS_MAX_ATTEMPTS"
+    SNAPSHOT_INTERVAL_KEY = "SNAPSHOT_INTERVAL"
+    SNAPSHOT_TIMER_THREAD_NAME = "SnapshotTimer"
+    alarm = "alarm"
+
+    starboardEngine = "Starboard Engine"
+    portEngine = "Port Engine"
+    startboardInnerEngine = "Starboard Inner Engine"
+    portInnerEngine = "Port Inner Engine"
+    On = "On"
+    Off = "Off"
+    threshold = "threshold"
+    europa = "europa"
+    alarmId = "alarmId"
+    notification = "notification"
+    userPreference = "userPreference"
+    THINGSBOARD_SETTINGS_KEY = "ThingsBoardSettings"
+
+    checkEngineAlarm = (0, "Check Engine")
+    overTemperatureAlarm = (1, "Over Temperature")
+    lowOilPressureAlarm = (2, "Low Oil Pressure")
+    lowOilLevelAlarm = (3, "Low Oil Level")
+    lowFuelPressureAlarm = (4, "Low Fuel Pressure")
+    lowSystemVoltageAlarm = (5, "Low System Voltage")
+    lowCoolantLevelAlarm = (6, "Low Coolant Level")
+    waterFlowAlarm = (7, "Water Flow")
+    waterInFuelAlarm = (8, "Water in Fuel")
+    chargeIndicatorAlarm = (9, "Charge Indicator")
+    preheatIndicatorAlarm = (10, "Preheat Indicator")
+    highBoostPressureAlarm = (11, "High Boost Pressure")
+    revLimitExceededAlarm = (12, "Rev Limit Exceeded")
+    egrSystemAlarm = (13, "EGR System")
+    throttlePositionSensorAlarm = (14, "Throttle Position Sensor")
+    engineEmergencyStopAlarm = (15, "Engine Emergency Stop")
+
+    warningLevel1Alarm = (0, "Warning Level 1")
+    warningLevel2Alarm = (1, "Warning Level 2")
+    powerReductionAlarm = (2, "Power Reduction")
+    maintenanceNeededAlarm = (3, "Maintenance Needed")
+    engineCommErrorAlarm = (4, "Engine Comm Error")
+    subOrSecondaryThrottleAlarm = (5, "Sub or Secondary Throttle")
+    neutralStartProtectAlarm = (6, "Neutral Start Protect")
+    engineShuttingDownAlarm = (7, "Engine Shutting Down")
+    sensorMalfunctionAlarm = (8, "Sensor Malfunction")
 
 
 LINE_CONST_MAP = {

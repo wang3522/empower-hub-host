@@ -1,4 +1,5 @@
 import logging
+import time
 from n2kclient.client import N2KClient
 from n2kclient.util.logging import configure_logging
 
@@ -14,7 +15,8 @@ class Main:
         n2k_client = N2KClient()
         n2k_client.start()
         self.logger.info("N2K Client is running")
-        self.logger.info("Press Ctrl+C to stop")
+        while True:
+            time.sleep(1)
 
 
 def main():

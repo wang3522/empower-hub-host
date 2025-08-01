@@ -23,6 +23,11 @@ class N2KDBusSimulator(dbus.service.Object):
     def __init__(self):
         self.get_devices_count = 0
         self.get_state_count = 0
+        self.initial = True
+        self.circuit_state_1 = json.dumps(
+            {"IsOffline": True, "Current": 2.5, "Voltage": 8.5, "Level": 0}
+        )
+
         self.device_list = [
             {"Id": "DC.6", "Type": "dc"},
             {"Id": "Tank.17", "Type": "tank"},
@@ -46,6 +51,62 @@ class N2KDBusSimulator(dbus.service.Object):
         self.get_config_fail_count = 0
         self.control_fail_count = 0
 
+    @dbus.service.signal(dbus_interface=IFACE, signature="s")
+    def Event(self, message: str):
+        """
+        Mock DBus signal for demonstration/testing purposes.
+        Args:
+            message (str): The message to emit with the signal.
+        """
+        pass
+
+    @dbus.service.signal(dbus_interface=IFACE, signature="s")
+    def Snapshot(self, message: str):
+        """
+        Mock DBus signal for demonstration/testing purposes.
+        Args:
+            message (str): The message to emit with the signal.
+        """
+
+        pass
+
+    @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
+    def AlarmList(self):
+        return json.dumps(
+            {
+                "Alarms": [
+                    {
+                        "AlarmType": 0,
+                        "Severity": 1,
+                        "CurrentState": 1,
+                        "ChannelId": 16404,
+                        "ExternalAlarmId": 6,
+                        "UniqueId": 29,
+                        "Valid": True,
+                        "Name": "DC High Voltage",
+                        "Channel": "Port Battery",
+                        "Device": "COI 1",
+                        "Title": "Port Battery",
+                        "Description": "",
+                    },
+                    {
+                        "AlarmType": 0,
+                        "Severity": 1,
+                        "CurrentState": 1,
+                        "ChannelId": 1283,
+                        "ExternalAlarmId": 6,
+                        "UniqueId": 260,
+                        "Valid": True,
+                        "Name": "DC High Voltage",
+                        "Channel": "House Battery",
+                        "Device": "MI 3",
+                        "Title": "House Battery",
+                        "Description": "",
+                    },
+                ]
+            }
+        )
+
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def GetDevices(self):
 
@@ -53,72 +114,32 @@ class N2KDBusSimulator(dbus.service.Object):
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def GetConfigAll(self):
-        if self.get_config_fail_count < 5:
-            self.get_config_fail_count += 1
-            raise dbus.exceptions.DBusException("DBus call failed")
         return CONFIG_JSON_STRING
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetState(self, id: str):
-        self.get_state_count += 1
-        if self.get_state_count < 80:
-            if id == "DC.6":
-                return '{"ComponentStatus": "Disconnected", "Voltage": 12.0, "Current": 2.0, "StateOfCharge": 75, "Temperature": 23.11, "CapacityRemaining": 1000.0, "TimeRemaining": 120, "TimeToCharge": 60}'
-            elif id == "DC.7":
-                return '{"ComponentStatus": "Connected", "Voltage": 11.0, "Current": 12.0, "StateOfCharge": 13, "Temperature": 14.11, "CapacityRemaining": 15555.0, "TimeRemaining": 1444, "TimeToCharge": 124}'
-            elif id == "Tank.17":
-                return (
-                    '{"ComponentStatus": "Connected", "Level": 200, "LevelPercent": 87}'
-                )
-            elif id == "AC.1":
-                return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 11.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Disconnected", "Voltage": 11.0, "Current": 59.8, "Frequency": 50.0, "Power": 5555.0}}}'
-            elif id == "Tank.81":
-                return (
-                    '{"ComponentStatus": "Connected", "Level": 300, "LevelPercent": 92}'
-                )
-            elif id == "Engine.0":
-                return '{"ComponentStatus": "Connected", "EngineState": 1, "Speed": 0, "CoolantPressure": 50, "CoolantTemperature": 80.0, "FuelLevel": 50, "EngineHours": 1000}'
-            elif id == "Circuit.141":
-                return '{"IsOffline": false, "Current": 1.5, "Voltage": 12.5, "Level": 100}'
-            elif id == "Circuit.114":
-                return (
-                    '{"IsOffline": true, "Current": 2.5, "Voltage": 8.5, "Level": 100}'
-                )
-            elif id == "GNSS.128":
-                return '{"ComponentStatus": "Connected", "FixType": "2D Fix", "LatitudeDeg": 8.5, "LongitudeDeg": 100.0, "Sog": 5.5}'
-            elif id == "InverterCharger.0":
-                return '{"ComponentStatus": "Connected", "InverterEnable": 0, "ChargerEnable": 0, "InverterState": "Inverting", "ChargerState": "Float"}'
-            elif id == "AC.5":
-                return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 1110.0, "Current": 11.5, "Frequency": 11.0, "Power": 1111.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 111.0, "Current": 11.8, "Frequency": 111.0, "Power": 111.0}}}'
-
-        if self.get_state_count >= 80:
-            if id == "DC.6":
-                return '{"ComponentStatus": "Connected", "Voltage": 12.0, "Current": 2.0, "StateOfCharge": 75, "Temperature": 23, "CapacityRemaining": 1000, "TimeRemaining": 120, "TimeToCharge": 60}'
-            elif id == "Tank.17":
-                return (
-                    '{"ComponentStatus": "Connected", "Level": 200, "LevelPercent": 87}'
-                )
-            elif id == "AC.1":
-                return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 230.0, "Current": 9.8, "Frequency": 50.0, "Power": 2250.0}}}'
-            elif id == "Tank.81":
-                return (
-                    '{"ComponentStatus": "Connected", "Level": 300, "LevelPercent": 92}'
-                )
-            elif id == "Engine.0":
-                return '{"ComponentStatus": "Connected", "EngineState": 1, "Speed": 0, "OilPressure": 50, "CoolantTemperature": 80.0, "FuelLevel": 50, "EngineHours": 1000}'
-            elif id == "Circuit.141":
-                return '{"ComponentStatus": "Connected", "Current": 1234.1, "Voltage": 12.5, "Level": 0}'
-            elif id == "Circuit.114":
-                return '{"ComponentStatus": "Disconnected", "Current": 1234.1, "Voltage": 12.5, "Level": 100}'
-            elif id == "Circuit.135":
-                return '{"ComponentStatus": "Disconnected", "Current": 2.5, "Voltage": 8.5, "Level": 100}'
-            elif id == "Circuit.138":
-                return '{"ComponentStatus": "Disconnected", "Current": 2.5, "Voltage": 8.5, "Level": 100}'
-            elif id == "GNSS.128":
-                return '{"ComponentStatus": "Connected", "FixType": "2D Fix", "LatitudeDeg": 8.5, "LongitudeDeg": 100.0, "Sog": 5.5}'
-            elif id == "InverterCharger.0":
-                return '{"ComponentStatus": "Connected", "InverterState": "Inverting"}'
-
+        if id == "DC.6":
+            return '{"ComponentStatus": "Disconnected", "Voltage": 12.0, "Current": 2.0, "StateOfCharge": 75, "Temperature": 23.11, "CapacityRemaining": 1000.0, "TimeRemaining": 120, "TimeToCharge": 60}'
+        elif id == "DC.7":
+            return '{"ComponentStatus": "Connected", "Voltage": 11.0, "Current": 12.0, "StateOfCharge": 13, "Temperature": 14.11, "CapacityRemaining": 15555.0, "TimeRemaining": 1444, "TimeToCharge": 124}'
+        elif id == "Tank.17":
+            return '{"ComponentStatus": "Connected", "Level": 200, "LevelPercent": 87}'
+        elif id == "AC.1":
+            return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 11.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Disconnected", "Voltage": 11.0, "Current": 59.8, "Frequency": 50.0, "Power": 5555.0}}}'
+        elif id == "Tank.81":
+            return '{"ComponentStatus": "Connected", "Level": 300, "LevelPercent": 92}'
+        elif id == "Engine.0":
+            return '{"ComponentStatus": "Connected", "EngineState": 1, "Speed": 0, "CoolantPressure": 50, "CoolantTemperature": 80.0, "FuelLevel": 50, "EngineHours": 1000}'
+        elif id == "Circuit.0":
+            return '{"IsOffline": false, "Current": 1.5, "Voltage": 12.5, "Level": 100}'
+        if id == "Circuit.114":
+            return self.circuit_state_1
+        elif id == "GNSS.128":
+            return '{"ComponentStatus": "Connected", "FixType": "2D Fix", "LatitudeDeg": 8.5, "LongitudeDeg": 100.0, "Sog": 5.5}'
+        elif id == "InverterCharger.0":
+            return '{"ComponentStatus": "Connected", "InverterEnable": 0, "ChargerEnable": 0, "InverterState": "Inverting", "ChargerState": "Float"}'
+        elif id == "AC.5":
+            return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 1110.0, "Current": 11.5, "Frequency": 11.0, "Power": 1111.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 111.0, "Current": 11.8, "Frequency": 111.0, "Power": 111.0}}}'
         return "{}"
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
@@ -146,6 +167,25 @@ class N2KDBusSimulator(dbus.service.Object):
             )
         return ""
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
+    def AlarmAcknowledge(self, acknowledge_request: str) -> str:
+        try:
+            acknowledge_json = json.loads(acknowledge_request)
+            if "Id" in acknowledge_json and "Accepted" in acknowledge_json:
+                alarm_id = acknowledge_json["Id"]
+                accepted = acknowledge_json["Accepted"]
+                print(f"Acknowledge Request: Id={alarm_id}, Accepted={accepted}")
+
+                return '{"Result": "Ok"}'
+            else:
+                self.logger.error(
+                    "Invalid acknowledge request format: %s", acknowledge_request
+                )
+                return '{"Result": "Error", "Message": "Invalid Format"}'
+        except Exception as e:
+            self.logger.error("Failed to acknowledge alarm %s: %s", alarm_id, e)
+            return False
+
+    @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetSetting(self, type: str):
         if type == "FactoryData":
             return '{"FactoryDataSettings":{"SerialNumber":"1234567890","RTFirmwareVersion":"1.0.0","MenderArtifactInfo":"1.2.3"}}'
@@ -160,21 +200,27 @@ class N2KDBusSimulator(dbus.service.Object):
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def Control(self, control_request: str):
-        if self.control_fail_count < 11:
-            self.control_fail_count += 1
-            raise dbus.exceptions.DBusException("DBus call failed")
         try:
             control_json = json.loads(control_request)
             if "Type" in control_json and control_json["Type"] in (
                 "Activate",
                 "Release",
-                "SetLevel",
+                "SetAbsolute",
             ):
+                print(f"Control Request: {control_json}")
+                self.circuit_state_1 = json.dumps(
+                    {"IsOffline": False, "Current": 2.5, "Voltage": 8.5, "Level": 100}
+                )
                 return '{"Result": "Ok"}'
             else:
                 return '{"Result": "Error", "Message": "Unknown Type"}'
         except Exception as e:
             return '{"Result": "Error", "Message": "Invalid JSON"}'
+
+    @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
+    def SingleSnapshot(self):
+        snapshot = {}
+        return json.dumps(snapshot)
 
 
 class Main:
@@ -193,6 +239,165 @@ class Main:
         service = N2KDBusSimulator()
         loop = GLib.MainLoop()
         self.logger.info("Service started. Press Ctrl+C to exit.")
+
+        def emit_event():
+            service.Event('{"Type": 1}')
+            return True  # Repeat every interval
+
+        def emit_snapshot():
+            snapshot = {
+                "DC": {
+                    "DC.6": {
+                        "ComponentStatus": "Disconnected",
+                        "Voltage": 12.0,
+                        "Current": 2.0,
+                        "StateOfCharge": 75,
+                        "Temperature": 23.11,
+                        "CapacityRemaining": 1000.0,
+                        "TimeRemaining": 120,
+                        "TimeToCharge": 60,
+                    },
+                    "DC.7": {
+                        "ComponentStatus": "Connected",
+                        "Voltage": 11.0,
+                        "Current": 12.0,
+                        "StateOfCharge": 13,
+                        "Temperature": 14.11,
+                        "CapacityRemaining": 15555.0,
+                        "TimeRemaining": 1444,
+                        "TimeToCharge": 124,
+                    },
+                },
+                "Tanks": {
+                    "Tank.17": {
+                        "ComponentStatus": "Connected",
+                        "Level": 200,
+                        "LevelPercent": 87,
+                    },
+                    "Tank.81": {
+                        "ComponentStatus": "Connected",
+                        "Level": 300,
+                        "LevelPercent": 92,
+                    },
+                },
+                "AC": {
+                    "AC.1": {
+                        "Instance": 1,
+                        "AClines": {
+                            "1": {
+                                "Instance": 1,
+                                "Line": 1,
+                                "ComponentStatus": "Connected",
+                                "Voltage": 11.0,
+                                "Current": 10.5,
+                                "Frequency": 50.0,
+                                "Power": 2400.0,
+                            },
+                            "2": {
+                                "Instance": 2,
+                                "Line": 2,
+                                "ComponentStatus": "Disconnected",
+                                "Voltage": 11.0,
+                                "Current": 59.8,
+                                "Frequency": 50.0,
+                                "Power": 5555.0,
+                            },
+                        },
+                    },
+                    "AC.5": {
+                        "Instance": 1,
+                        "AClines": {
+                            "1": {
+                                "Instance": 1,
+                                "Line": 1,
+                                "ComponentStatus": "Connected",
+                                "Voltage": 1110.0,
+                                "Current": 11.5,
+                                "Frequency": 11.0,
+                                "Power": 1111.0,
+                            },
+                            "2": {
+                                "Instance": 2,
+                                "Line": 2,
+                                "ComponentStatus": "Connected",
+                                "Voltage": 111.0,
+                                "Current": 11.8,
+                                "Frequency": 111.0,
+                                "Power": 111.0,
+                            },
+                        },
+                    },
+                },
+                "Engines": {
+                    "Engines.0": {
+                        "ComponentStatus": "Connected",
+                        "EngineState": 1,
+                        "Speed": 0,
+                        "CoolantPressure": 50,
+                        "CoolantTemperature": 80.0,
+                        "FuelLevel": 50,
+                        "EngineHours": 1000,
+                        "DiscreteStatus1": 1,
+                        "DiscreteStatus2": 1,
+                    }
+                },
+                "Circuits": {
+                    "Circuit.0": {
+                        "IsOffline": False,
+                        "Current": 1.5,
+                        "Voltage": 12.5,
+                        "Level": 100,
+                    },
+                    "Circuit.114": {
+                        "IsOffline": True,
+                        "Current": 2.5,
+                        "Voltage": 8.5,
+                        "Level": 0,
+                    },
+                    "Circuit.135": {
+                        "IsOffline": True,
+                        "Current": 2.5,
+                        "Voltage": 8.5,
+                        "Level": 0,
+                    },
+                    "Circuit.138": {
+                        "IsOffline": True,
+                        "Current": 2.5,
+                        "Voltage": 8.5,
+                        "Level": 0,
+                    },
+                    "Circuit.141": {
+                        "IsOffline": False,
+                        "Current": 2.5,
+                        "Voltage": 8.5,
+                        "Level": 0,
+                    },
+                },
+                "GNSS": {
+                    "GNSS.128": {
+                        "ComponentStatus": "Connected",
+                        "FixType": "2D Fix",
+                        "LatitudeDeg": 8.5,
+                        "LongitudeDeg": 100.0,
+                        "Sog": 5.5,
+                    },
+                },
+                "InverterChargers": {
+                    "InverterCharger.0": {
+                        "ComponentStatus": "Connected",
+                        "InverterEnable": 0,
+                        "ChargerEnable": 0,
+                        "InverterState": "Inverting",
+                        "ChargerState": "Float",
+                    },
+                },
+            }
+            service.Snapshot(json.dumps(snapshot))
+
+            # return True
+
+        GLib.timeout_add_seconds(2, emit_snapshot)  # Emit every 1 second
+
         try:
             loop.run()
         except KeyboardInterrupt:

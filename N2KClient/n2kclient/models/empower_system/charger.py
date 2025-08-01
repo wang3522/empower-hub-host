@@ -26,6 +26,12 @@ from ..common_enums import (
     DCMeterStates,
     ChargerStatus,
 )
+from ...models.alarm_setting import (
+    AlarmSettingFactory,
+    AlarmSettingLimit,
+    AlarmSettingType,
+)
+from ..n2k_configuration.alarm_limit import AlarmLimit
 
 CHARGER_STATE_MAPPING = {
     ChargerStatus.ABSORPTION: "absorption",
@@ -199,6 +205,31 @@ class CombiCharger(Thing):
                 Current.FILTER,
             ),
         )
+
+        #############################
+        # Alarm Settings
+        #############################
+        for limit in AlarmSettingLimit:
+            if hasattr(dc, limit.value):
+                attr: AlarmLimit = getattr(dc, limit.value)
+                if attr is not None and attr.enabled and attr.id > 0:
+                    limit_on = AlarmSettingFactory.get_alarm_setting(
+                        AlarmSettingType.BATTERY,
+                        limit,
+                        attr.id,
+                        attr.on,
+                        is_on=True,
+                        name=dc.name_utf8,
+                    )
+                    limit_off = AlarmSettingFactory.get_alarm_setting(
+                        AlarmSettingType.BATTERY,
+                        limit,
+                        attr.id,
+                        attr.off,
+                        is_on=False,
+                        name=dc.name_utf8,
+                    )
+                    self.alarm_settings.extend([limit_on, limit_off])
 
     def define_combi_channels(
         self, charger_circuit: Optional[Circuit], n2k_devices: N2kDevices

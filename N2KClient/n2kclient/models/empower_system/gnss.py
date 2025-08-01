@@ -141,8 +141,8 @@ class GNSS(Thing):
                 longitude_subject,
                 sog_subject,
             ).pipe(
-                ops.sample(Location.LOCATION_GNSS_UPDATE_SAMPLE),
                 ops.filter(lambda state: all(x is not None for x in state)),
+                ops.sample(Location.LOCATION_GNSS_UPDATE_SAMPLE),
                 ops.map(
                     lambda state: LocationState(
                         round(state[0], 5),

@@ -43,20 +43,20 @@ class SettingsUtil:
         try:
             default_config = {}
             combined_config = {}
-            SettingsUtil._logger.warn("Debug: Searching for appsettings file...")
+            SettingsUtil._logger.warning("Debug: Searching for appsettings file...")
             if default_file and os.path.exists(default_file):
-                SettingsUtil._logger.warn(
+                SettingsUtil._logger.warning(
                     "Debug: Found default appsettings file, loading now..."
                 )
                 with open(default_file, "r") as file:
                     default_config = json.load(file)
             else:
-                SettingsUtil._logger.warn(
+                SettingsUtil._logger.warning(
                     f"Warning: The file {default_file} does not exist."
                 )
 
             if override_file and os.path.exists(override_file):
-                SettingsUtil._logger.warn(
+                SettingsUtil._logger.warning(
                     "Debug: Found override appsettings file, loading now..."
                 )
                 with open(override_file, "r") as file:

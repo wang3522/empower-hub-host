@@ -47,45 +47,6 @@ def get_category_list(
     return categories
 
 
-def get_associated_circuit(
-    item_type: ItemType,
-    primary_id: int,
-    config: N2kConfiguration,
-):
-    association_relationship = next(
-        (
-            rel
-            for rel in config.ui_relationships
-            if rel.primary_type == item_type
-            and rel.secondary_type == ItemType.Circuit
-            and rel.primary_id == primary_id
-            and rel.secondary_id is not None
-        ),
-        None,
-    )
-
-    if association_relationship is not None:
-        hidden_circuit = next(
-            (
-                circuit
-                for id, circuit in config.hidden_circuit.items()
-                if id == association_relationship.secondary_id
-            ),
-            None,
-        )
-        if hidden_circuit is not None:
-            associated_circuit = next(
-                (
-                    circuit
-                    for id, circuit in config.circuit.items()
-                    if id == hidden_circuit.control_id
-                ),
-                None,
-            )
-            return associated_circuit
-    return None
-
-
 def get_primary_dc_meter(id: int, config: N2kConfiguration):
     rel = next(
         (
@@ -193,20 +154,6 @@ def create_link(
     return link
 
 
-def is_in_category(categories: list[CategoryItem], category_name: str) -> bool:
-    return (
-        next(
-            (
-                cat
-                for cat in categories
-                if cat.name_utf8 == category_name and cat.enabled == True
-            ),
-            None,
-        )
-        is not None
-    )
-
-
 def get_child_circuits(id: int, config: N2kConfiguration) -> list[Circuit]:
 
     child_circuits = []
@@ -239,18 +186,6 @@ def get_child_circuits(id: int, config: N2kConfiguration) -> list[Circuit]:
                 if child_circuit is not None:
                     child_circuits.append(child_circuit)
     return child_circuits
-
-
-def calculate_inverter_charger_instance(inverter_charger: InverterChargerDevice):
-    """
-    Given an inveter/charger, calculate its instance number from the instances
-    of the inverter and charger separately.
-    """
-
-    return (
-        inverter_charger.inverter_instance.instance << 8
-        | inverter_charger.charger_instance.instance
-    )
 
 
 def get_associated_tank(id: int, config: N2kConfiguration):

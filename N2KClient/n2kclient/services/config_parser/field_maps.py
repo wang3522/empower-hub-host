@@ -1,3 +1,4 @@
+from ...models.n2k_configuration.dc import DCType
 from ...models.common_enums import SwitchType
 from ...models.n2k_configuration.ac import ACLine, ACType
 from ...models.n2k_configuration.circuit import (
@@ -124,6 +125,10 @@ AC_EMUM_FIELD_MAP = {
     AttrNames.AC_TYPE: (JsonKeys.AC_TYPE, ACType),
 }
 
+DC_ENUM_FIELD_MAP = {
+    AttrNames.DC_TYPE: (JsonKeys.DC_TYPE, DCType),
+}
+
 TANK_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,
     AttrNames.NAMEUTF8: JsonKeys.NAMEUTF8,
@@ -149,6 +154,8 @@ INVERTER_CHARGER_FIELD_MAP = {
     AttrNames.PRIMARY: JsonKeys.PRIMARY,
     AttrNames.PRIMARY_PHASE: JsonKeys.PRIMARY_PHASE,
     AttrNames.DEVICE_INSTANCE: JsonKeys.DEVICE_INSTANCE,
+    AttrNames.DIPSWITCH: JsonKeys.DIPSWITCH,
+    AttrNames.CHANNEL_INDEX: JsonKeys.CHANNEL_INDEX,
 }
 
 INVERTER_CHARGER_DATA_ID_FIELD_MAP = {
@@ -284,4 +291,35 @@ FACTORY_METADATA_FIELD_MAP = {
     AttrNames.SERIAL_NUMBER: JsonKeys.SERIAL_NUMBER,
     AttrNames.RT_FIRMWARE_VERSION: JsonKeys.RT_FIRMWARE_VERSION,
     AttrNames.MENDER_ARTIFACT_INFO: JsonKeys.MENDER_ARTIFACT_INFO,
+}
+
+ALARM_LIMIT_FIELD_MAP = {
+    AttrNames.ID: JsonKeys.ID,
+    AttrNames.ENABLED: JsonKeys.ENABLED,
+    AttrNames.ON: JsonKeys.ON,
+    AttrNames.OFF: JsonKeys.OFF,
+}
+
+DC_ALARM_LIMIT_FIELD_MAP = {
+    AttrNames.HIGH_VOLTAGE: JsonKeys.HIGH_VOLTAGE,
+    AttrNames.LOW_VOLTAGE: JsonKeys.LOW_VOLTAGE,
+    AttrNames.VERY_LOW_VOLTAGE: JsonKeys.VERY_LOW_VOLTAGE,
+    AttrNames.HIGH_LIMIT: JsonKeys.HIGH_LIMIT,
+    AttrNames.LOW_LIMIT: JsonKeys.LOW_LIMIT,
+    AttrNames.VERY_LOW_LIMIT: JsonKeys.VERY_LOW_LIMIT,
+}
+
+AC_ALARM_LIMIT_FIELD_MAP = {
+    AttrNames.HIGH_LIMIT: JsonKeys.HIGH_LIMIT,
+    AttrNames.LOW_LIMIT: JsonKeys.LOW_LIMIT,
+    AttrNames.VERY_HIGH_LIMIT: JsonKeys.VERY_HIGH_LIMIT,
+    AttrNames.HIGH_VOLTAGE: JsonKeys.HIGH_VOLTAGE,
+    AttrNames.FREQUENCY: JsonKeys.FREQUENCY,
+}
+
+TANK_ALARM_LIMIT_FIELD_MAP = {
+    AttrNames.VERY_LOW_LIMIT: JsonKeys.VERY_LOW_LIMIT,
+    AttrNames.LOW_LIMIT: JsonKeys.LOW_LIMIT,
+    AttrNames.HIGH_LIMIT: JsonKeys.HIGH_LIMIT,
+    AttrNames.VERY_HIGH_LIMIT: JsonKeys.VERY_HIGH_LIMIT,
 }

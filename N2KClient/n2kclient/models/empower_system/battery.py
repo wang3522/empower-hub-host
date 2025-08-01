@@ -15,6 +15,12 @@ from ...util import rx as rxu
 from ..filters import Current, Voltage, Temperature, CapacityRemaining
 import reactivex as rx
 from ..common_enums import N2kDeviceType, DCMeterStates, CircuitStates
+from ...models.alarm_setting import (
+    AlarmSettingFactory,
+    AlarmSettingLimit,
+    AlarmSettingType,
+)
+from ..n2k_configuration.alarm_limit import AlarmLimit
 
 
 class Battery(Thing):
@@ -45,6 +51,26 @@ class Battery(Thing):
         self.define_battery_metadata(battery, fallback_battery, primary_battery)
 
         self.define_battery_channels(n2k_devices, battery, battery_circuit)
+
+        for limit in AlarmSettingLimit:
+            if hasattr(battery, limit.value):
+                attr: AlarmLimit = getattr(battery, limit.value)
+                if attr is not None and attr.enabled and attr.id > 0:
+                    limit_on = AlarmSettingFactory.get_alarm_setting(
+                        AlarmSettingType.BATTERY,
+                        limit,
+                        attr.id,
+                        attr.on,
+                        is_on=True,
+                    )
+                    limit_off = AlarmSettingFactory.get_alarm_setting(
+                        AlarmSettingType.BATTERY,
+                        limit,
+                        attr.id,
+                        attr.off,
+                        is_on=False,
+                    )
+                    self.alarm_settings.extend([limit_on, limit_off])
 
     def define_battery_metadata(
         self,
@@ -212,7 +238,7 @@ class Battery(Thing):
         n2k_devices.set_subscription(
             channel.id,
             rx.combine_latest(dc_current_subject, dc_state_of_charge_subject).pipe(
-                ops.filter(lambda state: state is not [None, None]),
+                ops.filter(lambda state: state[0] is not None or state[1] is not None),
                 ops.map(lambda state: resolve_battery_status(state[0], state[1])),
                 ops.distinct_until_changed(),
             ),

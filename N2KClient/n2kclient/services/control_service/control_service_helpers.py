@@ -1,4 +1,5 @@
 import json
+from logging import Logger
 from time import sleep
 from typing import Optional, Tuple
 from ...models.n2k_configuration.n2k_configuation import N2kConfiguration
@@ -11,7 +12,7 @@ CONTROL_SLEEP_TIME = 0.1
 
 
 def get_circuit_config(
-    config: N2kConfiguration, runtime_id: int, logger=None
+    config: N2kConfiguration, runtime_id: int, logger: Optional[Logger] = None
 ) -> Optional[Circuit]:
     circuit_config = config.circuit.get(runtime_id)
     if circuit_config is None and logger:
@@ -69,9 +70,9 @@ def control_circuit_switch(
     if not send_and_check(
         send_control,
         {
-            "Type": ControlRequest.Activate.value,
-            "Id": circuit_id,
-            "ThrowType": throw_type.value,
+            JsonKeys.TYPE: ControlRequest.Activate.value,
+            JsonKeys.ID: circuit_id,
+            JsonKeys.THROW_TYPE: throw_type.value,
         },
         logger=logger,
     ):
@@ -79,7 +80,7 @@ def control_circuit_switch(
     sleep(CONTROL_SLEEP_TIME)
     return send_and_check(
         send_control,
-        {"Type": ControlRequest.Release.value, "Id": circuit_id},
+        {JsonKeys.TYPE: ControlRequest.Release.value, JsonKeys.ID: circuit_id},
         logger=logger,
     )
 
@@ -90,9 +91,9 @@ def control_circuit_level(
     if not send_and_check(
         send_control,
         {
-            "Type": ControlRequest.SetAbsolute.value,
-            "Id": circuit_id,
-            "Level": target_level,
+            JsonKeys.TYPE: ControlRequest.SetAbsolute.value,
+            JsonKeys.ID: circuit_id,
+            JsonKeys.LEVEL: target_level,
         },
         logger=logger,
     ):
@@ -100,7 +101,7 @@ def control_circuit_level(
     sleep(CONTROL_SLEEP_TIME)
     return send_and_check(
         send_control,
-        {"Type": ControlRequest.Release.value, "Id": circuit_id},
+        {JsonKeys.TYPE: ControlRequest.Release.value, JsonKeys.ID: circuit_id},
         logger=logger,
     )
 
@@ -108,9 +109,9 @@ def control_circuit_level(
 def send_and_check(send_control, request: dict, logger=None) -> bool:
     response = send_control(json.dumps(request))
     try:
-        response_json = json.loads(response)
+        response_json: dict = json.loads(response)
         result = response_json.get(JsonKeys.Result)
-        return result == "Ok"
+        return result == JsonKeys.OK
     except Exception as e:
         if logger:
             logger.error("Invalid response from control request: %s (%s)", response, e)

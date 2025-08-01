@@ -37,9 +37,7 @@ class ACMeterThingBase(Thing):
         ic_component_status: Optional[rx.Observable[dict[str, any]]] = None,
     ):
         self.line_status = {}
-        self.connection_status_subject = rx.subject.BehaviorSubject(
-            ConnectionStatus.DISCONNECTED.value
-        )
+        self.connection_status_subject = rx.subject.BehaviorSubject(None)
         Thing.__init__(
             self,
             type,

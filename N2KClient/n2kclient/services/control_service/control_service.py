@@ -48,7 +48,7 @@ class ControlService:
             if not circuit_config:
                 return False
 
-            circuit_id, circuit_device = get_circuit_device(devices, circuit_config)
+            _, circuit_device = get_circuit_device(devices, circuit_config)
             current_is_on = is_circuit_on(circuit_device)
             self._logger.debug(
                 "Circuit %s current state: %s", runtime_id, current_is_on
@@ -64,7 +64,10 @@ class ControlService:
                 return True
 
             return control_circuit_switch(
-                self.send_control, circuit_id, throw_type, logger=self._logger
+                self.send_control,
+                circuit_config.id.value,
+                throw_type,
+                logger=self._logger,
             )
         except Exception as e:
             self._logger.error(
@@ -82,15 +85,16 @@ class ControlService:
             return False
         try:
             config = self.get_config()
-            devices = self.get_devices()
             circuit_config = get_circuit_config(config, runtime_id, logger=self._logger)
             if not circuit_config or not circuit_config.dimmable:
                 self._logger.error("Circuit %s is not dimmable", runtime_id)
                 return False
 
-            circuit_id, _ = get_circuit_device(devices, circuit_config)
             return control_circuit_level(
-                self.send_control, circuit_id, target_level, logger=self._logger
+                self.send_control,
+                circuit_config.id.value,
+                target_level,
+                logger=self._logger,
             )
         except Exception as e:
             self._logger.error(

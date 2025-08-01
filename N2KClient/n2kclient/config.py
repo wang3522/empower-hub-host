@@ -1,6 +1,6 @@
 OVERRIDE_APP_SETTINGS_FILE = (
-    "/data/appsettings.json"  # OVERRIDE SETTINGS FILE ON CONNECT-1
+    "/data/appsettings.json"  # OVERRIDE SETTINGS FILE ON Device
 )
 DEFAULT_APP_SETTINGS_FILE = (
-    "/N2KClient/appsettings.json"  # DEFAULT SETTINGS FILE IN TB CLIENT REPO
+    "./n2kclient/appsettings.json"  # DEFAULT SETTINGS FILE IN TB CLIENT REPO
 )

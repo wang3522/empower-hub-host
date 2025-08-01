@@ -4,6 +4,7 @@ from .channel import Channel
 from .link import Link
 from ..common_enums import ThingType
 import reactivex as rx
+from ..alarm_setting import AlarmSetting
 
 
 class Thing(ABC):
@@ -14,6 +15,7 @@ class Thing(ABC):
     metadata: dict[str, Union[str, int, float, bool]]
     links: list[Link]
     _disposable_list: list[rx.abc.DisposableBase]
+    alarm_settings: list[AlarmSetting]
 
     def __init__(
         self, type: ThingType, id: str, name: str, categories: list[str], links=[]
@@ -26,6 +28,7 @@ class Thing(ABC):
         self.links = links or []
         self.categories = categories
         self._disposable_list = []
+        self.alarm_settings = []
 
     def __del__(self):
         self.dispose()
@@ -52,4 +55,7 @@ class Thing(ABC):
                 for channel_id, channel in self.channels.items()
             },
             "links": [link.to_json() for link in self.links],
+            "settings": [
+                alarm_setting.to_json() for alarm_setting in self.alarm_settings
+            ],
         }

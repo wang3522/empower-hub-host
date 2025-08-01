@@ -12,6 +12,12 @@ from reactivex import operators as ops
 import reactivex as rx
 from ..filters import Volume
 from ..common_enums import N2kDeviceType, TankStates
+from ...models.alarm_setting import (
+    AlarmSettingFactory,
+    AlarmSettingLimit,
+    AlarmSettingType,
+)
+from ..n2k_configuration.alarm_limit import AlarmLimit
 
 
 class TankBase(Thing):
@@ -40,6 +46,18 @@ class TankBase(Thing):
             ] = tank.tank_capacity
         self.define_component_status_channel(n2k_devices)
         self.define_level_channels(n2k_devices)
+
+        for limit in AlarmSettingLimit:
+            if hasattr(tank, limit.value):
+                attr: AlarmLimit = getattr(tank, limit.value)
+                if attr is not None and attr.enabled and attr.id > 0:
+                    limit_on = AlarmSettingFactory.get_alarm_setting(
+                        AlarmSettingType.TANK, limit, attr.id, attr.on, is_on=True
+                    )
+                    limit_off = AlarmSettingFactory.get_alarm_setting(
+                        AlarmSettingType.TANK, limit, attr.id, attr.off, is_on=False
+                    )
+                    self.alarm_settings.extend([limit_on, limit_off])
 
     def define_component_status_channel(self, n2k_devices: N2kDevices):
         ###################################
@@ -98,8 +116,8 @@ class TankBase(Thing):
                     Volume.LEVEL_ABSOLUTE_FILTER,
                 ),
                 level_absolute_subject.pipe(
-                    ops.sample(Volume.SAMPLE_TIMER),
                     ops.filter(lambda state: state is not None),
+                    ops.sample(rx.interval(Volume.SAMPLE_TIMER)),
                     ops.distinct_until_changed(),
                 ),
             ),

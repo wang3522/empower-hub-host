@@ -8,5 +8,4 @@ docker run \
     --name hub-host-simulator \
     -v "$(pwd)/simulator:/simulator" \
     -v "$(pwd)/N2KClient:/N2KClient" \
-    -v "$(pwd)/config:/etc/dbus-1/system.d" \
     hub-host-simulator:latest

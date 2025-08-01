@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from .instance import Instance
 from .data_id import DataId
 from .config_item import ConfigItem
@@ -26,6 +27,8 @@ class InverterChargerDevice(ConfigItem):
     primary: bool
     primary_phase: int
     device_instance: int
+    dipswitch: Optional[int]
+    channel_index: Optional[int]
 
     def to_dict(self) -> dict[str, str]:
         try:
@@ -51,6 +54,8 @@ class InverterChargerDevice(ConfigItem):
                 AttrNames.PRIMARY: self.primary,
                 AttrNames.PRIMARY_PHASE: self.primary_phase,
                 AttrNames.DEVICE_INSTANCE: self.device_instance,
+                AttrNames.DIPSWITCH: self.dipswitch,
+                AttrNames.CHANNEL_INDEX: self.channel_index,
             }
         except Exception as e:
             print(f"Error serializing InverterChargerDevice to dict: {e}")

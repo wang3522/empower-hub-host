@@ -8,15 +8,12 @@ from ...models.empower_system.hub import Hub
 
 from .config_processor_helpers import (
     get_category_list,
-    get_associated_circuit,
     get_primary_dc_meter,
     get_fallback_dc_meter,
     get_ac_meter_associated_bls,
     create_link,
     get_circuit_associated_bls,
-    is_in_category,
     get_child_circuits,
-    calculate_inverter_charger_instance,
     get_associated_tank,
 )
 
@@ -50,8 +47,10 @@ from ...models.empower_system.engine_list import EngineList
 from ...models.n2k_configuration.engine_configuration import EngineConfiguration
 from ...models.empower_system.marine_engines import MarineEngine
 from ...models.devices import N2kDevices
-from .config_processor_helpers import (
+from ...util.common_utils import (
+    is_in_category,
     calculate_inverter_charger_instance,
+    get_associated_circuit,
 )
 
 

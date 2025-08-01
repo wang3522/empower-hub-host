@@ -1,6 +1,23 @@
 from enum import Enum
 
 
+class ComponentType(str, Enum):
+    ACMETER = "acMeter"
+    DCMETER = "dcMeter"
+    ACMAINS = "acMains"
+    CIRCUIT = "CIRCUIT"
+    AUDI = "audio"
+    MARINE_ENGINE = "marineEngine"
+    GENERATOR = "generator"
+    HVAC = "hvac"
+    INVERTERCHARGER = "inverterCharger"
+    MODE = "mode"
+    TANK = "tank"
+    GNSS = "gnss"
+    HUB = "hub"
+    BINARYLOGICSTATE = "binaryLogicState"
+
+
 class N2kDeviceType(str, Enum):
     DC = "dc"
     AC = "ac"
@@ -296,3 +313,44 @@ class ControlRequest(str, Enum):
     Release = "Release"
     Ping = "Ping"
     SetAbsolute = "SetAbsolute"
+
+
+class eAlarmType(Enum):
+    Externel = 0
+    DipswitchConflict = 1
+    TypeDeviceConflict = 2
+    TypeDeviceMissing = 3
+    TypeConfigConflict = 4
+    TypeSleepWarning = 5
+    TypeNone = 6
+
+
+class eSeverityType(Enum):
+    SeverityCritical = 0
+    SeverityImportant = 1
+    SeverityStandard = 2
+    SeverityWarning = 3
+    SeveritySIO = 4
+    SeverityNone = 5
+
+
+class eStateType(Enum):
+    StateDisabled = 0
+    StateEnabled = 1
+    StateAcknowledged = 2
+
+
+class eEventType(Enum):
+    ConfigChange = 0
+    AlarmAdded = 1
+    AlarmChanged = 2
+    AlarmRemoved = 3
+    AlarmActivated = 4
+    AlarmDeactivated = 5
+    AlarmLogUpdate = 6
+    AlarmGlobalStatus = 7
+    GNSSConfigChanged = 8
+    EngineConfigChanged = 9
+    CZoneRaw = 10
+    SystemLowPowerMode = 11
+    SystemHostActive = 12

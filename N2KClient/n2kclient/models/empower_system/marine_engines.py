@@ -31,7 +31,7 @@ class MarineEngine(Thing):
             engine.name_utf8,
             categories=categories,
         )
-        self.engine_device_id = f"{JsonKeys.ENGINE}.{engine.instance.instance}"
+        self.engine_device_id = f"{JsonKeys.ENGINES}.{engine.instance.instance}"
         if engine.engine_type is not None:
             self.metadata[
                 f"{Constants.empower}:{Constants.marineEngine}.{Constants.engineType}"

@@ -2,6 +2,8 @@ import json
 import logging
 from typing import Any
 
+from ...models.n2k_configuration.alarm_limit import AlarmLimit
+
 from ...models.n2k_configuration.n2k_configuation import N2kConfiguration
 from ...models.n2k_configuration.gnss import GNSSDevice
 from ...models.n2k_configuration.circuit import (
@@ -29,15 +31,15 @@ from ...models.constants import Constants, JsonKeys, AttrNames
 from ...models.n2k_configuration.value_u32 import ValueU32
 from .field_maps import *
 from .config_parser_helpers import (
-    map_enum_fields,
-    map_fields,
-    map_list_fields,
     get_device_instance_value,
+    get_bls_alarm_channel,
 )
 from ...models.n2k_configuration.ac_meter import ACMeter
 from ...models.n2k_configuration.engine_configuration import EngineConfiguration
 from ...models.n2k_configuration.config_metadata import ConfigMetadata
 from ...models.n2k_configuration.factory_metadata import FactoryMetadata
+from ...models.n2k_configuration.bls_alarm_mapping import BLSAlarmMapping
+from ...util.common_utils import map_fields, map_enum_fields, map_list_fields
 
 
 class ConfigParser:
@@ -162,6 +164,18 @@ class ConfigParser:
             self._logger.error(f"Failed to parse CategoryItem: {e}")
             raise
 
+    def parse_alarm_limit(self, alarm_limit_json: dict[str, Any]) -> AlarmLimit:
+        """
+        Parse the AlarmLimit object from the configuration.
+        """
+        try:
+            alarm_limit = AlarmLimit()
+            map_fields(alarm_limit_json, alarm_limit, ALARM_LIMIT_FIELD_MAP)
+            return alarm_limit
+        except Exception as e:
+            self._logger.error(f"Failed to parse AlarmLimit: {e}")
+            raise
+
     def parse_circuit(self, circuit_json: dict[str, Any]) -> Circuit:
         """
         Parse the Circuit device from the configuration.
@@ -205,7 +219,11 @@ class ConfigParser:
             # Map required fields directly
 
             map_fields(dc_json, dc_device, DC_FIELD_MAP)
-
+            map_enum_fields(self._logger, dc_json, dc_device, DC_ENUM_FIELD_MAP)
+            for attr, key in DC_ALARM_LIMIT_FIELD_MAP.items():
+                field_json = dc_json.get(key)
+                if field_json is not None:
+                    setattr(dc_device, attr, self.parse_alarm_limit(field_json))
             # Parse instance if present
             instance_json = dc_json.get(JsonKeys.INSTANCE)
             if instance_json is not None:
@@ -228,6 +246,11 @@ class ConfigParser:
             instance_json = ac_json.get(JsonKeys.INSTANCE)
             if instance_json is not None:
                 ac_device.instance = self.parse_instance(instance_json)
+
+            for attr, key in AC_ALARM_LIMIT_FIELD_MAP.items():
+                field_json = ac_json.get(key)
+                if field_json is not None:
+                    setattr(ac_device, attr, self.parse_alarm_limit(field_json))
             return ac_device
         except Exception as e:
             self._logger.error(f"Failed to parse AC device: {e}")
@@ -252,6 +275,11 @@ class ConfigParser:
                 tank_device.circuit_id = self.parse_data_id(circuit_id_json)
 
             map_enum_fields(self._logger, tank_json, tank_device, TANK_ENUM_FIELD_MAP)
+
+            for attr, key in TANK_ALARM_LIMIT_FIELD_MAP.items():
+                field_json = tank_json.get(key)
+                if field_json is not None:
+                    setattr(tank_device, attr, self.parse_alarm_limit(field_json))
             return tank_device
         except Exception as e:
             self._logger.error(f"Failed to parse Tank device: {e}")
@@ -683,6 +711,12 @@ class ConfigParser:
                 config_metadata_json
             )
 
+            # BLS Alarm Mappings
+            for bls in n2k_configuration.binary_logic_state.values():
+                channel = get_bls_alarm_channel(bls, n2k_configuration.ui_relationships)
+                if channel is not None:
+                    bls_alarm_mapping = BLSAlarmMapping(alarm_channel=channel, bls=bls)
+                    n2k_configuration.bls_alarm_mappings[bls.id] = bls_alarm_mapping
             return n2k_configuration
 
         except Exception as e:
@@ -701,9 +735,8 @@ class ConfigParser:
                 for engine in config_json[JsonKeys.ENGINES]:
                     engine_instance_value = get_device_instance_value(engine)
                     if engine_instance_value is not None:
-                        device_id = f"{AttrNames.ENGINE}.{engine_instance_value}"
-                        engine_configuration.devices[device_id] = self.parse_engine(
-                            engine
+                        engine_configuration.devices[engine_instance_value] = (
+                            self.parse_engine(engine)
                         )
 
             return engine_configuration
