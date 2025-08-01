@@ -73,7 +73,7 @@ class CombiCharger(Thing):
         if charger_circuit is not None:
             self.charger_circuit = charger_circuit.id.value
             self.charger_circuit_control_id = charger_circuit.control_id
-        self.n2k_device_id = f"{JsonKeys.INVERTER_CHARGER}.{instance}"
+        self.n2k_device_id = f"{JsonKeys.INVERTER_CHARGERS}.{instance}"
         Thing.__init__(
             self,
             type=ThingType.CHARGER,
@@ -263,7 +263,7 @@ class CombiCharger(Thing):
         charger_enable = charger_ce
         if charger_circuit is not None:
             circuit_level_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.CIRCUIT}.{self.charger_circuit}",
+                f"{JsonKeys.CIRCUITS}.{self.charger_circuit}",
                 CircuitStates.Level.value,
                 N2kDeviceType.CIRCUIT,
             )
@@ -365,7 +365,7 @@ class ACMeterCharger(ACMeterThingBase):
         self._define_channel(channel)
 
         circuit_level_subject = n2k_devices.get_channel_subject(
-            f"{JsonKeys.CIRCUIT}.{self.charger_circuit}",
+            f"{JsonKeys.CIRCUITS}.{self.charger_circuit}",
             CircuitStates.Level.value,
             N2kDeviceType.CIRCUIT,
         )

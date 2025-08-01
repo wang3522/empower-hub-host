@@ -44,7 +44,7 @@ class CircuitThing(Thing):
         self.circuit_control_id = circuit.control_id
         self.circuit_id = circuit.id.value
 
-        self.circuit_device_id = f"{JsonKeys.CIRCUIT}.{self.circuit_id}"
+        self.circuit_device_id = f"{JsonKeys.CIRCUITS}.{self.circuit_id}"
 
         ###############################
         # Channels

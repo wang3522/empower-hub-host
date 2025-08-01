@@ -77,13 +77,6 @@ class N2KClient(dbus.service.Object):
     control_service: ControlService
     _alarm_service: AlarmService
 
-    _get_state_timeout = SettingsUtil.get_setting(
-        Constants.N2K_SETTINGS_KEY,
-        Constants.WORKER_KEY,
-        Constants.STATE_TIMEOUT_KEY,
-        default_value=1,
-    )
-
     _dbus_retry_delay = SettingsUtil.get_setting(
         Constants.N2K_SETTINGS_KEY,
         Constants.WORKER_KEY,

@@ -471,7 +471,7 @@ class AcMeterInverter(InverterBase):
             self._define_channel(channel)
 
             circuit_level_subject = n2k_devices.get_channel_subject(
-                f"{JsonKeys.CIRCUIT}.{self.inverter_circuit_id}",
+                f"{JsonKeys.CIRCUITS}.{self.inverter_circuit_id}",
                 CircuitStates.Level.value,
                 N2kDeviceType.CIRCUIT,
             )
@@ -517,7 +517,7 @@ class CombiInverter(InverterBase):
             self.inverter_circuit_id = inverter_circuit.id.value
             self.inverter_circuit_control_id = inverter_circuit.control_id
 
-        self.n2k_device_id = f"{JsonKeys.INVERTER_CHARGER}.{instance}"
+        self.n2k_device_id = f"{JsonKeys.INVERTER_CHARGERS}.{instance}"
         self.define_inverter_channels(
             n2k_devices=n2k_devices, inverter_circuit=inverter_circuit
         )
@@ -639,7 +639,7 @@ class CombiInverter(InverterBase):
         inverter_enable = inverter_ie
 
         if inverter_circuit is not None:
-            circuit_device_id = f"{JsonKeys.CIRCUIT}.{self.inverter_circuit_id}"
+            circuit_device_id = f"{JsonKeys.CIRCUITS}.{self.inverter_circuit_id}"
 
             circuit_level_subject = n2k_devices.get_channel_subject(
                 circuit_device_id, CircuitStates.Level.value, N2kDeviceType.CIRCUIT

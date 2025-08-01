@@ -17,11 +17,11 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 RUN echo '<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">\
     <busconfig>\
     <policy user="root">\
-    <allow own="org.navico.CzoneCpp"/>\
-    <allow send_destination="org.navico.CzoneCpp"/>\
-    <allow receive_sender="org.navico.CzoneCpp"/>\
+    <allow own="org.navico.HubN2K"/>\
+    <allow send_destination="org.navico.HubN2K"/>\
+    <allow receive_sender="org.navico.HubN2K"/>\
     </policy>\
-    </busconfig>' > /etc/dbus-1/system.d/czonecpp.conf
+    </busconfig>' > /etc/dbus-1/system.d/hubn2k.conf
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

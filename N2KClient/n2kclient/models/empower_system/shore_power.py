@@ -292,7 +292,7 @@ class ShorePower(ACMeterThingBase):
         )
         self._define_channel(channel)
         enabled_subject = n2k_devices.get_channel_subject(
-            f"{JsonKeys.CIRCUIT}.{circuit.id.value}",
+            f"{JsonKeys.CIRCUITS}.{circuit.id.value}",
             CircuitStates.Level.value,
             N2kDeviceType.CIRCUIT,
         )

@@ -9,9 +9,9 @@ from models.config import CONFIG_JSON_STRING
 
 DBusGMainLoop(set_as_default=True)
 
-OPATH = "/org/navico/CzoneCpp"
-IFACE = "org.navico.CzoneCpp"
-BUS_NAME = "org.navico.CzoneCpp"
+OPATH = "/org/navico/HubN2K"
+IFACE = "org.navico.HubN2K.czone"
+BUS_NAME = "org.navico.HubN2K"
 
 
 class N2KDBusSimulator(dbus.service.Object):
@@ -117,32 +117,6 @@ class N2KDBusSimulator(dbus.service.Object):
         return CONFIG_JSON_STRING
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
-    def GetState(self, id: str):
-        if id == "DC.6":
-            return '{"ComponentStatus": "Disconnected", "Voltage": 12.0, "Current": 2.0, "StateOfCharge": 75, "Temperature": 23.11, "CapacityRemaining": 1000.0, "TimeRemaining": 120, "TimeToCharge": 60}'
-        elif id == "DC.7":
-            return '{"ComponentStatus": "Connected", "Voltage": 11.0, "Current": 12.0, "StateOfCharge": 13, "Temperature": 14.11, "CapacityRemaining": 15555.0, "TimeRemaining": 1444, "TimeToCharge": 124}'
-        elif id == "Tank.17":
-            return '{"ComponentStatus": "Connected", "Level": 200, "LevelPercent": 87}'
-        elif id == "AC.1":
-            return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 11.0, "Current": 10.5, "Frequency": 50.0, "Power": 2400.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Disconnected", "Voltage": 11.0, "Current": 59.8, "Frequency": 50.0, "Power": 5555.0}}}'
-        elif id == "Tank.81":
-            return '{"ComponentStatus": "Connected", "Level": 300, "LevelPercent": 92}'
-        elif id == "Engine.0":
-            return '{"ComponentStatus": "Connected", "EngineState": 1, "Speed": 0, "CoolantPressure": 50, "CoolantTemperature": 80.0, "FuelLevel": 50, "EngineHours": 1000}'
-        elif id == "Circuit.0":
-            return '{"IsOffline": false, "Current": 1.5, "Voltage": 12.5, "Level": 100}'
-        if id == "Circuit.114":
-            return self.circuit_state_1
-        elif id == "GNSS.128":
-            return '{"ComponentStatus": "Connected", "FixType": "2D Fix", "LatitudeDeg": 8.5, "LongitudeDeg": 100.0, "Sog": 5.5}'
-        elif id == "InverterCharger.0":
-            return '{"ComponentStatus": "Connected", "InverterEnable": 0, "ChargerEnable": 0, "InverterState": "Inverting", "ChargerState": "Float"}'
-        elif id == "AC.5":
-            return '{"Instance": 1, "AClines": {"1": {"Instance": 1, "Line": 1, "ComponentStatus": "Connected", "Voltage": 1110.0, "Current": 11.5, "Frequency": 11.0, "Power": 1111.0}, "2": {"Instance": 2, "Line": 2, "ComponentStatus": "Connected", "Voltage": 111.0, "Current": 11.8, "Frequency": 111.0, "Power": 111.0}}}'
-        return "{}"
-
-    @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def GetConfig(self, type: str):
         if type == "Engines":
             return '{"Engines":[{"DisplayType":41,"Id":0,"NameUTF8":"Starboard Engine","Instance":{"Enabled":true,"Instance":0},"SoftwareId":"Software_Id_0","CalibrationId":"CalibrationId_0","SerialNumber":"TESTSERIAL","ECUSerialNumber":"TESTECU","EngineType":1}]}'
@@ -166,6 +140,7 @@ class N2KDBusSimulator(dbus.service.Object):
                 "]}"
             )
         return ""
+
     @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
     def AlarmAcknowledge(self, acknowledge_request: str) -> str:
         try:
@@ -193,6 +168,7 @@ class N2KDBusSimulator(dbus.service.Object):
         elif type == "Config":
             return '{"ConfigId":726930,"ConfigVersion":0,"ConfigFileVersion":6,"ConfigName":"test-bench-qa-ui-rel"}'
         return ""
+
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def GetCategories(self):
         # Fill in below with categories
@@ -269,12 +245,12 @@ class Main:
                     },
                 },
                 "Tanks": {
-                    "Tank.17": {
+                    "Tanks.17": {
                         "ComponentStatus": "Connected",
                         "Level": 200,
                         "LevelPercent": 87,
                     },
-                    "Tank.81": {
+                    "Tanks.81": {
                         "ComponentStatus": "Connected",
                         "Level": 300,
                         "LevelPercent": 92,
@@ -342,31 +318,31 @@ class Main:
                     }
                 },
                 "Circuits": {
-                    "Circuit.0": {
+                    "Circuits.0": {
                         "IsOffline": False,
                         "Current": 1.5,
                         "Voltage": 12.5,
                         "Level": 100,
                     },
-                    "Circuit.114": {
+                    "Circuits.114": {
                         "IsOffline": True,
                         "Current": 2.5,
                         "Voltage": 8.5,
                         "Level": 0,
                     },
-                    "Circuit.135": {
+                    "Circuits.135": {
                         "IsOffline": True,
                         "Current": 2.5,
                         "Voltage": 8.5,
                         "Level": 0,
                     },
-                    "Circuit.138": {
+                    "Circuits.138": {
                         "IsOffline": True,
                         "Current": 2.5,
                         "Voltage": 8.5,
                         "Level": 0,
                     },
-                    "Circuit.141": {
+                    "Circuits.141": {
                         "IsOffline": False,
                         "Current": 2.5,
                         "Voltage": 8.5,
@@ -383,7 +359,7 @@ class Main:
                     },
                 },
                 "InverterChargers": {
-                    "InverterCharger.0": {
+                    "InverterChargers.0": {
                         "ComponentStatus": "Connected",
                         "InverterEnable": 0,
                         "ChargerEnable": 0,

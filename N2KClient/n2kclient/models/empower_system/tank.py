@@ -39,7 +39,7 @@ class TankBase(Thing):
             categories=categories,
             links=links,
         )
-        self.tank_device_id = f"{JsonKeys.TANK}.{tank.instance.instance}"
+        self.tank_device_id = f"{JsonKeys.TANKS}.{tank.instance.instance}"
         if tank.tank_capacity is not None and tank.tank_capacity != 0:
             self.metadata[
                 f"{Constants.empower}:{Constants.tank}.{Constants.capacity}"

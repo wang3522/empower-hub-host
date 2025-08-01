@@ -65,7 +65,7 @@ def determine_circuit_control_operation(
 
 
 def control_circuit_switch(
-    send_control, circuit_id: str, throw_type: ThrowType, logger=None
+    send_control, circuit_id: int, throw_type: ThrowType, logger=None
 ) -> bool:
     if not send_and_check(
         send_control,
@@ -86,7 +86,7 @@ def control_circuit_switch(
 
 
 def control_circuit_level(
-    send_control, circuit_id: str, target_level: int, logger=None
+    send_control, circuit_id: int, target_level: int, logger=None
 ) -> bool:
     if not send_and_check(
         send_control,

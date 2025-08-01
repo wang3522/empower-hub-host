@@ -382,9 +382,9 @@ class AttrNames:
 
 
 class Constants:
-    N2K_SERVICE_NAME = "org.navico.CzoneCpp"
-    N2K_OBJECT_PATH = "/org/navico/CzoneCpp"
-    N2K_INTERFACE_NAME = "org.navico.CzoneCpp"
+    N2K_SERVICE_NAME = "org.navico.HubN2K"
+    N2K_OBJECT_PATH = "/org/navico/HubN2K"
+    N2K_INTERFACE_NAME = "org.navico.HubN2K.czone"
     GET_STATE_SERVICE_METHOD_NAME = "GetState"
     GET_CONFIG_SERVICE_METHOD_NAME = "GetConfig"
     GET_CONFIG_ALL_SERVICE_METHOD_NAME = "GetConfigAll"
@@ -401,7 +401,6 @@ class Constants:
     N2K_SETTINGS_KEY = "N2KSettings"
     Control = "Control"
     WORKER_KEY = "N2K_WORKER"
-    STATE_TIMEOUT_KEY = "STATE_TIMEOUT"
     DBUS_N2K_CLIENT = "DBUS_N2K_CLIENT"
     Config_Parser = "Config Parser"
     Alarm_Service = "Alarm Service"

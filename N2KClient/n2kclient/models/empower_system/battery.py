@@ -137,7 +137,7 @@ class Battery(Thing):
         )
         self._define_channel(channel)
         battery_enable_subject = n2k_devices.get_channel_subject(
-            f"{JsonKeys.CIRCUIT}.{self.battery_circuit_id}",
+            f"{JsonKeys.CIRCUITS}.{self.battery_circuit_id}",
             CircuitStates.Level.value,
             N2kDeviceType.CIRCUIT,
         )
