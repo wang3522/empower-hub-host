@@ -3535,7 +3535,7 @@ AlarmRequest::AlarmRequest(const json &j) {
     }
 
   } catch (const std::exception &e) {
-    throw std::runtime_error("ControlRequest::ControlRequest error while generating ControlRequest object.");
+    throw std::runtime_error("AlarmRequest::AlarmRequest error while generating AlarmRequest object.");
   }
 }
 
