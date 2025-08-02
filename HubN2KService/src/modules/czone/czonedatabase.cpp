@@ -973,7 +973,7 @@ void CzoneDatabase::UpdateMonitoringHVACs(N2KMonitoring::SnapshotInstanceIdMap &
         {eCZone_Generic_Instance, false, 0.0f, "Instance", instance},
         {eCZone_Hvac_OperatingMode, false, 0.0f, "OperationMode", instance},
         {eCZone_Hvac_FanMode, false, 0.0f, "FanMode", instance},
-        {eCZone_Hvac_FanSpeed, false, 0.0f, "Fanspeed", instance},
+        {eCZone_Hvac_FanSpeed, false, 0.0f, "FanSpeed", instance},
         {eCZone_Environment_SetTemperature, false, 0.0f, "EnvironmentSetTemperature", instance},
         {eCZone_Environment_Temperature, false, 0.0f, "EnvironmentTemperature", instance}};
 
