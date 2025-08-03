@@ -45,7 +45,7 @@ class EmpowerService:
     # active_alarms: rx.Observable[AlarmList]
     # engine_alerts: rx.Observable[EngineAlertList]
     discovered_engines: rx.Observable[EngineList]
-    telemetry_consent: bool
+    telemetry_consent: bool = True
     _prev_system_subscription: rx.abc.DisposableBase = None
     _prev_engine_list_subscription: rx.abc.DisposableBase = None
 
