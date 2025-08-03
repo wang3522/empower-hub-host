@@ -253,17 +253,32 @@ class LocationService:
         self._logger.info("Setting geofence point and radius from value: %s", value)
         if value is not None:
             geofence_center = value.get(Constants.center)
-            self.geofence_point = GeoPoint(
+            new_geofence_point = GeoPoint(
                 latitude=geofence_center.get(Constants.latitude),
                 longitude=geofence_center.get(Constants.longitude),
             )
-            self.geofence_radius = value.get(Constants.radius)
-            self._logger.info(
-                "Geofence point set to %s with radius %s",
-                self.geofence_point,
-                self.geofence_radius,
-            )
-            self.geofence_ready.on_next(True)
+            new_geofence_radius = value.get(Constants.radius)
+            if (
+                new_geofence_point.latitude is not None and new_geofence_point.longitude is not None
+                and (
+                    new_geofence_point.latitude != self.geofence_point.latitude
+                    or new_geofence_point.longitude != self.geofence_point.longitude
+                )
+                or new_geofence_radius != self.geofence_radius
+            ):
+                self._logger.info(
+                    "Geofence point set to lat %s long %s with radius %s",
+                    new_geofence_point.latitude,
+                    new_geofence_point.longitude,
+                    self.geofence_radius,
+                )
+                self.geofence_point = new_geofence_point
+                self.geofence_radius = new_geofence_radius
+                self.geofence_ready.on_next(True)
+                # New geofence point is set, reset the geofence counter
+                self.geofence_counter = 0
+            else:
+                self._logger.debug("Geofence point not changed or invalid")
         else:
             self.geofence_point = None
 
