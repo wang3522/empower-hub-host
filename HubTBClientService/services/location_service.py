@@ -239,6 +239,8 @@ class LocationService:
         if value is not None:
             self.geofence_consent = value
             self._logger.info("Geofence consent set to %s", value)
+            if value is False:
+                self.geofence_counter = 0
 
     def set_geofence_point(self, value: dict):
         """
@@ -278,7 +280,12 @@ class LocationService:
         Returns:
             None
         """
-        if not self.geofence_consent or not self.location_consent:
+        if (
+            self.geofence_consent is None
+            or not self.geofence_consent
+            or self.location_consent is None
+            or not self.location_consent
+        ):
             self._logger.warning("Geofence or location consent is set to disabled")
             return False
 
@@ -706,7 +713,12 @@ class LocationService:
 
         sleep_time = 0
         while not self.gpsd_thread_event.wait(sleep_time):
-            self._logger.debug("sleeping for %s seconds", sleep_time)
+            if self.location_consent is None or not self.location_consent:
+                self._logger.warning(
+                    "Location consent is set to disabled, not fetching GPS data"
+                )
+                sleep_time = LOCATION_GPSD_UPDATE_INTERVAL
+                continue
             try:
                 # Fetch the current GPS data
                 packet = self.gnss_connection.get_location()
@@ -813,3 +825,4 @@ class LocationService:
                 self._logger.error("Error getting gpsd data: %s", e)
             # Set the gpsd interval back to the original config version
             sleep_time = LOCATION_GPSD_UPDATE_INTERVAL
+            self._logger.debug("sleeping for %s seconds", sleep_time)
