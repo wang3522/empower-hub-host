@@ -21,6 +21,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 from mqtt_client import ThingsBoardClient
 from dict_diff import dict_diff
 from services.sync_service import SyncService
+from services.rpc_handler_service import RpcHandlerService
 from tb_utils.constants import Constants
 from services.config import (
     telemetry_filter_patterns,
@@ -30,7 +31,7 @@ from services.config import (
 from n2kclient.models.empower_system.engine_list import EngineList
 from n2kclient.models.empower_system.empower_system import EmpowerSystem
 from n2kclient.client import N2KClient
-from n2kclient.models.devices import N2kDevice, N2kDevices
+from n2kclient.models.devices import N2kDevices
 from .location_service import LocationService
 
 class EmpowerService:
@@ -42,6 +43,7 @@ class EmpowerService:
     thingsboard_client: ThingsBoardClient
     n2k_client: N2KClient = N2KClient()
     location_service: LocationService
+    rpc_handler_service: RpcHandlerService = None  # Placeholder for RPC handler service
     # active_alarms: rx.Observable[AlarmList]
     # engine_alerts: rx.Observable[EngineAlertList]
     discovered_engines: rx.Observable[EngineList]
@@ -58,6 +60,7 @@ class EmpowerService:
         self._logger = logging.getLogger("EmpowerService")
         self.thingsboard_client = ThingsBoardClient()
         self.n2k_client = N2KClient()
+        self.rpc_handler_service = RpcHandlerService(self.n2k_client)
         self._service_init_disposables = []
         self._prev_empower_system = None
         self._prev_engine_list = None

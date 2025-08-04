@@ -10,6 +10,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 #pylint: disable=import-error, wrong-import-position
 from mqtt_client import ThingsBoardClient
 from tb_utils.constants import Constants
+from n2kclient.client import N2KClient
+from n2kclient.models.empower_system.thing import Thing
+from n2kclient.models.empower_system.channel import Channel
+from n2kclient.models.empower_system.circuit_thing import CircuitThing
+from n2kclient.models.empower_system.battery import Battery
 
 class ControlResult:
     """
@@ -45,13 +50,15 @@ class RpcHandlerService:
     _logger = logging.getLogger(__name__)
 
     thingsboard_client: ThingsBoardClient
+    n2k_client: N2KClient
 
     _stdout = ""
     _stdin = ""
     _stderr = ""
 
-    def __init__(self):
+    def __init__(self, n2k_client):
         self.thingsboard_client = ThingsBoardClient()
+        self.n2k_client = n2k_client
         self.register_rpc_callbacks()
 
     def __getCommandStatus_rpc_handler(self, body: dict[str, any]):
@@ -73,7 +80,6 @@ class RpcHandlerService:
         self.thingsboard_client.set_rpc_handler(
             "getCommandStatus", self.__getCommandStatus_rpc_handler
         )
-        self.thingsboard_client.set_rpc_handler("setValue", self.__setValue_rpc_handler)
         self.thingsboard_client.set_rpc_handler("control", self.__control_rpc_handler)
         self.thingsboard_client.set_rpc_handler(
             "writeConfig", self.__write_config_rpc_handler
@@ -137,25 +143,6 @@ class RpcHandlerService:
                 ),
             )
 
-    def __setValue_rpc_handler(self, body: dict[str, any]):
-        self._logger.info("Received control command: %s", body)
-        # data = list(body.keys())[0].split('/')
-        data = body.split("/")
-        key = data[0]
-        state = data[1]
-        self._logger.info(f"key: {key}, value: {state}")
-        # TODO: Rework to get the things in a better way.
-        # for thing_id in self._latest_cloud_config.things:
-        #     thing = self._latest_cloud_config.things[thing_id]
-        #     for channel_id in thing.channels:
-        #         if channel_id == key:
-        #             channel = thing.channels[channel_id]
-        #             # TODO: Add thing and channel to control component
-        #             # self.__control_component(thing, channel, state)
-        #             self.__control_component(state)
-        #             return
-        return
-
     def __acknowledge_alarm_handler(self, body: dict[str, any]):
         self._logger.info("Received acknowledge alarm command: %s", body)
         try:
@@ -213,20 +200,23 @@ class RpcHandlerService:
             attribute_id = body["attributeId"]
             state = body["state"]
 
-            # TODO: Rework things to get the things in a better way.
-            # if not thing_id in self._latest_cloud_config.things:
-            #     raise Exception(f"Thing with ID {thing_id} not found")
+            print("desired state is a float:", isinstance(state, float))
+            print("desired state is a bool:", isinstance(state, bool))
+            print("desired state is an int:", isinstance(state, int))
 
-            # thing = self._latest_cloud_config.things[thing_id]
+            latest_config = self.n2k_client.get_empower_system()
+            if latest_config is None:
+                raise Exception("Config is not yet available")
 
-            # if not attribute_id in thing.channels:
-            #     raise Exception(f"Attribute with ID {attribute_id} not found")
+            thing = latest_config.things.get(thing_id, None)
+            if thing is None:
+                raise Exception(f"Thing with ID {thing_id} not found")
 
-            # attribute = thing.channels[attribute_id]
+            target_attribute = thing.channels.get(attribute_id, None)
+            if target_attribute is None:
+                raise Exception(f"Attribute with ID {attribute_id} not found")
 
-            # TODO: Add thing and attribute to control component
-            # result = self.__control_component(thing, attribute, state)
-            result = self.__control_component(state)
+            result = self.__control_component(thing, target_attribute, state)
 
             return result.to_json()
 
@@ -238,29 +228,35 @@ class RpcHandlerService:
 
     def __control_component(
         self,
-        # thing: Thing,
-        # attribute: Channel,
-        state: Union[int, bool],
+        thing: Thing,
+        attribute: Channel,
+        state: Union[int, bool, float],
     ) -> ControlResult:
         # self._logger.info(
         #     f"Controlling {thing.name} ({thing.id}) attribute {attribute.name} ({attribute.id}) to {state}"
         # )
         self._logger.info(f"Controlling component with state: {state}")
 
+        print(type(thing))
+        print("attribute id: ", attribute.id)
+        print(attribute.to_json())
+
         try:
             # TODO: Implement the control logic for the controlling components
-            # if (
-            #     isinstance(thing, CircuitThing)
-            #     and attribute.id == Constants.powerChannel
-            # ):
-            #     desired_on = False
-            #     if state == 1 or state == True:
-            #         desired_on = True
+            if (
+                isinstance(thing, CircuitThing)
+                and attribute.id == Constants.powerChannel
+            ):
+                print("CircuitThing found")
+                desired_on = False
+                if state == 1 or state == True:
+                    desired_on = True
 
-            #     successful = self.n2k_client.set_circuit_state(
-            #         thing.circuit_runtime_id, desired_on
-            #     )
-            #     return ControlResult(successful, None)
+                # successful = self.n2k_client.set_circuit_state(
+                #     thing.circuit_runtime_id, desired_on
+                # )
+                successful = True
+                return ControlResult(successful, None)
 
             # elif isinstance(thing, Battery) and attribute.id == Constants.enabled:
             #     if thing.battery_circuit_id is not None:
