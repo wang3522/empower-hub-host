@@ -1903,6 +1903,25 @@ AlarmsList CzoneInterface::alarmList(const bool IsLog, const bool IsRaw) {
   return response;
 }
 
+AlarmsList CzoneInterface::alarmList() {
+  if (m_wakeUp) {
+    return m_wakeUpAlarmList;
+  }
+
+  AlarmsList response;
+  auto AlarmsLog = displayListNoLock(eCZoneStructDisplayAlarmLog);
+  for (auto &a : AlarmsLog) {
+    auto &alarm = response.add_alarm();
+    populateAlarm(alarm, a.Alarm, true, false);
+  }
+  auto Alarms = displayListNoLock(eCZoneStructDisplayAlarm);
+  for (auto &a : Alarms) {
+    auto &alarm = response.add_alarm();
+    populateAlarm(alarm, a.Alarm, false, false);
+  }
+  return response;
+}
+
 std::string CzoneInterface::libraryVersion() const {
   std::lock_guard<std::mutex> lock(m_canMutex);
   tCZoneLibraryInformation info;
@@ -3003,6 +3022,42 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
           return ""; // warning
         }
       });
+
+  dbusService->registerService("AlarmList", "czone", [ptr = this, dbusService]() -> std::string {
+    try {
+      json response;
+      auto alarms = ptr->alarmList();
+
+      response["Alarms"] = alarms.get_alarms();
+      return response.dump();
+    } catch (const std::exception &e) {
+      BOOST_LOG_TRIVIAL(error) << "AlarmList:Error " << e.what();
+      dbusService->throwError("AlarmList: " + std::string(e.what()));
+      return ""; // warning
+    }
+  });
+
+  dbusService->registerService("AlarmAcknowledge", "czone",
+                               [ptr = this, dbusService](std::string alarmRequestStr) -> std::string {
+                                 try {
+                                   json response;
+                                   AlarmRequest request(json::parse(alarmRequestStr));
+
+                                   if (request.m_id == nullptr || request.m_accepted == nullptr) {
+                                     throw std::invalid_argument("[Id, Accepted] argument is required.");
+                                   }
+
+                                   ptr->alarmAcknowledge(*request.m_id, *request.m_accepted);
+
+                                   response["Result"] = "Ok";
+
+                                   return response.dump();
+                                 } catch (const std::exception &e) {
+                                   BOOST_LOG_TRIVIAL(error) << "AlarmAcknowledge:Error " << e.what();
+                                   dbusService->throwError("AlarmAcknowledge: " + std::string(e.what()));
+                                   return ""; // warning
+                                 }
+                               });
 
   dbusService->registerSignal("Event", "czone");
   registerEventCallback([&dbusService](std::shared_ptr<Event> event) {

@@ -354,3 +354,9 @@ class eEventType(Enum):
     CZoneRaw = 10
     SystemLowPowerMode = 11
     SystemHostActive = 12
+
+
+class ConnectionStatus(str, Enum):
+    DISCONNECTED = "Disconnected"
+    CONNECTED = "Connected"
+    IDLE = "Idle"

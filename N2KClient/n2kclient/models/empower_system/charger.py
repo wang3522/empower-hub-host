@@ -88,6 +88,7 @@ class CombiCharger(Thing):
         ############################
         self.define_dc_lines(dc1, dc2, dc3, n2k_devices)
         self.define_combi_channels(charger_circuit, n2k_devices)
+        self.define_charger_component_status_channel(n2k_devices)
 
     def define_dc_lines(self, dc1: DC, dc2: DC, dc3: DC, n2k_devices: N2kDevices):
         if dc1 is not None:
@@ -303,6 +304,41 @@ class CombiCharger(Thing):
                 ops.distinct_until_changed(),
             ),
         )
+
+    def define_charger_component_status_channel(self, n2k_devices: N2kDevices):
+        ##############################
+        # Component Status
+        ##############################
+        channel = Channel(
+            id="cs",
+            name="Component Status",
+            type=ChannelType.STRING,
+            unit=Unit.NONE,
+            read_only=False,
+            tags=[f"{Constants.empower}:{Constants.charger}.componentStatus"],
+        )
+        self._define_channel(channel)
+
+        component_status_subject = n2k_devices.get_channel_subject(
+            self.n2k_device_id,
+            CombiChargerStates.ComponentStatus.value,
+            N2kDeviceType.INVERTERCHARGER,
+        )
+
+        self.component_status = component_status_subject.pipe(
+            ops.filter(lambda state: state is not None),
+            ops.map(
+                lambda status: (
+                    ConnectionStatus.CONNECTED
+                    if status == "Connected"
+                    else ConnectionStatus.DISCONNECTED
+                )
+            ),
+            ops.map(lambda status: StateWithTS(status).to_json()),
+            ops.distinct_until_changed(lambda state: state[Constants.state]),
+        )
+
+        n2k_devices.set_subscription(channel.id, self.component_status)
 
 
 class ACMeterCharger(ACMeterThingBase):

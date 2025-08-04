@@ -3524,3 +3524,26 @@ SettingRequest &SettingRequest::operator=(const SettingRequest &other) {
   }
   return *this;
 }
+
+AlarmRequest::AlarmRequest(const json &j) {
+  try {
+    if (j.contains("Id")) {
+      m_id = std::make_unique<uint32_t>(j["Id"].get<uint32_t>());
+    }
+    if (j.contains("Accepted")) {
+      m_accepted = std::make_unique<bool>(j["Accepted"].get<bool>());
+    }
+
+  } catch (const std::exception &e) {
+    throw std::runtime_error("AlarmRequest::AlarmRequest error while generating AlarmRequest object.");
+  }
+}
+
+AlarmRequest::AlarmRequest(const AlarmRequest &other) {
+  if (other.m_id) {
+    m_id = std::make_unique<uint32_t>(*other.m_id);
+  }
+  if (other.m_accepted) {
+    m_accepted = std::make_unique<bool>(*other.m_accepted);
+  }
+}
