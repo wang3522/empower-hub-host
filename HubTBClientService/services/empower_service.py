@@ -45,7 +45,7 @@ class EmpowerService:
     # active_alarms: rx.Observable[AlarmList]
     # engine_alerts: rx.Observable[EngineAlertList]
     discovered_engines: rx.Observable[EngineList]
-    telemetry_consent: rx.Observable[bool]
+    telemetry_consent: bool = True
     _prev_system_subscription: rx.abc.DisposableBase = None
     _prev_engine_list_subscription: rx.abc.DisposableBase = None
 
@@ -286,6 +286,10 @@ class EmpowerService:
         """
         Handle state changes for the given devices.
         """
+        if self.telemetry_consent is None or not self.telemetry_consent:
+            self._logger.debug("Telemetry consent not granted, skipping device state changes.")
+            return
+
         mobile_dict = devices.to_mobile_dict()
 
         telemetry_attrs = {
@@ -317,10 +321,24 @@ class EmpowerService:
 
     # TODO: Set up some sort of n2k_server_connection state
 
+    def set_telemetry_consent(self, value: bool):
+        if value is not None:
+            self.telemetry_consent = value
+            self._logger.info("Telemetry consent set to: %s", value)
+
     def __setup_subscriptions(self):
         """
         Set up subscriptions for the EmpowerService.
         """
+        # ======= ThingsBoard Client Subscriptions =======
+        self.sync_service.subscribe_to_attribute(Constants.TELEMETRY_CONSENT_ENABLED_KEY)
+        behavior_subject = self.sync_service.get_attribute_subject(
+            key=Constants.TELEMETRY_CONSENT_ENABLED_KEY
+        )
+        if behavior_subject is not None:
+            dispose = behavior_subject.subscribe(self.set_telemetry_consent)
+            self._service_init_disposables.append(dispose)
+        # ======= N2K Client Subscriptions =======
         # Subscribe to mobile friendly engine configuration
         disposable = (self.n2k_client.get_engine_list_observable()
                       .subscribe(self._update_engine_configuration))
@@ -469,7 +487,7 @@ class EmpowerService:
         self._logger.debug("Starting ThingsBoard client...")
         self.thingsboard_client.connect()
         self._logger.debug("Starting location service")
-        # TODO: Connect to thingsboard, start location service, setup n2k connection status
+        # TODO: setup n2k connection status
         self.location_service.start()
 
         # TODO: Subscribe to active alarms
