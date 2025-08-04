@@ -232,10 +232,9 @@ class RpcHandlerService:
         attribute: Channel,
         state: Union[int, bool, float],
     ) -> ControlResult:
-        # self._logger.info(
-        #     f"Controlling {thing.name} ({thing.id}) attribute {attribute.name} ({attribute.id}) to {state}"
-        # )
-        self._logger.info(f"Controlling component with state: {state}")
+        self._logger.info(
+            f"Controlling {thing.name} ({thing.id}) attribute {attribute.name} ({attribute.id}) to {state}"
+        )
 
         print(type(thing))
         print("attribute id: ", attribute.id)
