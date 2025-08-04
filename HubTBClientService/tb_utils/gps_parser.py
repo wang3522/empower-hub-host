@@ -115,7 +115,7 @@ class GPSParser:
 if __name__ == "__main__":
     # Temporary Constants for testing
     class Constants:
-        TS = "ts"
+        ts = "ts"
         LAT = "lat"
         LONG = "long"
         sp = "sp"
