@@ -56,6 +56,13 @@ def map_charger_state(state: str) -> str:
 
 
 class CombiCharger(Thing):
+    """
+    Represents a charger device created from InverterCharger in the Empower system.
+
+    Handles the creation and management of DC line channels, charger status, component status,
+    and alarm settings. Integrates with N2kDevices and RxPy for real-time updates.
+    """
+
     instance: int
     component_status: rx.Observable[dict[str, any]]
 
@@ -70,6 +77,19 @@ class CombiCharger(Thing):
         n2k_devices: N2kDevices,
         charger_circuit: Optional[Circuit] = None,
     ):
+        """
+        Initialize the CombiCharger and set up all relevant DC line channels, charger status, and component status.
+
+        Args:
+            inverter_charger (InverterChargerDevice): The inverter/charger device configuration.
+            dc1 (DC): The first DC line configuration.
+            dc2 (DC): The second DC line configuration.
+            dc3 (DC): The third DC line configuration.
+            categories (list[str]): List of categories for this charger.
+            instance (int): The instance number for this charger.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            charger_circuit (Optional[Circuit]): Associated circuit for this charger, if any.
+        """
         if charger_circuit is not None:
             self.charger_circuit = charger_circuit.id.value
             self.charger_circuit_control_id = charger_circuit.control_id
@@ -91,6 +111,15 @@ class CombiCharger(Thing):
         self.define_charger_component_status_channel(n2k_devices)
 
     def define_dc_lines(self, dc1: DC, dc2: DC, dc3: DC, n2k_devices: N2kDevices):
+        """
+        Define all DC line channels and metadata for up to three batteries.
+
+        Args:
+            dc1 (DC): The first DC line configuration.
+            dc2 (DC): The second DC line configuration.
+            dc3 (DC): The third DC line configuration.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         if dc1 is not None:
             self.metadata[
                 f"{Constants.empower}:{Constants.charger}.{Constants.battery1}.{Constants.name}"
@@ -115,6 +144,14 @@ class CombiCharger(Thing):
     def define_dc_line_channels(
         self, battery_number: int, n2k_devices: N2kDevices, dc: DC
     ):
+        """
+        Define all channels for a single DC line (component status, voltage, current) and alarm settings.
+
+        Args:
+            battery_number (int): The battery number (1, 2, or 3).
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            dc (DC): The DC configuration for this battery.
+        """
         dc_device_id = f"{JsonKeys.DC}.{dc.instance.instance}"
 
         battery_const = BATTERY_CONST_MAP.get(battery_number)
@@ -131,14 +168,12 @@ class CombiCharger(Thing):
                 f"{Constants.empower}:{Constants.charger}.{battery_const}.{Constants.componentStatus}"
             ],
         )
-        self._define_channel(channel)
-
         dc1_component_status_subject = n2k_devices.get_channel_subject(
             dc_device_id, DCMeterStates.ComponentStatus.value, N2kDeviceType.DC
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             dc1_component_status_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(
@@ -167,13 +202,12 @@ class CombiCharger(Thing):
             ],
         )
 
-        self._define_channel(channel)
         dc_voltage_subject = n2k_devices.get_channel_subject(
             dc_device_id, DCMeterStates.Voltage.value, N2kDeviceType.DC
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             dc_voltage_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Voltage.ROUND_VALUE),
@@ -194,12 +228,11 @@ class CombiCharger(Thing):
                 f"{Constants.empower}:{Constants.charger}.{battery_const}.{Constants.current}"
             ],
         )
-        self._define_channel(channel)
         dc_current_subject = n2k_devices.get_channel_subject(
             dc_device_id, DCMeterStates.Current.value, N2kDeviceType.DC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             dc_current_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Current.ROUND_VALUE),
@@ -235,6 +268,13 @@ class CombiCharger(Thing):
     def define_combi_channels(
         self, charger_circuit: Optional[Circuit], n2k_devices: N2kDevices
     ):
+        """
+        Define charger enable and charger status channels for the CombiCharger.
+
+        Args:
+            charger_circuit (Optional[Circuit]): Associated circuit for this charger, if any.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ####################
         #  Charger Enabled
         ####################
@@ -250,7 +290,6 @@ class CombiCharger(Thing):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.charger}.enabled"],
         )
-        self._define_channel(channel)
 
         charger_enable_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id,
@@ -275,7 +314,7 @@ class CombiCharger(Thing):
                 ops.distinct_until_changed(),
             )
             charger_enable = rx.merge(charger_ce, circuit_ce)
-        n2k_devices.set_subscription(channel.id, charger_enable)
+        n2k_devices.set_subscription(self._define_channel(channel), charger_enable)
 
         ####################
         #  Charger Status
@@ -288,7 +327,6 @@ class CombiCharger(Thing):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.charger}.status"],
         )
-        self._define_channel(channel)
 
         inverter_charger_status_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id,
@@ -297,7 +335,7 @@ class CombiCharger(Thing):
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             inverter_charger_status_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(lambda state: map_charger_state(state)),
@@ -306,6 +344,12 @@ class CombiCharger(Thing):
         )
 
     def define_charger_component_status_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the component status channel for the CombiCharger.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ##############################
         # Component Status
         ##############################
@@ -317,7 +361,6 @@ class CombiCharger(Thing):
             read_only=False,
             tags=[f"{Constants.empower}:{Constants.charger}.componentStatus"],
         )
-        self._define_channel(channel)
 
         component_status_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id,
@@ -338,11 +381,26 @@ class CombiCharger(Thing):
             ops.distinct_until_changed(lambda state: state[Constants.state]),
         )
 
-        n2k_devices.set_subscription(channel.id, self.component_status)
+        n2k_devices.set_subscription(
+            self._define_channel(channel), self.component_status
+        )
 
 
 class ACMeterCharger(ACMeterThingBase):
+    """
+    Represents an AC meter charger device in the Empower system.
+
+    Handles the creation and management of AC line channels, charger status, and circuit enable channels.
+    Integrates with N2kDevices and RxPy for real-time updates.
+    """
+
     def _calc_charger_state(self) -> str:
+        """
+        Calculate the overall charger state based on the connection status of all lines.
+
+        Returns:
+            str: "charging" if any line is connected, otherwise "disabled".
+        """
         return "charging" if StateUtil.any_true(self.line_connected) else "disabled"
 
     def __init__(
@@ -354,6 +412,17 @@ class ACMeterCharger(ACMeterThingBase):
         categories: list[str],
         circuit: Optional[Circuit] = None,
     ):
+        """
+        Initialize the ACMeterCharger and set up all relevant AC line channels, charger status, and circuit enable channels.
+
+        Args:
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            categories (list[str]): List of categories for this charger.
+            circuit (Optional[Circuit]): Associated circuit for this charger, if any.
+        """
         ACMeterThingBase.__init__(
             self, ThingType.CHARGER, ac_line1, ac_line2, ac_line3, categories
         )
@@ -376,6 +445,16 @@ class ACMeterCharger(ACMeterThingBase):
         n2k_devices: N2kDevices,
         circuit: Optional[Circuit] = None,
     ):
+        """
+        Define all AC meter charger channels (status and circuit enable).
+
+        Args:
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            circuit (Optional[Circuit]): Associated circuit for this charger, if any.
+        """
         self.define_ac_meter_charger_status_channel(
             ac_line1, ac_line2, ac_line3, n2k_devices
         )
@@ -385,6 +464,13 @@ class ACMeterCharger(ACMeterThingBase):
     def define_ac_meter_charger_circuit_enable_channel(
         self, circuit: Circuit, n2k_devices: N2kDevices
     ):
+        """
+        Define the circuit enable channel for the ACMeterCharger.
+
+        Args:
+            circuit (Circuit): The associated circuit for this charger.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         self.charger_circuit = circuit.id.value
         self.charger_circuit_control_id = circuit.control_id
         ####################
@@ -398,7 +484,6 @@ class ACMeterCharger(ACMeterThingBase):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.charger}.{Constants.enabled}"],
         )
-        self._define_channel(channel)
 
         circuit_level_subject = n2k_devices.get_channel_subject(
             f"{JsonKeys.CIRCUITS}.{self.charger_circuit}",
@@ -411,11 +496,20 @@ class ACMeterCharger(ACMeterThingBase):
             ops.map(lambda level: 1 if level > 0 else 0),
             ops.distinct_until_changed(),
         )
-        n2k_devices.set_subscription(channel.id, charger_enable)
+        n2k_devices.set_subscription(self._define_channel(channel), charger_enable)
 
     def define_ac_meter_charger_status_channel(
         self, ac_line1: AC, ac_line2: AC, ac_line3: AC, n2k_devices: N2kDevices
     ):
+        """
+        Define the charger status channel for the ACMeterCharger and manage line connection state.
+
+        Args:
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ####################
         #  Charger Status
         ####################
@@ -427,8 +521,6 @@ class ACMeterCharger(ACMeterThingBase):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.charger}.{Constants.status}"],
         )
-
-        self._define_channel(channel)
 
         ac_id = f"{JsonKeys.AC}.{ac_line1.instance.instance}"
         if ac_line1 is not None:
@@ -479,7 +571,7 @@ class ACMeterCharger(ACMeterThingBase):
             self._disposable_list.append(ac_line3_state)
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             self.line_state_subject.pipe(
                 ops.distinct_until_changed(),
             ),

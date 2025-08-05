@@ -52,6 +52,7 @@ from ...util.common_utils import (
     calculate_inverter_charger_instance,
     get_associated_circuit,
 )
+from ...models.n2k_configuration.dc import DCType
 
 
 class ConfigProcessor:
@@ -329,25 +330,26 @@ class ConfigProcessor:
                 dc_meter.id,
                 config,
             )
-            circuit = get_associated_circuit(
-                ItemType.DcMeter,
-                dc_meter.id,
-                config,
-            )
-            primary_dc = get_primary_dc_meter(dc_meter.id, config)
-            secondary_dc = get_fallback_dc_meter(dc_meter.id, config)
-            if circuit is not None:
-                self._associated_circuit_instances.append(circuit.control_id)
+            if dc_meter.dc_type == DCType.Battery and len(categories) == 0:
+                circuit = get_associated_circuit(
+                    ItemType.DcMeter,
+                    dc_meter.id,
+                    config,
+                )
+                primary_dc = get_primary_dc_meter(dc_meter.id, config)
+                secondary_dc = get_fallback_dc_meter(dc_meter.id, config)
+                if circuit is not None:
+                    self._associated_circuit_instances.append(circuit.control_id)
 
-            dc_thing = Battery(
-                battery=dc_meter,
-                categories=categories,
-                battery_circuit=circuit,
-                primary_battery=primary_dc,
-                fallback_battery=secondary_dc,
-                n2k_devices=n2k_devices,
-            )
-            self._things.append(dc_thing)
+                dc_thing = Battery(
+                    battery=dc_meter,
+                    categories=categories,
+                    battery_circuit=circuit,
+                    primary_battery=primary_dc,
+                    fallback_battery=secondary_dc,
+                    n2k_devices=n2k_devices,
+                )
+                self._things.append(dc_thing)
 
     # ###################################################
     #     GNSS

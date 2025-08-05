@@ -14,12 +14,27 @@ from ..common_enums import N2kDeviceType, GNSSStates
 
 
 class GNSS(Thing):
+    """
+    Represents a GNSS (GPS) device in the Empower system.
+
+    Handles the creation and management of GNSS-related channels (component status, fix type, location),
+    and integrates with N2kDevices and RxPy for real-time updates.
+    """
+
     def __init__(
         self,
         gnss: GNSSDevice,
         n2k_devices: N2kDevices,
         categories: list[str] = [],
     ):
+        """
+        Initialize the GNSS thing and set up all relevant GNSS channels.
+
+        Args:
+            gnss (GNSSDevice): The GNSS device configuration for this thing.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            categories (list[str], optional): List of categories for this GNSS thing.
+        """
         Thing.__init__(
             self,
             ThingType.GNSS,
@@ -37,11 +52,23 @@ class GNSS(Thing):
         self.define_gnss_channels(n2k_devices)
 
     def define_gnss_channels(self, n2k_devices: N2kDevices):
+        """
+        Define all GNSS-related channels for the GNSS device.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         self.define_component_status(n2k_devices)
         self.define_fix_type_channel(n2k_devices)
         self.define_location_channel(n2k_devices)
 
     def define_component_status(self, n2k_devices: N2kDevices):
+        """
+        Define the component status channel for the GNSS device.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ##########################
         # Component Status
         ##########################
@@ -55,12 +82,11 @@ class GNSS(Thing):
                 f"{Constants.empower}:{Constants.location}.{Constants.componentStatus}"
             ],
         )
-        self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
             self.gnss_device_id, GNSSStates.ComponentStatus.value, N2kDeviceType.GNSS
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             component_status_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(
@@ -76,6 +102,12 @@ class GNSS(Thing):
         )
 
     def define_fix_type_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the fix type channel for the GNSS device.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ##########################
         # Fix Type
         ##########################
@@ -87,12 +119,11 @@ class GNSS(Thing):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.location}.fixType"],
         )
-        self._define_channel(channel)
         fix_type_subject = n2k_devices.get_channel_subject(
             self.gnss_device_id, GNSSStates.FixType.value, N2kDeviceType.GNSS
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             fix_type_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(
@@ -110,6 +141,12 @@ class GNSS(Thing):
         )
 
     def define_location_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the location channel for the GNSS device.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ##########################
         # Location
         ##########################
@@ -121,7 +158,6 @@ class GNSS(Thing):
             unit=Unit.GEOJSON_POINT,
             tags=[f"{Constants.empower}:{Constants.location}.position"],
         )
-        self._define_channel(channel)
         lattitude_subject = n2k_devices.get_channel_subject(
             self.gnss_device_id, GNSSStates.LatitudeDeg.value, N2kDeviceType.GNSS
         )
@@ -135,7 +171,7 @@ class GNSS(Thing):
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             rx.combine_latest(
                 lattitude_subject,
                 longitude_subject,

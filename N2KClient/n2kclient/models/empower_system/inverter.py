@@ -51,11 +51,24 @@ def map_inverter_state(state: str) -> str:
 
 
 class InverterBase(Thing):
+    """
+    Base class for inverter devices in the Empower system.
+
+    Handles the creation and management of AC line channels, component status, and inverter state.
+    Integrates with N2kDevices and RxPy for real-time updates.
+    """
+
     ac_line1: Optional[AC] = None
     ac_line2: Optional[AC] = None
     ac_line3: Optional[AC] = None
 
     def _calc_connection_status(self):
+        """
+        Calculate the overall connection status for the inverter based on the status of all lines.
+
+        Returns:
+            ConnectionStatus: CONNECTED if any line is connected, otherwise DISCONNECTED.
+        """
         return (
             ConnectionStatus.CONNECTED
             if StateUtil.any_connected(self.line_status)
@@ -74,6 +87,20 @@ class InverterBase(Thing):
         inverter_component_status: Optional[rx.Observable] = None,
         n2k_devices: Optional[N2kDevices] = None,
     ):
+        """
+        Initialize the InverterBase and set up all relevant AC line channels and component status.
+
+        Args:
+            id (str): The unique id for this inverter.
+            name (str): Human-readable name for this inverter.
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+            categories (list[str]): List of categories for this inverter.
+            status_ac_line (int): The AC line number associated with the main status.
+            inverter_component_status (Optional[rx.Observable]): Observable for component status, if any.
+            n2k_devices (Optional[N2kDevices]): The N2K device manager for channel subjects and subscriptions.
+        """
         self.line_status = {}
         self.connection_status_subject = rx.subject.BehaviorSubject(
             self._calc_connection_status()
@@ -111,6 +138,17 @@ class InverterBase(Thing):
         ac_line3: AC,
         inverter_component_status: Optional[rx.Observable] = None,
     ):
+        """
+        Define all AC line channels for the inverter.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            status_ac_line (int): The AC line number associated with the main status.
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+            inverter_component_status (Optional[rx.Observable]): Observable for component status, if any.
+        """
         if ac_line1 is not None:
             self.define_inverter_ac_line_channels(
                 1,
@@ -140,6 +178,15 @@ class InverterBase(Thing):
         inverter_component_status: Optional[rx.Observable],
         status_ac_line: int,
     ):
+        """
+        Define all channels for a single AC line (component status, voltage, current, frequency, power).
+
+        Args:
+            line_number (int): The AC line number (1, 2, or 3).
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            inverter_component_status (Optional[rx.Observable]): Observable for component status, overrides the status of status_ac_line.
+            status_ac_line (int): The AC line number associated with component status.
+        """
         line_const = LINE_CONST_MAP.get(line_number)
 
         def update_line1_status(status: dict[str, any]):
@@ -159,8 +206,6 @@ class InverterBase(Thing):
                 f"{Constants.empower}:{Constants.inverter}.{line_const}.{Constants.componentStatus}"
             ],
         )
-
-        self._define_channel(channel)
 
         if inverter_component_status is not None and status_ac_line == line_number:
             line_component_status = inverter_component_status
@@ -186,7 +231,9 @@ class InverterBase(Thing):
         line_component_status.subscribe(update_line1_status)
         self._disposable_list.append(line_component_status)
 
-        n2k_devices.set_subscription(channel.id, line_component_status)
+        n2k_devices.set_subscription(
+            self._define_channel(channel), line_component_status
+        )
 
         #######################
         # Line Voltage
@@ -201,14 +248,13 @@ class InverterBase(Thing):
                 f"{Constants.empower}:{Constants.inverter}.{line_const}.{Constants.voltage}"
             ],
         )
-        self._define_channel(channel)
 
         ac_voltage_subject = n2k_devices.get_channel_subject(
             self.ac_id, f"{ACMeterStates.Voltage.value}.{line_number}", N2kDeviceType.AC
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             ac_voltage_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Voltage.ROUND_VALUE),
@@ -229,12 +275,11 @@ class InverterBase(Thing):
                 f"{Constants.empower}:{Constants.inverter}.{line_const}.{Constants.current}"
             ],
         )
-        self._define_channel(channel)
         ac_current_subject = n2k_devices.get_channel_subject(
             self.ac_id, f"{ACMeterStates.Current.value}.{line_number}", N2kDeviceType.AC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             ac_current_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Current.ROUND_VALUE),
@@ -255,14 +300,13 @@ class InverterBase(Thing):
                 f"{Constants.empower}:{Constants.inverter}.{line_const}.{Constants.frequency}"
             ],
         )
-        self._define_channel(channel)
         ac_frequency_subject = n2k_devices.get_channel_subject(
             self.ac_id,
             f"{ACMeterStates.Frequency.value}.{line_number}",
             N2kDeviceType.AC,
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             ac_frequency_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Frequency.ROUND_VALUE),
@@ -283,12 +327,11 @@ class InverterBase(Thing):
                 f"{Constants.empower}:{Constants.inverter}.{line_const}.{Constants.power}"
             ],
         )
-        self._define_channel(channel)
         ac_power_subject = n2k_devices.get_channel_subject(
             self.ac_id, f"{ACMeterStates.Power.value}.{line_number}", N2kDeviceType.AC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             ac_power_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Power.ROUND_VALUE),
@@ -302,6 +345,14 @@ class InverterBase(Thing):
         n2k_devices: N2kDevices,
         inverter_component_status: Optional[rx.Observable],
     ):
+        """
+        Define the component status channel for the inverter if inverter_component_status is not provided.
+
+        Args:
+            status_ac_line (int): The AC line number associated with the main status.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            inverter_component_status (Optional[rx.Observable]): Observable for component status, if any.
+        """
         if inverter_component_status is None and status_ac_line is None:
             channel = Channel(
                 id="cs",
@@ -320,12 +371,26 @@ class InverterBase(Thing):
                 ops.distinct_until_changed(lambda state: state[Constants.state]),
             )
 
-            n2k_devices.set_subscription(channel.id, component_status)
+            n2k_devices.set_subscription(
+                self._define_channel(channel), component_status
+            )
 
 
 class AcMeterInverter(InverterBase):
+    """
+    Represents an AC meter inverter device in the Empower system.
+
+    Handles the creation and management of AC line channels, inverter state, and enable channels.
+    Integrates with N2kDevices and RxPy for real-time updates.
+    """
 
     def _calc_inverter_state(self) -> str:
+        """
+        Calculate the overall inverter state based on the connection status of all lines.
+
+        Returns:
+            str: "inverting" if any line is connected, otherwise "disabled".
+        """
         return "inverting" if StateUtil.any_true(self.line_connected) else "disabled"
 
     def __init__(
@@ -337,6 +402,17 @@ class AcMeterInverter(InverterBase):
         categories: list[str],
         circuit: Circuit,
     ):
+        """
+        Initialize the AcMeterInverter and set up all relevant AC line channels, inverter state, and enable channels.
+
+        Args:
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            categories (list[str]): List of categories for this inverter.
+            circuit (Circuit): Associated circuit for this inverter.
+        """
         self.line_connected = {}
         self.inverter_state_subject = rx.subject.BehaviorSubject(
             self._calc_inverter_state
@@ -367,6 +443,16 @@ class AcMeterInverter(InverterBase):
         n2k_devices: N2kDevices,
         circuit: Optional[Circuit] = None,
     ):
+        """
+        Define all AC meter inverter channels (state and enable).
+
+        Args:
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            circuit (Optional[Circuit]): Associated circuit for this inverter, if any.
+        """
         self.define_acmeter_inverter_state_channel(
             ac_line1, ac_line2, ac_line3, n2k_devices
         )
@@ -379,6 +465,15 @@ class AcMeterInverter(InverterBase):
         ac_line3: AC,
         n2k_devices: N2kDevices,
     ):
+        """
+        Define the inverter state channel for the AcMeterInverter and manage line connection state.
+
+        Args:
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ###################################
         # Inverter State
         ###################################
@@ -445,7 +540,7 @@ class AcMeterInverter(InverterBase):
             self._disposable_list.append(ac_line3_state)
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             self.inverter_state_subject.pipe(
                 ops.distinct_until_changed(),
             ),
@@ -456,6 +551,13 @@ class AcMeterInverter(InverterBase):
         circuit: Optional[Circuit],
         n2k_devices: N2kDevices,
     ):
+        """
+        Define the inverter enable channel for the AcMeterInverter.
+
+        Args:
+            circuit (Optional[Circuit]): Associated circuit for this inverter, if any.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ############################
         # Inverter Enable
         ############################
@@ -468,7 +570,6 @@ class AcMeterInverter(InverterBase):
                 read_only=(circuit.switch_type == SwitchType.Not_Set),
                 tags=[f"{Constants.empower}:{Constants.inverter}.{Constants.enabled}"],
             )
-            self._define_channel(channel)
 
             circuit_level_subject = n2k_devices.get_channel_subject(
                 f"{JsonKeys.CIRCUITS}.{self.inverter_circuit_id}",
@@ -481,12 +582,19 @@ class AcMeterInverter(InverterBase):
                 ops.distinct_until_changed(),
             )
             n2k_devices.set_subscription(
-                channel.id,
+                self._define_channel(channel),
                 inverter_enable,
             )
 
 
 class CombiInverter(InverterBase):
+    """
+    Represents a combined inverter/charger device in the Empower system.
+
+    Handles the creation and management of inverter state, component status, and enable channels.
+    Integrates with N2kDevices and RxPy for real-time updates.
+    """
+
     inverter_circuit_id: Optional[str] = None
     instance: int
 
@@ -502,6 +610,20 @@ class CombiInverter(InverterBase):
         n2k_devices: N2kDevices,
         inverter_circuit: Optional[Circuit] = None,
     ):
+        """
+        Initialize the CombiInverter and set up all relevant inverter channels.
+
+        Args:
+            inverter_charger (InverterChargerDevice): The inverter/charger device configuration.
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+            categories (list[str]): List of categories for this inverter.
+            instance (int): The instance number for this inverter.
+            status_ac_line (int): The AC line number associated with the main status.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            inverter_circuit (Optional[Circuit]): Associated circuit for this inverter, if any.
+        """
         InverterBase.__init__(
             self,
             id=instance,
@@ -525,6 +647,13 @@ class CombiInverter(InverterBase):
     def define_inverter_channels(
         self, n2k_devices: N2kDevices, inverter_circuit: Optional[Circuit]
     ):
+        """
+        Define all inverter channels (state, component status, enable) for the CombiInverter.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            inverter_circuit (Optional[Circuit]): Associated circuit for this inverter, if any.
+        """
         self.define_inverter_state_channel(n2k_devices=n2k_devices)
         self.define_inverter_component_status_channel(n2k_devices=n2k_devices)
         self.define_inverter_enable_channel(
@@ -535,6 +664,12 @@ class CombiInverter(InverterBase):
         self,
         n2k_devices: N2kDevices,
     ):
+        """
+        Define the inverter state channel for the CombiInverter.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
 
         ##########################
         # Inverter State
@@ -547,7 +682,6 @@ class CombiInverter(InverterBase):
             read_only=True,
             tags=[f"{Constants.empower}:{Constants.inverter}.{Constants.state}"],
         )
-        self._define_channel(channel)
 
         inverter_state_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id,
@@ -555,7 +689,7 @@ class CombiInverter(InverterBase):
             N2kDeviceType.INVERTERCHARGER,
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             inverter_state_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(lambda state: map_inverter_state(state)),
@@ -567,6 +701,12 @@ class CombiInverter(InverterBase):
         self,
         n2k_devices: N2kDevices,
     ):
+        """
+        Define the component status channel for the CombiInverter.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         #############################
         # Component Status
         #############################
@@ -580,7 +720,6 @@ class CombiInverter(InverterBase):
                 f"{Constants.empower}:{Constants.inverter}.{Constants.componentStatus}"
             ],
         )
-        self._define_channel(channel)
 
         component_status_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id,
@@ -602,7 +741,7 @@ class CombiInverter(InverterBase):
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             component_status,
         )
 
@@ -611,6 +750,13 @@ class CombiInverter(InverterBase):
         inverter_circuit: Optional[Circuit],
         n2k_devices: N2kDevices,
     ):
+        """
+        Define the inverter enable channel for the CombiInverter.
+
+        Args:
+            inverter_circuit (Optional[Circuit]): Associated circuit for this inverter, if any.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         #############################
         # Inverter Enable
         #############################
@@ -627,7 +773,6 @@ class CombiInverter(InverterBase):
             tags=[f"{Constants.empower}:{Constants.inverter}.{Constants.enabled}"],
         )
 
-        self._define_channel(channel)
         inverter_enable_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id,
             CombiInverterStates.InverterEnable.value,
@@ -652,4 +797,4 @@ class CombiInverter(InverterBase):
             )
             inverter_enable = rx.merge(inverter_ie, circuit_ie)
 
-        n2k_devices.set_subscription(channel.id, inverter_enable)
+        n2k_devices.set_subscription(self._define_channel(channel), inverter_enable)

@@ -24,6 +24,13 @@ from ..n2k_configuration.alarm_limit import AlarmLimit
 
 
 class Battery(Thing):
+    """
+    Represents a battery device in the Empower system.
+
+    Handles the creation and management of battery-related channels (voltage, current, temperature, etc.),
+    metadata, and alarm settings. Integrates with N2kDevices and RxPy for real-time updates.
+    """
+
     battery_circuit_id: Optional[int] = None
     battery_circuit_control_id: Optional[int] = None
     instance: int
@@ -37,6 +44,17 @@ class Battery(Thing):
         primary_battery: DC = None,
         fallback_battery: DC = None,
     ):
+        """
+        Initialize the Battery thing and set up all relevant channels, metadata, and alarm settings.
+
+        Args:
+            battery (DC): The DC configuration for this battery.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            categories (list[str], optional): List of categories for this battery.
+            battery_circuit (Circuit, optional): Associated circuit for this battery, if any.
+            primary_battery (DC, optional): Reference to the primary battery, if any.
+            fallback_battery (DC, optional): Reference to the fallback battery, if any.
+        """
         Thing.__init__(
             self,
             ThingType.BATTERY,
@@ -78,6 +96,14 @@ class Battery(Thing):
         fallback_battery: DC,
         primary_battery: DC,
     ):
+        """
+        Define and set metadata for the battery, including fallback/primary references and capacity.
+
+        Args:
+            battery (DC): The DC configuration for this battery.
+            fallback_battery (DC): Reference to the fallback battery, if any.
+            primary_battery (DC): Reference to the primary battery, if any.
+        """
         if fallback_battery is not None:
             self.metadata[f"{Constants.empower}:{Constants.fallbackBattery}"] = (
                 f"{ThingType.BATTERY.value}.{fallback_battery.instance.instance}"
@@ -96,6 +122,15 @@ class Battery(Thing):
     def define_battery_channels(
         self, n2k_devices: N2kDevices, battery: DC, battery_circuit: Circuit
     ):
+        """
+        Define all battery-related channels (voltage, current, temperature, etc.) for this battery.
+        Also defines the component status channel.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            battery (DC): The DC configuration for this battery.
+            battery_circuit (Circuit): Associated circuit for this battery, if any.
+        """
         if battery_circuit is not None:
             self.define_circuit_enabled_channel(n2k_devices, battery_circuit)
 
@@ -122,6 +157,9 @@ class Battery(Thing):
     def define_circuit_enabled_channel(
         self, n2k_devices: N2kDevices, battery_circuit: Circuit = None
     ):
+        """
+        Define the channel that indicates whether the battery circuit is enabled.
+        """
         self.battery_circuit_id = battery_circuit.id.value
         self.battery_circuit_control_id = battery_circuit.control_id
         ######################
@@ -135,14 +173,13 @@ class Battery(Thing):
             type=ChannelType.BOOLEAN,
             tags=[f"{Constants.empower}:{Constants.battery}.{Constants.enabled}"],
         )
-        self._define_channel(channel)
         battery_enable_subject = n2k_devices.get_channel_subject(
             f"{JsonKeys.CIRCUITS}.{self.battery_circuit_id}",
             CircuitStates.Level.value,
             N2kDeviceType.CIRCUIT,
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             battery_enable_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(lambda level: level > 0),
@@ -151,6 +188,10 @@ class Battery(Thing):
         )
 
     def define_battery_voltage_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the channel for battery voltage.
+        This channel will provide real-time updates on the battery's voltage level.
+        """
         ##############################
         # Voltage Channel
         ##############################
@@ -162,12 +203,11 @@ class Battery(Thing):
             unit=Unit.ENERGY_VOLT,
             tags=[f"{Constants.empower}:{Constants.battery}.{Constants.voltage}"],
         )
-        self._define_channel(channel)
         dc_voltage_subject = n2k_devices.get_channel_subject(
             self.battery_device_id, DCMeterStates.Voltage.value, N2kDeviceType.DC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             dc_voltage_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Voltage.ROUND_VALUE),
@@ -176,6 +216,10 @@ class Battery(Thing):
         )
 
     def define_battery_current_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the channel for battery current.
+        This channel will provide real-time updates on the battery's current level.
+        """
         #############################
         # Current Channel
         #############################
@@ -187,12 +231,11 @@ class Battery(Thing):
             unit=Unit.ENERGY_AMP,
             tags=[f"{Constants.empower}:{Constants.battery}.{Constants.current}"],
         )
-        self._define_channel(channel)
         dc_current_subject = n2k_devices.get_channel_subject(
             self.battery_device_id, DCMeterStates.Current.value, N2kDeviceType.DC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             dc_current_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Current.ROUND_VALUE),
@@ -201,6 +244,16 @@ class Battery(Thing):
         )
 
     def define_battery_status_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the channel for battery status.
+        This channel will provide real-time updates on the battery's status.
+
+        If battery current is available, it determines the status based on the current value:
+        - If current is None, the status is unknown.
+        - If state of charge is 100%, the status is CHARGED.
+        - If current is less than or equal to 0.3, the status is DISCHARGING.
+        - Otherwise, the status is CHARGING.
+        """
         ############################
         # Status Channel
         ############################
@@ -228,7 +281,6 @@ class Battery(Thing):
             tags=[f"{Constants.empower}:{Constants.battery}.{Constants.status}"],
         )
 
-        self._define_channel(channel)
         dc_current_subject = n2k_devices.get_channel_subject(
             self.battery_device_id, DCMeterStates.Current.value, N2kDeviceType.DC
         )
@@ -236,7 +288,7 @@ class Battery(Thing):
             self.battery_device_id, DCMeterStates.StateOfCharge.value, N2kDeviceType.DC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             rx.combine_latest(dc_current_subject, dc_state_of_charge_subject).pipe(
                 ops.filter(lambda state: state[0] is not None or state[1] is not None),
                 ops.map(lambda state: resolve_battery_status(state[0], state[1])),
@@ -245,6 +297,10 @@ class Battery(Thing):
         )
 
     def define_temperature_channel(self, n2k_devices: N2kDevices):
+        """ "
+        Define the channel for battery temperature.
+        This channel will provide real-time updates on the battery's temperature level.
+        """
         #####################
         # Temperature Channel
         #####################
@@ -257,13 +313,12 @@ class Battery(Thing):
             tags=[f"{Constants.empower}:{Constants.battery}.{Constants.temperature}"],
         )
 
-        self._define_channel(channel)
         dc_temperature_subject = n2k_devices.get_channel_subject(
             self.battery_device_id, DCMeterStates.Temperature.value, N2kDeviceType.DC
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             dc_temperature_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Temperature.ROUND_VALUE),
@@ -272,6 +327,9 @@ class Battery(Thing):
         )
 
     def define_show_state_of_charge(self, n2k_devices: N2kDevices):
+        """
+        Define the channel that shows the state of charge of the battery.
+        This channel will provide real-time updates on the battery's state of charge."""
         #########################
         # State of Charge Channel
         #########################
@@ -283,12 +341,11 @@ class Battery(Thing):
             unit=Unit.PERCENT,
             tags=[f"{Constants.empower}:{Constants.battery}.{Constants.stateOfCharge}"],
         )
-        self._define_channel(channel)
         dc_state_of_charge_subject = n2k_devices.get_channel_subject(
             self.battery_device_id, DCMeterStates.StateOfCharge.value, N2kDeviceType.DC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             dc_state_of_charge_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.distinct_until_changed(),
@@ -296,6 +353,10 @@ class Battery(Thing):
         )
 
     def define_capacity_remaining_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the channel for capacity remaining.
+        This channel will provide real-time updates on the remaining capacity of the battery.
+        """
         ##############################
         # Capacity Remaining Channel
         ##############################
@@ -309,14 +370,13 @@ class Battery(Thing):
                 f"{Constants.empower}:{Constants.battery}.{Constants.capacityRemaining}"
             ],
         )
-        self._define_channel(channel)
         dc_capacity_remaining_subject = n2k_devices.get_channel_subject(
             self.battery_device_id,
             DCMeterStates.CapacityRemaining.value,
             N2kDeviceType.DC,
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             dc_capacity_remaining_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(CapacityRemaining.ROUND_VALUE),
@@ -325,6 +385,10 @@ class Battery(Thing):
         )
 
     def define_time_remaining_channel(self, n2k_devices: N2kDevices):
+        """ "
+        Define the channel for time remaining.
+        This channel will provide real-time updates on the time remaining for the battery.
+        """
         ################################
         # Time Remaining Channel
         ################################
@@ -336,12 +400,11 @@ class Battery(Thing):
             unit=Unit.TIME_SECOND,
             tags=[f"{Constants.empower}:{Constants.battery}.{Constants.timeRemaining}"],
         )
-        self._define_channel(channel)
         dc_time_remaining_subject = n2k_devices.get_channel_subject(
             self.battery_device_id, DCMeterStates.TimeRemaining.value, N2kDeviceType.DC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             dc_time_remaining_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.distinct_until_changed(),
@@ -349,6 +412,10 @@ class Battery(Thing):
         )
 
     def define_time_to_charge_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the channel for time to charge.
+        This channel will provide real-time updates on the time remaining to fully charge the battery.
+        """
         ################################
         # Time to Charge Channel
         ################################
@@ -360,12 +427,11 @@ class Battery(Thing):
             unit=Unit.TIME_SECOND,
             tags=[f"{Constants.empower}:{Constants.battery}.{Constants.timeToCharge}"],
         )
-        self._define_channel(channel)
         dc_time_to_charge_subject = n2k_devices.get_channel_subject(
             self.battery_device_id, DCMeterStates.TimeToCharge.value, N2kDeviceType.DC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             dc_time_to_charge_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.distinct_until_changed(),
@@ -373,6 +439,10 @@ class Battery(Thing):
         )
 
     def define_component_status_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the channel for component status.
+        This channel will provide real-time updates on the component status of the battery.
+        """
         #################################
         # Component Status Channel
         #################################
@@ -386,14 +456,13 @@ class Battery(Thing):
                 f"{Constants.empower}:{Constants.battery}.{Constants.componentStatus}"
             ],
         )
-        self._define_channel(channel)
         dc_component_status_subject = n2k_devices.get_channel_subject(
             self.battery_device_id,
             DCMeterStates.ComponentStatus.value,
             N2kDeviceType.DC,
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             dc_component_status_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(

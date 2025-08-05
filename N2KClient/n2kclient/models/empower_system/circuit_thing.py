@@ -22,6 +22,13 @@ def get_enabled_categories(categories: list[CategoryItem]):
 
 
 class CircuitThing(Thing):
+    """
+    Represents a circuit device in the Empower system.
+
+    Handles the creation and management of circuit-related channels (component status, current, level, power),
+    and integrates with N2kDevices and RxPy for real-time updates. Supports dimmable and non-dimmable circuits.
+    """
+
     circuit: Circuit
 
     def __init__(
@@ -32,6 +39,16 @@ class CircuitThing(Thing):
         n2k_devices: N2kDevices,
         bls: BinaryLogicState = None,
     ):
+        """
+        Initialize the CircuitThing and set up all relevant circuit channels.
+
+        Args:
+            type (ThingType): The type of the thing (e.g., CIRCUIT).
+            circuit (Circuit): The circuit configuration for this thing.
+            links (list[Link]): List of links to other things.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            bls (BinaryLogicState, optional): Associated binary logic state, if any.
+        """
         Thing.__init__(
             self,
             type,
@@ -52,6 +69,12 @@ class CircuitThing(Thing):
         self.define_circuit_channels(n2k_devices, bls)
 
     def define_circuit_component_status_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the component status channel for the circuit.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         #############################
         # Component Status
         #############################
@@ -63,14 +86,13 @@ class CircuitThing(Thing):
             read_only=False,
             tags=[f"{Constants.empower}:{self.type}.{Constants.componentStatus}"],
         )
-        self._define_channel(channel)
         is_offline_subject = n2k_devices.get_channel_subject(
             self.circuit_device_id,
             CircuitStates.IsOffline.value,
             N2kDeviceType.CIRCUIT,
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             is_offline_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(lambda state: StateUtil.is_circuit_connected(state)),
@@ -80,6 +102,12 @@ class CircuitThing(Thing):
         )
 
     def define_circuit_current_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the current channel for the circuit.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ##############################
         # Current
         ##############################
@@ -91,13 +119,12 @@ class CircuitThing(Thing):
             read_only=True,
             tags=[f"{Constants.empower}:{self.type}.current"],
         )
-        self._define_channel(channel)
         current_subject = n2k_devices.get_channel_subject(
             self.circuit_device_id, CircuitStates.Current.value, N2kDeviceType.CIRCUIT
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             current_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Current.ROUND_VALUE),
@@ -106,6 +133,12 @@ class CircuitThing(Thing):
         )
 
     def define_circuit_level_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the dimming level channel for the circuit (if dimmable).
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ##############################
         # Dimming Level
         ##############################
@@ -117,13 +150,12 @@ class CircuitThing(Thing):
             read_only=False,
             tags=[f"{Constants.empower}:{self.type}.level"],
         )
-        self._define_channel(channel)
 
         level_subject = n2k_devices.get_channel_subject(
             self.circuit_device_id, CircuitStates.Level.value, N2kDeviceType.CIRCUIT
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             level_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.distinct_until_changed(),
@@ -136,6 +168,14 @@ class CircuitThing(Thing):
         bls: BinaryLogicState = None,
         circuit: Circuit = None,
     ):
+        """
+        Define the power channel for the circuit (if not dimmable), optionally merging with binary logic state.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            bls (BinaryLogicState, optional): Associated binary logic state, if any.
+            circuit (Circuit, optional): The circuit configuration for this thing.
+        """
         ##############################
         # Power
         ##############################
@@ -175,15 +215,21 @@ class CircuitThing(Thing):
             read_only=circuit.switch_type == 0,
             tags=[f"{Constants.empower}:{self.type}.power"],
         )
-        self._define_channel(channel)
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             power_state,
         )
 
     def define_circuit_channels(
         self, n2k_devices: N2kDevices, bls: BinaryLogicState = None
     ):
+        """
+        Define all channels for the circuit, including component status, current, and either level or power, depending on whether the circuit is dimmable.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            bls (BinaryLogicState, optional): Associated binary logic state, if any.
+        """
         self.define_circuit_component_status_channel(n2k_devices)
         self.define_circuit_current_channel(n2k_devices)
         if self.circuit.dimmable:

@@ -72,12 +72,11 @@ class TankBase(Thing):
             read_only=False,
             tags=[f"{Constants.empower}:{Constants.tank}.{Constants.componentStatus}"],
         )
-        self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
             self.tank_device_id, TankStates.ComponentStatus.value, N2kDeviceType.TANK
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             component_status_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(
@@ -104,12 +103,11 @@ class TankBase(Thing):
             unit=Unit.VOLUME_LITRE,
             tags=[f"{Constants.empower}:{Constants.tank}.levelAbsolute"],
         )
-        self._define_channel(channel)
         level_absolute_subject = n2k_devices.get_channel_subject(
             self.tank_device_id, TankStates.Level.value, N2kDeviceType.TANK
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             rx.merge(
                 level_absolute_subject.pipe(
                     ops.filter(lambda state: state is not None),
@@ -133,13 +131,12 @@ class TankBase(Thing):
             unit=Unit.PERCENT,
             tags=[f"{Constants.empower}:{Constants.tank}.levelPercent"],
         )
-        self._define_channel(channel)
 
         level_percent_subject = n2k_devices.get_channel_subject(
             self.tank_device_id, TankStates.LevelPercent.value, N2kDeviceType.TANK
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             rx.merge(
                 level_percent_subject.pipe(
                     ops.filter(lambda state: state is not None), Volume.FILTER

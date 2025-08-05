@@ -13,12 +13,27 @@ from ..common_enums import N2kDeviceType, ClimateStates
 
 
 class Climate(Thing):
+    """
+    Represents a climate (HVAC) device in the Empower system.
+
+    Handles the creation and management of climate-related channels (component status, mode, set point, ambient temperature, fan speed, fan mode),
+    and integrates with N2kDevices and RxPy for real-time updates.
+    """
+
     def __init__(
         self,
         hvac: HVACDevice,
         n2k_devices: N2kDevices,
         categories: list[str] = [],
     ):
+        """
+        Initialize the Climate thing and set up all relevant climate channels.
+
+        Args:
+            hvac (HVACDevice): The HVAC device configuration for this climate thing.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            categories (list[str], optional): List of categories for this climate thing.
+        """
         Thing.__init__(
             self,
             type=ThingType.CLIMATE,
@@ -30,6 +45,12 @@ class Climate(Thing):
         self.define_climate_channels(n2k_devices)
 
     def define_climate_component_status_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the component status channel for the climate device.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ##########################
         # Component Status
         ##########################
@@ -41,12 +62,11 @@ class Climate(Thing):
             read_only=False,
             tags=[f"{Constants.empower}:{Constants.hvac}.{Constants.componentStatus}"],
         )
-        self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
             self.hvac_device_id, ClimateStates.ComponentStatus.value, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             component_status_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(
@@ -62,6 +82,12 @@ class Climate(Thing):
         )
 
     def def_mode_channels(self, n2k_devices: N2kDevices):
+        """
+        Define the mode channel for the climate device.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ############################
         # Mode
         ############################
@@ -73,12 +99,11 @@ class Climate(Thing):
             read_only=True,
             tags=[f"{Constants.empower}:{Constants.hvac}.{Constants.mode}"],
         )
-        self._define_channel(channel)
         mode_subject = n2k_devices.get_channel_subject(
             self.hvac_device_id, ClimateStates.Mode.value, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             mode_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.distinct_until_changed(),
@@ -86,6 +111,12 @@ class Climate(Thing):
         )
 
     def define_set_point_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the set point channel for the climate device.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ###############################
         # Set Point
         ###############################
@@ -97,12 +128,11 @@ class Climate(Thing):
             unit=Unit.TEMPERATURE_CELSIUS,
             tags=[f"{Constants.empower}:{Constants.hvac}.{Constants.setPoint}"],
         )
-        self._define_channel(channel)
         set_point_subject = n2k_devices.get_channel_subject(
             self.hvac_device_id, ClimateStates.SetPoint.value, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             set_point_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(2),
@@ -111,6 +141,12 @@ class Climate(Thing):
         )
 
     def define_ambient_temperature_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the ambient temperature channel for the climate device.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ###############################
         # Ambient Temperature
         ###############################
@@ -124,14 +160,13 @@ class Climate(Thing):
                 f"{Constants.empower}:{Constants.hvac}.{Constants.ambientTemperature}"
             ],
         )
-        self._define_channel(channel)
         ambient_temp_subject = n2k_devices.get_channel_subject(
             self.hvac_device_id,
             ClimateStates.AmbientTemperature.value,
             N2kDeviceType.HVAC,
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             ambient_temp_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Temperature.ROUND_VALUE),
@@ -140,6 +175,12 @@ class Climate(Thing):
         )
 
     def define_fan_speed_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the fan speed channel for the climate device.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         #################################
         # Fan Speed
         #################################
@@ -151,12 +192,11 @@ class Climate(Thing):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.hvac}.{Constants.fanSpeed}"],
         )
-        self._define_channel(channel)
         fan_speed_subject = n2k_devices.get_channel_subject(
             self.hvac_device_id, ClimateStates.FanSpeed.value, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             fan_speed_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(2),
@@ -165,6 +205,12 @@ class Climate(Thing):
         )
 
     def define_fan_mode_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the fan mode channel for the climate device.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         #################################
         # Fan Mode
         #################################
@@ -176,12 +222,12 @@ class Climate(Thing):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.hvac}.{Constants.fanMode}"],
         )
-        self._define_channel(channel)
+
         fan_mode_subject = n2k_devices.get_channel_subject(
             self.hvac_device_id, ClimateStates.FanMode.value, N2kDeviceType.HVAC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             fan_mode_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.distinct_until_changed(),
@@ -189,6 +235,12 @@ class Climate(Thing):
         )
 
     def define_climate_channels(self, n2k_devices: N2kDevices):
+        """
+        Define all climate-related channels for the climate device.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         self.define_climate_component_status_channel(n2k_devices)
         self.def_mode_channels(n2k_devices)
         self.define_set_point_channel(n2k_devices)

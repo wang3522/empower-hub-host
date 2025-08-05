@@ -22,8 +22,23 @@ from ..common_enums import (
 
 
 class ShorePower(ACMeterThingBase):
+    """
+    Represents a shore power device in the Empower system.
+
+    Handles the creation and management of shore power-related channels (connected, enabled),
+    and integrates with N2kDevices and RxPy for real-time updates. Supports both inverter/charger and non-inverter/charger configurations.
+
+    Connected state is determined based on the voltage of the AC lines or the component status of an associated inverter/charger, (if present).
+    BLS or Signal input can be used to determine the connected state as well. The values from BLS are inverted to match the expected state, and merged with previously defined connected state.
+    """
 
     def _calc_shorepower_connected(self):
+        """
+        Calculate whether any shore power line is connected using external utility.
+
+        Returns:
+            bool: True if any line is connected, otherwise False.
+        """
         return StateUtil.any_connected(self.line_connected)
 
     def __init__(
@@ -38,6 +53,20 @@ class ShorePower(ACMeterThingBase):
         component_status: Optional[rx.Observable[dict[str, any]]] = None,
         bls: BinaryLogicState = None,
     ):
+        """
+        Initialize the ShorePower thing and set up all relevant shore power channels.
+
+        Args:
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            categories (list[str], optional): List of categories for this shore power device.
+            circuit (Optional[Circuit]): Associated circuit for this shore power device, if any.
+            ic_associated_line (Optional[int]): Line number associated with an integrated component (if any).
+            component_status (Optional[rx.Observable[dict[str, any]]]): Observable for integrated component status (if any).
+            bls (BinaryLogicState, optional): Associated binary logic state, if any.
+        """
         self.line_connected = {}
         self.ac_connected_state = rx.subject.BehaviorSubject(None)
         ACMeterThingBase.__init__(
@@ -66,12 +95,22 @@ class ShorePower(ACMeterThingBase):
             bls,
         )
 
-    # ACMeter is associated to a Inverter/Charger. We should report disconnected if
-    # the reported voltage value is invalid. Combi inverter/chargers do not report 0 voltage
-    # same way non-Combi inverter/chargers do when shorepower is disconnected
     def define_shorepower_connected_pipe_inverter_charger(
         self, n2k_devices: N2kDevices, ac_line1: AC, ac_line2: AC, ac_line3: AC
     ):
+        """
+        Define the logic for determining shore power connection when associated with an inverter/charger.
+
+        ACMeter is associated to a Inverter/Charger. We should report disconnected if
+        the reported voltage value is invalid. Combi inverter/chargers do not report 0 voltage
+        same way non-Combi inverter/chargers do when shorepower is disconnected
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+        """
         if ac_line1 is not None:
 
             def update_line1_status(status: ConnectionStatus):
@@ -153,6 +192,15 @@ class ShorePower(ACMeterThingBase):
     def define_shorepower_connected_pipe_non_inverter_charger(
         self, n2k_devices: N2kDevices, ac_line1: AC, ac_line2: AC, ac_line3: AC
     ):
+        """
+        Define the logic for determining shore power connection when not associated with an inverter/charger.
+        The connected state is determined by the voltage of the AC lines.
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+        """
         # Report connected if ANY line voltage is greater than 0
         if ac_line1 is not None:
 
@@ -233,6 +281,23 @@ class ShorePower(ACMeterThingBase):
         component_status: Optional[rx.Observable[dict[str, any]]] = None,
         bls: Optional[BinaryLogicState] = None,
     ):
+        """
+        Define the connected channel for the shore power device.
+
+        Determines the connected state based on the voltage of the AC lines or the component status of an associated inverter/charger, if present.
+        If an inverter/charger is associated, the connected state is determined by the inverter/charger's component status.
+        If no inverter/charger is associated, the connected state is determined by the voltage of the AC lines.
+        If a Binary Logic State (BLS) is provided, it is used to determine the connected state, with the values inverted to match the expected state.
+
+        Args:
+            ac_line1 (AC): The first AC line configuration.
+            ac_line2 (AC): The second AC line configuration.
+            ac_line3 (AC): The third AC line configuration.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            ic_associated_line (Optional[int]): Line number associated with an integrated component (if any).
+            component_status (Optional[rx.Observable[dict[str, any]]]): Observable for integrated component status (if any).
+            bls (Optional[BinaryLogicState]): Associated binary logic state, if any.
+        """
         ######################
         # Connected Channel
         ######################
@@ -244,7 +309,6 @@ class ShorePower(ACMeterThingBase):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.shorepower}.connected"],
         )
-        self._define_channel(channel)
 
         if component_status is not None and ic_associated_line is not None:
             self.define_shorepower_connected_pipe_inverter_charger(
@@ -272,13 +336,20 @@ class ShorePower(ACMeterThingBase):
             )
 
             connected_state = rx.merge(bls_connected_state, self.ac_connected_state)
-        n2k_devices.set_subscription(channel.id, connected_state)
+        n2k_devices.set_subscription(self._define_channel(channel), connected_state)
 
     def define_shorepower_enabled_channel(
         self,
         circuit: Optional[Circuit],
         n2k_devices: N2kDevices,
     ):
+        """
+        Define the enabled channel for the shore power device.
+
+        Args:
+            circuit (Optional[Circuit]): Associated circuit for this shore power device, if any.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ######################
         # Enabled Channel
         ######################
@@ -290,14 +361,13 @@ class ShorePower(ACMeterThingBase):
             read_only=circuit.switch_type == 0,
             tags=[f"{Constants.empower}:{Constants.shorepower}.{Constants.enabled}"],
         )
-        self._define_channel(channel)
         enabled_subject = n2k_devices.get_channel_subject(
             f"{JsonKeys.CIRCUITS}.{circuit.id.value}",
             CircuitStates.Level.value,
             N2kDeviceType.CIRCUIT,
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             enabled_subject.pipe(
                 ops.map(lambda level: level > 0), ops.distinct_until_changed()
             ),
