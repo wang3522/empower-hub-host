@@ -65,7 +65,7 @@ public:
   void emitSignal(const std::string &signalName, const std::string &interfaceSuffix, const std::string &result) {
     auto signalEndpoint = m_servicename + "." + interfaceSuffix + "." + signalName;
     if (m_registeredSignals.find(signalEndpoint) != m_registeredSignals.end()) {
-      m_object->emitSignal(signalName).onInterface(m_servicename).withArguments(result);
+      m_object->emitSignal(signalName).onInterface(m_servicename + "." + interfaceSuffix).withArguments(result);
     }
   }
 

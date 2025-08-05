@@ -43,7 +43,6 @@ class Hub(Thing):
                 f"{Constants.empower}:{Constants.hub}.{Constants.ethernetInternetConnectivity}"
             ],
         )
-        self._define_channel(channel)
 
         ethernet_internet_connectivity_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id,
@@ -52,7 +51,7 @@ class Hub(Thing):
         )
         if ethernet_internet_connectivity_subject is not None:
             n2k_devices.set_subscription(
-                channel.id,
+                self._define_channel(channel),
                 ethernet_internet_connectivity_subject.pipe(
                     ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
@@ -73,7 +72,6 @@ class Hub(Thing):
                 f"{Constants.empower}:{Constants.hub}.{Constants.wifiInternetConnectivity}"
             ],
         )
-        self._define_channel(channel)
 
         wifi_internet_connectivity_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id,
@@ -82,7 +80,7 @@ class Hub(Thing):
         )
         if wifi_internet_connectivity_subject is not None:
             n2k_devices.set_subscription(
-                channel.id,
+                self._define_channel(channel),
                 wifi_internet_connectivity_subject.pipe(
                     ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
@@ -101,14 +99,13 @@ class Hub(Thing):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.hub}.{Constants.wifiSsid}"],
         )
-        self._define_channel(channel)
 
         wifi_ssid_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id, HubStates.WifiSsid.value, N2kDeviceType.DEVICE
         )
         if wifi_ssid_subject is not None:
             n2k_devices.set_subscription(
-                channel.id,
+                self._define_channel(channel),
                 wifi_ssid_subject.pipe(
                     ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
@@ -127,14 +124,13 @@ class Hub(Thing):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.hub}.{Constants.wifiType}"],
         )
-        self._define_channel(channel)
 
         wifi_type_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id, HubStates.WifiType.value, N2kDeviceType.DEVICE
         )
         if wifi_type_subject is not None:
             n2k_devices.set_subscription(
-                channel.id,
+                self._define_channel(channel),
                 wifi_type_subject.pipe(
                     ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
@@ -155,14 +151,13 @@ class Hub(Thing):
                 f"{Constants.empower}:{Constants.hub}.{Constants.wifiSignalStrength}"
             ],
         )
-        self._define_channel(channel)
 
         wifi_signal_strength_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id, HubStates.WifiSignalStrength.value, N2kDeviceType.DEVICE
         )
         if wifi_signal_strength_subject is not None:
             n2k_devices.set_subscription(
-                channel.id,
+                self._define_channel(channel),
                 wifi_signal_strength_subject.pipe(
                     ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
@@ -183,8 +178,6 @@ class Hub(Thing):
                 f"{Constants.empower}:{Constants.hub}.{Constants.cellularInternetConnectivity}"
             ],
         )
-        self._define_channel(channel)
-
         cellular_internet_connectivity_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id,
             HubStates.CellularInternetConnectivity.value,
@@ -192,7 +185,7 @@ class Hub(Thing):
         )
         if cellular_internet_connectivity_subject is not None:
             n2k_devices.set_subscription(
-                channel.id,
+                self._define_channel(channel),
                 cellular_internet_connectivity_subject.pipe(
                     ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
@@ -213,7 +206,6 @@ class Hub(Thing):
                 f"{Constants.empower}:{Constants.hub}.{Constants.cellularSignalStrength}"
             ],
         )
-        self._define_channel(channel)
 
         cellular_signal_strength_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id,
@@ -222,7 +214,7 @@ class Hub(Thing):
         )
         if cellular_signal_strength_subject is not None:
             n2k_devices.set_subscription(
-                channel.id,
+                self._define_channel(channel),
                 cellular_signal_strength_subject.pipe(
                     ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
@@ -241,14 +233,13 @@ class Hub(Thing):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.hub}.{Constants.cellularIccid}"],
         )
-        self._define_channel(channel)
 
         cellular_iccid_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id, HubStates.CellularSimIccid.value, N2kDeviceType.DEVICE
         )
         if cellular_iccid_subject is not None:
             n2k_devices.set_subscription(
-                channel.id,
+                self._define_channel(channel),
                 cellular_iccid_subject.pipe(
                     ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
@@ -267,14 +258,13 @@ class Hub(Thing):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.hub}.{Constants.cellularEid}"],
         )
-        self._define_channel(channel)
 
         cellular_eid_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id, HubStates.CellularSimEid.value, N2kDeviceType.DEVICE
         )
         if cellular_eid_subject is not None:
             n2k_devices.set_subscription(
-                channel.id,
+                self._define_channel(channel),
                 cellular_eid_subject.pipe(
                     ops.filter(lambda state: state is not None),
                     ops.distinct_until_changed(),
@@ -293,7 +283,6 @@ class Hub(Thing):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.hub}.{Constants.activeConnection}"],
         )
-        self._define_channel(channel)
 
         ethernet_internet_connectivity_subject = n2k_devices.get_channel_subject(
             self.n2k_device_id,
@@ -316,7 +305,7 @@ class Hub(Thing):
             and cellular_internet_connectivity_subject is not None
         ):
             n2k_devices.set_subscription(
-                channel.id,
+                self._define_channel(channel),
                 rx.combine_latest(
                     ethernet_internet_connectivity_subject.pipe(
                         ops.distinct_until_changed()

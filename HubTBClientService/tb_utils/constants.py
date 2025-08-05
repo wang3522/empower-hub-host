@@ -13,6 +13,7 @@ class Constants:
     CONFIG_CHECKSUM_KEY = "configuration.checksum"
     ENGINE_CONFIG_KEY = "configuration.engine"
     LOCATION_CONSENT_ENABLED_KEY = "locationConsentEnabled"
+    TELEMETRY_CONSENT_ENABLED_KEY = "telemetryConsentEnabled"
     GEOFENCE_ENABLED_KEY = "geofenceEnabled"
     GEOFENCE_KEY = "geofence"
     TB_ACCESS_TOKEN_PATH = "/data/tb_access_token"

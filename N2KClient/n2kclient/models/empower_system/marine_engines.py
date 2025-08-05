@@ -21,9 +21,24 @@ def _map_engine_type(type: EngineType) -> str:
 
 
 class MarineEngine(Thing):
+    """
+    Represents a marine engine device in the Empower system.
+
+    Handles the creation and management of engine-related channels (component status, speed, engine hours, coolant temperature, pressures, status, serial number),
+    and integrates with N2kDevices and RxPy for real-time updates.
+    """
+
     def __init__(
         self, engine: EngineDevice, n2k_devices: N2kDevices, categories: list[str] = []
     ):
+        """
+        Initialize the MarineEngine and set up all relevant engine channels.
+
+        Args:
+            engine (EngineDevice): The engine device configuration for this marine engine.
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            categories (list[str], optional): List of categories for this marine engine.
+        """
         Thing.__init__(
             self,
             ThingType.MARINE_ENGINE,
@@ -40,6 +55,13 @@ class MarineEngine(Thing):
         self.define_engine_channels(n2k_devices, engine)
 
     def define_engine_channels(self, n2k_devices: N2kDevices, engine: EngineDevice):
+        """
+        Define all engine-related channels for the marine engine.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            engine (EngineDevice): The engine device configuration for this marine engine.
+        """
         self.define_component_status_channel(n2k_devices)
         self.define_speed_channel(n2k_devices)
         self.define_engine_hours_channel(n2k_devices, engine)
@@ -49,6 +71,12 @@ class MarineEngine(Thing):
         self.define_serial_number_channel(n2k_devices, engine)
 
     def define_component_status_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the component status channel for the marine engine.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         #############################
         # Component Status
         #############################
@@ -62,14 +90,13 @@ class MarineEngine(Thing):
                 f"{Constants.empower}:{Constants.marineEngine}.{Constants.componentStatus}"
             ],
         )
-        self._define_channel(channel)
         component_status_subject = n2k_devices.get_channel_subject(
             self.engine_device_id,
             MarineEngineStates.ComponentStatus.value,
             N2kDeviceType.ENGINE,
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             component_status_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(
@@ -85,6 +112,12 @@ class MarineEngine(Thing):
         )
 
     def define_speed_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the speed channel for the marine engine.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
         ##############################
         # Speed
         ##############################
@@ -96,13 +129,12 @@ class MarineEngine(Thing):
             read_only=True,
             tags=[f"{Constants.empower}:{Constants.marineEngine}.{Constants.speed}"],
         )
-        self._define_channel(channel)
         speed_subject = n2k_devices.get_channel_subject(
             self.engine_device_id, MarineEngineStates.Speed.value, N2kDeviceType.ENGINE
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             speed_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 Engine.SPEED_SAMPLE_TIMER,
@@ -114,6 +146,13 @@ class MarineEngine(Thing):
     def define_engine_hours_channel(
         self, n2k_devices: N2kDevices, engine: EngineDevice
     ):
+        """
+        Define the engine hours channel for the marine engine.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            engine (EngineDevice): The engine device configuration for this marine engine.
+        """
         ##############################
         # Engine Hours
         ##############################
@@ -127,7 +166,6 @@ class MarineEngine(Thing):
                 f"{Constants.empower}:{Constants.marineEngine}.{Constants.engineHours}"
             ],
         )
-        self._define_channel(channel)
 
         engine_hours_subject = n2k_devices.get_channel_subject(
             self.engine_device_id,
@@ -136,7 +174,7 @@ class MarineEngine(Thing):
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             engine_hours_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 Engine.ENGINE_HOURS_FILTER,
@@ -147,6 +185,13 @@ class MarineEngine(Thing):
     def define_coolant_temperature_channel(
         self, n2k_devices: N2kDevices, engine: EngineDevice
     ):
+        """
+        Define the coolant temperature channel for the marine engine.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            engine (EngineDevice): The engine device configuration for this marine engine.
+        """
         ###############################
         # Coolant Temperature
         ###############################
@@ -160,7 +205,6 @@ class MarineEngine(Thing):
                 f"{Constants.empower}:{Constants.marineEngine}.{Constants.coolantTemperature}"
             ],
         )
-        self._define_channel(channel)
 
         coolant_temp_subject = n2k_devices.get_channel_subject(
             self.engine_device_id,
@@ -169,7 +213,7 @@ class MarineEngine(Thing):
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             coolant_temp_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Temperature.ROUND_VALUE),
@@ -178,6 +222,13 @@ class MarineEngine(Thing):
         )
 
     def define_pressure_channels(self, n2k_devices: N2kDevices, engine: EngineDevice):
+        """
+        Define the coolant and oil pressure channels for the marine engine, as well as their gain adjustments.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            engine (EngineDevice): The engine device configuration for this marine engine.
+        """
 
         ###############################
         # Coolant Pressure
@@ -198,7 +249,6 @@ class MarineEngine(Thing):
                 f"{Constants.empower}:{Constants.marineEngine}.{Constants.coolantPressure}"
             ],
         )
-        self._define_channel(channel)
 
         coolant_pressure_subject = n2k_devices.get_channel_subject(
             self.engine_device_id,
@@ -207,7 +257,7 @@ class MarineEngine(Thing):
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             coolant_pressure_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(lambda state: state * pressureGain),
@@ -229,7 +279,6 @@ class MarineEngine(Thing):
                 f"{Constants.empower}:{Constants.marineEngine}.{Constants.oilPressure}"
             ],
         )
-        self._define_channel(channel)
 
         oil_pressure_subject = n2k_devices.get_channel_subject(
             self.engine_device_id,
@@ -238,7 +287,7 @@ class MarineEngine(Thing):
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             oil_pressure_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(lambda state: state * pressureGain),
@@ -247,6 +296,13 @@ class MarineEngine(Thing):
         )
 
     def define_status_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the status channel for the marine engine.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+        """
+
         ##################################
         # Status
         ##################################
@@ -269,7 +325,6 @@ class MarineEngine(Thing):
             unit=Unit.NONE,
             tags=[f"{Constants.empower}:{Constants.marineEngine}.{Constants.status}"],
         )
-        self._define_channel(channel)
 
         engine_state_subject = n2k_devices.get_channel_subject(
             self.engine_device_id,
@@ -278,7 +333,7 @@ class MarineEngine(Thing):
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             engine_state_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 ops.map(lambda state: resolve_engine_status(state)),
@@ -289,6 +344,13 @@ class MarineEngine(Thing):
     def define_serial_number_channel(
         self, n2k_devices: N2kDevices, engine: EngineDevice
     ):
+        """
+        Define the serial number channel for the marine engine. This value should be static as it is provided by config.
+
+        Args:
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            engine (EngineDevice): The engine device configuration for this marine engine.
+        """
         ##################################
         # Serial Number
         ##################################
@@ -302,6 +364,6 @@ class MarineEngine(Thing):
                 f"{Constants.empower}:{Constants.marineEngine}.{Constants.serialNumber}"
             ],
         )
-        self._define_channel(channel)
-
-        n2k_devices.set_subscription(channel.id, rx.just(engine.serial_number))
+        n2k_devices.set_subscription(
+            self._define_channel(channel), rx.just(engine.serial_number)
+        )

@@ -23,7 +23,7 @@ def get_circuit_config(
 def get_circuit_device(
     devices: N2kDevices, circuit_config: Circuit
 ) -> Tuple[str, Optional[N2kDevice]]:
-    circuit_id = f"{JsonKeys.CIRCUIT}.{circuit_config.id.value}"
+    circuit_id = f"{JsonKeys.CIRCUITS}.{circuit_config.id.value}"
     return circuit_id, devices.devices.get(circuit_id)
 
 

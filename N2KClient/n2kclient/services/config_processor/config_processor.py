@@ -52,6 +52,7 @@ from ...util.common_utils import (
     calculate_inverter_charger_instance,
     get_associated_circuit,
 )
+from ...models.n2k_configuration.dc import DCType
 
 
 class ConfigProcessor:
@@ -271,6 +272,7 @@ class ConfigProcessor:
         )
 
         shorepower = None
+        shore_key = None
         if inverter_charger.charger_ac_id.enabled:
             shorepower, shore_key = next(
                 (
@@ -282,9 +284,12 @@ class ConfigProcessor:
                 (None, None),
             )
 
-        if shorepower is not None:
+        if (
+            shorepower is not None
+            and shore_key is not None
+            and hasattr(charger_thing, "component_status")
+        ):
             self._ic_component_status[shorepower.line[1].instance.instance] = (
-                # charger_thing.component_status
                 charger_thing.component_status,
                 shore_key,
             )
@@ -325,25 +330,26 @@ class ConfigProcessor:
                 dc_meter.id,
                 config,
             )
-            circuit = get_associated_circuit(
-                ItemType.DcMeter,
-                dc_meter.id,
-                config,
-            )
-            primary_dc = get_primary_dc_meter(dc_meter.id, config)
-            secondary_dc = get_fallback_dc_meter(dc_meter.id, config)
-            if circuit is not None:
-                self._associated_circuit_instances.append(circuit.control_id)
+            if dc_meter.dc_type == DCType.Battery and len(categories) == 0:
+                circuit = get_associated_circuit(
+                    ItemType.DcMeter,
+                    dc_meter.id,
+                    config,
+                )
+                primary_dc = get_primary_dc_meter(dc_meter.id, config)
+                secondary_dc = get_fallback_dc_meter(dc_meter.id, config)
+                if circuit is not None:
+                    self._associated_circuit_instances.append(circuit.control_id)
 
-            dc_thing = Battery(
-                battery=dc_meter,
-                categories=categories,
-                battery_circuit=circuit,
-                primary_battery=primary_dc,
-                fallback_battery=secondary_dc,
-                n2k_devices=n2k_devices,
-            )
-            self._things.append(dc_thing)
+                dc_thing = Battery(
+                    battery=dc_meter,
+                    categories=categories,
+                    battery_circuit=circuit,
+                    primary_battery=primary_dc,
+                    fallback_battery=secondary_dc,
+                    n2k_devices=n2k_devices,
+                )
+                self._things.append(dc_thing)
 
     # ###################################################
     #     GNSS
@@ -466,7 +472,7 @@ class ConfigProcessor:
             links = []
             # Fuel tanks
             if tank.tank_type == TankType.Fuel or tank.tank_type == TankType.Oil:
-                tank_thing = FuelTank(tank=tank)
+                tank_thing = FuelTank(tank=tank, n2k_devices=n2k_devices)
                 self._things.append(tank_thing)
             # Water tanks (have associated circuits (pumps))
             else:
@@ -591,7 +597,6 @@ class ConfigProcessor:
             self.process_hvac(config, devices)
             self.process_circuits(config, devices)
 
-            # Config metadata?
             system = EmpowerSystem(config.config_metadata)
             [system.add_thing(thing) for thing in self._things]
 

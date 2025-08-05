@@ -86,7 +86,7 @@ class GPSParser:
             raise ValueError("Incomplete GPSACP response")
 
         return {
-            Constants.Ts: self.gpsacp_to_epoch(fields[0], fields[9]),
+            Constants.ts: self.gpsacp_to_epoch(fields[0], fields[9]),
             Constants.LAT: self.get_latitude(fields[1]),
             Constants.LONG: self.get_longitude(fields[2]),
             "error": {
@@ -115,7 +115,7 @@ class GPSParser:
 if __name__ == "__main__":
     # Temporary Constants for testing
     class Constants:
-        TS = "ts"
+        ts = "ts"
         LAT = "lat"
         LONG = "long"
         sp = "sp"

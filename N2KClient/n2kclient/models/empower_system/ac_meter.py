@@ -18,7 +18,20 @@ from ...models.common_enums import N2kDeviceType, ACMeterStates
 
 
 class ACMeterThingBase(Thing):
+    """
+    Base class for AC meter devices in the Empower system.
+
+    Handles the creation and management of AC line channels (voltage, current, frequency, power, and status)
+    for up to three AC lines. Tracks connection status and provides integration with N2kDevices and RxPy.
+    """
+
     def _calc_connection_status(self):
+        """
+        Calculate the overall connection status for the AC meter based on the status of all lines.
+
+        Returns:
+            ConnectionStatus: CONNECTED if any line is connected, otherwise DISCONNECTED.
+        """
         return (
             ConnectionStatus.CONNECTED
             if StateUtil.any_connected(self.line_status)
@@ -36,6 +49,19 @@ class ACMeterThingBase(Thing):
         ic_associated_line: Optional[int],
         ic_component_status: Optional[rx.Observable[dict[str, any]]] = None,
     ):
+        """
+        Initialize the AC meter thing with up to three AC lines and set up all relevant channels.
+
+        Args:
+            type (ThingType): The type of the thing (e.g., AC_METER).
+            ac_line1 (AC): The first AC line configuration
+            ac_line2 (AC): The second AC line configuration
+            ac_line3 (AC): The third AC line configuration
+            n2k_devices (N2KDevices): The N2K device manager for channel subjects and subscriptions.
+            categories (list[str]): List of categories for this thing.
+            ic_associated_line (Optional[int]): Line number of acmeter that is associated with inverter charger (optional).
+            ic_component_status (Optional[rx.Observable[dict[str, any]]]): Observable for component status of associated inverter charger (optional).
+        """
         self.line_status = {}
         self.connection_status_subject = rx.subject.BehaviorSubject(None)
         Thing.__init__(
@@ -67,6 +93,18 @@ class ACMeterThingBase(Thing):
         ic_associated_line: Optional[int],
         ic_component_status: Optional[rx.Observable[dict[str, any]]] = None,
     ):
+        """
+        Define all AC line channels (voltage, current, frequency, power, and status) for up to three lines.
+        Also defines the overall component status channel for the AC meter.
+
+        Args:
+            ac_line1 (AC): The first AC line configuration
+            ac_line2 (AC): The second AC line configuration
+            ac_line3 (AC): The third AC line configuration
+            n2k_devices (N2KDevices): The N2K device manager for channel subjects and subscriptions.
+            ic_associated_line (Optional[int]): Line number of acmeter that is associated with inverter charger (if any).
+            ic_component_status (Optional[rx.Observable[dict[str, any]]]): Observable for component status of associated inverter charger (if any).
+        """
         if ac_line1 is not None:
             self.define_ac_line_channels(
                 1, n2k_devices, ic_associated_line, ic_component_status
@@ -88,7 +126,6 @@ class ACMeterThingBase(Thing):
             read_only=False,
             tags=[f"{Constants.empower}:{self.type.value}.{Constants.componentStatus}"],
         )
-        self._define_channel(channel)
 
         componenet_status = self.connection_status_subject.pipe(
             ops.filter(lambda state: state is not None),
@@ -96,7 +133,7 @@ class ACMeterThingBase(Thing):
             ops.distinct_until_changed(lambda state: state[Constants.state]),
         )
 
-        n2k_devices.set_subscription(channel.id, componenet_status)
+        n2k_devices.set_subscription(self._define_channel(channel), componenet_status)
 
     def define_ac_line_channels(
         self,
@@ -105,6 +142,15 @@ class ACMeterThingBase(Thing):
         ic_associated_line: Optional[int],
         ic_component_status: Optional[rx.Observable[dict[str, any]]] = None,
     ):
+        """
+        Define all channels for a single AC line (component status, voltage, current, frequency, power).
+
+        Args:
+            line_number (int): The AC line number (1, 2, or 3).
+            n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
+            ic_associated_line (Optional[int]): Line number of acmeter that is associated with inverter charger (if any).
+            ic_component_status (Optional[rx.Observable[dict[str, any]]]): Observable for component status of associated inverter charger (if any).
+        """
         line_const = LINE_CONST_MAP.get(line_number)
 
         def update_line_status(status: dict[str, any]):
@@ -125,8 +171,6 @@ class ACMeterThingBase(Thing):
                 f"{Constants.empower}:{self.type.value}.{line_const}.{Constants.componentStatus}"
             ],
         )
-
-        self._define_channel(channel)
 
         if ic_associated_line == line_number and ic_component_status is not None:
             line_component_status_subject = ic_component_status
@@ -150,7 +194,9 @@ class ACMeterThingBase(Thing):
                 ops.distinct_until_changed(lambda state: state[Constants.state]),
             )
 
-        n2k_devices.set_subscription(channel.id, line_component_status)
+        n2k_devices.set_subscription(
+            self._define_channel(channel), line_component_status
+        )
 
         line_component_status.subscribe(update_line_status)
         self._disposable_list.append(line_component_status)
@@ -168,14 +214,13 @@ class ACMeterThingBase(Thing):
                 f"{Constants.empower}:{self.type.value}.{line_const}.{Constants.voltage}"
             ],
         )
-        self._define_channel(channel)
 
         line_voltage_subject = n2k_devices.get_channel_subject(
             self.ac_id, f"{ACMeterStates.Voltage.value}.{line_number}", N2kDeviceType.AC
         )
 
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             line_voltage_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Voltage.ROUND_VALUE),
@@ -196,13 +241,12 @@ class ACMeterThingBase(Thing):
                 f"{Constants.empower}:{self.type.value}.{line_const}.{Constants.current}"
             ],
         )
-        self._define_channel(channel)
 
         line_current_subject = n2k_devices.get_channel_subject(
             self.ac_id, f"{ACMeterStates.Current.value}.{line_number}", N2kDeviceType.AC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             line_current_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Current.ROUND_VALUE),
@@ -223,14 +267,13 @@ class ACMeterThingBase(Thing):
                 f"{Constants.empower}:{self.type.value}.{line_const}.{Constants.frequency}"
             ],
         )
-        self._define_channel(channel)
         line_frequency_subject = n2k_devices.get_channel_subject(
             self.ac_id,
             f"{ACMeterStates.Frequency.value}.{line_number}",
             N2kDeviceType.AC,
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             line_frequency_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Frequency.ROUND_VALUE),
@@ -251,13 +294,12 @@ class ACMeterThingBase(Thing):
                 f"{Constants.empower}:{self.type.value}.{line_const}.{Constants.power}"
             ],
         )
-        self._define_channel(channel)
 
         line_power_subject = n2k_devices.get_channel_subject(
             self.ac_id, f"{ACMeterStates.Power.value}.{line_const}", N2kDeviceType.AC
         )
         n2k_devices.set_subscription(
-            channel.id,
+            self._define_channel(channel),
             line_power_subject.pipe(
                 ops.filter(lambda state: state is not None),
                 rxu.round_float(Power.ROUND_VALUE),
