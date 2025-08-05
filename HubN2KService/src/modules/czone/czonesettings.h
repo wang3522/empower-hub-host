@@ -54,6 +54,9 @@ public:
   void factoryReset();
   void resetAndInitializeCZonelibSettings();
 
+  bool saveToFile(const std::string &content, const std::string &fileName);
+  bool loadFromFile(std::string &output, const std::string &fileName);
+
 private:
   CzoneSettings();
   ~CzoneSettings();
@@ -80,8 +83,6 @@ private:
   bool m_enable_batterycharger;
 
   inline void saveSettings();
-  bool saveToFile(const std::string &content, const std::string &fileName);
-  bool loadFromFile(std::string &output, const std::string &fileName);
 
   std::string _getCpuHostId();
   std::string _getSerialNumber();

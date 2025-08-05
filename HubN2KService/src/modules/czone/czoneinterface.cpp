@@ -1,3 +1,4 @@
+#include <boost/beast/core/detail/base64.hpp>
 #include <iostream>
 #include <sstream>
 
@@ -3035,6 +3036,41 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
       dbusService->throwError("AlarmList: " + std::string(e.what()));
       return ""; // warning
     }
+  });
+
+  dbusService->registerService("PutFile", "czone", [ptr = this, dbusService](std::string encodedFile) -> std::string {
+    try {
+      std::string decoded;
+      decoded.resize(boost::beast::detail::base64::decoded_size(encodedFile.size()));
+      auto const result = boost::beast::detail::base64::decode(&decoded[0], encodedFile.data(), encodedFile.size());
+      decoded.resize(result.first);
+
+      const auto filename = ptr->m_czoneSettings.getConfigurationPath();
+      ptr->m_czoneSettings.saveToFile(decoded, filename);
+    } catch (const std::exception &e) {
+      BOOST_LOG_TRIVIAL(error) << "PutFile:Error " << e.what();
+      dbusService->throwError("PutFile: " + std::string(e.what()));
+    }
+    return "";
+  });
+
+  dbusService->registerService("GetFile", "czone", [ptr = this, dbusService]() -> std::string {
+    try {
+      std::string data;
+      const auto filename = ptr->m_czoneSettings.getConfigurationPath();
+
+      ptr->m_czoneSettings.loadFromFile(data, filename);
+      std::size_t encoded_size = boost::beast::detail::base64::encoded_size(data.length());
+      std::string encoded(encoded_size, '\0');
+      std::size_t bytes_written = boost::beast::detail::base64::encode(encoded.data(), data.data(), data.length());
+      encoded.resize(bytes_written);
+
+      return encoded;
+    } catch (const std::exception &e) {
+      BOOST_LOG_TRIVIAL(error) << "GetFile:Error " << e.what();
+      dbusService->throwError("GetFile: " + std::string(e.what()));
+    }
+    return "";
   });
 
   dbusService->registerService("AlarmAcknowledge", "czone",
