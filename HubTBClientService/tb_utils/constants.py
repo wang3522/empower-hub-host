@@ -48,3 +48,6 @@ class Constants:
 
     # ===== Channel constants =====
     powerChannel = "p"
+    enabled = "enabled"
+    chargerEnable = "ce"
+    inverterEnable = "ie"

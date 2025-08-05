@@ -15,6 +15,8 @@ from n2kclient.models.empower_system.thing import Thing
 from n2kclient.models.empower_system.channel import Channel
 from n2kclient.models.empower_system.circuit_thing import CircuitThing
 from n2kclient.models.empower_system.battery import Battery
+from n2kclient.models.empower_system.charger import CombiCharger, ACMeterCharger
+from n2kclient.models.empower_system.inverter import CombiInverter, AcMeterInverter
 
 class ControlResult:
     """
@@ -200,10 +202,6 @@ class RpcHandlerService:
             attribute_id = body["attributeId"]
             state = body["state"]
 
-            print("desired state is a float:", isinstance(state, float))
-            print("desired state is a bool:", isinstance(state, bool))
-            print("desired state is an int:", isinstance(state, int))
-
             latest_config = self.n2k_client.get_empower_system()
             if latest_config is None:
                 raise Exception("Config is not yet available")
@@ -226,6 +224,25 @@ class RpcHandlerService:
             response = ControlResult(False, str(error))
             return response.to_json()
 
+    def __control_level_or_set_state(self, thing: Thing, state: Union[bool, float]) -> ControlResult:
+        """
+        Control the level or set the state of a component.
+        This function is a convenience function to control the level or set the state of a component.
+        It will return a ControlResult object with the result of the operation.
+        """
+        runtime_id = int(thing.id.split('.')[-1])
+        if isinstance(state, float):
+            self._logger.debug("Setting level for circuit %s to %s", runtime_id, state)
+            return self.n2k_client.set_circuit_level(runtime_id, float(state))
+        else:
+            if isinstance(state, int) or isinstance(state, bool):
+                desired_on = False
+                if state == 1 or state == True:
+                    desired_on = True
+                state = desired_on
+            self._logger.debug("Setting state for circuit %s to %s", runtime_id, state)
+            return self.n2k_client.set_circuit_power_state(runtime_id, bool(state))
+
     def __control_component(
         self,
         thing: Thing,
@@ -236,62 +253,39 @@ class RpcHandlerService:
             f"Controlling {thing.name} ({thing.id}) attribute {attribute.name} ({attribute.id}) to {state}"
         )
 
-        print(type(thing))
-        print("attribute id: ", attribute.id)
-        print(attribute.to_json())
-
         try:
             # TODO: Implement the control logic for the controlling components
             if (
                 isinstance(thing, CircuitThing)
                 and attribute.id == Constants.powerChannel
             ):
-                print("CircuitThing found")
-                desired_on = False
-                if state == 1 or state == True:
-                    desired_on = True
-
-                # successful = self.n2k_client.set_circuit_state(
-                #     thing.circuit_runtime_id, desired_on
-                # )
-                successful = True
-                return ControlResult(successful, None)
-
-            # elif isinstance(thing, Battery) and attribute.id == Constants.enabled:
-            #     if thing.battery_circuit_id is not None:
-            #         successful = self.n2k_client.set_circuit_state(
-            #             thing.battery_circuit_id, state
-            #         )
-            #         return ControlResult(successful, None)
-            #     else:
-            #         self._logger.error("No circuit found for Battery")
-            #         return ControlResult(False, "No circuit found for Battery")
-
-            # elif (
-            #     isinstance(thing, CombiMasterCharger)
-            #     or isinstance(thing, AcMeterCharger)
-            # ) and attribute.id == Constants.chargerEnable:
-            #     if thing.charger_circuit_id is not None:
-            #         successful = self.n2k_client.set_circuit_state(
-            #             thing.charger_circuit_id, state
-            #         )
-            #         return ControlResult(successful, None)
-            #     else:
-            #         self._logger.error("No circuit found for Charger")
-            #         return ControlResult(False, "No circuit found for Charger")
-
-            # elif (
-            #     isinstance(thing, CombiMasterInverter)
-            #     or isinstance(thing, AcMeterInverter)
-            # ) and attribute.id == Constants.inverterEnable:
-            #     if thing.inverter_circuit_id is not None:
-            #         successful = self.n2k_client.set_circuit_state(
-            #             thing.inverter_circuit_id, state
-            #         )
-            #         return ControlResult(successful, None)
-            #     else:
-            #         self._logger.error("No circuit found for Inverter")
-            #         return ControlResult(False, "No circuit found for Inverter")
+                return ControlResult(self.__control_level_or_set_state(thing, state), None)
+            elif isinstance(thing, Battery) and attribute.id == Constants.enabled:
+                if thing.battery_circuit_id is not None:
+                    return ControlResult(self.__control_level_or_set_state(thing.battery_circuit_id, state), None)
+                else:
+                    self._logger.error("No circuit found for Battery")
+                    return ControlResult(False, "No circuit found for Battery")
+            elif (
+                isinstance(thing, CombiCharger)
+                or isinstance(thing, ACMeterCharger)
+            ) and attribute.id == Constants.chargerEnable:
+                if thing.charger_circuit_control_id is not None:
+                    successful = self.n2k_client.set_circuit_power_state(thing.charger_circuit_control_id, state)
+                    return ControlResult(successful, None)
+                else:
+                    self._logger.error("No circuit found for Charger")
+                    return ControlResult(False, "No circuit found for Charger")
+            elif (
+                isinstance(thing, CombiInverter)
+                or isinstance(thing, AcMeterInverter)
+            ) and attribute.id == Constants.inverterEnable:
+                if thing.inverter_circuit_control_id is not None:
+                    successful = self.n2k_client.set_circuit_power_state(thing.inverter_circuit_control_id, state)
+                    return ControlResult(successful, None)
+                else:
+                    self._logger.error("No circuit found for Inverter")
+                    return ControlResult(False, "No circuit found for Inverter")
 
             self._logger.error("Failed to control component")
             return ControlResult(False, "Invalid control Request")
