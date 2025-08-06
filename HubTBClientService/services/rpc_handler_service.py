@@ -274,7 +274,7 @@ class RpcHandlerService:
                 if thing.battery_circuit_id is not None:
                     # Try to set the state of the battery circuit
                     return ControlResult(
-                        self.__control_level_or_set_state(
+                        self.n2k_client.set_circuit_power_state(
                             thing.battery_circuit_id, state),
                             None
                         )
