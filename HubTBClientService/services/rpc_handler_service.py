@@ -231,7 +231,7 @@ class RpcHandlerService:
     def __control_level_or_set_state(self,
             thing: Thing,
             state: Union[bool, float]
-        ) -> ControlResult:
+        ) -> bool:
         """
         Control the level or set the state of a component.
         This function is a convenience function to control the level/set the state of a component.
