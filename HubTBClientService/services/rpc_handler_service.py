@@ -235,7 +235,7 @@ class RpcHandlerService:
         """
         Control the level or set the state of a component.
         This function is a convenience function to control the level/set the state of a component.
-        It will return a ControlResult object with the result of the operation.
+        It will return a boolean indicating success or failure.
         """
         runtime_id = int(thing.id.split('.')[-1])
         if isinstance(state, float):
