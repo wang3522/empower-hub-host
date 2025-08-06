@@ -16,6 +16,7 @@ class Constants:
     TELEMETRY_CONSENT_ENABLED_KEY = "telemetryConsentEnabled"
     GEOFENCE_ENABLED_KEY = "geofenceEnabled"
     GEOFENCE_KEY = "geofence"
+    N2K_CONNECTION_STATUS_KEY = "n2k_server_connection_state"
     TB_ACCESS_TOKEN_PATH = "/data/tb_access_token"
     SN_PATH = "/data/factory/serial_number"
     TB_CONSENTS_PATH = "/data/tb_consents/"

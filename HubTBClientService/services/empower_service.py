@@ -32,6 +32,7 @@ from n2kclient.models.empower_system.engine_list import EngineList
 from n2kclient.models.empower_system.empower_system import EmpowerSystem
 from n2kclient.client import N2KClient
 from n2kclient.models.devices import N2kDevices
+from n2kclient.models.dbus_connection_status import DBUSConnectionStatus
 from .location_service import LocationService
 
 class EmpowerService:
@@ -70,24 +71,6 @@ class EmpowerService:
         self.last_state_attrs = {}
         self.sync_service = SyncService()
         self.location_service = LocationService(self.n2k_client)
-
-        #TODO: Callback for controlling value, is this needed here?
-        # def callback(result, *args):
-        #     self._logger.info("received attribute update kvp: %s", result)
-        #     if not isinstance(result, dict):
-        #         return
-        #     key = list(result.keys())[0]
-        #     state = result[key]
-
-        #     for thing_id in self._latest_cloud_config.things:
-        #         thing = self._latest_cloud_config.things[thing_id]
-        #         for channel_id in thing.channels:
-        #             if channel_id == key:
-        #                 channel = thing.channels[channel_id]
-        #                 self.__control_component(thing, channel, state)
-
-        # consent = self.thingsboard_client.subscribe_all_attributes(None)
-        # self._service_init_disposables.append(consent.subscribe(callback))
 
         #TODO: Subscribe to active alarms
 
@@ -322,8 +305,6 @@ class EmpowerService:
             print("Sending state updates:", state_attrs)
             self.thingsboard_client.update_attributes(state_attrs)
 
-    # TODO: Set up some sort of n2k_server_connection state
-
     def set_telemetry_consent(self, value: bool):
         if value is not None:
             self.telemetry_consent = value
@@ -357,6 +338,38 @@ class EmpowerService:
         # Subscribe to the state changes
         disposable = self.n2k_client.devices.subscribe(self.device_state_changes)
         self._service_init_disposables.append(disposable)
+        # ======= N2K Client Connection Subscription =======
+        # Need to get the value of the protected method since it is a behavior subject
+        # and we want the latest value as soon as we subscribe in the event we miss
+        # the initial connection status event.
+        # pylint: disable=protected-access
+        self._update_n2k_client_connection_status(
+            self.n2k_client._n2k_dbus_connection_status.value
+        )
+        disposable = self.n2k_client.n2k_dbus_connection_status.subscribe(
+            self._update_n2k_client_connection_status
+        )
+        self._service_init_disposables.append(disposable)
+
+    def _update_n2k_client_connection_status(self, status: DBUSConnectionStatus):
+        """
+        Update the N2K client connection status.
+        This method will send the connection status to ThingsBoard.
+        """
+        if status is None:
+            self._logger.error("N2K client connection status is None")
+            return
+
+        if self.telemetry_consent is None or not self.telemetry_consent:
+            self._logger.debug(
+                "Telemetry consent not granted, skipping N2K client connection status update."
+            )
+            return
+
+        self._logger.info("N2K client connection status updated: %s", status.to_json())
+        self.thingsboard_client.update_attributes(
+            {Constants.N2K_CONNECTION_STATUS_KEY: status.to_json()}
+        )
 
     def _update_metadata(self, metadata: dict[str, Any]):
         """
@@ -490,16 +503,13 @@ class EmpowerService:
         self._logger.debug("Starting ThingsBoard client...")
         self.thingsboard_client.connect()
         self._logger.debug("Starting location service")
-        # TODO: setup n2k connection status
         self.location_service.start()
 
         # TODO: Subscribe to active alarms
-        # TODO: Subscribe to engine config attribute
 
         # TODO: Pull down active alarms, engine config
 
         # TODO: Get consents from sync service
 
-        #TODO: Start n2k client
         self._logger.debug("Starting N2K Client")
         self.n2k_client.start()
