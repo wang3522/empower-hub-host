@@ -45,3 +45,10 @@ class Constants:
     MIN_CHANGE = "MIN_CHANGE"
     trips = "trips"
     n2k = "n2k"
+
+    # ===== Channel constants =====
+    powerChannel = "p"
+    levelChannel = "lvl"
+    enabled = "enabled"
+    chargerEnable = "ce"
+    inverterEnable = "ie"

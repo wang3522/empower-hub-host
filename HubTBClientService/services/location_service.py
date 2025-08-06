@@ -280,7 +280,7 @@ class LocationService:
             else:
                 self._logger.debug("Geofence point not changed or invalid")
         else:
-            self.geofence_point = None
+            self.geofence_point = GeoPoint(None, None)
 
     def _config_changed(self, config):
         if config:
