@@ -48,6 +48,7 @@ class Constants:
 
     # ===== Channel constants =====
     powerChannel = "p"
+    levelChannel = "lvl"
     enabled = "enabled"
     chargerEnable = "ce"
     inverterEnable = "ie"

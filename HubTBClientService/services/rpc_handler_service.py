@@ -228,28 +228,6 @@ class RpcHandlerService:
             response = ControlResult(False, str(error))
             return response.to_json()
 
-    def __control_level_or_set_state(self,
-            thing: Thing,
-            state: Union[bool, float]
-        ) -> bool:
-        """
-        Control the level or set the state of a component.
-        This function is a convenience function to control the level/set the state of a component.
-        It will return a boolean indicating success or failure.
-        """
-        runtime_id = int(thing.id.split('.')[-1])
-        if isinstance(state, float):
-            self._logger.debug("Setting level for circuit %s to %s", runtime_id, state)
-            return self.n2k_client.set_circuit_level(runtime_id, float(state))
-        else:
-            if isinstance(state, int) or isinstance(state, bool):
-                desired_on = False
-                if state == 1 or state == True:
-                    desired_on = True
-                state = desired_on
-            self._logger.debug("Setting state for circuit %s to %s", runtime_id, state)
-            return self.n2k_client.set_circuit_power_state(runtime_id, bool(state))
-
     def __control_component(
         self,
         thing: Thing,
@@ -263,12 +241,23 @@ class RpcHandlerService:
 
         try:
             # Check to see if thing is a CircuitThing
-            if (
-                isinstance(thing, CircuitThing)
-                and attribute.id == Constants.powerChannel
-            ):
+            if isinstance(thing, CircuitThing):
+                # Get the runtime ID from the thing ID
+                runtime_id = int(thing.id.split('.')[-1])
                 # Circuit Things can be dimmable, so we can either set a level or state
-                return ControlResult(self.__control_level_or_set_state(thing, state), None)
+                # Depending on the attribute id we get sent
+                if attribute.id == Constants.powerChannel:
+                    self._logger.debug("Setting state for circuit %s to %s", runtime_id, state)
+                    return ControlResult(
+                        self.n2k_client.set_circuit_power_state(runtime_id, bool(state)),
+                        None
+                    )
+                elif attribute.id == Constants.levelChannel:
+                    self._logger.debug("Setting level for circuit %s to %s", runtime_id, state)
+                    return ControlResult(
+                        self.n2k_client.set_circuit_level(runtime_id, float(state)),
+                        None
+                    )
             # Check if thing is a Battery and the attribute is enabled
             elif isinstance(thing, Battery) and attribute.id == Constants.enabled:
                 if thing.battery_circuit_id is not None:
