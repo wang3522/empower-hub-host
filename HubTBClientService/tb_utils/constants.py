@@ -46,6 +46,16 @@ class Constants:
     MIN_CHANGE = "MIN_CHANGE"
     trips = "trips"
     n2k = "n2k"
+    CURRENT_STATE = "currentState"
+    ALARM_GEOFENCE_KEY = "alarm.geofence"
+    TITLE = "title"
+    NAME = "name"
+    TYPE = "type"
+    DESCRIPTION = "description"
+    SEVERITY = "severity"
+    CURRENT_STATE = "currentState"
+    DATE_ACTIVE = "dateActive"
+    THINGS = "things"
 
     # ===== Channel constants =====
     powerChannel = "p"
