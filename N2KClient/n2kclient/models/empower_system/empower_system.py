@@ -46,5 +46,9 @@ class EmpowerSystem:
         }
 
     def __del__(self):
+        self.dispose()
+
+    def dispose(self):
         for disposable in self.things.values():
             disposable.dispose()
+        self.things.clear()

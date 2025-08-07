@@ -341,7 +341,7 @@ class eStateType(Enum):
 
 
 class eEventType(Enum):
-    ConfigChange = 0
+    ConfigChanged = 0
     AlarmAdded = 1
     AlarmChanged = 2
     AlarmRemoved = 3

@@ -19,5 +19,9 @@ class EngineList:
         }
 
     def __del__(self):
+        self.dispose()
+
+    def dispose(self):
         for disposable in self.engines.values():
             disposable.dispose()
+        self.engines.clear()

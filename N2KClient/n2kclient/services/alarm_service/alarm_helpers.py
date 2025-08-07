@@ -36,8 +36,7 @@ def generate_alarms_from_discrete_status(
     This method iterates through the provided status alarms and checks if the corresponding bit
     in the discrete status is set. If the bit is set and the alarm is not already present
     in the previous engine alert list, it creates a new EngineAlert and adds it to the merged
-    engine alert list. If the alarm text is already present, it updates the merged engine alert
-    list with the existing alert from the previous engine alert list.
+    engine alert list.
 
     Args:
         status_alarms (list): A list of tuples where each tuple contains a bit shift and an alarm text.
@@ -60,10 +59,7 @@ def generate_alarms_from_discrete_status(
             f"engine.{engine_id}.discrete_status{discrete_status_word}.{bit_shift}"
         )
         if (discrete_status >> bit_shift) & 1:
-            if (
-                engine_id not in prev_engine_alert_list.engine_alarms
-                or alarm_text not in prev_engine_alert_list.engine_alarms[engine_id]
-            ):
+            if alarm_id not in prev_engine_alert_list.engine_alarms:
                 date_active = TimeUtil.current_time()
                 engine_alert = EngineAlarm(
                     date_active=date_active,

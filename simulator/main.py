@@ -21,6 +21,7 @@ class N2KDBusSimulator(dbus.service.Object):
     device_list: list
 
     def __init__(self):
+
         self.get_devices_count = 0
         self.get_state_count = 0
         self.initial = True
@@ -43,11 +44,24 @@ class N2KDBusSimulator(dbus.service.Object):
             {"Id": "Circuit.135", "Type": "circuit"},
             {"Id": "Circuit.138", "Type": "circuit"},
         ]
-        # bus = dbus.SystemBus()
-        bus = dbus.SessionBus() if platform.system() == "Darwin" else dbus.SystemBus()
-        bus.request_name(BUS_NAME)
-        bus_name = dbus.service.BusName(BUS_NAME, bus=bus)
-        dbus.service.Object.__init__(self, bus_name, OPATH)
+
+        # Retry loop for DBus bus and service registration
+        while True:
+            try:
+                if platform.system() == "Darwin":
+                    bus = dbus.SessionBus()
+                else:
+                    bus = dbus.SystemBus()
+                bus.request_name(BUS_NAME)
+                bus_name = dbus.service.BusName(BUS_NAME, bus=bus)
+                dbus.service.Object.__init__(self, bus_name, OPATH)
+                break
+            except Exception as e:
+                print(
+                    f"[Simulator] Failed to connect/register on DBus: {e}. Retrying in 5 seconds..."
+                )
+                time.sleep(5)
+
         self.get_config_fail_count = 0
         self.control_fail_count = 0
 
@@ -195,7 +209,153 @@ class N2KDBusSimulator(dbus.service.Object):
 
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def SingleSnapshot(self):
-        snapshot = {}
+        snapshot = {
+            "DC": {
+                "DC.6": {
+                    "ComponentStatus": "Disconnected",
+                    "Voltage": 12.0,
+                    "Current": 2.0,
+                    "StateOfCharge": 75,
+                    "Temperature": 23.11,
+                    "CapacityRemaining": 1000.0,
+                    "TimeRemaining": 120,
+                    "TimeToCharge": 60,
+                },
+                "DC.7": {
+                    "ComponentStatus": "Connected",
+                    "Voltage": 11.0,
+                    "Current": 12.0,
+                    "StateOfCharge": 13,
+                    "Temperature": 14.11,
+                    "CapacityRemaining": 15555.0,
+                    "TimeRemaining": 1444,
+                    "TimeToCharge": 124,
+                },
+            },
+            "Tanks": {
+                "Tanks.17": {
+                    "ComponentStatus": "Connected",
+                    "Level": 200,
+                    "LevelPercent": 87,
+                },
+                "Tanks.81": {
+                    "ComponentStatus": "Connected",
+                    "Level": 300,
+                    "LevelPercent": 92,
+                },
+            },
+            "AC": {
+                "AC.1": {
+                    "Instance": 1,
+                    "AClines": {
+                        "1": {
+                            "Instance": 1,
+                            "Line": 1,
+                            "ComponentStatus": "Connected",
+                            "Voltage": 11.0,
+                            "Current": 10.5,
+                            "Frequency": 50.0,
+                            "Power": 2400.0,
+                        },
+                        "2": {
+                            "Instance": 2,
+                            "Line": 2,
+                            "ComponentStatus": "Disconnected",
+                            "Voltage": 11.0,
+                            "Current": 59.8,
+                            "Frequency": 50.0,
+                            "Power": 5555.0,
+                        },
+                    },
+                },
+                "AC.5": {
+                    "Instance": 1,
+                    "AClines": {
+                        "1": {
+                            "Instance": 1,
+                            "Line": 1,
+                            "ComponentStatus": "Connected",
+                            "Voltage": 1110.0,
+                            "Current": 11.5,
+                            "Frequency": 11.0,
+                            "Power": 1111.0,
+                        },
+                        "2": {
+                            "Instance": 2,
+                            "Line": 2,
+                            "ComponentStatus": "Connected",
+                            "Voltage": 111.0,
+                            "Current": 11.8,
+                            "Frequency": 111.0,
+                            "Power": 111.0,
+                        },
+                    },
+                },
+            },
+            "Engines": {
+                "Engines.0": {
+                    "ComponentStatus": "Connected",
+                    "EngineState": 1,
+                    "Speed": 0,
+                    "CoolantPressure": 50,
+                    "CoolantTemperature": 80.0,
+                    "FuelLevel": 50,
+                    "EngineHours": 1000,
+                    "DiscreteStatus1": 1,
+                    "DiscreteStatus2": 1,
+                }
+            },
+            "Circuits": {
+                "Circuits.0": {
+                    "IsOffline": False,
+                    "Current": 1.5,
+                    "Voltage": 12.5,
+                    "Level": 100,
+                },
+                "Circuits.114": {
+                    "IsOffline": True,
+                    "Current": 2.5,
+                    "Voltage": 8.5,
+                    "Level": 0,
+                },
+                "Circuits.135": {
+                    "IsOffline": True,
+                    "Current": 2.5,
+                    "Voltage": 8.5,
+                    "Level": 0,
+                },
+                "Circuits.138": {
+                    "IsOffline": True,
+                    "Current": 2.5,
+                    "Voltage": 8.5,
+                    "Level": 0,
+                },
+                "Circuits.141": {
+                    "IsOffline": False,
+                    "Current": 2.5,
+                    "Voltage": 8.5,
+                    "Level": 100,
+                },
+            },
+            "GNSS": {
+                "GNSS.128": {
+                    "ComponentStatus": "Connected",
+                    "FixType": "2D Fix",
+                    "LatitudeDeg": 8.5,
+                    "LongitudeDeg": 100.0,
+                    "Sog": 5.5,
+                },
+            },
+            "InverterChargers": {
+                "InverterChargers.0": {
+                    "ComponentStatus": "Connected",
+                    "InverterEnable": 0,
+                    "ChargerEnable": 0,
+                    "InverterState": "Inverting",
+                    "ChargerState": "Float",
+                },
+            },
+        }
         return json.dumps(snapshot)
 
 
@@ -203,7 +363,7 @@ class Main:
     logger = logging.getLogger("DBUS N2k Simulator")
 
     def __init__(self):
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
         log_handler = logging.StreamHandler()
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -221,6 +381,7 @@ class Main:
             return True  # Repeat every interval
 
         def emit_snapshot():
+            self.logger.debug("Emitting snapshot")
             snapshot = {
                 "DC": {
                     "DC.6": {
@@ -346,7 +507,7 @@ class Main:
                         "IsOffline": False,
                         "Current": 2.5,
                         "Voltage": 8.5,
-                        "Level": 0,
+                        "Level": 100,
                     },
                 },
                 "GNSS": {
@@ -369,10 +530,9 @@ class Main:
                 },
             }
             service.Snapshot(json.dumps(snapshot))
+            return True
 
-            # return True
-
-        GLib.timeout_add_seconds(2, emit_snapshot)  # Emit every 1 second
+        GLib.timeout_add_seconds(2, emit_snapshot)  # Emit every 2 second
 
         try:
             loop.run()

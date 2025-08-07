@@ -1,7 +1,7 @@
+import copy
 import logging
-import platform
 import threading
-from typing import Any, List, Union
+from typing import Any, List
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 import dbus.proxies
@@ -15,7 +15,6 @@ from .models.devices import N2kDevices
 from .models.constants import Constants, JsonKeys
 from reactivex import operators as ops
 from gi.repository import GLib
-from time import sleep
 from .util.settings_util import SettingsUtil
 from .models.common_enums import N2kDeviceType, eEventType, ConnectionStatus
 from .services.config_parser.config_parser import ConfigParser
@@ -32,6 +31,7 @@ from .services.signal_parser.event_parser import EventParser
 from .models.empower_system.alarm_list import AlarmList
 from .models.dbus_connection_status import DBUSConnectionStatus
 from .util.time_util import TimeUtil
+from .services.dbus_proxy_service.dbus_proxy import DbusProxyService
 
 
 class N2KClient(dbus.service.Object):
@@ -53,19 +53,6 @@ class N2KClient(dbus.service.Object):
     engine_list: rx.subject.BehaviorSubject
     factory_metadata: rx.subject.BehaviorSubject
     n2k_dbus_connection_status: rx.subject.BehaviorSubject
-
-    bus: Union[dbus.SystemBus, dbus.SessionBus]
-    n2k_dbus_interface: dbus.Interface
-    n2k_dbus_object: dbus.proxies.ProxyObject
-
-    _dbus_get_config: dbus.proxies._ProxyMethod
-    _dbus_get_config_all: dbus.proxies._ProxyMethod
-    _dbus_get_categories: dbus.proxies._ProxyMethod
-    _dbus_get_setting: dbus.proxies._ProxyMethod
-    _dbus_control: dbus.proxies._ProxyMethod
-    _dbus_alarm_acknowledge: dbus.proxies._ProxyMethod
-    _dbus_alarm_list: dbus.proxies._ProxyMethod
-    _dbus_single_snapshot: dbus.proxies._ProxyMethod
 
     _latest_config: N2kConfiguration
     _latest_empower_system: EmpowerSystem
@@ -110,6 +97,8 @@ class N2KClient(dbus.service.Object):
 
         self._latest_devices = N2kDevices()
 
+        self._latest_engine_config = EngineConfiguration()
+
         self._devices = rx.subject.BehaviorSubject(N2kDevices())
         self._config = rx.subject.BehaviorSubject(N2kConfiguration())
         self._empower_system = rx.subject.BehaviorSubject(EmpowerSystem(None))
@@ -148,93 +137,38 @@ class N2KClient(dbus.service.Object):
         self.engine_alarms = self._engine_alarms.pipe(ops.publish(), ops.ref_count())
         self.n2k_dbus_connection_status = self._n2k_dbus_connection_status.pipe(
             ops.filter(lambda status: status is not None),
-            ops.distinct_until_changed(
-                lambda state: state.connection_state or state.reason
-            ),
+            ops.distinct_until_changed(lambda state: state.connection_state),
             ops.publish(),
             ops.ref_count(),
         )
-        # Initialize N2k dbus Interface
-        # Mac uses SessionBus, Linux uses SystemBus
-        self.bus = dbus.SystemBus()
-        if platform.system() == "Darwin":
-            self.bus = dbus.SessionBus()
-
-        n2k_dbus_object = self.bus.get_object(
-            Constants.N2K_SERVICE_NAME, Constants.N2K_OBJECT_PATH
-        )
-        self.n2k_dbus_interface = dbus.Interface(
-            n2k_dbus_object, Constants.N2K_INTERFACE_NAME
-        )
-
-        # Initialize N2k dbus Service Methods
-        self._dbus_get_config = self.n2k_dbus_interface.get_dbus_method(
-            Constants.GET_CONFIG_SERVICE_METHOD_NAME
-        )
-
-        self._dbus_get_config_all = self.n2k_dbus_interface.get_dbus_method(
-            Constants.GET_CONFIG_ALL_SERVICE_METHOD_NAME
-        )
-        self._dbus_get_categories = self.n2k_dbus_interface.get_dbus_method(
-            Constants.GET_CATEGORIES_SERVICE_METHOD_NAME
-        )
-
-        self._dbus_get_setting = self.n2k_dbus_interface.get_dbus_method(
-            Constants.GET_SETTING_SERVICE_METHOD_NAME
-        )
-
-        self._dbus_control = self.n2k_dbus_interface.get_dbus_method(
-            Constants.CONTROL_SERVICE_METHOD_NAME
-        )
-
-        self._dbus_alarm_acknowledge = self.n2k_dbus_interface.get_dbus_method(
-            Constants.ALARM_ACKNOWLEDGE_SERVICE_METHOD_NAME
-        )
-
-        self._dbus_alarm_list = self.n2k_dbus_interface.get_dbus_method(
-            Constants.ALARM_LIST_SERVICE_METHOD_NAME
-        )
-
-        self._dbus_single_snapshot = self.n2k_dbus_interface.get_dbus_method(
-            Constants.SINGLE_SNAPSHOT_SERVICE_METHOD_NAME
-        )
-
-        # Service initialization
         self._config_parser = ConfigParser()
         self._config_processor = ConfigProcessor()
         self._event_parser = EventParser()
+
+        self._dbus_proxy = DbusProxyService(
+            status_callback=self._n2k_dbus_connection_status.on_next,
+            event_handler=self.event_handler,
+            snapshot_handler=self.snapshot_handler,
+            retry_delay=self._dbus_retry_delay,
+            control_max_attempts=self._control_dbus_max_attempts,
+        )
+
         self.control_service = ControlService(
             get_config_func=self.get_config,
             get_devices_func=self.get_devices,
-            send_control_func=self.dbus_control,
+            send_control_func=self._dbus_proxy.control,
         )
         self._alarm_service = AlarmService(
-            alarm_list_func=self.dbus_alarm_list,
+            alarm_list_func=self._dbus_proxy.alarm_list,
             get_latest_alarms_func=self.get_latest_alarms,
             get_config_func=self.get_config,
             get_engine_config_func=self.get_latest_engine_config,
             get_engine_alarms_func=self.get_engine_alarms,
             set_alarm_list=self._set_alarm_list,
             set_engine_alarms=self._set_engine_alarms,
-            acknowledge_alarm_func=self.dbus_alarm_acknowledge,
+            acknowledge_alarm_func=self._dbus_proxy.alarm_acknowledge,
         )
-
         self._setup_subscriptions()
-
-        self.bus.add_signal_receiver(
-            self.event_handler,
-            dbus_interface=Constants.N2K_INTERFACE_NAME,
-            signal_name=Constants.EVENT_SIGNAL_NAME,
-            path=Constants.N2K_OBJECT_PATH,
-        )
-
-        self.bus.add_signal_receiver(
-            self.snapshot_handler,
-            dbus_interface=Constants.N2K_INTERFACE_NAME,
-            signal_name=Constants.SNAPSHOT_SIGNAL_NAME,
-            path=Constants.N2K_OBJECT_PATH,
-        )
-
         self._set_periodic_snapshot_timer()
 
     def run_mainloop(self):
@@ -242,6 +176,7 @@ class N2KClient(dbus.service.Object):
         Run the GLib main loop to handle DBus signals and events.
         This method is typically called in a separate thread.
         """
+        self._dbus_proxy.connect()
         self._scan_factory_metadata()
         self._get_configuration()
         self._scan_marine_engine_config(should_reset=False)
@@ -335,117 +270,6 @@ class N2KClient(dbus.service.Object):
             self._scan_marine_engine_config()
             self._alarm_service.load_active_alarms()
         self.previous_n2k_dbus_connection_status = status
-
-    # === DBus Wrappers ===
-    def _retry_dbus_call(self, func, *args, delay=None, max_attempts=None, **kwargs):
-        """
-        Retry a DBus call indefinitely with a configurable delay.
-        Logs the DBus method name, interface, and error on each failure.
-        """
-        if delay is None:
-            delay = self._dbus_retry_delay
-        attempt = 0
-        # Try to extract DBus method name and interface if available
-        method_name = (
-            getattr(func, "_method_name", None)
-            or getattr(func, "__name__", None)
-            or str(func)
-        )
-        while True:
-            try:
-                result = func(*args, **kwargs)
-                self._n2k_dbus_connection_status.on_next(
-                    DBUSConnectionStatus(
-                        connection_state=ConnectionStatus.CONNECTED,
-                        reason="",
-                        timestamp=TimeUtil.current_time(),
-                    )
-                )
-                return result
-            except dbus.exceptions.DBusException as e:
-                attempt += 1
-                self._logger.warning(
-                    f"DBus call '{method_name}' failed (attempt {attempt}): {e}"
-                )
-                self._n2k_dbus_connection_status.on_next(
-                    DBUSConnectionStatus(
-                        connection_state=ConnectionStatus.DISCONNECTED,
-                        reason=str(e),
-                        timestamp=TimeUtil.current_time(),
-                    )
-                )
-                if max_attempts and attempt >= max_attempts:
-                    self._logger.error(
-                        f"DBus call '{method_name}' failed after {attempt} attempts. Giving up."
-                    )
-                    raise
-                sleep(delay)
-
-    def dbus_single_snapshot(self, *args, **kwargs) -> Any:
-        """
-        Call the DBus SingleSnapshot method with retry.
-        Returns a single snapshot from the DBus service.
-        """
-        return self._retry_dbus_call(self._dbus_single_snapshot, *args, **kwargs)
-
-    def dbus_get_config(self, *args, **kwargs) -> Any:
-        """
-        Call the DBus GetConfig method with retry.
-        Returns the configuration for a given key.
-        """
-        return self._retry_dbus_call(self._dbus_get_config, *args, **kwargs)
-
-    def dbus_get_config_all(self, *args, **kwargs) -> Any:
-        """
-        Call the DBus GetConfigAll method with retry.
-        Returns the full configuration.
-        """
-        return self._retry_dbus_call(self._dbus_get_config_all, *args, **kwargs)
-
-    def dbus_get_categories(self, *args, **kwargs) -> Any:
-        """
-        Call the DBus GetCategories method with retry.
-        Returns the categories configuration.
-        """
-        return self._retry_dbus_call(self._dbus_get_categories, *args, **kwargs)
-
-    def dbus_get_setting(self, *args, **kwargs) -> Any:
-        """
-        Call the DBus GetSetting method with retry.
-        Returns the requested setting.
-        """
-        return self._retry_dbus_call(self._dbus_get_setting, *args, **kwargs)
-
-    def dbus_control(self, *args, **kwargs) -> Any:
-        """
-        Call the DBus Control method with retry.
-        Sends a control request to the DBus service.
-        """
-        return self._retry_dbus_call(
-            self._dbus_control,
-            *args,
-            **kwargs,
-            max_attempts=self._control_dbus_max_attempts,
-        )
-
-    def dbus_alarm_acknowledge(self, *args, **kwargs) -> Any:
-        """
-        Call the DBus AlarmAcknowledge method with retry.
-        Acknowledges an alarm in the DBus service.
-        """
-        return self._retry_dbus_call(
-            self._dbus_alarm_acknowledge,
-            *args,
-            **kwargs,
-            max_attempts=self._control_dbus_max_attempts,
-        )
-
-    def dbus_alarm_list(self, *args, **kwargs) -> Any:
-        """
-        Call the DBus AlarmList method with retry.
-        Returns the list of alarms from the DBus service.
-        """
-        return self._retry_dbus_call(self._dbus_alarm_list, *args, **kwargs)
 
     def _log_config_item(self, config_type: str, config_obj: Any):
         if config_obj is not None:
@@ -624,8 +448,8 @@ class N2KClient(dbus.service.Object):
             if parsed_event.type is eEventType.EngineConfigChanged:
                 self._logger.info("Received EngineConfigChanged event")
                 self._scan_marine_engine_config()
-            if parsed_event.type is eEventType.ConfigChange:
-                self._logger.info("Received ConfigChange event")
+            if parsed_event.type is eEventType.ConfigChanged:
+                self._logger.info("Received ConfigChanged event")
                 self._get_configuration()
             if parsed_event.type in [
                 eEventType.AlarmAdded,
@@ -648,7 +472,9 @@ class N2KClient(dbus.service.Object):
     def _scan_factory_metadata(self):
         try:
             self._logger.info("Loading factory metadata...")
-            factory_metadata_response = self.dbus_get_setting(Constants.FactoryData)
+            factory_metadata_response = self._dbus_proxy.get_setting(
+                Constants.FactoryData
+            )
             factory_metadata_json = json.loads(factory_metadata_response)
             factory_metadata = self._config_parser.parse_factory_metadata(
                 factory_metadata_json
@@ -660,7 +486,7 @@ class N2KClient(dbus.service.Object):
     def _scan_config_metadata(self):
         try:
             self._logger.info("Loading config metadata...")
-            config_metadata = self.dbus_get_setting(Constants.Config)
+            config_metadata = self._dbus_proxy.get_setting(Constants.Config)
             return config_metadata
         except Exception as e:
             self._logger.error(f"Error reading dbus Get Config Metadata response: {e}")
@@ -669,8 +495,11 @@ class N2KClient(dbus.service.Object):
     def _get_configuration(self):
         # Raw Czone Config
         try:
-            categories_json = self.dbus_get_categories()
-            config_json = self.dbus_get_config_all()
+            with self.lock:
+                self._latest_devices.dispose_devices(is_engine=False)
+                self._devices.on_next(self._latest_devices)
+            categories_json = self._dbus_proxy.get_categories()
+            config_json = self._dbus_proxy.get_config_all()
             config_metadata_json = self._scan_config_metadata()
             raw_config = self._config_parser.parse_config(
                 config_json, categories_json, config_metadata_json
@@ -678,6 +507,8 @@ class N2KClient(dbus.service.Object):
             self._config.on_next(raw_config)
 
             # Empower System
+            if self._latest_empower_system is not None:
+                self._latest_empower_system.dispose()
             processed_config = self._config_processor.build_empower_system(
                 raw_config, self._latest_devices
             )
@@ -706,7 +537,13 @@ class N2KClient(dbus.service.Object):
 
         # Engine Config
         try:
-            engine_config_json = self.dbus_get_config(JsonKeys.ENGINES)
+            if should_reset:
+                with self.lock:
+                    self._latest_devices.dispose_devices(True)
+                    self._devices.on_next(self._latest_devices)
+                if self._latest_engine_list is not None:
+                    self._latest_engine_list.dispose()
+            engine_config_json = self._dbus_proxy.get_config(JsonKeys.ENGINES)
             raw_engine_config = self._config_parser.parse_engine_configuration(
                 engine_config_json, engine_configuration
             )
@@ -781,25 +618,31 @@ class N2KClient(dbus.service.Object):
     def _merge_state_update(self, state_updates: dict[str, dict[str, Any]]):
         with self.lock:
             device_list_copy = self._latest_devices
-
             for id, state_update in state_updates.items():
-                if id not in device_list_copy.devices:
-                    continue
-                # Devices of type AC contain multiple AC Lines,
-                # We want to keep ACLine data together within same device, but each lines data accessable by knowing the line ID
-                # For this reason, we are creating channels within the AC device named as {channel_id}.{line_id}
-                if device_list_copy.devices[id].type == N2kDeviceType.AC:
-                    lines: dict[int, dict[str, any]] = state_update.get("AClines", {})
-                    if lines is not None:
-                        for line_id, line_value in lines.items():
-                            for channel_id, value in line_value.items():
-                                device_list_copy.update_channel(
-                                    id, f"{channel_id}.{int(line_id)}", value
-                                )
-                else:
+                if id in device_list_copy.devices:
+                    # Devices of type AC contain multiple AC Lines,
+                    # We want to keep ACLine data together within same device, but each lines data accessable by knowing the line ID
+                    # For this reason, we are creating channels within the AC device named as {channel_id}.{line_id}
+                    if device_list_copy.devices[id].type == N2kDeviceType.AC:
+                        lines: dict[int, dict[str, any]] = state_update.get(
+                            "AClines", {}
+                        )
+                        if lines is not None:
+                            for line_id, line_value in lines.items():
+                                for channel_id, value in line_value.items():
+                                    device_list_copy.devices[id].update_channel(
+                                        f"{channel_id}.{int(line_id)}", value
+                                    )
+                    else:
+                        for channel_id, value in state_update.items():
+                            device_list_copy.devices[id].update_channel(
+                                channel_id, value
+                            )
+                elif id in device_list_copy.engine_devices:
                     for channel_id, value in state_update.items():
-                        device_list_copy.update_channel(id, channel_id, value)
-
+                        device_list_copy.engine_devices[id].update_channel(
+                            channel_id, value
+                        )
             self._devices.on_next(device_list_copy)
 
     def _set_periodic_snapshot_timer(self):
@@ -811,15 +654,20 @@ class N2KClient(dbus.service.Object):
 
     def _start_snapshot_timer(self):
         try:
-            self._periodic_snapshot_timer.cancel()
+            # Only cancel if timer exists and is alive
+            if (
+                hasattr(self, "_periodic_snapshot_timer")
+                and self._periodic_snapshot_timer.is_alive()
+            ):
+                self._periodic_snapshot_timer.cancel()
             self._set_periodic_snapshot_timer()
             self._periodic_snapshot_timer.start()
-        except:
-            self._logger.warning("Failed to restart periodic snapshot timer")
+        except Exception as e:
+            self._logger.warning(f"Failed to restart periodic snapshot timer: {e}")
 
     def _single_snapshot(self):
         try:
-            snapshot = self.dbus_single_snapshot()
+            snapshot = self._dbus_proxy.single_snapshot()
             self.snapshot_handler(snapshot)
         except Exception as e:
             self._logger.error(f"Error getting single snapshot: {e}")

@@ -189,7 +189,7 @@ class InverterBase(Thing):
         """
         line_const = LINE_CONST_MAP.get(line_number)
 
-        def update_line1_status(status: dict[str, any]):
+        def update_line_status(status: dict[str, any]):
             self.line_status[line_number] = status[Constants.state]
             self.connection_status_subject.on_next(self._calc_connection_status())
 
@@ -228,8 +228,11 @@ class InverterBase(Thing):
                 ops.distinct_until_changed(lambda state: state[Constants.state]),
             )
 
-        line_component_status.subscribe(update_line1_status)
-        self._disposable_list.append(line_component_status)
+        line_component_status_disposable = line_component_status.subscribe(
+            update_line_status
+        )
+
+        self._disposable_list.append(line_component_status_disposable)
 
         n2k_devices.set_subscription(
             self._define_channel(channel), line_component_status

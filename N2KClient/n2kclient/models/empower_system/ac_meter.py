@@ -198,8 +198,9 @@ class ACMeterThingBase(Thing):
             self._define_channel(channel), line_component_status
         )
 
-        line_component_status.subscribe(update_line_status)
-        self._disposable_list.append(line_component_status)
+        self._disposable_list.append(
+            line_component_status.subscribe(update_line_status)
+        )
 
         ###################################
         # Line Voltage

@@ -2,6 +2,8 @@ import json
 from typing import Any, Dict
 import reactivex as rx
 from reactivex.subject import BehaviorSubject
+
+from .constants import Constants
 from .common_enums import N2kDeviceType
 from reactivex.disposable import Disposable
 
@@ -19,7 +21,10 @@ class N2kDevice:
         self._channel_subjects = {}
 
     def update_channel(self, channel_key: str, value: Any):
-        """Update a channel's value"""
+        """
+        Update the value of a channel and notify any observers.
+        If the channel does not have a subject, one is created.
+        """
         # Update raw value
         self.channels[channel_key] = value
 
@@ -30,6 +35,10 @@ class N2kDevice:
             self._channel_subjects[channel_key] = BehaviorSubject(value)
 
     def get_channel_subject(self, channel_key: str) -> BehaviorSubject:
+        """
+        Get the BehaviorSubject for a channel, creating it if it does not exist.
+        The subject emits the current value and all future updates.
+        """
         if channel_key not in self._channel_subjects:
             initial_value = self.channels.get(channel_key)
             self._channel_subjects[channel_key] = BehaviorSubject(initial_value)
@@ -39,82 +48,183 @@ class N2kDevice:
         self.dispose()
 
     def dispose(self):
-        """Clean up subjects"""
+        """
+        Dispose of all channel subjects and clear channel values.
+        This should be called to release resources when the device is no longer needed.
+        """
         self._channel_subjects.clear()
         self.channels.clear()
 
     def to_dict(self) -> Dict[str, Any]:
+        """
+        Return a dictionary representation of the device, including type and channels.
+        """
         return {"type": self.type.value, "channels": self.channels}
 
     def to_json_string(self) -> str:
+        """
+        Return a JSON string representation of the device.
+        """
         return json.dumps(self.to_dict())
 
 
 class N2kDevices:
     devices: Dict[str, N2kDevice]
+    engine_devices: Dict[str, N2kDevice]
     mobile_channels: Dict[str, Any]
+    engine_mobile_channels: Dict[str, Any]
     _pipe_subscriptions: Dict[str, Disposable]
+    _engine_pipe_subscriptions: Dict[str, Disposable]
 
     def __init__(self):
         self.devices = {}
+        self.engine_devices = {}
         # Mobile channel values
         self.mobile_channels = {}
+        self.engine_mobile_channels = {}
         # Subscriptions for pipes
         self._pipe_subscriptions = {}
+        self._engine_pipe_subscriptions = {}
+
+    def dispose_devices(self, is_engine: bool = False):
+        """
+        Dispose and remove all devices, subscriptions, and mobile channels.
+
+        Args:
+            is_engine (bool, optional): If True, disposes engine devices and related resources;
+                otherwise, disposes non-engine devices and resources. Defaults to False.
+        Returns:
+            None
+        """
+        if is_engine:
+            subscriptions = self._engine_pipe_subscriptions
+            devices = self.engine_devices
+            channels = self.engine_mobile_channels
+        else:
+            subscriptions = self._pipe_subscriptions
+            devices = self.devices
+            channels = self.mobile_channels
+        for subscription in subscriptions.values():
+            subscription.dispose()
+        subscriptions.clear()
+
+        for device in devices.values():
+            device.dispose()
+        devices.clear()
+        channels.clear()
 
     def add(self, key: str, device: N2kDevice):
-        """Add a device"""
-        if key in self.devices:
-            # Update type, but keep the same object and subjects.
-            # If config is processed prior to device creation, it will have been created with type assumed from config.
-            # This allows the device type to be updated later if needed.
-            self.devices[key].type = device.type
-            # Optionally update other metadata here
+        """
+        Add a device to the appropriate collection (engine or non-engine).
+
+        Args:
+            key (str): The unique key for the device.
+            device (N2kDevice): The device instance to add.
+        Returns:
+            None
+        """
+        if device.type == N2kDeviceType.ENGINE:
+            self.engine_devices[key] = device
         else:
             self.devices[key] = device
 
-    def update_channel(self, device_key: str, channel_key: str, value: Any):
-        """Update a channel in a device"""
-        if device_key in self.devices:
-            self.devices[device_key].update_channel(channel_key, value)
-
     def get_channel_subject(
-        self, device_key: str, channel_key: str, device_type: N2kDeviceType
+        self,
+        device_key: str,
+        channel_key: str,
+        device_type: N2kDeviceType = N2kDeviceType.UNKNOWN,
     ) -> BehaviorSubject:
-        # Ensure device entry exists. If not, create it. Config builder will provide expected device type
-        if device_key not in self.devices:
-            self.devices[device_key] = N2kDevice(type=device_type)
-        return self.devices[device_key].get_channel_subject(channel_key)
+        """
+        Get the BehaviorSubject for a device's channel, creating the device if necessary.
 
-    def set_subscription(self, mobile_key: str, observable: rx.Observable):
-        """Set a subscription from an observable to a mobile channel"""
-        # Create the subscription
-        subscription = observable.subscribe(
-            on_next=lambda value: self._update_mobile_channel(mobile_key, value)
+        Args:
+            device_key (str): The unique key for the device.
+            channel_key (str): The channel key within the device.
+            device_type (N2kDeviceType, optional): The type of device (ENGINE or other).
+                Determines which device collection to use. Defaults to UNKNOWN.
+        Returns:
+            BehaviorSubject: The subject for the specified channel, emitting current and future values.
+        """
+        device_dict = (
+            self.devices if device_type != N2kDeviceType.ENGINE else self.engine_devices
         )
+        if device_key not in device_dict:
+            device_dict[device_key] = N2kDevice(type=device_type)
+        return device_dict[device_key].get_channel_subject(channel_key)
+
+    def set_subscription(
+        self, mobile_key: str, observable: rx.Observable, is_engine: bool = False
+    ):
+        """
+        Subscribe to an observable and update the appropriate mobile channel on new values.
+
+        Args:
+            mobile_key (str): The key for the mobile channel to update.
+            observable (rx.Observable): The observable to subscribe to.
+            is_engine (bool, optional): If True, updates engine mobile channels; otherwise, updates non-engine channels. Defaults to False.
+        Returns:
+            None
+        """
+        subscription = observable.subscribe(
+            on_next=lambda value: self._update_mobile_channel(
+                mobile_key, value, is_engine=is_engine
+            )
+        )
+        if is_engine:
+            pipe_subscriptions = self._engine_pipe_subscriptions
+        else:
+            pipe_subscriptions = self._pipe_subscriptions
 
         # Clean up any existing subscription
-        if mobile_key in self._pipe_subscriptions:
-            self._pipe_subscriptions[mobile_key].dispose()
+        if mobile_key in pipe_subscriptions:
+            pipe_subscriptions[mobile_key].dispose()
 
         # Store the new subscription
-        self._pipe_subscriptions[mobile_key] = subscription
+        pipe_subscriptions[mobile_key] = subscription
 
-    def _update_mobile_channel(self, mobile_key: str, value: Any):
-        """Update a mobile channel value"""
-        self.mobile_channels[mobile_key] = value
+    def _update_mobile_channel(
+        self, mobile_key: str, value: Any, is_engine: bool = False
+    ):
+        """
+        Update the value of a mobile channel.
+
+        Args:
+            mobile_key (str): The key for the mobile channel to update.
+            value (Any): The new value to set for the channel.
+            is_engine (bool, optional): If True, updates engine mobile channels; otherwise, updates non-engine channels. Defaults to False.
+        Returns:
+            None
+        """
+        if is_engine:
+            self.engine_mobile_channels[mobile_key] = value
+        else:
+            self.mobile_channels[mobile_key] = value
 
     def to_mobile_dict(self) -> Dict[str, Any]:
-        """Return mobile channel values from all devices"""
-        return self.mobile_channels
+        """
+        Return a dictionary containing all mobile channel values (engine and non-engine).
+
+        Returns:
+            Dict[str, Any]: A dictionary with all mobile channel values.
+        """
+        return {**self.mobile_channels, **self.engine_mobile_channels}
 
     def dispose(self):
-        """Clean up all device subscriptions"""
+        """
+        Dispose and remove all non-engine devices, subscriptions, and mobile channels.
+
+        This should be called to release resources for all non-engine devices.
+
+        Returns:
+            None
+        """
         for subscription in self._pipe_subscriptions.values():
             subscription.dispose()
         self._pipe_subscriptions.clear()
         for device in self.devices.values():
             device.dispose()
+        self.mobile_channels.clear()
+        self.devices.clear()
 
     def __del__(self):
         self.dispose()

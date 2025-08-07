@@ -134,8 +134,7 @@ class ShorePower(ACMeterThingBase):
                 ),
                 ops.distinct_until_changed(),
             )
-            disposable = line1_connected.subscribe(update_line1_status)
-            self._disposable_list.append(disposable)
+            self._disposable_list.append(line1_connected.subscribe(update_line1_status))
 
         if ac_line2 is not None:
 
@@ -160,8 +159,9 @@ class ShorePower(ACMeterThingBase):
                 ),
                 ops.distinct_until_changed(),
             )
-            disposable = line2_connected.subscribe(update_line2_connected)
-            self._disposable_list.append(disposable)
+            self._disposable_list.append(
+                line2_connected.subscribe(update_line2_connected)
+            )
 
         if ac_line3 is not None:
 
@@ -186,8 +186,10 @@ class ShorePower(ACMeterThingBase):
                 ),
                 ops.distinct_until_changed(),
             )
-            disposable = line3_connected.subscribe(update_line3_connected)
-            self._disposable_list.append(disposable)
+
+            self._disposable_list.append(
+                line3_connected.subscribe(update_line3_connected)
+            )
 
     def define_shorepower_connected_pipe_non_inverter_charger(
         self, n2k_devices: N2kDevices, ac_line1: AC, ac_line2: AC, ac_line3: AC

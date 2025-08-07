@@ -119,9 +119,6 @@ class ConfigProcessor:
                     inverter_hidden_circuit.control_id
                 ]
 
-                self._associated_circuit_instances.append(
-                    inverter_visible_circuit.control_id
-                )
                 return inverter_visible_circuit
 
     def process_charger_circuit(
@@ -148,9 +145,6 @@ class ConfigProcessor:
                     charger_hidden_circuit.control_id
                 ]
 
-                self._associated_circuit_instances.append(
-                    charger_visible_circuit.control_id
-                )
                 return charger_visible_circuit
 
     def process_inverters(

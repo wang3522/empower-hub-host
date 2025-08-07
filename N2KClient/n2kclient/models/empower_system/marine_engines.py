@@ -109,6 +109,7 @@ class MarineEngine(Thing):
                 ops.map(lambda status: StateWithTS(status).to_json()),
                 ops.distinct_until_changed(lambda state: state[Constants.state]),
             ),
+            True,
         )
 
     def define_speed_channel(self, n2k_devices: N2kDevices):
@@ -141,6 +142,7 @@ class MarineEngine(Thing):
                 Engine.SPEED_FILTER,
                 ops.map(lambda state: StateWithTS(state).to_json()),
             ),
+            True,
         )
 
     def define_engine_hours_channel(
@@ -180,6 +182,7 @@ class MarineEngine(Thing):
                 Engine.ENGINE_HOURS_FILTER,
                 ops.map(lambda state: state / 60),
             ),
+            True,
         )
 
     def define_coolant_temperature_channel(
@@ -219,6 +222,7 @@ class MarineEngine(Thing):
                 rxu.round_float(Temperature.ROUND_VALUE),
                 Temperature.FILTER,
             ),
+            True,
         )
 
     def define_pressure_channels(self, n2k_devices: N2kDevices, engine: EngineDevice):
@@ -264,6 +268,7 @@ class MarineEngine(Thing):
                 rxu.round_float(Pressure.ROUND_VALUE),
                 Pressure.FILTER,
             ),
+            True,
         )
 
         #################################
@@ -293,6 +298,7 @@ class MarineEngine(Thing):
                 ops.map(lambda state: state * pressureGain),
                 Pressure.FILTER,
             ),
+            True,
         )
 
     def define_status_channel(self, n2k_devices: N2kDevices):
@@ -339,6 +345,7 @@ class MarineEngine(Thing):
                 ops.map(lambda state: resolve_engine_status(state)),
                 ops.distinct_until_changed(),
             ),
+            True,
         )
 
     def define_serial_number_channel(
@@ -365,5 +372,5 @@ class MarineEngine(Thing):
             ],
         )
         n2k_devices.set_subscription(
-            self._define_channel(channel), rx.just(engine.serial_number)
+            self._define_channel(channel), rx.just(engine.serial_number), True
         )
