@@ -159,6 +159,87 @@ public:
   ~ControlRequest() = default;
 };
 
+class FileRequest {
+public:
+  enum eResourceType : int {
+    eTouch7 = 0,
+    eTouch10 = 1,
+    ePhone = 2,
+  };
+  static std::string to_string(eResourceType type) {
+    switch (type) {
+    case eTouch7: return "Touch7";
+    case eTouch10: return "Touch10";
+    case ePhone: return "Phone";
+    default: return "Unknown";
+    }
+  }
+    static eResourceType from_string_control(const std::string &str) {
+    if (str == "Touch7")
+      return eTouch7;
+    if (str == "Touch10")
+      return eTouch10;
+    if (str == "Phone")
+      return ePhone;
+    return eTouch7;
+  }
+
+  enum eFileType : int {
+    eDefaultZcf = 0,
+    eFavouritesCfp = 1,
+    eMinMaxLog = 2,
+    eCircuitsLog = 3,
+    eAlarmDescription = 4,
+    eAlarmLog = 5,
+    eAlarmCustomizedDescription = 6,
+    eResource = 7
+  };
+  static std::string to_string(eFileType type) {
+    switch (type) {
+    case eDefaultZcf: return "DefaultZcf";
+    case eFavouritesCfp: return "FavouritesCfp";
+    case eMinMaxLog: return "MinMaxLog";
+    case eCircuitsLog: return "CircuitsLog";
+    case eAlarmDescription: return "AlarmDescription";
+    case eAlarmLog: return "AlarmLog";
+    case eAlarmCustomizedDescription: return "AlarmCustomizedDescription";
+    case eResource: return "Resource";
+    default: return "Unknown";
+    }
+  }
+  static eFileType from_string_button(const std::string &str) {
+    if (str == "DefaultZcf")
+      return eDefaultZcf;
+    if (str == "FavouritesCfp")
+      return eFavouritesCfp;
+    if (str == "MinMaxLog")
+      return eMinMaxLog;
+    if (str == "CircuitsLog")
+      return eCircuitsLog;
+    if (str == "AlarmDescription")
+      return eAlarmDescription;
+    if (str == "AlarmLog")
+      return eAlarmLog;
+    if (str == "AlarmCustomizedDescription")
+      return eAlarmCustomizedDescription;
+    if (str == "Resource")
+      return eResource;
+    return eDefaultZcf;
+  }
+
+  std::unique_ptr<eFileType> m_type = nullptr;
+  std::unique_ptr<eResourceType> m_resourceType = nullptr;
+  std::unique_ptr<std::string> m_content = nullptr;
+
+  FileRequest() = delete;
+  FileRequest(const json &j);
+  FileRequest(const FileRequest &other);
+  FileRequest(FileRequest &&other) = default;
+  FileRequest &operator=(const FileRequest &other) = default;
+  FileRequest &operator=(FileRequest &&other) = default;
+  ~FileRequest() = default;
+};
+
 class ControlTypeValueRequest {
 public:
   enum eHVACType : int {

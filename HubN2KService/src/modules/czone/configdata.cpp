@@ -76,6 +76,36 @@ ControlRequest::ControlRequest(const ControlRequest &other) {
     m_token = std::make_unique<std::string>(*other.m_token);
 }
 
+FileRequest::FileRequest(const json &j) {
+  try {
+    if (j.contains("Type")) {
+      m_type = std::make_unique<eFileType>(from_string_control(j["Type"].get<std::string>()));
+    }
+
+    if (j.contains("ResourceType")) {
+      m_resourceType = std::make_unique<eResourceType>(from_string_control(j["ResourceType"].get<std::string>()));
+    }
+
+    if (j.contains("Content")) {
+      m_content = std::make_unique<std::string>(j["Content"].get<std::string>());
+    }
+
+  } catch (const std::invalid_argument &e) {
+    throw std::invalid_argument(e.what());
+  } catch (const std::exception &e) {
+    throw std::runtime_error("FileRequest::FileRequest error while generating FileRequest object.");
+  }
+}
+
+FileRequest::FileRequest(const FileRequest &other) {
+  if (other.m_type)
+    m_type = std::make_unique<eFileType>(*other.m_type);
+  if (other.m_resourceType)
+    m_resourceType = std::make_unique<eResourceType>(*other.m_resourceType);
+  if (other.m_content)
+    m_content = std::make_unique<std::string>(*other.m_content);
+}
+
 ControlTypeValueRequest::ControlTypeValueRequest() : m_instance(0), m_type(0), m_value(0), m_token() {}
 
 ConfigRequest::ConfigRequest(eConfigType type) : m_type(type), m_token(), m_parentId(0), m_flags(0), m_subType(0) {}

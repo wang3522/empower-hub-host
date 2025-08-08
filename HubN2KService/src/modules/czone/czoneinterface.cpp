@@ -3038,8 +3038,14 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
     }
   });
 
-  dbusService->registerService("PutFile", "czone", [ptr = this, dbusService](std::string encodedFile) -> std::string {
+  dbusService->registerService("PutFile", "czone", [ptr = this, dbusService](std::string fileRequestStr) -> std::string {
     try {
+      FileRequest request(json::parse(fileRequestStr));
+      if(request.m_content == nullptr) {
+        throw std::invalid_argument("[Content] argument is required.");
+      }
+
+      auto &encodedFile = *request.m_content;
       std::string decoded;
       decoded.resize(boost::beast::detail::base64::decoded_size(encodedFile.size()));
       auto const result = boost::beast::detail::base64::decode(&decoded[0], encodedFile.data(), encodedFile.size());
