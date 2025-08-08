@@ -53,7 +53,6 @@ class Constants:
     TYPE = "type"
     DESCRIPTION = "description"
     SEVERITY = "severity"
-    CURRENT_STATE = "currentState"
     DATE_ACTIVE = "dateActive"
     THINGS = "things"
 
