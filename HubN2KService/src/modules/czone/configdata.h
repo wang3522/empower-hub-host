@@ -174,7 +174,7 @@ public:
     default: return "Unknown";
     }
   }
-    static eResourceType from_string_control(const std::string &str) {
+    static eResourceType from_string_ResourceType(const std::string &str) {
     if (str == "Touch7")
       return eTouch7;
     if (str == "Touch10")
@@ -207,7 +207,7 @@ public:
     default: return "Unknown";
     }
   }
-  static eFileType from_string_button(const std::string &str) {
+  static eFileType from_string_fileType(const std::string &str) {
     if (str == "DefaultZcf")
       return eDefaultZcf;
     if (str == "FavouritesCfp")

@@ -79,11 +79,11 @@ ControlRequest::ControlRequest(const ControlRequest &other) {
 FileRequest::FileRequest(const json &j) {
   try {
     if (j.contains("Type")) {
-      m_type = std::make_unique<eFileType>(from_string_control(j["Type"].get<std::string>()));
+      m_type = std::make_unique<eFileType>(from_string_fileType(j["Type"].get<std::string>()));
     }
 
     if (j.contains("ResourceType")) {
-      m_resourceType = std::make_unique<eResourceType>(from_string_control(j["ResourceType"].get<std::string>()));
+      m_resourceType = std::make_unique<eResourceType>(from_string_ResourceType(j["ResourceType"].get<std::string>()));
     }
 
     if (j.contains("Content")) {
