@@ -3038,46 +3038,55 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
     }
   });
 
-  dbusService->registerService("PutFile", "czone", [ptr = this, dbusService](std::string fileRequestStr) -> std::string {
-    try {
-      FileRequest request(json::parse(fileRequestStr));
-      if(request.m_content == nullptr) {
-        throw std::invalid_argument("[Content] argument is required.");
-      }
+  dbusService->registerService(
+      "PutFile", "czone", [ptr = this, dbusService](std::string fileRequestStr) -> std::string {
+        try {
+          FileRequest request(json::parse(fileRequestStr));
+          if (request.m_content == nullptr) {
+            throw std::invalid_argument("[Content] argument is required.");
+          }
 
-      auto &encodedFile = *request.m_content;
-      std::string decoded;
-      decoded.resize(boost::beast::detail::base64::decoded_size(encodedFile.size()));
-      auto const result = boost::beast::detail::base64::decode(&decoded[0], encodedFile.data(), encodedFile.size());
-      decoded.resize(result.first);
+          auto &encodedFile = *request.m_content;
+          std::string decoded;
+          decoded.resize(boost::beast::detail::base64::decoded_size(encodedFile.size()));
+          auto const result = boost::beast::detail::base64::decode(&decoded[0], encodedFile.data(), encodedFile.size());
+          decoded.resize(result.first);
 
-      const auto filename = ptr->m_czoneSettings.getConfigurationPath();
-      ptr->m_czoneSettings.saveToFile(decoded, filename);
-    } catch (const std::exception &e) {
-      BOOST_LOG_TRIVIAL(error) << "PutFile:Error " << e.what();
-      dbusService->throwError("PutFile: " + std::string(e.what()));
-    }
-    return "";
-  });
+          const auto filename = ptr->m_czoneSettings.getConfigurationPath();
+          ptr->m_czoneSettings.saveToFile(decoded, filename);
+        } catch (const std::exception &e) {
+          BOOST_LOG_TRIVIAL(error) << "PutFile:Error " << e.what();
+          dbusService->throwError("PutFile: " + std::string(e.what()));
+        }
+        return "";
+      });
 
-  dbusService->registerService("GetFile", "czone", [ptr = this, dbusService]() -> std::string {
-    try {
-      std::string data;
-      const auto filename = ptr->m_czoneSettings.getConfigurationPath();
+  dbusService->registerService(
+      "GetFile", "czone", [ptr = this, dbusService](std::string fileRequestStr) -> std::string {
+        try {
+          FileRequest request(json::parse(fileRequestStr));
+          if (request.m_type == nullptr) {
+            throw std::invalid_argument("[Type] argument is required.");
+          }
 
-      ptr->m_czoneSettings.loadFromFile(data, filename);
-      std::size_t encoded_size = boost::beast::detail::base64::encoded_size(data.length());
-      std::string encoded(encoded_size, '\0');
-      std::size_t bytes_written = boost::beast::detail::base64::encode(encoded.data(), data.data(), data.length());
-      encoded.resize(bytes_written);
+          if (*request.m_type == FileRequest::eFileType::eDefaultZcf) {
+            std::string data;
+            const auto filename = ptr->m_czoneSettings.getConfigurationPath();
 
-      return encoded;
-    } catch (const std::exception &e) {
-      BOOST_LOG_TRIVIAL(error) << "GetFile:Error " << e.what();
-      dbusService->throwError("GetFile: " + std::string(e.what()));
-    }
-    return "";
-  });
+            ptr->m_czoneSettings.loadFromFile(data, filename);
+            std::size_t encoded_size = boost::beast::detail::base64::encoded_size(data.length());
+            std::string encoded(encoded_size, '\0');
+            std::size_t bytes_written =
+                boost::beast::detail::base64::encode(encoded.data(), data.data(), data.length());
+            encoded.resize(bytes_written);
+            return encoded;
+          }
+        } catch (const std::exception &e) {
+          BOOST_LOG_TRIVIAL(error) << "GetFile:Error " << e.what();
+          dbusService->throwError("GetFile: " + std::string(e.what()));
+        }
+        return "";
+      });
 
   dbusService->registerService("AlarmAcknowledge", "czone",
                                [ptr = this, dbusService](std::string alarmRequestStr) -> std::string {
