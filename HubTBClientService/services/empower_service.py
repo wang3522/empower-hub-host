@@ -509,7 +509,5 @@ class EmpowerService:
 
         # TODO: Pull down active alarms, engine config
 
-        # TODO: Get consents from sync service
-
         self._logger.debug("Starting N2K Client")
         self.n2k_client.start()
