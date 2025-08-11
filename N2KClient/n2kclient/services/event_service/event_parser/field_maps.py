@@ -1,5 +1,5 @@
-from ...models.constants import AttrNames, JsonKeys
-from ...models.common_enums import eEventType
+from ....models.constants import AttrNames, JsonKeys
+from ....models.common_enums import eEventType
 
 EVENT_FIELD_MAP = {
     AttrNames.CONTENT: JsonKeys.CONTENT,

@@ -1,21 +1,21 @@
-from ...models.n2k_configuration.dc import DCType
-from ...models.common_enums import SwitchType
-from ...models.n2k_configuration.ac import ACLine, ACType
-from ...models.n2k_configuration.circuit import (
+from ....models.n2k_configuration.dc import DCType
+from ....models.common_enums import SwitchType
+from ....models.n2k_configuration.ac import ACLine, ACType
+from ....models.n2k_configuration.circuit import (
     CircuitType,
     ControlType,
 )
-from ...models.n2k_configuration.device import DeviceType
-from ...models.n2k_configuration.engine import EngineType
-from ...models.n2k_configuration.pressure import (
+from ....models.n2k_configuration.device import DeviceType
+from ....models.n2k_configuration.engine import EngineType
+from ....models.n2k_configuration.pressure import (
     PressureType,
 )
-from ...models.n2k_configuration.tank import TankType
-from ...models.n2k_configuration.ui_relationship_msg import (
+from ....models.n2k_configuration.tank import TankType
+from ....models.n2k_configuration.ui_relationship_msg import (
     ItemType,
     RelationshipType,
 )
-from ...models.constants import AttrNames, JsonKeys
+from ....models.constants import AttrNames, JsonKeys
 
 CIRCUIT_LOAD_FIELD_MAP = {
     AttrNames.ID: JsonKeys.ID,

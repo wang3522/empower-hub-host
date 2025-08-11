@@ -27,6 +27,20 @@ def process_device_alarms(
     alarm: Optional[Alarm] = None,
     is_dc_alarm: Optional[bool] = None,
 ) -> List[ComponentReference]:
+    """
+    Process device alarms and update affected components.
+    This function checks if the alarm is related to device circuits, AC meters, DC meters, inverter chargers, or battery devices(clustered) via dipswitch matching to configuration data.
+    If a match is found, it creates a ComponentReference for the relevant component and adds it to the affected components list.
+    Args:
+        logger: Logger instance for logging errors or information.
+        resolved_alarm_channel_id: The resolved channel ID for the alarm.
+        config: The N2kConfiguration containing device definitions.
+        affected_components: List to which affected components will be added.
+        alarm: Optional Alarm object that may contain additional information.
+        is_dc_alarm: Optional boolean indicating if the alarm is related to DC.
+    Returns:
+        List of affected components with device references added if applicable.
+    """
     alarm_device_dipswitch = None
     if alarm is not None and alarm.alarm_type == eAlarmType.TypeSleepWarning:
         alarm_device_dipswitch = resolved_alarm_channel_id
@@ -170,6 +184,22 @@ def process_dc_meter_alarms(
     alarm: Optional[Alarm] = None,
     is_dc_alarm: Optional[bool] = None,
 ) -> List[ComponentReference]:
+    """
+    Process DC meter alarms and update affected components.
+    This function checks if the alarm is related to DC meters, by matching unique id of alarm, to alarms in config of device.
+    Secondly, it checks if the alarm channel id matches the address of any DC meter in the configuration.
+    If a match is found, it creates a ComponentReference for the DC meter and adds
+    it to the affected components list.
+    Args:
+        logger: Logger instance for logging errors or information.
+        resolved_alarm_channel_id: The resolved channel ID for the alarm.
+        config: The N2kConfiguration containing DC meter definitions.
+        affected_components: List to which affected components will be added.
+        alarm: Optional Alarm object that may contain additional information.
+        is_dc_alarm: Optional boolean indicating if the alarm is related to DC.
+    Returns:
+        List of affected components with DC meter references added if applicable.
+    """
     for [_, dc] in config.dc.items():
         if any(
             alarm_config is not None
@@ -202,6 +232,20 @@ def process_ac_meter_alarms(
     alarm: Optional[Alarm] = None,
     is_dc_alarm: Optional[bool] = None,
 ) -> List[ComponentReference]:
+    """
+    Process AC meter alarms and update affected components.
+    This function checks if the alarm is related to AC meters by matching alarm properties to configuration data for AC lines.
+    If a match is found, it creates a ComponentReference for the AC meter line and adds it to the affected components list.
+    Args:
+        logger: Logger instance for logging errors or information.
+        resolved_alarm_channel_id: The resolved channel ID for the alarm.
+        config: The N2kConfiguration containing AC meter definitions.
+        affected_components: List to which affected components will be added.
+        alarm: Optional Alarm object that may contain additional information.
+        is_dc_alarm: Optional boolean indicating if the alarm is related to DC.
+    Returns:
+        List of affected components with AC meter references added if applicable.
+    """
     for [_, ac] in config.ac.items():
         for [_, line] in ac.line.items():
             if any(
@@ -235,6 +279,20 @@ def process_tank_alarms(
     alarm: Optional[Alarm] = None,
     is_dc_alarm: Optional[bool] = None,
 ) -> List[ComponentReference]:
+    """
+    Process tank alarms and update affected components.
+    This function checks if the alarm is related to tanks by matching alarm properties to configuration data for tanks.
+    If a match is found, it creates a ComponentReference for the tank and adds it to the affected components list.
+    Args:
+        logger: Logger instance for logging errors or information.
+        resolved_alarm_channel_id: The resolved channel ID for the alarm.
+        config: The N2kConfiguration containing tank definitions.
+        affected_components: List to which affected components will be added.
+        alarm: Optional Alarm object that may contain additional information.
+        is_dc_alarm: Optional boolean indicating if the alarm is related to DC.
+    Returns:
+        List of affected components with tank references added if applicable.
+    """
     for [_, tank] in config.tank.items():
         if any(
             alarm_config is not None
@@ -266,6 +324,20 @@ def process_circuit_load_alarms(
     alarm: Optional[Alarm] = None,
     is_dc_alarm: Optional[bool] = None,
 ) -> List[ComponentReference]:
+    """
+    Process circuit load alarms and update affected components.
+    This function checks if the alarm is related to circuit loads by matching the resolved alarm channel ID to the channel address of circuit loads in the configuration.
+    If a match is found, it creates a ComponentReference for the circuit and adds it to the affected components list.
+    Args:
+        logger: Logger instance for logging errors or information.
+        resolved_alarm_channel_id: The resolved channel ID for the alarm.
+        config: The N2kConfiguration containing circuit definitions.
+        affected_components: List to which affected components will be added.
+        alarm: Optional Alarm object that may contain additional information.
+        is_dc_alarm: Optional boolean indicating if the alarm is related to DC.
+    Returns:
+        List of affected components with circuit references added if applicable.
+    """
     if resolved_alarm_channel_id is not None:
         for [_, circuit] in config.circuit.items():
             if circuit.circuit_loads is not None:
@@ -289,6 +361,21 @@ def process_bls_alarms(
     resolved_alarm_channel_id: Optional[int] = None,
     is_dc_alarm: Optional[bool] = None,
 ) -> List[ComponentReference]:
+    """
+    Process BLS (Binary Logic State) alarms and update affected components.
+    This function checks if the alarm is related to a BLS mapping by matching the alarm channel to BLS alarm mappings in the configuration.
+    If a match is found, it creates a ComponentReference for the BLS and adds it to the affected components list.
+    It also adds related AC meters, DC meters, tanks, or circuits based on UI relationships.
+    Args:
+        logger: Logger instance for logging errors or information.
+        config: The N2kConfiguration containing BLS alarm mappings and UI relationships.
+        affected_components: List to which affected components will be added.
+        alarm: Optional Alarm object that may contain additional information.
+        resolved_alarm_channel_id: Optional resolved channel ID for the alarm.
+        is_dc_alarm: Optional boolean indicating if the alarm is related to DC.
+    Returns:
+        List of affected components with BLS and related references added if applicable.
+    """
     bls = next(
         (
             bls.bls
@@ -377,6 +464,20 @@ def process_smartcraft_alarms(
     alarm: Optional[Alarm] = None,
     is_dc_alarm: Optional[bool] = None,
 ) -> List[ComponentReference]:
+    """
+    Process SmartCraft engine alarms and update affected components.
+    This function checks if the alarm is related to a SmartCraft engine by mapping the resolved alarm channel ID to an engine instance name and matching it to engine devices in the configuration.
+    If a match is found, it creates a ComponentReference for the marine engine and adds it to the affected components list.
+    Args:
+        logger: Logger instance for logging errors or information.
+        resolved_alarm_channel_id: The resolved channel ID for the alarm.
+        config: The EngineConfiguration containing engine device definitions.
+        affected_components: List to which affected components will be added.
+        alarm: Optional Alarm object that may contain additional information.
+        is_dc_alarm: Optional boolean indicating if the alarm is related to DC.
+    Returns:
+        List of affected components with marine engine references added if applicable.
+    """
     engine_instance = resolved_alarm_channel_id & 0x00FF
     engine_name = map_sc_engine_instance_to_engine_name(engine_instance)
     if engine_name is not None:
@@ -397,6 +498,13 @@ def process_smartcraft_alarms(
 
 
 def map_sc_engine_instance_to_engine_name(engine_instance: int) -> Optional[str]:
+    """
+    Map a SmartCraft engine instance number to its engine name string.
+    Args:
+        engine_instance: The engine instance number (int).
+    Returns:
+        The engine name string if found, otherwise None.
+    """
     smartcraft_options = {
         0: "StarboardEngine",
         1: "PortEngine",

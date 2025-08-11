@@ -1,10 +1,8 @@
-import copy
 import logging
 import threading
 from typing import Any, List
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
-import dbus.proxies
 import dbus.service
 import reactivex as rx
 import json
@@ -12,13 +10,10 @@ import json
 from .models.empower_system.engine_alarm_list import EngineAlarmList
 
 from .models.devices import N2kDevices
-from .models.constants import Constants, JsonKeys
+from .models.constants import Constants
 from reactivex import operators as ops
 from gi.repository import GLib
-from .util.settings_util import SettingsUtil
-from .models.common_enums import N2kDeviceType, eEventType, ConnectionStatus
-from .services.config_parser.config_parser import ConfigParser
-from .services.config_processor.config_processor import ConfigProcessor
+from .models.common_enums import ConnectionStatus
 from .services.alarm_service.alarm_service import AlarmService
 from .models.n2k_configuration.n2k_configuation import N2kConfiguration
 from .models.empower_system.empower_system import EmpowerSystem
@@ -27,14 +22,23 @@ from .models.empower_system.engine_list import EngineList
 from .models.n2k_configuration.factory_metadata import FactoryMetadata
 from .services.control_service.control_service import ControlService
 from .models.empower_system.alarm import Alarm
-from .services.signal_parser.event_parser import EventParser
 from .models.empower_system.alarm_list import AlarmList
 from .models.dbus_connection_status import DBUSConnectionStatus
 from .util.time_util import TimeUtil
 from .services.dbus_proxy_service.dbus_proxy import DbusProxyService
+from .services.config_service.config_service import ConfigService
+from .services.snapshot_service.snapshot_service import SnapshotService
+from .services.event_service.event_service import EventService
 
 
 class N2KClient(dbus.service.Object):
+    """
+    Main class for the N2KClient, handling DBus connections and providing access to services.
+    This class is responsible for managing the lifecycle of the client, including connecting to DBus, initializing managing services,
+    subscribing to signals, and providing a unified interface for interacting with the various
+    components of the N2K system.
+    """
+
     _logger = logging.getLogger(Constants.DBUS_N2K_CLIENT)
     _disposable_list: List[rx.abc.DisposableBase]
     _latest_devices: N2kDevices
@@ -62,31 +66,11 @@ class N2KClient(dbus.service.Object):
     _latest_alarms: AlarmList
     _latest_engine_alarms: EngineAlarmList
 
-    _config_parser: ConfigParser
-    _config_processor: ConfigProcessor
-    control_service: ControlService
+    _config_service: ConfigService
+    _control_service: ControlService
     _alarm_service: AlarmService
-
-    _dbus_retry_delay = SettingsUtil.get_setting(
-        Constants.N2K_SETTINGS_KEY,
-        Constants.WORKER_KEY,
-        Constants.DBUS_RETRY_DELAY_KEY,
-        default_value=5,
-    )
-
-    _control_dbus_max_attempts = SettingsUtil.get_setting(
-        Constants.N2K_SETTINGS_KEY,
-        Constants.WORKER_KEY,
-        Constants.CONTROL_DBUS_MAX_ATTEMPTS_KEY,
-        default_value=3,
-    )
-
-    _snapshot_interval = SettingsUtil.get_setting(
-        Constants.N2K_SETTINGS_KEY,
-        Constants.WORKER_KEY,
-        Constants.SNAPSHOT_INTERVAL_KEY,
-        default_value=60,
-    )
+    _snapshot_service: SnapshotService
+    _event_service: EventService
 
     lock: threading.Lock
 
@@ -141,27 +125,20 @@ class N2KClient(dbus.service.Object):
             ops.publish(),
             ops.ref_count(),
         )
-        self._config_parser = ConfigParser()
-        self._config_processor = ConfigProcessor()
-        self._event_parser = EventParser()
 
         self._dbus_proxy = DbusProxyService(
             status_callback=self._n2k_dbus_connection_status.on_next,
-            event_handler=self.event_handler,
-            snapshot_handler=self.snapshot_handler,
-            retry_delay=self._dbus_retry_delay,
-            control_max_attempts=self._control_dbus_max_attempts,
         )
 
         self.control_service = ControlService(
-            get_config_func=self.get_config,
-            get_devices_func=self.get_devices,
+            get_config_func=self.get_latest_config,
+            get_devices_func=self.get_latest_devices,
             send_control_func=self._dbus_proxy.control,
         )
         self._alarm_service = AlarmService(
             alarm_list_func=self._dbus_proxy.alarm_list,
             get_latest_alarms_func=self.get_latest_alarms,
-            get_config_func=self.get_config,
+            get_config_func=self.get_latest_config,
             get_engine_config_func=self.get_latest_engine_config,
             get_engine_alarms_func=self.get_engine_alarms,
             set_alarm_list=self._set_alarm_list,
@@ -170,8 +147,39 @@ class N2KClient(dbus.service.Object):
             get_latest_empower_system_func=self.get_latest_empower_system,
             get_latest_engine_list_func=self.get_latest_engine_list,
         )
+
+        self._config_service = ConfigService(
+            dbus_proxy=self._dbus_proxy,
+            lock=self.lock,
+            get_latest_devices=self.get_latest_devices,
+            set_devices=self.set_devices,
+            set_config=self.set_config,
+            set_empower_system=self.set_empower_system,
+            dispose_empower_system=self.dispose_empower_system,
+            get_engine_config=self.get_latest_engine_config,
+            get_engine_list=self.get_latest_engine_list,
+            set_engine_config=self.set_engine_config,
+            set_engine_list=self.set_engine_list,
+            set_factory_metadata=self.set_factory_metadata,
+            request_state_snapshot=self.request_state_snapshot,
+        )
+        self._snapshot_service = SnapshotService(
+            dbus_proxy=self._dbus_proxy,
+            lock=self.lock,
+            get_latest_devices=self.get_latest_devices,
+            set_devices=self.set_devices,
+            get_latest_engine_config=self.get_latest_engine_config,
+            process_engine_alarms_from_snapshot=self._alarm_service.process_engine_alarm_from_snapshots,
+        )
+
+        self._event_service = EventService(
+            alarm_service=self._alarm_service,
+            config_service=self._config_service,
+        )
+
+        self._dbus_proxy.snapshot_handler = self._snapshot_service.snapshot_handler
+        self._dbus_proxy.event_handler = self._event_service.event_handler
         self._setup_subscriptions()
-        self._set_periodic_snapshot_timer()
 
     def run_mainloop(self):
         """
@@ -179,13 +187,19 @@ class N2KClient(dbus.service.Object):
         This method is typically called in a separate thread.
         """
         self._dbus_proxy.connect()
-        self._scan_factory_metadata()
-        self._get_configuration()
-        self._scan_marine_engine_config(should_reset=False)
+        self._config_service.scan_factory_metadata()
+        self._config_service.get_configuration()
+        self._config_service.scan_marine_engine_config(should_reset=False)
         loop = GLib.MainLoop()
         loop.run()
 
     def _setup_subscriptions(self):
+        """
+        Set up subscriptions to various observables to keep the latest state updated.
+        This method subscribes to the latest devices, configuration, empower system,
+        engine configuration, engine list, factory metadata, active alarms, and engine alarms.
+        It also sets up handlers for DBus connection status updates.
+        """
         self._disposable_list.append(
             self.devices.subscribe(self._update_latest_devices)
         )
@@ -216,40 +230,71 @@ class N2KClient(dbus.service.Object):
 
     # === Update Handlers ===
     def _update_latest_engine_alarms(self, alarms: EngineAlarmList):
+        """
+        Set the latest engine alarms.
+        This updates the internal state and notifies observers.
+        """
         self._latest_engine_alarms = alarms
         self._logger.debug(
             f"Latest engine alarms: {json.dumps(alarms.to_alarm_dict(), indent=None)}\n\n"
         )
 
     def _update_latest_alarms(self, alarms: AlarmList):
+        """
+        Set the latest active alarms.
+        This updates the internal state and notifies observers.
+        """
         self._latest_alarms = alarms
         self._logger.debug(
             f"Latest alarms: {json.dumps(alarms.to_alarm_dict(), indent=None)}\n\n"
         )
 
     def _update_latest_devices(self, devices: N2kDevices):
+        """
+        Set the latest N2kDevices object.
+        This updates the internal state and notifies observers."""
         self._latest_devices = devices
         self._logger.info(
             f"Latest devices: {json.dumps(devices.to_mobile_dict(), indent=None)}\n\n"
         )
 
     def _update_latest_config(self, config: N2kConfiguration):
+        """
+        Set the latest N2kConfiguration object.
+        This updates the internal state and notifies observers.
+        """
         self._latest_config = config
         self._log_config_item("config", config)
 
     def _update_latest_empower_system(self, empower_system: EmpowerSystem):
+        """
+        Set the latest EmpowerSystem object.
+        This updates the internal state and notifies observers.
+        """
         self._latest_empower_system = empower_system
         self._log_config_item("empower system", empower_system)
 
     def _update_latest_engine_config(self, config: EngineConfiguration):
+        """
+        Set the latest EngineConfiguration object.
+        This updates the internal state and notifies observers.
+        """
         self._latest_engine_config = config
         self._log_config_item("engine config", config)
 
     def _update_latest_engine_list(self, engine_list: EngineList):
+        """
+        Set the latest EngineList object.
+        This updates the internal state and notifies observers.
+        """
         self._latest_engine_list = engine_list
         self._log_config_item("engine list", engine_list)
 
     def _update_latest_factory_metadata(self, factory_metadata: FactoryMetadata):
+        """
+        Set the latest FactoryMetadata object.
+        This updates the internal state and notifies observers.
+        """
         self._latest_factory_metadata = factory_metadata
         self._log_config_item("factory metadata", factory_metadata)
 
@@ -269,7 +314,7 @@ class N2KClient(dbus.service.Object):
             self._logger.info(
                 f"Reconnected to DBus Service. Refreshing alarms and scanning marine engine config"
             )
-            self._scan_marine_engine_config()
+            self._config_service.scan_marine_engine_config()
             self._alarm_service.load_active_alarms()
         self.previous_n2k_dbus_connection_status = status
 
@@ -287,26 +332,49 @@ class N2KClient(dbus.service.Object):
             )
 
     # === Public API Methods ===
+    def write_configuration(self, config_hex: str) -> None:
+        """
+        Write the configuration to the host.
+
+        Args:
+            config_hex: Configuration data encoded as hex.
+        """
+        self._logger.debug("Writing configuration to host")
+        self._config_service.write_configuration(config_hex)
+
     def request_state_snapshot(self) -> None:
-        # Grab all of the attributes and update the state
+        """
+        Request a snapshot of the current state.
+        This will trigger the snapshot service to gather the latest state.
+        """
         self._logger.debug("Getting single snapshot")
-        self._single_snapshot()
+        self._snapshot_service._single_snapshot()
 
     def acknowledge_alarm(self, alarm_id: int) -> bool:
+        """
+        Acknowledge an alarm by its ID
+        """
         self._logger.info(
             f"Acknowledge Alarm Command received for Alarm ID: {alarm_id}"
         )
         return self._alarm_service.acknowledge_alarm(alarm_id)
 
     def refresh_active_alarms(self) -> bool:
+        """
+        Refresh the active alarms by requesting them from the DBus service.
+        """
         self._logger.info("Refresh Alarm Command received. Scanning active alarms")
         return self._alarm_service.load_active_alarms(True)
 
     def scan_marine_engines(self, should_clear: bool = True) -> bool:
+        """
+        Scan for marine engines and update the engine list.
+        If should_clear is True, it will clear the existing engine list
+        """
         self._logger.info(
             f"Scan Marine Engines Command received. should_clear = {should_clear}"
         )
-        return self._scan_marine_engine_config(should_reset=should_clear)
+        return self._config_service.scan_marine_engine_config(should_reset=should_clear)
 
     def set_circuit_power_state(self, runtime_id: int, target_on: bool) -> bool:
         """
@@ -325,6 +393,11 @@ class N2KClient(dbus.service.Object):
             return False
 
     def set_circuit_level(self, runtime_id: int, level: float) -> bool:
+        """
+        Set the dimming level of a circuit by its runtime ID.
+        The level should be between 0 and 100.
+        Returns True if the operation was successful, False otherwise.
+        """
         try:
             result = self.control_service.set_circuit_level(
                 runtime_id=runtime_id, level=level
@@ -337,12 +410,21 @@ class N2KClient(dbus.service.Object):
             return False
 
     def _set_alarm_list(self, alarm_list: AlarmList):
+        """
+        Set the latest active alarms.
+        This updates the internal state and notifies observers.
+        """
         self._active_alarms.on_next(alarm_list)
 
     def _set_engine_alarms(self, engine_alarms: EngineAlarmList):
+        """
+        Set the latest engine alarms.
+        This updates the internal state and notifies observers.
+        """
         self._engine_alarms.on_next(engine_alarms)
 
-    def get_devices(self) -> N2kDevices:
+    # === Getters ===
+    def get_latest_devices(self) -> N2kDevices:
         """
         Get the latest N2kDevices object.
         """
@@ -354,7 +436,7 @@ class N2KClient(dbus.service.Object):
         """
         return self.devices
 
-    def get_config(self) -> N2kConfiguration:
+    def get_latest_config(self) -> N2kConfiguration:
         """
         Get the latest N2kConfiguration object.
         """
@@ -402,13 +484,7 @@ class N2KClient(dbus.service.Object):
         """
         return self._latest_engine_alarms
 
-    def get_engine_list_observable(self) -> rx.Observable:
-        """
-        Get the observable for EngineList updates.
-        """
-        return self.engine_list
-
-    def get_latest_alarms(self) -> AlarmList:
+    def get_latest_alarms(self) -> dict[int, Alarm]:
         """
         Get the latest active alarms.
         Returns a dictionary of Alarm objects keyed by their unique ID.
@@ -427,261 +503,64 @@ class N2KClient(dbus.service.Object):
         """
         return self._latest_engine_config
 
+    # === Setters ===
+    def set_devices(self, devices: N2kDevices):
+        """
+        Set the latest N2kDevices object.
+        """
+        self._devices.on_next(devices)
+
+    def set_config(self, config: N2kConfiguration):
+        """
+        Set the latest N2kConfiguration object.
+        """
+        self._config.on_next(config)
+
+    def set_empower_system(self, empower_system: EmpowerSystem):
+        """
+        Set the latest EmpowerSystem object.
+        """
+        self._empower_system.on_next(empower_system)
+
+    def set_engine_list(self, engine_list: EngineList):
+        """
+        Set the latest EngineList object.
+        """
+        self._engine_list.on_next(engine_list)
+
+    def set_engine_config(self, engine_config: EngineConfiguration):
+        """
+        Set the latest EngineConfiguration object.
+        """
+        self._engine_config.on_next(engine_config)
+
+    def dispose_empower_system(self):
+        """
+        Dispose the current EmpowerSystem instance.
+        This is useful for cleaning up resources when the system is no longer needed.
+        """
+        if self._latest_empower_system:
+            self._latest_empower_system.dispose()
+
+    def set_factory_metadata(self, factory_metadata: FactoryMetadata):
+        """
+        Set the latest FactoryMetadata object.
+        """
+        self._factory_metadata.on_next(factory_metadata)
+
     def start(self):
+        """
+        Start the N2KClient by running the GLib main loop in a separate thread.
+        This allows the client to handle DBus signals and events asynchronously, while not blocking the main thread.
+        """
         self._mainloop_thread = threading.Thread(target=self.run_mainloop, daemon=True)
         self._mainloop_thread.start()
 
-    # === DBus Signal/Event Handlers ===
-    def snapshot_handler(self, snapshot_json: str):
-        try:
-            self._logger.info(f"Received snapshot.")
-            self._start_snapshot_timer()
-            snapshot_dict: dict[str, dict[str, Any]] = json.loads(snapshot_json)
-
-            if self._latest_engine_config is not None:
-                self._alarm_service.process_engine_alarm_from_snapshot(snapshot_dict)
-
-            state_update = self._process_state_from_snapshot(snapshot_dict)
-            self._merge_state_update(state_update)
-        except Exception as e:
-            self._logger.error(
-                f"Failed to parse DBus signal JSON: {e}, raw: {snapshot_json}"
-            )
-            return
-
-    def event_handler(self, event_json: str):
-        try:
-            event_dict = json.loads(event_json)
-            parsed_event = self._event_parser.parse_event(event_dict)
-            if parsed_event.type is eEventType.EngineConfigChanged:
-                self._logger.info("Received EngineConfigChanged event")
-                self._scan_marine_engine_config()
-            if parsed_event.type is eEventType.ConfigChanged:
-                self._logger.info("Received ConfigChanged event")
-                self._get_configuration()
-            if parsed_event.type in [
-                eEventType.AlarmAdded,
-                eEventType.AlarmRemoved,
-                eEventType.AlarmChanged,
-                eEventType.AlarmActivated,
-                eEventType.AlarmDeactivated,
-            ]:
-                self._logger.info("Received Alarm event")
-                self._alarm_service.load_active_alarms()
-            self._logger.debug("Event received and processed")
-
-        except Exception as e:
-            self._logger.error(
-                f"Failed to parse DBus signal JSON: {e}, raw: {event_json}"
-            )
-            return
-
-    # === Configuration and Metadata Scanning ===
-    def _scan_factory_metadata(self):
-        try:
-            self._logger.info("Loading factory metadata...")
-            factory_metadata_response = self._dbus_proxy.get_setting(
-                Constants.FactoryData
-            )
-            factory_metadata_json = json.loads(factory_metadata_response)
-            factory_metadata = self._config_parser.parse_factory_metadata(
-                factory_metadata_json
-            )
-            self._factory_metadata.on_next(factory_metadata)
-        except Exception as e:
-            self._logger.error(f"Error reading dbus Get Factory Metadata response: {e}")
-
-    def _scan_config_metadata(self):
-        try:
-            self._logger.info("Loading config metadata...")
-            config_metadata = self._dbus_proxy.get_setting(Constants.Config)
-            return config_metadata
-        except Exception as e:
-            self._logger.error(f"Error reading dbus Get Config Metadata response: {e}")
-            return {}
-
-    def _get_configuration(self):
-        # Raw Czone Config
-        try:
-            with self.lock:
-                self._latest_devices.dispose_devices(is_engine=False)
-                self._devices.on_next(self._latest_devices)
-            categories_json = self._dbus_proxy.get_categories()
-            config_json = self._dbus_proxy.get_config_all()
-            config_metadata_json = self._scan_config_metadata()
-            raw_config = self._config_parser.parse_config(
-                config_json, categories_json, config_metadata_json
-            )
-            self._config.on_next(raw_config)
-
-            # Empower System
-            if self._latest_empower_system is not None:
-                self._latest_empower_system.dispose()
-            processed_config = self._config_processor.build_empower_system(
-                raw_config, self._latest_devices
-            )
-            self._empower_system.on_next(processed_config)
-            self._single_snapshot()
-        except Exception as e:
-            self._logger.error(
-                f"Error reading dbus Get Config response: {e}", exc_info=True
-            )
-
-    def _scan_marine_engine_config(self, should_reset: bool = False) -> bool:
-        """
-        Scans the marine configuration and updates the engine configuration.
-
-        This method retrieves the engine configuration from the data provider
-        and updates the engine configuration in the `EngineConfiguration` object.
-
-        Returns:
-            None
-        """
-        engine_configuration: EngineConfiguration = self._engine_config.value
-
-        self._logger.info(
-            "Loading Engine configuration with should_reset = %r...", should_reset
-        )
-
-        # Engine Config
-        try:
-            if should_reset:
-                with self.lock:
-                    self._latest_devices.dispose_devices(True)
-                    self._devices.on_next(self._latest_devices)
-                if self._latest_engine_list is not None:
-                    self._latest_engine_list.dispose()
-            engine_config_json = self._dbus_proxy.get_config(JsonKeys.ENGINES)
-            raw_engine_config = self._config_parser.parse_engine_configuration(
-                engine_config_json, engine_configuration
-            )
-
-            raw_engine_config.should_reset = should_reset
-
-            self._engine_config.on_next(raw_engine_config)
-
-            # Engine List
-            engine_list = self._config_processor.build_engine_list(
-                raw_engine_config, self._latest_devices
-            )
-            self._engine_list.on_next(engine_list)
-            self._single_snapshot()
-            return True
-        except Exception as e:
-            self._logger.error(f"Error reading dbus Get Engine response: {e}")
-            return False
-
-    # === State Processing ===
-    def _process_state_from_snapshot(self, snapshot_dict: dict[str, dict[str, Any]]):
-        state_update = {}
-        # Circuits
-        if JsonKeys.CIRCUITS in snapshot_dict:
-            for circuit_id, circuit_state in snapshot_dict[JsonKeys.CIRCUITS].items():
-                state_update[circuit_id] = circuit_state
-
-        # Tanks
-        if JsonKeys.TANKS in snapshot_dict:
-            for tank_id, tank_state in snapshot_dict[JsonKeys.TANKS].items():
-                state_update[tank_id] = tank_state
-
-        # Engines
-        if JsonKeys.ENGINES in snapshot_dict:
-            for engine_id, engine_state in snapshot_dict[JsonKeys.ENGINES].items():
-                state_update[engine_id] = engine_state
-        # AC
-        if JsonKeys.AC in snapshot_dict:
-            for ac_id, ac_state in snapshot_dict[JsonKeys.AC].items():
-                state_update[ac_id] = ac_state
-
-        # DC
-        if JsonKeys.DC in snapshot_dict:
-            for dc_id, dc_state in snapshot_dict[JsonKeys.DC].items():
-                state_update[dc_id] = dc_state
-
-        # Hvacs
-        if JsonKeys.HVACS in snapshot_dict:
-            for hvac_id, hvac_state in snapshot_dict[JsonKeys.HVACS].items():
-                state_update[hvac_id] = hvac_state
-
-        # InverterChargers
-        if JsonKeys.INVERTER_CHARGERS in snapshot_dict:
-            for inverter_charger_id, inverter_state in snapshot_dict[
-                JsonKeys.INVERTER_CHARGERS
-            ].items():
-                state_update[inverter_charger_id] = inverter_state
-
-        # GNSS
-        if JsonKeys.GNSS in snapshot_dict:
-            for gnss_id, gnss_state in snapshot_dict[JsonKeys.GNSS].items():
-                state_update[gnss_id] = gnss_state
-
-        # Binary Logic State
-        if JsonKeys.BINARY_LOGIC_STATE in snapshot_dict:
-            for bls_id, logic_state in snapshot_dict[
-                JsonKeys.BINARY_LOGIC_STATE
-            ].items():
-                state_update[bls_id] = logic_state
-        return state_update
-
-    def _merge_state_update(self, state_updates: dict[str, dict[str, Any]]):
-        with self.lock:
-            device_list_copy = self._latest_devices
-            for id, state_update in state_updates.items():
-                if id in device_list_copy.devices:
-                    # Devices of type AC contain multiple AC Lines,
-                    # We want to keep ACLine data together within same device, but each lines data accessable by knowing the line ID
-                    # For this reason, we are creating channels within the AC device named as {channel_id}.{line_id}
-                    if device_list_copy.devices[id].type == N2kDeviceType.AC:
-                        lines: dict[int, dict[str, any]] = state_update.get(
-                            "AClines", {}
-                        )
-                        if lines is not None:
-                            for line_id, line_value in lines.items():
-                                for channel_id, value in line_value.items():
-                                    device_list_copy.devices[id].update_channel(
-                                        f"{channel_id}.{int(line_id)}", value
-                                    )
-                    else:
-                        for channel_id, value in state_update.items():
-                            device_list_copy.devices[id].update_channel(
-                                channel_id, value
-                            )
-                elif id in device_list_copy.engine_devices:
-                    for channel_id, value in state_update.items():
-                        device_list_copy.engine_devices[id].update_channel(
-                            channel_id, value
-                        )
-            self._devices.on_next(device_list_copy)
-
-    def _set_periodic_snapshot_timer(self):
-        # Set up a periodic timer to call _single_snapshot every N seconds
-        self._periodic_snapshot_timer = threading.Timer(
-            self._snapshot_interval, self._single_snapshot
-        )
-        self._periodic_snapshot_timer.name = Constants.SNAPSHOT_TIMER_THREAD_NAME
-
-    def _start_snapshot_timer(self):
-        try:
-            # Only cancel if timer exists and is alive
-            if (
-                hasattr(self, "_periodic_snapshot_timer")
-                and self._periodic_snapshot_timer.is_alive()
-            ):
-                self._periodic_snapshot_timer.cancel()
-            self._set_periodic_snapshot_timer()
-            self._periodic_snapshot_timer.start()
-        except Exception as e:
-            self._logger.warning(f"Failed to restart periodic snapshot timer: {e}")
-
-    def _single_snapshot(self):
-        try:
-            snapshot = self._dbus_proxy.single_snapshot()
-            self.snapshot_handler(snapshot)
-        except Exception as e:
-            self._logger.error(f"Error getting single snapshot: {e}")
-
     # === Destructor ===
     def __del__(self):
+        """
+        Destructor to clean up resources when the N2KClient instance is deleted.
+        """
         if self._disposable_list is not None:
             for disposable in self._disposable_list:
                 disposable.dispose()

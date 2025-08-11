@@ -1,6 +1,7 @@
 import logging
-from time import sleep
 from typing import Callable
+
+from ...util.settings_util import SettingsUtil
 
 from ...models.n2k_configuration.n2k_configuation import N2kConfiguration
 from ...models.devices import N2kDevices
@@ -18,6 +19,12 @@ from ...services.control_service.control_service_helpers import (
 class ControlService:
     """Service for controlling N2K devices"""
 
+    _control_max_attempts = SettingsUtil.get_setting(
+        Constants.N2K_SETTINGS_KEY,
+        Constants.WORKER_KEY,
+        Constants.CONTROL_DBUS_MAX_ATTEMPTS_KEY,
+        default_value=3,
+    )
     _logger = logging.getLogger(Constants.N2K_CONTROL_SERVICE)
 
     def __init__(

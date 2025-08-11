@@ -10,6 +10,15 @@ from ...models.empower_system.engine_alarm import EngineAlarm
 
 
 def get_inverter_charger_alarm_title(config: N2kConfiguration, ac_id: int):
+    """
+    Get the title of the inverter charger alarm based on the AC ID.
+    Args:
+        config: The N2K configuration containing AC definitions.
+        ac_id: The AC ID to find the corresponding alarm title.
+
+    Returns:
+        The title of the inverter charger alarm or None if not found.
+    """
     for [_, ac_meter] in config.ac.items():
         for [_, ac_line] in ac_meter.line.items():
             if ac_id == ac_line.id:

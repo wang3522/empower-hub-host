@@ -4,6 +4,8 @@ from ..models.n2k_configuration.n2k_configuation import N2kConfiguration
 from ..models.n2k_configuration.ui_relationship_msg import ItemType
 from ..models.n2k_configuration.inverter_charger import InverterChargerDevice
 from ..models.n2k_configuration.category_item import CategoryItem
+from ..models.constants import JsonKeys
+import json
 
 
 def is_in_category(categories: list[CategoryItem], category_name: str) -> bool:
@@ -114,3 +116,29 @@ def map_list_fields(source: dict[str, Any], target: object, field_map: dict) -> 
         value = source.get(key)
         if value is not None:
             setattr(target, attr, [parse_func(item) for item in value])
+
+
+def send_and_validate_response(dbus_command, request: dict, logger=None) -> bool:
+    """
+    Send a request and verify the response indicates success.
+
+    Serializes the request to JSON, sends it via the provided function,
+    and checks if the response indicates success (result == "OK").
+
+    Args:
+        dbus_command: Function to send the request
+        request: Dictionary containing the request data
+        logger: Optional logger for error reporting
+
+    Returns:
+        True if the response indicates success, False otherwise
+    """
+    response = dbus_command(json.dumps(request))
+    try:
+        response_json: dict = json.loads(response)
+        result = response_json.get(JsonKeys.Result)
+        return result == JsonKeys.OK
+    except Exception as e:
+        if logger:
+            logger.error("Invalid response from request: %s (%s)", response, e)
+        return False

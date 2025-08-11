@@ -360,3 +360,11 @@ class ConnectionStatus(str, Enum):
     DISCONNECTED = "Disconnected"
     CONNECTED = "Connected"
     IDLE = "Idle"
+
+
+class ConfigOperationType(Enum):
+    ReadConfig = 0
+    WriteConfig = 1
+    SettingsFactoryReset = 2
+    CZoneRaw = 3
+    SnapshotUpdate = 4

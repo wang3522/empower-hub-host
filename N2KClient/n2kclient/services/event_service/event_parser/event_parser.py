@@ -2,9 +2,9 @@ import json
 import logging
 from typing import Optional
 
-from ...models.constants import Constants
-from ...models.event import Event
-from ...util.common_utils import map_fields, map_enum_fields
+from ....models.constants import Constants
+from ....models.event import Event
+from ....util.common_utils import map_fields, map_enum_fields
 from .field_maps import EVENT_FIELD_MAP, EVENT_ENUM_FIELD_MAP
 
 
