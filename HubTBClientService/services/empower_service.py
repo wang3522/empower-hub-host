@@ -79,7 +79,7 @@ class EmpowerService:
 
         self.__setup_subscriptions()
 
-    def _publish_alarm_timeseries(self,alarms: list[Alarm]):
+    def _publish_alarm_timeseries(self, alarms: list[Alarm]):
         telemetry_dict = {}
         for alarm in alarms:
             telemetry_dict[alarm.id] = alarm.to_dict()
