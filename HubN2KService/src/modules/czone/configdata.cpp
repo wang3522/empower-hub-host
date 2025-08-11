@@ -111,6 +111,9 @@ OperationRequest::OperationRequest(const json &j) {
     if (j.contains("Type")) {
       m_type = std::make_unique<eOperationType>(from_string_OperationType(j["Type"].get<std::string>()));
     }
+    if (j.contains("type")) {
+      m_type = std::make_unique<eOperationType>(from_string_OperationType(j["type"].get<std::string>()));
+    }
 
     if (j.contains("ReadConfigForce")) {
       m_readConfigForce = std::make_unique<bool>(j["ReadConfigForce"].get<bool>());
