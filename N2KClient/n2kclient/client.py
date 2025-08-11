@@ -167,6 +167,8 @@ class N2KClient(dbus.service.Object):
             set_alarm_list=self._set_alarm_list,
             set_engine_alarms=self._set_engine_alarms,
             acknowledge_alarm_func=self._dbus_proxy.alarm_acknowledge,
+            get_latest_empower_system_func=self.get_latest_empower_system,
+            get_latest_engine_list_func=self.get_latest_engine_list,
         )
         self._setup_subscriptions()
         self._set_periodic_snapshot_timer()
@@ -364,7 +366,7 @@ class N2KClient(dbus.service.Object):
         """
         return self.config
 
-    def get_empower_system(self) -> EmpowerSystem:
+    def get_latest_empower_system(self) -> EmpowerSystem:
         """
         Get the latest EmpowerSystem object.
         """
@@ -388,7 +390,7 @@ class N2KClient(dbus.service.Object):
         """
         return self.factory_metadata
 
-    def get_engine_list(self) -> EngineList:
+    def get_latest_engine_list(self) -> EngineList:
         """
         Get the latest EngineList object.
         """
@@ -406,12 +408,18 @@ class N2KClient(dbus.service.Object):
         """
         return self.engine_list
 
-    def get_latest_alarms(self) -> dict[int, Alarm]:
+    def get_latest_alarms(self) -> AlarmList:
         """
         Get the latest active alarms.
         Returns a dictionary of Alarm objects keyed by their unique ID.
         """
         return self._latest_alarms
+
+    def get_alarms_observable(self) -> rx.subject.BehaviorSubject:
+        """
+        Get the observable for AlarmList updates.
+        """
+        return self._active_alarms
 
     def get_latest_engine_config(self) -> EngineConfiguration:
         """
