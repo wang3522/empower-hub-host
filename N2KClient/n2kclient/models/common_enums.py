@@ -362,9 +362,9 @@ class ConnectionStatus(str, Enum):
     IDLE = "Idle"
 
 
-class ConfigOperationType(Enum):
-    ReadConfig = 0
-    WriteConfig = 1
-    SettingsFactoryReset = 2
-    CZoneRaw = 3
-    SnapshotUpdate = 4
+class ConfigOperationType(str, Enum):
+    ReadConfig = "ReadConfig"
+    WriteConfig = "WriteConfig"
+    SettingsFactoryReset = "SettingsFactoryReset"
+    CZoneRaw = "CZoneRaw"
+    SnapshotUpdate = "SnapshotUpdate"

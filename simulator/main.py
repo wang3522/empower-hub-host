@@ -224,7 +224,7 @@ class N2KDBusSimulator(dbus.service.Object):
     def Operation(self, operation_request: str):
         try:
             operation_json = json.loads(operation_request)
-            if "type" in operation_json and operation_json["type"] == 1:
+            if "type" in operation_json and operation_json["type"] == "WriteConfig":
                 return '{"Result": "Ok"}'
             else:
                 return '{"Result": "Error", "Message": "Unknown Operation"}'
