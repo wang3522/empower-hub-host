@@ -207,7 +207,7 @@ class EmpowerService:
             self._service_init_disposables.append(dispose)
         # ======= N2K Client Subscriptions =======
         # Subscribe to mobile friendly engine configuration
-        disposable = (self.n2k_client.get_engine_list_observable()
+        disposable = (self.n2k_client.engine_list
                       .subscribe(self._update_engine_configuration))
         self._service_init_disposables.append(disposable)
         # Subscribe to mobile friendly configuration
