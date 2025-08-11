@@ -3090,6 +3090,7 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
 
   dbusService->registerService("Operation", "czone",
                                [ptr = this, dbusService](std::string operationRequestStr) -> std::string {
+                                 json response;
                                  try {
                                    OperationRequest request(json::parse(operationRequestStr));
                                    if (request.m_type == nullptr) {
@@ -3101,18 +3102,21 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
                                      bool force = *request.m_readConfigForce;
                                      bool configMode = *request.m_readConfigMode;
                                      ptr->readConfig(force, configMode);
+                                     response["Result"] = "Ok";
                                    } break;
                                    case OperationRequest::eOperationType::eWriteConfig: {
                                      ptr->writeConfig();
+                                     response["Result"] = "Ok";
                                    } break;
                                    case OperationRequest::eOperationType::eSettingsFactoryReset: {
                                      ptr->m_czoneSettings.factoryReset();
+                                     response["Result"] = "Ok";
                                    } break;
                                    case OperationRequest::eOperationType::eCZoneRaw: {
-                                     // [x] todo
                                      if (request.m_cZoneRawOperation) {
                                        CZoneOperation(tCZoneOperationType(*request.m_cZoneRawOperation));
                                      }
+                                     response["Result"] = "Ok";
                                    } break;
                                    case OperationRequest::eOperationType::eSnapshotUpdate: {
                                      // [x] todo
@@ -3124,7 +3128,8 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
                                    BOOST_LOG_TRIVIAL(error) << "Operation:Error " << e.what();
                                    dbusService->throwError("Operation: " + std::string(e.what()));
                                  }
-                                 return "";
+                                 response["Result"] = "Error";
+                                 return response.dump();
                                });
 
   dbusService->registerService("AlarmAcknowledge", "czone",
