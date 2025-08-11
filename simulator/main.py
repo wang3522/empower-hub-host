@@ -208,6 +208,29 @@ class N2KDBusSimulator(dbus.service.Object):
         except Exception as e:
             return '{"Result": "Error", "Message": "Invalid JSON"}'
 
+    @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
+    def PutFile(self, request: str):
+        try:
+            request_json = json.loads(request)
+            if "Content" in request_json:
+                print(f"PutFile Request: {request_json['Content']}")
+                return '{"Result": "Ok"}'
+            else:
+                return '{"Result": "Error", "Message": "Invalid Content"}'
+        except Exception as e:
+            return '{"Result": "Error", "Message": "Invalid JSON"}'
+
+    @dbus.service.method(dbus_interface=IFACE, in_signature="s", out_signature="s")
+    def Operation(self, operation_request: str):
+        try:
+            operation_json = json.loads(operation_request)
+            if "type" in operation_json and operation_json["type"] == 1:
+                return '{"Result": "Ok"}'
+            else:
+                return '{"Result": "Error", "Message": "Unknown Operation"}'
+        except Exception as e:
+            return '{"Result": "Error", "Message": "Invalid JSON"}'
+
     @dbus.service.method(dbus_interface=IFACE, in_signature="", out_signature="s")
     def SingleSnapshot(self):
         snapshot = {

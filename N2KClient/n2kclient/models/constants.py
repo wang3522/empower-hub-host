@@ -196,6 +196,8 @@ class JsonKeys:
 
     OK = "Ok"
 
+    type = "type"
+
 
 class AttrNames:
     CATEGORY = "category"
@@ -393,6 +395,8 @@ class Constants:
     ALARM_LIST_SERVICE_METHOD_NAME = "AlarmList"
     CONTROL_SERVICE_METHOD_NAME = "Control"
     SINGLE_SNAPSHOT_SERVICE_METHOD_NAME = "SingleSnapshot"
+    PUT_FILE_SERVICE_METHOD_NAME = "PutFile"
+    OPERATION_SERVICE_METHOD_NAME = "Operation"
     ALARM_ACKNOWLEDGE_SERVICE_METHOD_NAME = "AlarmAcknowledge"
     EVENT_SIGNAL_NAME = "Event"
     SNAPSHOT_SIGNAL_NAME = "Snapshot"
@@ -517,6 +521,7 @@ class Constants:
     NonVisibleCircuits = "NonVisibleCircuits"
 
     N2K_CONTROL_SERVICE = "N2K_CONTROL_SERVICE"
+    N2K_CONFIG_SERVICE = "N2K_CONFIG_SERVICE"
     DBUS_RETRY_DELAY_KEY = "DBUS_RETRY_DELAY"
     CONTROL_DBUS_MAX_ATTEMPTS_KEY = "CONTROL_DBUS_MAX_ATTEMPTS"
     SNAPSHOT_INTERVAL_KEY = "SNAPSHOT_INTERVAL"

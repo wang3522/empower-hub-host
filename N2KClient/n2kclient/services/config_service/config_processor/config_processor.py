@@ -1,10 +1,10 @@
 import logging
-from ...models.n2k_configuration.n2k_configuation import N2kConfiguration
-from ...models.empower_system.empower_system import EmpowerSystem
-from ...models.empower_system.thing import Thing
-from ...models.n2k_configuration.device import DeviceType
+from ....models.n2k_configuration.n2k_configuation import N2kConfiguration
+from ....models.empower_system.empower_system import EmpowerSystem
+from ....models.empower_system.thing import Thing
+from ....models.n2k_configuration.device import DeviceType
 
-from ...models.empower_system.hub import Hub
+from ....models.empower_system.hub import Hub
 
 from .config_processor_helpers import (
     get_category_list,
@@ -17,42 +17,42 @@ from .config_processor_helpers import (
     get_associated_tank,
 )
 
-from ...models.n2k_configuration.ui_relationship_msg import ItemType
+from ....models.n2k_configuration.ui_relationship_msg import ItemType
 
-from ...models.n2k_configuration.inverter_charger import InverterChargerDevice
+from ....models.n2k_configuration.inverter_charger import InverterChargerDevice
 
-from ...models.empower_system.inverter import CombiInverter
-from ...models.n2k_configuration.tank import TankType
-from ...models.empower_system.charger import CombiCharger, ACMeterCharger
-from ...models.n2k_configuration.category_item import CategoryItem
-from ...models.empower_system.battery import Battery
-from ...models.empower_system.gnss import GNSS
-from ...models.n2k_configuration.ac import ACType
-from ...models.empower_system.shore_power import ShorePower
-from ...models.empower_system.inverter import AcMeterInverter
-from ...models.empower_system.tank import (
+from ....models.empower_system.inverter import CombiInverter
+from ....models.n2k_configuration.tank import TankType
+from ....models.empower_system.charger import CombiCharger, ACMeterCharger
+from ....models.n2k_configuration.category_item import CategoryItem
+from ....models.empower_system.battery import Battery
+from ....models.empower_system.gnss import GNSS
+from ....models.n2k_configuration.ac import ACType
+from ....models.empower_system.shore_power import ShorePower
+from ....models.empower_system.inverter import AcMeterInverter
+from ....models.empower_system.tank import (
     FuelTank,
     BlackWaterTank,
     FreshWaterTank,
     WasteWaterTank,
 )
-from ...models.common_enums import ThingType
-from ...models.empower_system.climate import Climate
-from ...models.constants import Constants
-from ...models.empower_system.light import CircuitLight
-from ...models.empower_system.bilge_pump import CircuitBilgePump
-from ...models.empower_system.pump import CircuitWaterPump
-from ...models.empower_system.circuit_power_switch import CircuitPowerSwitch
-from ...models.empower_system.engine_list import EngineList
-from ...models.n2k_configuration.engine_configuration import EngineConfiguration
-from ...models.empower_system.marine_engines import MarineEngine
-from ...models.devices import N2kDevices
-from ...util.common_utils import (
+from ....models.common_enums import ThingType
+from ....models.empower_system.climate import Climate
+from ....models.constants import Constants
+from ....models.empower_system.light import CircuitLight
+from ....models.empower_system.bilge_pump import CircuitBilgePump
+from ....models.empower_system.pump import CircuitWaterPump
+from ....models.empower_system.circuit_power_switch import CircuitPowerSwitch
+from ....models.empower_system.engine_list import EngineList
+from ....models.n2k_configuration.engine_configuration import EngineConfiguration
+from ....models.empower_system.marine_engines import MarineEngine
+from ....models.devices import N2kDevices
+from ....util.common_utils import (
     is_in_category,
     calculate_inverter_charger_instance,
     get_associated_circuit,
 )
-from ...models.n2k_configuration.dc import DCType
+from ....models.n2k_configuration.dc import DCType
 
 
 class ConfigProcessor:

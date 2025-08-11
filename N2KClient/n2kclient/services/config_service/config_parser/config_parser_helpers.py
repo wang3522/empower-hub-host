@@ -1,8 +1,7 @@
 from typing import Any
-import logging
-from ...models.constants import JsonKeys
-from ...models.n2k_configuration.binary_logic_state import BinaryLogicState
-from ...models.n2k_configuration.ui_relationship_msg import (
+from ....models.constants import JsonKeys
+from ....models.n2k_configuration.binary_logic_state import BinaryLogicState
+from ....models.n2k_configuration.ui_relationship_msg import (
     UiRelationShipMsg,
     ItemType,
 )

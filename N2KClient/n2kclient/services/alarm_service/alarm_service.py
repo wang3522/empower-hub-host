@@ -41,9 +41,25 @@ from ...models.n2k_configuration.tank import TankType
 from ...models.n2k_configuration.bls_alarm_mapping import BLSAlarmMapping
 from .field_maps import ALARM_FIELD_MAP, ALARM_ENUM_FIELD_MAP
 from .alarm_helpers import generate_alarms_from_discrete_status
+from ...util.common_utils import send_and_validate_response
 
 
 class AlarmService:
+    """
+    Service for managing N2K alarms
+    This service provides methods to acknowledge alarms, load active alarms, and manage alarm states.
+    It interacts with the N2K configuration and engine configuration to process alarms.
+    Attributes:
+        alarm_list: Function to retrieve the current alarm list.
+        get_latest_alarms: Function to get the latest alarms.
+        get_config: Function to get the N2K configuration.
+        get_engine_config: Function to get the engine configuration.
+        get_engine_alarms: Function to get the engine alarms.
+        set_alarm_list: Function to set the alarm list.
+        set_engine_alarms: Function to set the engine alarms.
+        acknowledge_alarm_func: Function to acknowledge an alarm.
+    """
+
     _logger = logging.getLogger(
         f"{Constants.DBUS_N2K_CLIENT}.{Constants.Alarm_Service}"
     )
@@ -96,18 +112,9 @@ class AlarmService:
                 JsonKeys.ID: alarm.unique_id,
                 JsonKeys.ACCEPTED: True,
             }
-            response = self.acknowledge_alarm_func(json.dumps(acknowledge_request))
-            try:
-                response_json: dict = json.loads(response)
-                result = response_json.get(JsonKeys.Result)
-                return result == JsonKeys.OK
-            except Exception as e:
-                self._logger.error(
-                    "Invalid response from acknowledge alarm request %s: %s",
-                    alarm_id,
-                    e,
-                )
-                return False
+            return send_and_validate_response(
+                self.acknowledge_alarm_func, acknowledge_request, self._logger
+            )
 
         except Exception as e:
             self._logger.error("Failed to acknowledge alarm %s: %s", alarm_id, e)
@@ -309,6 +316,11 @@ class AlarmService:
     def _get_alarm_thing(
         self, reference: ComponentReference, config: N2kConfiguration, things: list[str]
     ):
+        """
+        Given a ComponentReference, find the associated thing in the configuration.
+        This will return a list of things based on the type of component reference.
+        If no association is found, it returns the things list unchanged.
+        """
         thing = reference.thing
         ref_type = reference.component_type
         if ref_type == ComponentType.CIRCUIT:
@@ -358,6 +370,12 @@ class AlarmService:
         return things
 
     def get_switch_thing(self, config: N2kConfiguration, switch: Circuit):
+        """
+        Given a switch, find the associated thing in the configuration.
+        This will return a ComponentReference if the switch is associated with a circuit, AC meter,
+        DC meter, or tank.
+        If no association is found, it returns None.
+        """
         # DC
         for dc in config.dc.values():
             circuit = get_associated_circuit(ItemType.DcMeter, dc.id, config)
@@ -442,6 +460,13 @@ class AlarmService:
         return alarm
 
     def parse_alarm_list(self, alarm_list_str: str) -> list[Alarm]:
+        """
+        Parse the alarm list JSON string into a list of Alarm objects.
+        Args:
+            alarm_list_str: The JSON string representing the alarm list.
+            Returns:
+                List of Alarm objects parsed from the JSON string.
+        """
         try:
             alarms = []
             alarm_list_json = json.loads(alarm_list_str)
@@ -455,6 +480,13 @@ class AlarmService:
             raise
 
     def parse_alarm(self, alarm_json: dict[str, Any]) -> Alarm:
+        """
+        Parse a single alarm JSON object into an Alarm instance.
+        Args:
+            alarm_json: The JSON object representing the alarm.
+        Returns:
+                An Alarm instance populated with the data from the JSON object.
+        """
         try:
             alarm = Alarm()
             map_fields(alarm_json, alarm, ALARM_FIELD_MAP)
@@ -464,7 +496,7 @@ class AlarmService:
             self._logger.error(f"Failed to parse alarm: {e}")
             raise
 
-    def process_engine_alarm_from_snapshot(
+    def process_engine_alarm_from_snapshots(
         self, snapshot_dict: dict[str, dict[str, Any]]
     ) -> None:
         """

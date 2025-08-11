@@ -7,45 +7,68 @@ from typing import Any, Dict, Optional
 import logging
 import json
 import reactivex as rx
+# pylint: disable=import-error,no-name-in-module
+from tb_utils.constants import Constants
+from tb_utils.gps_parser import GPSParser
+from tb_utils.geo_util import GeoUtil
+from mqtt_client import ThingsBoardClient
+
 from n2kclient.client import N2KClient
-# from n2k_client.models.configuration import N2kConfiguration
 from n2kclient.models.empower_system.location_state import LocationState
 from n2kclient.util.settings_util import SettingsUtil
-# TODO: Alarms are not ready yet
-# from n2k_client.models.alarm import AlarmSeverity, AlarmState
+from n2kclient.models.empower_system.alarm import AlarmSeverity, AlarmState
+
 from .models.geofence import GeoPoint, Geofence
 from .sync_service import SyncService
 
-# pylint: disable=relative-beyond-top-level
-from tb_utils.geo_util import GeoUtil
-from mqtt_client import ThingsBoardClient
 from .config import location_priority_sources, location_filter_pattern
-from tb_utils.constants import Constants
-from tb_utils.gps_parser import GPSParser
 
 # Port for GNSS connection
 SERIAL_PORT = SettingsUtil.get_setting(
-    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.SERIAL_PORT, default_value="/dev/ttyUSB1"
+    Constants.THINGSBOARD_SETTINGS_KEY,
+    Constants.GNSS,
+    Constants.SERIAL_PORT,
+    default_value="/dev/ttyUSB1"
 )
 # # Cloud publish interval in seconds
 LOCATION_CLOUD_PUBLISH_INTERVAL = SettingsUtil.get_setting(
-    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.LOCATION, Constants.CLOUD_PUBLISH_INTERVAL, default_value=600
+    Constants.THINGSBOARD_SETTINGS_KEY,
+    Constants.GNSS,
+    Constants.LOCATION,
+    Constants.CLOUD_PUBLISH_INTERVAL,
+    default_value=600
 )
 # number of updates to flush (i.e. if any one gps thing has 20 updates, flush all)
 LOCATION_FLUSH_MAX_UPDATES = SettingsUtil.get_setting(
-    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.LOCATION, Constants.FLUSH_MAX_UPDATES, default_value=20
+    Constants.THINGSBOARD_SETTINGS_KEY,
+    Constants.GNSS,
+    Constants.LOCATION,
+    Constants.FLUSH_MAX_UPDATES,
+    default_value=20
 )
 # GPSD update interval in seconds
 LOCATION_GPSD_UPDATE_INTERVAL = SettingsUtil.get_setting(
-    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.LOCATION, Constants.GPSD_UPDATE_INTERVAL, default_value=10
+    Constants.THINGSBOARD_SETTINGS_KEY,
+    Constants.GNSS,
+    Constants.LOCATION,
+    Constants.GPSD_UPDATE_INTERVAL,
+    default_value=10
 )
 # Minimum distance in meters
 MINIMUM_DISTANCE = SettingsUtil.get_setting(
-    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.DISTANCE, Constants.MIN_CHANGE, default_value=50
+    Constants.THINGSBOARD_SETTINGS_KEY,
+    Constants.GNSS,
+    Constants.DISTANCE,
+    Constants.MIN_CHANGE,
+    default_value=50
 )
 # Minimum speed in m/s
 MINIMUM_SPEED = SettingsUtil.get_setting(
-    Constants.THINGSBOARD_SETTINGS_KEY, Constants.GNSS, Constants.SPEED, Constants.MIN_CHANGE, default_value=5
+    Constants.THINGSBOARD_SETTINGS_KEY,
+    Constants.GNSS,
+    Constants.SPEED,
+    Constants.MIN_CHANGE,
+    default_value=5
 )
 # Acceptable error margin for stationary gps coord reading
 STATIONARY_ERR = SettingsUtil.get_setting(
@@ -99,8 +122,8 @@ class LocationService:
     geofence_radius: float = None
     # geofence_alarm: the current geofence alarm state in cloud
     geofence_alarm: dict = {}
-    geofence_consent: rx.Observable[bool]
-    location_consent: rx.Observable[bool]
+    geofence_consent: bool
+    location_consent: bool
     geofence: rx.Observable[Geofence]
     geofence_counter: int = 0
 
@@ -270,7 +293,7 @@ class LocationService:
                     "Geofence point set to lat %s long %s with radius %s",
                     new_geofence_point.latitude,
                     new_geofence_point.longitude,
-                    self.geofence_radius,
+                    new_geofence_radius,
                 )
                 self.geofence_point = new_geofence_point
                 self.geofence_radius = new_geofence_radius
@@ -323,61 +346,50 @@ class LocationService:
                     "Geofence alarm triggered %d times in a row", self.geofence_counter
                 )
 
-                # TODO: Uncomment when geofence alarm is ready
-                # # Boat is outside of geofence. Create the alarm
-                # if self.geofence_counter >= OUT_OF_GEOFENCE_COUNT:
-                #     geofence_alarm = {
-                #         Constants.TITLE: OUTSIDE_GEOFENCE_TITLE,
-                #         Constants.NAME: OUTSIDE_GEOFENCE_TITLE,
-                #         Constants.DESCRIPTION: OUTSIDE_GEOFENCE_DESCRIPTION,
-                #         Constants.SEVERITY: AlarmSeverity.IMPORTANT,
-                #         Constants.CURRENT_STATE: AlarmState.ENABLED,
-                #         Constants.DATE_ACTIVE: int(time.time() * 1000),
-                #         Constants.THINGS: [change.thing_id],
-                #     }
-                # else:
-                #     geofence_alarm = {}
-            # elif distance < self.geofence_radius:
-            if distance < self.geofence_radius:
+                # Boat is outside of geofence. Create the alarm
+                if self.geofence_counter >= OUT_OF_GEOFENCE_COUNT:
+                    geofence_alarm = {
+                        Constants.TITLE: OUTSIDE_GEOFENCE_TITLE,
+                        Constants.NAME: OUTSIDE_GEOFENCE_TITLE,
+                        Constants.DESCRIPTION: OUTSIDE_GEOFENCE_DESCRIPTION,
+                        Constants.SEVERITY: AlarmSeverity.IMPORTANT,
+                        Constants.CURRENT_STATE: AlarmState.ENABLED,
+                        Constants.DATE_ACTIVE: int(time.time() * 1000),
+                        Constants.THINGS: [change.get(Constants.THINGS, "gnss.gpsd")],
+                    }
+                else:
+                    geofence_alarm = {}
+            elif distance < self.geofence_radius:
                 self._logger.info("Boat is inside the geofence")
                 self.geofence_counter = 0
                 geofence_alarm = {}
 
-            # TODO: Uncomment when geofence alarm is ready
             # Check to see that both alarms are not enabled
-            # if (
-            #     self.geofence_alarm
-            #     and geofence_alarm
-            #     and self.geofence_alarm.get(Constants.CURRENT_STATE)
-            #     == AlarmState.ENABLED
-            #     and geofence_alarm.get(Constants.CURRENT_STATE) == AlarmState.ENABLED
-            # ):
-            #     self._logger.info(
-            #         "Geofence alarm already enabled. No update will be sent."
-            #     )
-            #     return False
-            # else:
-            #     # Check to make sure that the alarm isn't the same
-            #     # before sending to thingsboard
-            #     # Do not send geofence alarm with no body i.e {}
-            #     return_value = False
-            #     if self.geofence_alarm != geofence_alarm and geofence_alarm:
-            #         self._logger.info("Publishing geofence alarm telemetry")
-            #         self.thingsboard_client.send_telemetry(
-            #             {Constants.ALARM_GEOFENCE_KEY: geofence_alarm},
-            #             data_type=client.TelemetryDataType.OTHER,
-            #         )
-            #         return_value = True
-            #     # Don't reset the geofence alarm if we have woken up due to telemetry
-            #     # if not (
-            #     #     Constants.TIMER_HOST_WAKEUP
-            #     #     == self.geofence_alarm.get(Constants.WAKEUP_REASON, "")
-            #     # ):
-            #     #     self._logger.info("Setting self.geofence_alarm")
-            #     #     self.geofence_alarm = geofence_alarm
-                # return return_value
-            return False
-
+            if (
+                self.geofence_alarm
+                and geofence_alarm
+                and self.geofence_alarm.get(Constants.CURRENT_STATE)
+                == AlarmState.ENABLED
+                and geofence_alarm.get(Constants.CURRENT_STATE) == AlarmState.ENABLED
+            ):
+                self._logger.info(
+                    "Geofence alarm already enabled. No update will be sent."
+                )
+                return False
+            else:
+                # Check to make sure that the alarm isn't the same
+                # before sending to thingsboard
+                # Do not send geofence alarm with no body i.e {}
+                return_value = False
+                if self.geofence_alarm != geofence_alarm and geofence_alarm:
+                    self._logger.info("Publishing geofence alarm telemetry")
+                    self.thingsboard_client.send_telemetry(
+                        {Constants.ALARM_GEOFENCE_KEY: geofence_alarm},
+                    )
+                    return_value = True
+                # Store the geofence alarm state so we don't send the alarm again
+                self.geofence_alarm = geofence_alarm
+                return return_value
         except KeyError as e:
             self._logger.error("Missing key in state data: %s", e)
         except Exception as e:
@@ -755,6 +767,7 @@ class LocationService:
                         "y": round(packet["error"]["y"]),
                     }
                     location_dict["sats_valid"] = packet["sats_valid"]
+                    location_dict[Constants.THINGS] = "gnss.gpsd"
                     # We had a previous value that was None, wait to get multiple coordinates
                     # before testing the thresholding
                     if (

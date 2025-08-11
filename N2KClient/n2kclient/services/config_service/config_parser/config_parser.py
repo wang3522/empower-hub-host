@@ -2,44 +2,44 @@ import json
 import logging
 from typing import Any
 
-from ...models.n2k_configuration.alarm_limit import AlarmLimit
+from ....models.n2k_configuration.alarm_limit import AlarmLimit
 
-from ...models.n2k_configuration.n2k_configuation import N2kConfiguration
-from ...models.n2k_configuration.gnss import GNSSDevice
-from ...models.n2k_configuration.circuit import (
+from ....models.n2k_configuration.n2k_configuation import N2kConfiguration
+from ....models.n2k_configuration.gnss import GNSSDevice
+from ....models.n2k_configuration.circuit import (
     Circuit,
     CircuitLoad,
     CategoryItem,
 )
-from ...models.n2k_configuration.dc import DC
-from ...models.n2k_configuration.ac import AC, ACLine
-from ...models.n2k_configuration.tank import Tank
-from ...models.n2k_configuration.inverter_charger import InverterChargerDevice
-from ...models.n2k_configuration.device import Device
-from ...models.n2k_configuration.hvac import HVACDevice
-from ...models.n2k_configuration.audio_stereo import AudioStereoDevice
-from ...models.n2k_configuration.binary_logic_state import BinaryLogicState
-from ...models.n2k_configuration.ui_relationship_msg import (
+from ....models.n2k_configuration.dc import DC
+from ....models.n2k_configuration.ac import AC, ACLine
+from ....models.n2k_configuration.tank import Tank
+from ....models.n2k_configuration.inverter_charger import InverterChargerDevice
+from ....models.n2k_configuration.device import Device
+from ....models.n2k_configuration.hvac import HVACDevice
+from ....models.n2k_configuration.audio_stereo import AudioStereoDevice
+from ....models.n2k_configuration.binary_logic_state import BinaryLogicState
+from ....models.n2k_configuration.ui_relationship_msg import (
     UiRelationShipMsg,
 )
-from ...models.n2k_configuration.pressure import Pressure
-from ...models.n2k_configuration.engine import EngineDevice
-from ...models.n2k_configuration.sequential_name import SequentialName
-from ...models.n2k_configuration.instance import Instance
-from ...models.n2k_configuration.data_id import DataId
-from ...models.constants import Constants, JsonKeys, AttrNames
-from ...models.n2k_configuration.value_u32 import ValueU32
+from ....models.n2k_configuration.pressure import Pressure
+from ....models.n2k_configuration.engine import EngineDevice
+from ....models.n2k_configuration.sequential_name import SequentialName
+from ....models.n2k_configuration.instance import Instance
+from ....models.n2k_configuration.data_id import DataId
+from ....models.constants import Constants, JsonKeys, AttrNames
+from ....models.n2k_configuration.value_u32 import ValueU32
 from .field_maps import *
 from .config_parser_helpers import (
     get_device_instance_value,
     get_bls_alarm_channel,
 )
-from ...models.n2k_configuration.ac_meter import ACMeter
-from ...models.n2k_configuration.engine_configuration import EngineConfiguration
-from ...models.n2k_configuration.config_metadata import ConfigMetadata
-from ...models.n2k_configuration.factory_metadata import FactoryMetadata
-from ...models.n2k_configuration.bls_alarm_mapping import BLSAlarmMapping
-from ...util.common_utils import map_fields, map_enum_fields, map_list_fields
+from ....models.n2k_configuration.ac_meter import ACMeter
+from ....models.n2k_configuration.engine_configuration import EngineConfiguration
+from ....models.n2k_configuration.config_metadata import ConfigMetadata
+from ....models.n2k_configuration.factory_metadata import FactoryMetadata
+from ....models.n2k_configuration.bls_alarm_mapping import BLSAlarmMapping
+from ....util.common_utils import map_fields, map_enum_fields, map_list_fields
 
 
 class ConfigParser:
