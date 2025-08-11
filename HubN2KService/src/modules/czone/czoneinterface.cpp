@@ -3110,6 +3110,9 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
                                    } break;
                                    case OperationRequest::eOperationType::eCZoneRaw: {
                                      // [x] todo
+                                     if (request.m_cZoneRawOperation) {
+                                       CZoneOperation(tCZoneOperationType(*request.m_cZoneRawOperation));
+                                     }
                                    } break;
                                    case OperationRequest::eOperationType::eSnapshotUpdate: {
                                      // [x] todo
