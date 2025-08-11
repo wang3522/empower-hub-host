@@ -3,6 +3,10 @@ import json
 import logging
 from typing import Any, Callable, Optional, Union
 
+from ...models.empower_system.engine_list import EngineList
+
+from ...models.empower_system.empower_system import EmpowerSystem
+
 from ...models.n2k_configuration.n2k_configuation import N2kConfiguration
 from ...models.n2k_configuration.engine_configuration import EngineConfiguration
 from ...models.empower_system.engine_alarm_list import EngineAlarmList
@@ -56,6 +60,8 @@ class AlarmService:
         set_alarm_list: Callable[[AlarmList], None],
         set_engine_alarms: Callable[[EngineAlarmList], None],
         acknowledge_alarm_func: Callable[[dict], None],
+        get_latest_empower_system_func: Callable[[], EmpowerSystem],
+        get_latest_engine_list_func: Callable[[], EngineList],
     ):
         self.alarm_list = alarm_list_func
         self.get_latest_alarms = get_latest_alarms_func
@@ -65,6 +71,8 @@ class AlarmService:
         self.set_alarm_list = set_alarm_list
         self.set_engine_alarms = set_engine_alarms
         self.acknowledge_alarm_func = acknowledge_alarm_func
+        self.get_latest_empower_system = get_latest_empower_system_func
+        self.get_latest_engine_list = get_latest_engine_list_func
 
         self._prev_discrete_status1 = {}
         self._prev_discrete_status2 = {}
@@ -159,6 +167,7 @@ class AlarmService:
                 merged_alarm_list.to_alarm_dict() != latest_alarms.to_alarm_dict()
                 or force
             ):
+                merged_alarm_list = self._verify_alarm_things(merged_alarm_list)
                 self.set_alarm_list(merged_alarm_list)
         except Exception as e:
             self._logger.error("Failed to load active alarms: %s", e)
@@ -383,6 +392,36 @@ class AlarmService:
                 return ComponentReference(component_type=ComponentType.TANK, thing=tank)
         return None
 
+    def _verify_alarm_things(self, alarm_list: AlarmList):
+        """
+        Verify each alarm contain thing that is part of reported system and remove any alarm that do not.
+        """
+        alarm_list_copy = copy.deepcopy(alarm_list)
+        for id, alarm in list(alarm_list.alarm.items()):
+            valid_things = []
+            for thing in alarm.things:
+                if thing in self.get_latest_empower_system().things:
+                    valid_things.append(thing)
+            alarm_list.alarm[id].things = valid_things
+            if len(valid_things) == 0:
+                del alarm_list.alarm[id]
+        return alarm_list_copy
+
+    def _verify_engine_alarm_things(self, engine_alarm_list: EngineAlarmList):
+        """
+        Verify each engine alarm contains things that are part of the latest engine list and remove any alarm that do not.
+        """
+        engine_alarm_list_copy = copy.deepcopy(engine_alarm_list)
+        for id, engine_alarm in list(engine_alarm_list.engine_alarms.items()):
+            valid_things = []
+            for thing in engine_alarm.things:
+                if thing in self.get_latest_engine_list().engines:
+                    valid_things.append(thing)
+            engine_alarm_list.engine_alarms[id].things = valid_things
+            if len(valid_things) == 0:
+                del engine_alarm_list.engine_alarms[id]
+        return engine_alarm_list_copy
+
     def post_process_alarm_configuration(
         self, alarm: N2KAlarm, bls_alarms: dict[int, BLSAlarmMapping]
     ) -> Union[N2KAlarm | None]:
@@ -528,4 +567,7 @@ class AlarmService:
             merged_engine_alarm_list.to_alarm_dict()
             != latest_engine_alarm_list.to_alarm_dict()
         ):
+            merged_engine_alarm_list = self._verify_engine_alarm_things(
+                merged_engine_alarm_list
+            )
             self.set_engine_alarms(merged_engine_alarm_list)
