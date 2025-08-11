@@ -106,6 +106,45 @@ FileRequest::FileRequest(const FileRequest &other) {
     m_content = std::make_unique<std::string>(*other.m_content);
 }
 
+OperationRequest::OperationRequest(const json &j) {
+  try {
+    if (j.contains("Type")) {
+      m_type = std::make_unique<eOperationType>(from_string_OperationType(j["Type"].get<std::string>()));
+    }
+
+    if (j.contains("ReadConfigForce")) {
+      m_readConfigForce = std::make_unique<bool>(j["ReadConfigForce"].get<bool>());
+    } else {
+      m_readConfigForce = std::make_unique<bool>(false);
+    }
+
+    if (j.contains("ReadConfigMode")) {
+      m_readConfigMode = std::make_unique<bool>(j["ReadConfigMode"].get<bool>());
+    } else {
+      m_readConfigMode = std::make_unique<bool>(false);
+    }
+
+    if (j.contains("CZoneRawOperation")) {
+      m_cZoneRawOperation = std::make_unique<uint32_t>(j["CZoneRawOperation"].get<uint32_t>());
+    }
+  } catch (const std::invalid_argument &e) {
+    throw std::invalid_argument(e.what());
+  } catch (const std::exception &e) {
+    throw std::runtime_error("FileRequest::FileRequest error while generating FileRequest object.");
+  }
+}
+
+OperationRequest::OperationRequest(const OperationRequest &other) {
+  if (other.m_type)
+    m_type = std::make_unique<eOperationType>(*other.m_type);
+  if (other.m_readConfigForce)
+    m_readConfigForce = std::make_unique<bool>(*other.m_readConfigForce);
+  if (other.m_readConfigMode)
+    m_readConfigMode = std::make_unique<bool>(*other.m_readConfigMode);
+  if (other.m_cZoneRawOperation)
+    m_cZoneRawOperation = std::make_unique<uint32_t>(*other.m_cZoneRawOperation);
+}
+
 ControlTypeValueRequest::ControlTypeValueRequest() : m_instance(0), m_type(0), m_value(0), m_token() {}
 
 ConfigRequest::ConfigRequest(eConfigType type) : m_type(type), m_token(), m_parentId(0), m_flags(0), m_subType(0) {}

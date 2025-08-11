@@ -174,7 +174,7 @@ public:
     default: return "Unknown";
     }
   }
-    static eResourceType from_string_ResourceType(const std::string &str) {
+  static eResourceType from_string_ResourceType(const std::string &str) {
     if (str == "Touch7")
       return eTouch7;
     if (str == "Touch10")
@@ -238,6 +238,53 @@ public:
   FileRequest &operator=(const FileRequest &other) = default;
   FileRequest &operator=(FileRequest &&other) = default;
   ~FileRequest() = default;
+};
+
+class OperationRequest {
+public:
+  enum eOperationType : int {
+    eReadConfig = 0,
+    eWriteConfig = 1,
+    eSettingsFactoryReset = 2,
+    eCZoneRaw = 3,
+    eSnapshotUpdate = 4
+  };
+  static std::string to_string(eOperationType type) {
+    switch (type) {
+    case eReadConfig: return "ReadConfig";
+    case eWriteConfig: return "WriteConfig";
+    case eSettingsFactoryReset: return "SettingsFactoryReset";
+    case eCZoneRaw: return "CZoneRaw";
+    case eSnapshotUpdate: return "SnapshotUpdate";
+    default: return "Unknown";
+    }
+  }
+  static eOperationType from_string_OperationType(const std::string &str) {
+    if (str == "ReadConfig")
+      return eReadConfig;
+    if (str == "WriteConfig")
+      return eWriteConfig;
+    if (str == "SettingsFactoryReset")
+      return eSettingsFactoryReset;
+    if (str == "CZoneRaw")
+      return eCZoneRaw;
+    if (str == "SnapshotUpdate")
+      return eSnapshotUpdate;
+    return eReadConfig;
+  }
+
+  std::unique_ptr<eOperationType> m_type = nullptr;
+  std::unique_ptr<bool> m_readConfigForce = nullptr;
+  std::unique_ptr<bool> m_readConfigMode = nullptr;
+  std::unique_ptr<uint32_t> m_cZoneRawOperation = nullptr;
+
+  OperationRequest() = delete;
+  OperationRequest(const json &j);
+  OperationRequest(const OperationRequest &other);
+  OperationRequest(OperationRequest &&other) = default;
+  OperationRequest &operator=(const OperationRequest &other) = default;
+  OperationRequest &operator=(OperationRequest &&other) = default;
+  ~OperationRequest() = default;
 };
 
 class ControlTypeValueRequest {

@@ -3088,6 +3088,42 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
         return "";
       });
 
+  dbusService->registerService("Operation", "czone",
+                               [ptr = this, dbusService](std::string operationRequestStr) -> std::string {
+                                 try {
+                                   OperationRequest request(json::parse(operationRequestStr));
+                                   if (request.m_type == nullptr) {
+                                     throw std::invalid_argument("[Type] argument is required.");
+                                   }
+
+                                   switch (*request.m_type) {
+                                   case OperationRequest::eOperationType::eReadConfig: {
+                                     bool force = *request.m_readConfigForce;
+                                     bool configMode = *request.m_readConfigMode;
+                                     ptr->readConfig(force, configMode);
+                                   } break;
+                                   case OperationRequest::eOperationType::eWriteConfig: {
+                                     ptr->writeConfig();
+                                   } break;
+                                   case OperationRequest::eOperationType::eSettingsFactoryReset: {
+                                     ptr->m_czoneSettings.factoryReset();
+                                   } break;
+                                   case OperationRequest::eOperationType::eCZoneRaw: {
+                                     // [x] todo
+                                   } break;
+                                   case OperationRequest::eOperationType::eSnapshotUpdate: {
+                                     // [x] todo
+                                   } break;
+                                   default: break;
+                                   }
+
+                                 } catch (const std::exception &e) {
+                                   BOOST_LOG_TRIVIAL(error) << "Operation:Error " << e.what();
+                                   dbusService->throwError("Operation: " + std::string(e.what()));
+                                 }
+                                 return "";
+                               });
+
   dbusService->registerService("AlarmAcknowledge", "czone",
                                [ptr = this, dbusService](std::string alarmRequestStr) -> std::string {
                                  try {
