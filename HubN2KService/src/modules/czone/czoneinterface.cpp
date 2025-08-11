@@ -1,3 +1,4 @@
+#include <boost/beast/core/detail/base64.hpp>
 #include <iostream>
 #include <sstream>
 
@@ -3036,6 +3037,100 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
       return ""; // warning
     }
   });
+
+  dbusService->registerService(
+      "PutFile", "czone", [ptr = this, dbusService](std::string fileRequestStr) -> std::string {
+        try {
+          FileRequest request(json::parse(fileRequestStr));
+          if (request.m_content == nullptr) {
+            throw std::invalid_argument("[Content] argument is required.");
+          }
+
+          auto &encodedFile = *request.m_content;
+          std::string decoded;
+          decoded.resize(boost::beast::detail::base64::decoded_size(encodedFile.size()));
+          auto const result = boost::beast::detail::base64::decode(&decoded[0], encodedFile.data(), encodedFile.size());
+          decoded.resize(result.first);
+
+          const auto filename = ptr->m_czoneSettings.getConfigurationPath();
+          ptr->m_czoneSettings.saveToFile(decoded, filename);
+        } catch (const std::exception &e) {
+          BOOST_LOG_TRIVIAL(error) << "PutFile:Error " << e.what();
+          dbusService->throwError("PutFile: " + std::string(e.what()));
+        }
+        return "";
+      });
+
+  dbusService->registerService(
+      "GetFile", "czone", [ptr = this, dbusService](std::string fileRequestStr) -> std::string {
+        try {
+          FileRequest request(json::parse(fileRequestStr));
+          if (request.m_type == nullptr) {
+            throw std::invalid_argument("[Type] argument is required.");
+          }
+
+          if (*request.m_type == FileRequest::eFileType::eDefaultZcf) {
+            std::string data;
+            const auto filename = ptr->m_czoneSettings.getConfigurationPath();
+
+            ptr->m_czoneSettings.loadFromFile(data, filename);
+            std::size_t encoded_size = boost::beast::detail::base64::encoded_size(data.length());
+            std::string encoded(encoded_size, '\0');
+            std::size_t bytes_written =
+                boost::beast::detail::base64::encode(encoded.data(), data.data(), data.length());
+            encoded.resize(bytes_written);
+            return encoded;
+          }
+        } catch (const std::exception &e) {
+          BOOST_LOG_TRIVIAL(error) << "GetFile:Error " << e.what();
+          dbusService->throwError("GetFile: " + std::string(e.what()));
+        }
+        return "";
+      });
+
+  dbusService->registerService("Operation", "czone",
+                               [ptr = this, dbusService](std::string operationRequestStr) -> std::string {
+                                 json response;
+                                 try {
+                                   OperationRequest request(json::parse(operationRequestStr));
+                                   if (request.m_type == nullptr) {
+                                     throw std::invalid_argument("[Type] argument is required.");
+                                   }
+
+                                   switch (*request.m_type) {
+                                   case OperationRequest::eOperationType::eReadConfig: {
+                                     bool force = *request.m_readConfigForce;
+                                     bool configMode = *request.m_readConfigMode;
+                                     ptr->readConfig(force, configMode);
+                                     response["Result"] = "Ok";
+                                   } break;
+                                   case OperationRequest::eOperationType::eWriteConfig: {
+                                     ptr->writeConfig();
+                                     response["Result"] = "Ok";
+                                   } break;
+                                   case OperationRequest::eOperationType::eSettingsFactoryReset: {
+                                     ptr->m_czoneSettings.factoryReset();
+                                     response["Result"] = "Ok";
+                                   } break;
+                                   case OperationRequest::eOperationType::eCZoneRaw: {
+                                     if (request.m_cZoneRawOperation) {
+                                       CZoneOperation(tCZoneOperationType(*request.m_cZoneRawOperation));
+                                     }
+                                     response["Result"] = "Ok";
+                                   } break;
+                                   case OperationRequest::eOperationType::eSnapshotUpdate: {
+                                     // [x] todo
+                                   } break;
+                                   default: break;
+                                   }
+
+                                 } catch (const std::exception &e) {
+                                   BOOST_LOG_TRIVIAL(error) << "Operation:Error " << e.what();
+                                   dbusService->throwError("Operation: " + std::string(e.what()));
+                                 }
+                                 response["Result"] = "Error";
+                                 return response.dump();
+                               });
 
   dbusService->registerService("AlarmAcknowledge", "czone",
                                [ptr = this, dbusService](std::string alarmRequestStr) -> std::string {
