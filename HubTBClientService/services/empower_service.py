@@ -20,7 +20,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 # pylint: disable=wrong-import-position,import-error,no-name-in-module
 from mqtt_client import ThingsBoardClient
 from dict_diff import dict_diff
-from services.sync_service import SyncService
+from services.sync_service import SyncService, AttributeType
 from services.rpc_handler_service import RpcHandlerService
 from tb_utils.constants import Constants
 from services.config import (
@@ -33,6 +33,8 @@ from n2kclient.models.empower_system.empower_system import EmpowerSystem
 from n2kclient.client import N2KClient
 from n2kclient.models.devices import N2kDevices
 from n2kclient.models.dbus_connection_status import DBUSConnectionStatus
+from n2kclient.models.empower_system.alarm import AlarmState, Alarm
+from n2kclient.models.empower_system.alarm_list import AlarmList
 from .location_service import LocationService
 
 class EmpowerService:
@@ -57,6 +59,8 @@ class EmpowerService:
     last_telemetry = {}
     last_state_attrs = {}
 
+    _active_alarms = None
+
     def __init__(self):
         self._logger = logging.getLogger("EmpowerService")
         self.thingsboard_client = ThingsBoardClient()
@@ -69,193 +73,60 @@ class EmpowerService:
         self._prev_engine_list_subscription = None
         self.last_telemetry = {}
         self.last_state_attrs = {}
+        self._active_alarms = {}
         self.sync_service = SyncService()
         self.location_service = LocationService(self.n2k_client)
 
-        #TODO: Subscribe to active alarms
-
-        #TODO: Subscribe to engine alarms
-
-        # def _publish_alarm_timeseries(alarms: list[Alarm]):
-        def _publish_alarm_timeseries(alarms: list):
-            telemetry_dict = {}
-            for alarm in alarms:
-                telemetry_dict[alarm.id] = alarm.to_dict()
-            if telemetry_dict:
-                self._logger.debug(
-                    "Publishing alarms timeseries data %s", json.dumps(telemetry_dict)
-                )
-                self.thingsboard_client.send_telemetry(
-                    telemetry_dict
-                )
-
-        # TODO: Handle alarm logic
-        # def _reconcile_active_alarms(alarm_list: AlarmList):
-        #     if Constants.ActiveAlarms not in self.last_state_attrs:
-        #         self.last_state_attrs[Constants.ActiveAlarms] = {}
-        #     latest_cloud_alarms = self.last_state_attrs[Constants.ActiveAlarms]
-        #     alarm_timeseries = []
-        #     for [id, alarm] in alarm_list.alarm.items():
-        #         if id in latest_cloud_alarms:
-        #             cloud_state = latest_cloud_alarms[id][Constants.currentState]
-        #             cloud_date_active = latest_cloud_alarms[id][Constants.dateActive]
-        #             if alarm.current_state == AlarmState.ENABLED:
-        #                 if cloud_state == AlarmState.ENABLED:
-        #                     alarm.date_active = cloud_date_active
-        #                 else:
-        #                     alarm_timeseries.append(alarm)
-        #             elif alarm.current_state == AlarmState.ACKNOWLEDGED:
-        #                 alarm.date_active = cloud_date_active
-        #                 if cloud_state != AlarmState.ACKNOWLEDGED:
-        #                     alarm_timeseries.append(alarm)
-        #         else:
-        #             alarm_timeseries.append(alarm)
-        #     _publish_alarm_timeseries(alarm_timeseries)
-
-        # def _verify_alarm_things(alarm_list: AlarmList):
-        #     for id, alarm in list(alarm_list.alarm.items()):
-        #         valid_things = []
-        #         for thing in alarm.things:
-        #             if thing in self._latest_cloud_config.things or (
-        #                 TBConstants.ENGINE_CONFIG_KEY in self.last_state_attrs
-        #                 and thing
-        #                 in self.last_state_attrs[TBConstants.ENGINE_CONFIG_KEY]
-        #             ):
-        #                 valid_things.append(thing)
-        #         alarm_list.alarm[id].things = valid_things
-        #         if len(valid_things) == 0:
-        #             del alarm_list.alarm[id]
-
-        # def _publish_active_alarms(alarm_list: AlarmList):
-        #     if self.current_telemetry_consent:
-        #         _verify_alarm_things(alarm_list)
-        #         _reconcile_active_alarms(alarm_list)
-        #         alarm_dict = alarm_list.to_alarm_dict()
-        #         self.__print_active_alarms(alarm_list=alarm_list)
-        #         if self.last_state_attrs[Constants.ActiveAlarms] == alarm_dict:
-        #             self._logger.debug(f"Cloud active_alarms attribute is up to date")
-        #             self.thingsboard_client.handle_alarm_synced()
-        #         else:
-        #             self._logger.debug(
-        #                 f"Publishing updated active alarm list:\n{alarm_dict}"
-        #             )
-        #             self.thingsboard_client.update_attributes(
-        #                 {Constants.ActiveAlarms: alarm_dict},
-        #                 client.AttributeDataType.ALARM,
-        #             )
-        #             self.last_state_attrs[Constants.ActiveAlarms] = alarm_dict
-
-        # def _reconcile_engine_alerts(engine_alerts: EngineAlertList):
-        #     if self.current_telemetry_consent:
-        #         engine_alert_list_dict = engine_alerts.to_alarm_dict()
-        #         if "EngineAlerts" not in self.last_state_attrs:
-        #             self.last_state_attrs["EngineAlerts"] = {}
-        #         latest_cloud_engine_alerts = self.last_state_attrs["EngineAlerts"]
-        #         engine_alert_timeseries = []
-        #         for [id, alarm] in engine_alerts.engine_alerts.items():
-        #             if id in latest_cloud_engine_alerts:
-        #                 alarm.date_active = latest_cloud_engine_alerts[id][
-        #                     Constants.dateActive
-        #                 ]
-        #             else:
-        #                 engine_alert_timeseries.append(alarm)
-        #         _publish_alarm_timeseries(engine_alert_timeseries)
-        #         if self.last_state_attrs["EngineAlerts"] != engine_alert_list_dict:
-        #             self.last_state_attrs["EngineAlerts"] = engine_alert_list_dict
-
-        #TODO: Subscribe to active alarms, engine alarms
-
-        #TODO: Subscribe and handle engine config
-        # def _publish_engine_config(config: EngineList):
-        #     if config is None:
-        #         return
-
-        #     def __update_engine_config_attribute():
-        #         if self.current_telemetry_consent:
-        #             engine_dict = config.to_config_dict()
-        #             updated_engine_dict: dict[str, any] = {}
-        #             if config.should_reset:
-        #                 self._logger.error("Latest Engine Configuration is cleared.")
-        #                 updated_engine_dict = engine_dict
-        #             else:
-        #                 updated_engine_dict = copy.deepcopy(
-        #                     self.last_state_attrs[TBConstants.ENGINE_CONFIG_KEY]
-        #                 )
-        #                 updated_engine_dict.update(engine_dict)
-        #             if (
-        #                 self.last_state_attrs[TBConstants.ENGINE_CONFIG_KEY]
-        #                 == updated_engine_dict
-        #             ):
-        #                 self._logger.info(
-        #                     f"Cloud Engine Configuration Attribute is up to date"
-        #                 )
-        #             else:
-        #                 self._logger.info(
-        #                     f"Publishing Updated Engine configuration:\n{updated_engine_dict}"
-        #                 )
-        #                 self.thingsboard_client.update_attributes(
-        #                     {TBConstants.ENGINE_CONFIG_KEY: updated_engine_dict},
-        #                     client.AttributeDataType.ENGINE_CLOUD_CONFIG,
-        #                 )
-        #                 self.last_state_attrs[TBConstants.ENGINE_CONFIG_KEY] = (
-        #                     updated_engine_dict
-        #                 )
-        #             self.__print_engine_cloud_config(updated_engine_dict)
-        #         if self._prev_engine_list_subscription is not None:
-        #             self._prev_engine_list_subscription.dispose()
-        #         if self._prev_engine_list is not None:
-        #             self._prev_engine_list.__del__()
-        #         self._prev_engine_list = config
-
-        #         self._prev_engine_list_subscription = config.state_changes.pipe(
-        #             ops.buffer_with_time(0.5),
-        #             ops.filter(
-        #                 lambda changes: len(changes) > 0
-        #                 and self.current_telemetry_consent
-        #             ),
-        #         ).subscribe(__publish_state_changes)
-        #         self.n2k_client.start_engine_state_sync()
-
-        #     if TBConstants.ENGINE_CONFIG_KEY in self.last_state_attrs:
-        #         __update_engine_config_attribute()
-        #     else:
-        #         fetch_engine_config = rx.Subject()
-
-        #         def __fetch_and_update_engine_config(value):
-        #             self.last_state_attrs[TBConstants.ENGINE_CONFIG_KEY] = {}
-        #             if isinstance(value, dict):
-        #                 if TBConstants.ENGINE_CONFIG_KEY in value and isinstance(
-        #                     value[TBConstants.ENGINE_CONFIG_KEY], dict
-        #                 ):
-        #                     temp_engine_dict = value[TBConstants.ENGINE_CONFIG_KEY]
-        #                 else:
-        #                     if len(value) == 0:
-        #                         self._logger.error(
-        #                             "Engine Configuration Fetch returned an empty dict. Possible reasons include the fetch was unsuccessful or the attribute does not exist."
-        #                         )
-        #                     temp_engine_dict = value
-        #                 for key, value in temp_engine_dict.items():
-        #                     self.last_state_attrs[TBConstants.ENGINE_CONFIG_KEY][
-        #                         key
-        #                     ] = value
-        #                 self._logger.info(
-        #                     f"Successfully fetched engine config from cloud"
-        #                 )
-        #             else:
-        #                 self._logger.error(
-        #                     f"Invalid format when fetching engine config from cloud: {value}"
-        #                 )
-        #             __update_engine_config_attribute()
-
-        #         fetch_engine_config.subscribe(__fetch_and_update_engine_config)
-        #         self.thingsboard_client.request_attributes_state(
-        #             client_attributes=[
-        #                 TBConstants.ENGINE_CONFIG_KEY,
-        #             ],
-        #             subject=fetch_engine_config,
-        #         )
-
         self.__setup_subscriptions()
+
+    def _publish_alarm_timeseries(self, alarms: list[Alarm]):
+        telemetry_dict = {}
+        for alarm in alarms:
+            telemetry_dict[alarm.id] = alarm.to_dict()
+        if telemetry_dict:
+            self._logger.debug(
+                "Publishing alarms timeseries data %s", json.dumps(telemetry_dict)
+            )
+            self.thingsboard_client.send_telemetry(
+                telemetry_dict
+            )
+
+    def _reconcile_active_alarms(self, alarm_list: AlarmList):
+        latest_cloud_alarms = self._active_alarms
+        alarm_timeseries = []
+        for [id, alarm] in alarm_list.alarm.items():
+            if id in latest_cloud_alarms:
+                cloud_state = latest_cloud_alarms[id][Constants.currentState]
+                cloud_date_active = latest_cloud_alarms[id][Constants.dateActive]
+                if alarm.current_state == AlarmState.ENABLED:
+                    if cloud_state == AlarmState.ENABLED:
+                        alarm.date_active = cloud_date_active
+                    else:
+                        alarm_timeseries.append(alarm)
+                elif alarm.current_state == AlarmState.ACKNOWLEDGED:
+                    alarm.date_active = cloud_date_active
+                    if cloud_state != AlarmState.ACKNOWLEDGED:
+                        alarm_timeseries.append(alarm)
+            else:
+                alarm_timeseries.append(alarm)
+        self._publish_alarm_timeseries(alarm_timeseries)
+
+    def _publish_active_alarms(self, alarm_list: AlarmList):
+        if self.telemetry_consent is not None and self.telemetry_consent and alarm_list is not None:
+            self.__print_active_alarms(alarm_list)
+            alarm_dict = alarm_list.to_alarm_dict()
+            # Convert all keys to strings for compatibility with ThingsBoard
+            alarm_dict = {str(k): v for k, v in alarm_dict.items()}
+            if self._active_alarms == alarm_dict:
+                self._logger.debug("Cloud active_alarms attribute is up to date")
+            else:
+                self._logger.debug(
+                    "Publishing updated active alarm list:\n%s", alarm_dict
+                )
+                self._reconcile_active_alarms(alarm_list)
+                self.thingsboard_client.update_attributes(
+                    {Constants.ACTIVE_ALARMS_KEY: alarm_dict},
+                )
 
     def __del__(self):
         if len(self._service_init_disposables) > 0:
@@ -310,6 +181,11 @@ class EmpowerService:
             self.telemetry_consent = value
             self._logger.info("Telemetry consent set to: %s", value)
 
+    def update_active_alarms(self, alarms: dict):
+        if alarms is not None:
+            self._active_alarms = alarms
+            self._logger.info("Active alarms updated: %s", alarms)
+
     def __setup_subscriptions(self):
         """
         Set up subscriptions for the EmpowerService.
@@ -321,6 +197,13 @@ class EmpowerService:
         )
         if behavior_subject is not None:
             dispose = behavior_subject.subscribe(self.set_telemetry_consent)
+            self._service_init_disposables.append(dispose)
+        self.sync_service.subscribe_to_attribute(Constants.ACTIVE_ALARMS_KEY, AttributeType.CLIENT)
+        behavior_subject = self.sync_service.get_attribute_subject(
+            key=Constants.ACTIVE_ALARMS_KEY
+        )
+        if behavior_subject is not None:
+            dispose = behavior_subject.subscribe(self.update_active_alarms)
             self._service_init_disposables.append(dispose)
         # ======= N2K Client Subscriptions =======
         # Subscribe to mobile friendly engine configuration
@@ -337,6 +220,9 @@ class EmpowerService:
         self._service_init_disposables.append(disposable)
         # Subscribe to the state changes
         disposable = self.n2k_client.devices.subscribe(self.device_state_changes)
+        self._service_init_disposables.append(disposable)
+        # Subscribe to the alarm list updates
+        disposable = self.n2k_client.get_alarms_observable().subscribe(self._publish_active_alarms)
         self._service_init_disposables.append(disposable)
         # ======= N2K Client Connection Subscription =======
         # Need to get the value of the protected method since it is a behavior subject
@@ -486,8 +372,7 @@ class EmpowerService:
                         channel.get("readOnly"),
                     )
 
-    # def __print_active_alarms(self, alarm_list: AlarmList):
-    def __print_active_alarms(self, alarm_list: dict):
+    def __print_active_alarms(self, alarm_list: AlarmList):
         self._logger.info("Active Alarms (%s found)", alarm_list.alarm.__len__())
         for [alarm_id, alarm] in alarm_list.alarm.items():
             self._logger.info(
@@ -504,12 +389,5 @@ class EmpowerService:
         self.thingsboard_client.connect()
         self._logger.debug("Starting location service")
         self.location_service.start()
-
-        # TODO: Subscribe to active alarms
-
-        # TODO: Pull down active alarms, engine config
-
-        # TODO: Get consents from sync service
-
         self._logger.debug("Starting N2K Client")
         self.n2k_client.start()

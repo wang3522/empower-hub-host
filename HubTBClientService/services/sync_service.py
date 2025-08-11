@@ -6,13 +6,57 @@ import logging
 import os
 import sys
 import threading
-from typing import Optional, Any
+from typing import Dict, Optional, Any
+import enum
 import reactivex as rx
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 # pylint: disable=import-error, wrong-import-position
 from mqtt_client import ThingsBoardClient
 from tb_utils.constants import Constants
+
+class AttributeType(enum.Enum):
+    """
+    Enum for attribute types in Thingsboard.
+    """
+    SHARED = "shared"
+    CLIENT = "client"
+
+class SyncObject:
+    """
+    SyncObject class that wraps a reactivex BehaviorSubject and an attribute type.
+    The attribute type indicates whether the attribute is shared or client attribute
+    in Thingsboard.
+    """
+
+    subject: rx.subject.BehaviorSubject
+    type: AttributeType
+
+    def __init__(self, initial_value: Any, attr_type: AttributeType):
+        self.subject = rx.subject.BehaviorSubject(initial_value)
+        self.type = attr_type
+
+    def on_next(self, value: Any):
+        """
+        Update the value of the subject and notify subscribers.
+        """
+        self.subject.on_next(value)
+
+    def get_value(self) -> Any:
+        """
+        Get the current value of the subject.
+        """
+        return self.subject.value
+
+    def to_dict(self) -> Dict:
+        """
+        Convert the SyncObject to a dictionary representation.
+        This is used when saving to a file.
+        """
+        return {
+            "value": self.subject.value,
+            "type": self.type.value
+        }
 
 class SyncService:
     """
@@ -28,7 +72,7 @@ class SyncService:
     _lock = threading.Lock()
 
     _mqtt_client = ThingsBoardClient()
-    _attributes: dict[str, rx.subject.BehaviorSubject] = {}
+    _attributes: dict[str, SyncObject] = {}
     _connection_disposable: rx.disposable.Disposable = None
     _disposables: list[rx.disposable.Disposable] = []
     _last_connected_value = False
@@ -72,13 +116,16 @@ class SyncService:
                         json_data = json.load(file)
                         if json_data and "value" in json_data:
                             value = json_data.get("value", None)
+                            type_value = AttributeType(
+                                json_data.get("type", AttributeType.SHARED.value)
+                            )
                             if attribute_name not in self._attributes:
                                 self._logger.info(
                                     "Creating BehaviorSubject for attribute '%s' with '%s'",
                                     attribute_name,
                                     str(value)
                                 )
-                                self._attributes[attribute_name] = rx.subject.BehaviorSubject(value)
+                                self._attributes[attribute_name] = SyncObject(value, type_value)
                             else:
                                 self._logger.info(
                                     "Attribute '%s' already exists, skipping creation.",
@@ -91,7 +138,8 @@ class SyncService:
                         "Error extracting attribute name from file %s: %s", file_name, e
                     )
                     if len(file_name) > 5 and file_name.endswith('.json'):
-                        self.subscribe_to_attribute(file_name[:-5])  # Fallback to subscribe to attribute name
+                        # Fallback to subscribe to attribute name
+                        self.subscribe_to_attribute(file_name[:-5])
                     continue
         except FileNotFoundError as e:
             self._logger.error("Directory %s not found: %s", Constants.TB_CONSENTS_PATH, e)
@@ -114,7 +162,10 @@ class SyncService:
         Clean up the instance when it is deleted.
         """
         try:
-            if getattr(self._mqtt_client, "_is_connected_internal", None) and getattr(self._mqtt_client._is_connected_internal, "value", False):
+            if (
+                getattr(self._mqtt_client, "_is_connected_internal", None)
+                and getattr(self._mqtt_client._is_connected_internal, "value", False)
+            ):
                 self._logger.info("Disconnecting from Thingsboard...")
                 self._mqtt_client.disconnect()
             self._logger.info("Deleting mqtt client instance...")
@@ -146,7 +197,7 @@ class SyncService:
         if key not in self._attributes:
             self._logger.error("Attribute '%s' not found in SyncService.", key)
             return None
-        return self._attributes.get(key, None)
+        return self._attributes.get(key, None).subject
 
     def get_attribute_value(self, key: str):
         """
@@ -170,22 +221,22 @@ class SyncService:
 
         for key, val in value.items():
             if key in self._attributes and val is not None:
-                if val != self._attributes[key].value:
+                if val != self._attributes[key].subject.value:
                     self._logger.info(
                         "Attribute '%s' changed from '%s' to '%s'.",
                         key,
-                        self._attributes[key].value,
+                        self._attributes[key].subject.value,
                         val
                     )
                     self._attributes[key].on_next(val)
-                    self._update_file(key, val)
+                    self._update_file(key)
             else:
                 if key != "shared": # Shared key is just another dictionary for shared attributes
                     self._logger.warning("%s not found, creating new entry with %s", key, str(val))
-                    self._attributes[key] = rx.subject.BehaviorSubject(val)
+                    self._attributes[key] = SyncObject(val, AttributeType.SHARED)
                     self._logger.info("Created new BehaviorSubject for attribute '%s'.", key)
 
-    def _update_file(self, key: str, value: Any):
+    def _update_file(self, key: str):
         """
         Update the file for the attribute with the given key.
         This method will create a new file if it does not exist.
@@ -193,19 +244,26 @@ class SyncService:
         file_path = os.path.join(Constants.TB_CONSENTS_PATH, f"{key}.json")
         try:
             with open(file_path, 'w', encoding='utf-8') as file:
-                file.write(json.dumps({"value": value}, ensure_ascii=False, indent=2))
-            self._logger.info("Updated file for attribute '%s' with value '%s'.", key, str(value))
+                file.write(json.dumps(
+                    self._attributes[key].to_dict(),
+                    ensure_ascii=False,
+                    indent=2
+                ))
+            self._logger.info("Updated file for attribute '%s' with value '%s'.",
+                key,
+                self._attributes[key].get_value()
+            )
         except Exception as e:
             self._logger.error("Error updating file for attribute '%s': %s", key, e)
 
-    def subscribe_to_attribute(self, key: str):
+    def subscribe_to_attribute(self, key: str, attr_type: AttributeType = AttributeType.SHARED):
         """
         Subscribe to an attribute in the SyncService.
         If the attribute does not exist, it will be created.
         """
         if key not in self._attributes:
             self._logger.info("Creating new BehaviorSubject for attribute '%s'.", key)
-            self._attributes[key] = rx.subject.BehaviorSubject(None)
+            self._attributes[key] = SyncObject(None, attr_type)
         else:
             self._logger.info("Attribute '%s' already exists", key)
         self._logger.info("Thingsboard subscribing to attribute '%s'.", key)
@@ -226,9 +284,19 @@ class SyncService:
                 disposable.dispose()
         self._disposables.clear()
         keys = list(self._attributes.keys())
+        client_keys = []
+        shared_keys = []
         for key in keys:
             self.subscribe_to_attribute(key)
+            if self._attributes[key].type == AttributeType.CLIENT:
+                client_keys.append(key)
+            else:
+                shared_keys.append(key)
         self._logger.info("Requesting attributes state for keys: %s", keys)
         subject = rx.subject.BehaviorSubject(None)
         subject.subscribe(self._update_value)
-        self._mqtt_client.request_attributes_state(subject=subject, shared_attributes=keys)
+        self._mqtt_client.request_attributes_state(
+            subject=subject,
+            shared_attributes=shared_keys,
+            client_attributes=client_keys
+        )

@@ -561,6 +561,10 @@ class ThingsBoardClient:
             # Divide attributes into chunks of 100
             attributes_chunks = chunk_attributes(attributes.items(), 100)
             for chunk in attributes_chunks:
+                if Constants.CONFIG_KEY in chunk:
+                    config = chunk.pop(Constants.CONFIG_KEY, None)
+                    _ = self._client.send_attributes({Constants.CONFIG_KEY: config}, wait_for_publish=True)
+                time.sleep(0.010)  # Sleep to allow Thingsboard to process the message
                 _ = self._client.send_attributes(chunk, wait_for_publish=True)
         except Exception as error:
             self._logger.error("Failed to send attributes")
@@ -652,7 +656,6 @@ class ThingsBoardClient:
             try:
                 self._logger.info("putting telemetry to offline queue")
                 self.offline_telemetry_queue.put_nowait(telemetry)
-                self.last_telemetry.update(telemetry)
             except queue.Full:
                 # Queue was full when attempting to add
                 # Remove the oldest value in order to add the newest value in
@@ -666,7 +669,6 @@ class ThingsBoardClient:
                 self._logger.info("Removed Telemetry Item %s", dequeue_value)
                 # Insert the newest value into thte queue
                 self.offline_telemetry_queue.put_nowait(telemetry)
-                self.last_telemetry.update(telemetry)
 
     def request_attributes_state(
         self,
