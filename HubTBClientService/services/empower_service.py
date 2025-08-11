@@ -389,10 +389,5 @@ class EmpowerService:
         self.thingsboard_client.connect()
         self._logger.debug("Starting location service")
         self.location_service.start()
-
-        # TODO: Subscribe to active alarms
-
-        # TODO: Pull down active alarms, engine config
-
         self._logger.debug("Starting N2K Client")
         self.n2k_client.start()
