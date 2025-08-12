@@ -436,7 +436,7 @@ class Constants:
     current = "current"
     frequency = "frequency"
     power = "power"
-    state = "state"
+    state = "s"
     enabled = "enabled"
     charger = "charger"
     name = "name"

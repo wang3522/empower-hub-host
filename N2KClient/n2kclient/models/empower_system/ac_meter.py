@@ -173,7 +173,7 @@ class ACMeterThingBase(Thing):
         )
 
         if ic_associated_line == line_number and ic_component_status is not None:
-            line_component_status_subject = ic_component_status
+            line_component_status = ic_component_status
         else:
             line_component_status_subject = n2k_devices.get_channel_subject(
                 self.ac_id,
