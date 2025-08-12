@@ -478,6 +478,12 @@ class N2KClient(dbus.service.Object):
         """
         return self._latest_engine_list
 
+    def get_engine_list_observable(self) -> rx.Observable:
+        """
+        Get the observable for EngineList updates.
+        """
+        return self.engine_list
+
     def get_engine_alarms(self) -> EngineAlarmList:
         """
         Get the latest EngineAlarmList object.
