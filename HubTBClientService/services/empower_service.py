@@ -46,13 +46,9 @@ class EmpowerService:
     thingsboard_client: ThingsBoardClient
     n2k_client: N2KClient = N2KClient()
     location_service: LocationService
-    rpc_handler_service: RpcHandlerService = None  # Placeholder for RPC handler service
-    # active_alarms: rx.Observable[AlarmList]
-    # engine_alerts: rx.Observable[EngineAlertList]
+    rpc_handler_service: RpcHandlerService = None
     discovered_engines: rx.Observable[EngineList]
     telemetry_consent: bool = True
-    _prev_system_subscription: rx.abc.DisposableBase = None
-    _prev_engine_list_subscription: rx.abc.DisposableBase = None
 
     _service_init_disposables: list[rx.abc.DisposableBase]
 
@@ -69,8 +65,6 @@ class EmpowerService:
         self._service_init_disposables = []
         self._prev_empower_system = None
         self._prev_engine_list = None
-        self._prev_system_subscription = None
-        self._prev_engine_list_subscription = None
         self.last_telemetry = {}
         self.last_state_attrs = {}
         self._active_alarms = {}
@@ -132,10 +126,6 @@ class EmpowerService:
         if len(self._service_init_disposables) > 0:
             for disposable in self._service_init_disposables:
                 disposable.dispose()
-        if self._prev_system_subscription:
-            self._prev_system_subscription.dispose()
-        if self._prev_engine_list_subscription:
-            self._prev_engine_list_subscription.dispose()
         if self.thingsboard_client is not None:
             self.thingsboard_client.__del__()
 
