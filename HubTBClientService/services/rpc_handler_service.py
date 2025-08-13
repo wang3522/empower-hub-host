@@ -204,7 +204,7 @@ class RpcHandlerService:
                 raise Exception("Invalid control command: state is missing")
 
             # Get the latest configuration from the n2k_client
-            latest_config = self.n2k_client.get_empower_system()
+            latest_config = self.n2k_client.get_latest_empower_system()
             if latest_config is None:
                 raise Exception("Config is not yet available")
 
