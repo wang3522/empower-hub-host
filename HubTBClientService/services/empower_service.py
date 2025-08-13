@@ -47,7 +47,6 @@ class EmpowerService:
     n2k_client: N2KClient = N2KClient()
     location_service: LocationService
     rpc_handler_service: RpcHandlerService = None
-    discovered_engines: rx.Observable[EngineList]
     telemetry_consent: bool = True
 
     _service_init_disposables: list[rx.abc.DisposableBase]
@@ -197,7 +196,7 @@ class EmpowerService:
             self._service_init_disposables.append(dispose)
         # ======= N2K Client Subscriptions =======
         # Subscribe to mobile friendly engine configuration
-        disposable = (self.n2k_client.engine_list
+        disposable = (self.n2k_client.get_engine_list_observable()
                       .subscribe(self._update_engine_configuration))
         self._service_init_disposables.append(disposable)
         # Subscribe to mobile friendly configuration
