@@ -444,7 +444,6 @@ class ThingsBoardClient:
                     "Requesting attributes from cloud to check for changes %s",
                     json.dumps(not_cached)
                 )
-                #TODO: Check to see if the requested value is config, grab checksum instead to compare
                 # Request the attributes from Thingsboard and update
                 # the attributes with the new values.
                 self.request_then_update_attributes(
@@ -486,12 +485,17 @@ class ThingsBoardClient:
         def request_attributes_callback(value):
             # If the value is different from the last known state
             # Update the last known state
-            if config is not None and Constants.CONFIG_CHECKSUM_KEY in value:
-                hashed_string = hashlib.new("sha256")
-                hashed_string.update(json.dumps(config).encode())
-                checksum_value = hashed_string.hexdigest()
-                if value[Constants.CONFIG_CHECKSUM_KEY] != checksum_value:
-                    self._logger.info("Config checksum is different from cloud")
+            if config is not None:
+                if Constants.CONFIG_CHECKSUM_KEY in value:
+                    hashed_string = hashlib.new("sha256")
+                    hashed_string.update(json.dumps(config).encode())
+                    checksum_value = hashed_string.hexdigest()
+                    if value[Constants.CONFIG_CHECKSUM_KEY] != checksum_value:
+                        self._logger.info("Config checksum is different from cloud")
+                        not_cached_dict[Constants.CONFIG_KEY] = config
+                else:
+                    self._logger.info("Config checksum not found in cloud")
+                    not_cached_dict[Constants.CONFIG_KEY] = config
 
             self._logger.info(
                 "Updating last known state with new attributes %s",
