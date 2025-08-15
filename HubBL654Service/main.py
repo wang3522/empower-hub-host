@@ -10,6 +10,7 @@ import traceback  # [x] debug
 from threading import Event
 
 from bleService.bleuart import BLE_UART
+from bleService.empower_ble_service import EmpowerBleService
 from dbusService.server import initialize_dbus_server
 
 logger = logging.getLogger()
@@ -19,6 +20,10 @@ def initialize_ble():
         ble_uart = BLE_UART()
         ble_uart.configure()
         ble_uart.start()
+        empower_ble_service = EmpowerBleService(ble_uart)
+        empower_ble_service.start()
+        cmd_interface = ble_uart.get_cmd_interface()
+        cmd_interface.set_empower_ble_service(empower_ble_service)
         logger.info("BLE uart started.")
         return ble_uart
     except Exception as error:
