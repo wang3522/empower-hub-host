@@ -15,13 +15,6 @@ from n2kclient.models.empower_system.inverter import CombiInverter, AcMeterInver
 from bleService.uart_message_processor import encrypt_data
 
 class EmpowerBleService:
-    _logger: logging.Logger = logging.getLogger("EmpowerBleService")
-    n2k_client: N2KClient = N2KClient()
-    _prev_system_subscription: rx.abc.DisposableBase = None
-    last_telemetry = {}
-    attribute_sub_set = set() #{attribute_ID, ...}
-    attribute_dict = {} #{attribute_ID: (value, timestamp)}
-
     def __init__(self, ble_uart=None):
         self._logger = logging.getLogger("EmpowerBleService")
         self.ble_uart = ble_uart
@@ -30,6 +23,8 @@ class EmpowerBleService:
         self._prev_system_subscription = None
         self.last_telemetry = {}
         self.last_state_attrs = {}
+        self.attribute_sub_set = set() #{attribute_ID, ...}
+        self.attribute_dict = {} #{attribute_ID: (value, timestamp)}
         self.__setup_subscriptions()
         self._logger.debug("Starting empower ble service...")
 
@@ -110,7 +105,7 @@ class EmpowerBleService:
                 if (attribute_tuple is not None):
                     if (attribute_tuple[0] is not None):
                         timestamp = str(int(time.time() * 1000))
-                        self._handle_notify_client(attr_id, self.attribute_dict.get(attr_id, (None, 0))[0], timestamp)
+                        self._handle_notify_client(attr_id, attribute_tuple[0], timestamp)
                     else:
                         self._logger.debug(f"Value for {attr_id} is None, not sending notification")
                 else: 
