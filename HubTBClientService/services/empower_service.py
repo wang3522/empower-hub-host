@@ -316,21 +316,31 @@ class EmpowerService:
 
         try:
             config_dict = config.to_config_dict()
+            # Get a copy of the current engine list so we can compare it later
+            config_copy = self._engine_list.copy() if self._engine_list else {}
             # If should reset is True, clear the existing engine list
             # Otherwise, only update the existing engine list
             if config.should_reset is True:
                 self._engine_list.clear()
                 self._engine_list = {}
 
+            # Append any new engines to the engine list
             for engine_id, engine in config_dict.items():
                 self._engine_list[engine_id] = engine
 
-            self._logger.debug(
-                "Publishing engine configuration to cloud: %s", json.dumps(self._engine_list)
-            )
-            self.thingsboard_client.update_attributes(
-                {Constants.ENGINE_CONFIG_KEY: self._engine_list}
-            )
+            # If the engine list has changed, update the ThingsBoard client
+            if config_copy != self._engine_list:
+                new_engine_config = {Constants.ENGINE_CONFIG_KEY: self._engine_list}
+                self.thingsboard_client.update_attributes(
+                    new_engine_config
+                )
+                # Because engine config is a client attribute, the thingsboard subscribe does not
+                # give us the latest value, so we need to manually update the sync service so its
+                # available and can be used on startup when offline. If thingsboard didn't get the
+                # change, then the sync service will update to the cloud copy when it connects.
+                self.sync_service._update_value(new_engine_config)
+            else:
+                self._logger.debug("Engine configuration is up to date, no changes detected.")
             self.__print_engine_cloud_config(self._engine_list)
         except Exception as e:
             self._logger.error("Failed to update engine configuration: %s", e)
