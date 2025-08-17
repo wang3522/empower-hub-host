@@ -130,7 +130,6 @@ class RpcHandlerService:
             successful, reason = self.n2k_client.scan_marine_engines(
                 should_clear=should_clear
             )
-            successful = True
             return ControlResult(successful, reason)
         except Exception as error:
             self._logger.error("Failed to scan engine config")
