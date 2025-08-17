@@ -321,7 +321,6 @@ class EmpowerService:
             # If should reset is True, clear the existing engine list
             # Otherwise, only update the existing engine list
             if config.should_reset is True:
-                self._engine_list.clear()
                 self._engine_list = {}
 
             # Append any new engines to the engine list
