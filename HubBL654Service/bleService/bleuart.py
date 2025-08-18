@@ -127,7 +127,7 @@ class BLE_UART:
                     content = f.read()
             except Exception as e:
                 logger.error("Failed to read file {}: {}".format(rel_path, e))
-                self._send_data(f"BL/OTA_TRANSFER_STATUS/{"error".encode().hex()}\n")
+                self._send_data(f"BL/OTA_TRANSFER_STATUS/error\n")
                 return
 
             chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
@@ -141,7 +141,8 @@ class BLE_UART:
                 data_cmd = "BL/OTA_DATA/{}/{}".format(idx, hex_chunk)
                 self._send_data(data_cmd + "\n")
                 time.sleep(0.2)
-        self._send_data(f"BL/OTA_TRANSFER_STATUS/{"success".encode().hex()}\n")
+
+        self._send_data(f"BL/OTA_TRANSFER_STATUS/success\n")
         return
 
     def _read_thread(self):
