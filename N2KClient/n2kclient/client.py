@@ -409,20 +409,6 @@ class N2KClient(dbus.service.Object):
             )
             return False
 
-    def _set_alarm_list(self, alarm_list: AlarmList):
-        """
-        Set the latest active alarms.
-        This updates the internal state and notifies observers.
-        """
-        self._active_alarms.on_next(alarm_list)
-
-    def _set_engine_alarms(self, engine_alarms: EngineAlarmList):
-        """
-        Set the latest engine alarms.
-        This updates the internal state and notifies observers.
-        """
-        self._engine_alarms.on_next(engine_alarms)
-
     # === Getters ===
     def get_latest_devices(self) -> N2kDevices:
         """
@@ -540,6 +526,27 @@ class N2KClient(dbus.service.Object):
         """
         self._engine_config.on_next(engine_config)
 
+    def set_factory_metadata(self, factory_metadata: FactoryMetadata):
+        """
+        Set the latest FactoryMetadata object.
+        """
+        self._factory_metadata.on_next(factory_metadata)
+
+    def _set_alarm_list(self, alarm_list: AlarmList):
+        """
+        Set the latest active alarms.
+        This updates the internal state and notifies observers.
+        """
+        self._active_alarms.on_next(alarm_list)
+
+    def _set_engine_alarms(self, engine_alarms: EngineAlarmList):
+        """
+        Set the latest engine alarms.
+        This updates the internal state and notifies observers.
+        """
+        self._engine_alarms.on_next(engine_alarms)
+
+    # Lifecycle Methods
     def dispose_empower_system(self):
         """
         Dispose the current EmpowerSystem instance.
@@ -547,12 +554,6 @@ class N2KClient(dbus.service.Object):
         """
         if self._latest_empower_system:
             self._latest_empower_system.dispose()
-
-    def set_factory_metadata(self, factory_metadata: FactoryMetadata):
-        """
-        Set the latest FactoryMetadata object.
-        """
-        self._factory_metadata.on_next(factory_metadata)
 
     def start(self):
         """

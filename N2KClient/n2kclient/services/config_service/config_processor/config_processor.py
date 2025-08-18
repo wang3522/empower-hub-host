@@ -56,6 +56,54 @@ from ....models.n2k_configuration.dc import DCType
 
 
 class ConfigProcessor:
+    """
+    Processes an N2kConfiguration and related device/config objects to build an EmpowerSystem.
+
+    This class is responsible for converting the N2kConfiguration into a list of `Thing` objects, wiring up all device, tank, circuit, and system relationships, and updating the N2kDevices manager with the necessary subscriptions to map raw DBus state into processed Empower state. It also tracks which circuits/meters are associated with inverters/chargers to avoid duplication, and manages component status relationships for shorepower and inverter/charger combos.
+
+    Attributes:
+        _things (list[Thing]):
+            List of all Thing objects created from the configuration. Used to build the EmpowerSystem.
+        _acMeter_inverter_instances (list[str]):
+            List of AC meter instance IDs that are associated with inverters (to avoid duplicate creation).
+        _dcMeter_charger_instances (list[str]):
+            List of DC meter instance IDs that are associated with chargers (to avoid duplicate creation).
+        _ic_component_status (dict):
+            Tracks component status for inverter/charger and shorepower relationships.
+        _associated_circuit_instances (list[str]):
+            List of circuit instance IDs whose status is tracked by other components (so they are not created as independent circuits).
+
+    Methods:
+        process_devices(config, n2k_devices):
+            Processes device configurations and adds Hub objects.
+        process_inverter_circuit(...):
+            Handles mapping of inverter circuits, including hidden/visible logic.
+        process_charger_circuit(...):
+            Handles mapping of charger circuits, including hidden/visible logic.
+        process_inverters(...):
+            Processes inverter configurations and adds CombiInverter objects.
+        process_chargers(...):
+            Processes charger configurations and adds CombiCharger objects.
+        process_inverter_chargers(...):
+            Processes all inverter/charger combos, calling both inverter and charger logic.
+        process_dc_meters(...):
+            Processes DC meter configurations and adds Battery objects.
+        process_gnss(...):
+            Processes GNSS configurations and adds GNSS objects.
+        process_ac_meters(...):
+            Processes AC meter configurations and adds ShorePower, AcMeterInverter, or ACMeterCharger objects.
+        process_tanks(...):
+            Processes tank configurations and adds FuelTank, FreshWaterTank, WasteWaterTank, or BlackWaterTank objects.
+        process_hvac(...):
+            Processes HVAC configurations and adds Climate objects.
+        process_circuits(...):
+            Processes circuit configurations and adds CircuitLight, CircuitBilgePump, CircuitWaterPump, or CircuitPowerSwitch objects.
+        build_empower_system(config, devices):
+            Builds and returns the EmpowerSystem from all processed things.
+        build_engine_list(config, devices):
+            Builds and returns an EngineList from engine configuration.
+    """
+
     _things: list[Thing]
 
     # Keep ACMeters associated with Inverters and DCMeters associated with chargers.
@@ -85,6 +133,12 @@ class ConfigProcessor:
     def process_devices(
         self, config: N2kConfiguration, n2k_devices: N2kDevices
     ) -> None:
+        """
+        Process device configurations and add Hub objects to the system.
+        Args:
+            config (N2kConfiguration): The N2k configuration object.
+            n2k_devices (N2kDevices): The N2k devices object.
+        """
         for device in config.device.values():
             if device.device_type == DeviceType.Europa:
                 hub = Hub(device, n2k_devices)
@@ -98,6 +152,16 @@ class ConfigProcessor:
         inverter_charger: InverterChargerDevice,
         config: N2kConfiguration,
     ):
+        """
+        Handle mapping of inverter circuits, including hidden/visible logic.
+        Visible circuit will share a controlId with hidden circuit that controls the inverter charger.
+        This circuit should be used in control operations and monitoring of enable status.
+        Args:
+            inverter_charger (InverterChargerDevice): The inverter charger device.
+            config (N2kConfiguration): The N2k configuration object.
+        Returns:
+            Optional[Circuit]: The visible circuit associated with the inverter charger, if found.
+        """
         inverter_visible_circuit = None
         if (
             inverter_charger.inverter_circuit_id.enabled
@@ -124,6 +188,14 @@ class ConfigProcessor:
     def process_charger_circuit(
         self, inverter_charger: InverterChargerDevice, config: N2kConfiguration
     ):
+        """
+        Handle mapping of inverter circuits, including hidden/visible logic.
+        Visible circuit will share a controlId with hidden circuit that controls the inverter charger.
+        This circuit should be used in control operations and monitoring of enable status.
+        Args:
+            inverter_charger (InverterChargerDevice): The inverter charger device.
+            config (N2kConfiguration): The N2k configuration object.
+        """
         charger_visible_circuit = None
         if (
             inverter_charger.charger_circuit_id.enabled
@@ -155,7 +227,17 @@ class ConfigProcessor:
         n2k_devices: N2kDevices,
         instance: int,
     ) -> None:
+        """
+        Process inverter configurations and add CombiInverter objects to the system.
+        Mark inverter circuits as associated circuits to avoid duplication.
 
+        Args:
+            config (N2kConfiguration): The N2k configuration object.
+            inverter_charger (InverterChargerDevice): The inverter charger device.
+            categories (list[CategoryItem]): List of categories associated with the inverter.
+            n2k_devices (N2kDevices): The N2k devices object.
+            instance (int): The instance number for the inverter.
+        """
         ac_meter = None
         inverter_associated_ac_line = None
 
@@ -214,6 +296,17 @@ class ConfigProcessor:
         n2k_devices: N2kDevices,
         instance: int,
     ) -> None:
+        """
+        Process charger configurations and add CombiCharger objects to the system.
+        Mark charger circuits as associated circuits to avoid duplication.
+        Track/return component status relationships for shorepower associated with inverter/charger.
+        Args:
+            inverter_charger (InverterChargerDevice): The inverter charger device.
+            config (N2kConfiguration): The N2k configuration object.
+            categories (list[CategoryItem]): List of categories associated with the charger.
+            n2k_devices (N2kDevices): The N2k devices object.
+            instance (int): The instance number for the charger.
+        """
         charger_visible_circuit = self.process_charger_circuit(inverter_charger, config)
 
         dc_meter1 = None
@@ -293,9 +386,14 @@ class ConfigProcessor:
     def process_inverter_chargers(
         self, config: N2kConfiguration, n2k_devices: N2kDevices
     ) -> None:
-        # For each inverter/charger we will create both an inverter and
-        # charger thing.
-        for id, inverter_charger in config.inverter_charger.items():
+        """
+        Process all inverter/charger combos, calling both inverter and charger logic.
+        This method creates both inverter and charger things for each inverter/charger combo.
+        Args:
+            config (N2kConfiguration): The N2k configuration object.
+            n2k_devices (N2kDevices): The N2k devices object.
+        """
+        for _, inverter_charger in config.inverter_charger.items():
             categories = get_category_list(
                 ItemType.InverterCharger,
                 inverter_charger.id,
@@ -315,6 +413,13 @@ class ConfigProcessor:
     def process_dc_meters(
         self, config: N2kConfiguration, n2k_devices: N2kDevices
     ) -> None:
+        """
+        Process DC meter configurations and add Battery objects.
+        This method checks for primary and fallback batteries, and pass associated circuits with them if available.
+        Args:
+            config (N2kConfiguration): The N2k configuration object.
+            n2k_devices (N2kDevices): The N2k devices object.
+        """
         for dc_meter in config.dc.values():
             circuit = None
             if dc_meter.instance.instance in self._dcMeter_charger_instances:
@@ -349,6 +454,12 @@ class ConfigProcessor:
     #     GNSS
     # ###################################################
     def process_gnss(self, config: N2kConfiguration, n2k_devices: N2kDevices) -> None:
+        """
+        Process GNSS configurations and add GNSS objects.
+        Args:
+            config (N2kConfiguration): The N2k configuration object.
+            n2k_devices (N2kDevices): The N2k devices object.
+        """
         for gnss in config.gnss.values():
             gnss_thing = GNSS(gnss, n2k_devices)
             self._things.append(gnss_thing)
@@ -359,6 +470,13 @@ class ConfigProcessor:
     def process_ac_meters(
         self, config: N2kConfiguration, n2k_devices: N2kDevices
     ) -> None:
+        """
+        Process AC meter configurations and add ShorePower, AcMeterInverter, or ACMeterCharger objects.
+        This method checks for associated circuits, categories, and component status relationships (in case of association with inverter/charger).
+        Args:
+            config (N2kConfiguration): The N2k configuration object.
+            n2k_devices (N2kDevices): The N2k devices object.
+        """
         for ac_meter in config.ac.values():
             if ac_meter.line[1].instance.instance in self._acMeter_inverter_instances:
                 continue
@@ -462,6 +580,14 @@ class ConfigProcessor:
     #     Tanks
     # ###################################################
     def process_tanks(self, config: N2kConfiguration, n2k_devices: N2kDevices) -> None:
+        """
+        Process tank configurations and add FuelTank, FreshWaterTank, WasteWaterTank, or BlackWaterTank objects.
+        This method checks the tank type and associated circuits, creating links for water tanks
+        that have associated circuits (pumps).
+        Args:
+            config (N2kConfiguration): The N2k configuration object.
+            n2k_devices (N2kDevices): The N2k devices object.
+        """
         for tank in config.tank.values():
             links = []
             # Fuel tanks
@@ -512,6 +638,13 @@ class ConfigProcessor:
     #     Hvac
     # ###################################################
     def process_hvac(self, config: N2kConfiguration, n2k_devices: N2kDevices) -> None:
+        """
+        Process HVAC configurations and add Climate objects.
+        This method retrieves the categories for each HVAC system and creates Climate objects accordingly.
+        Args:
+            config (N2kConfiguration): The N2k configuration object.
+            n2k_devices (N2kDevices): The N2k devices object.
+        """
         for hvac in config.hvac.values():
             categories = get_category_list(ItemType.Temperature, hvac.id, config)
             climate_thing = Climate(
@@ -527,6 +660,15 @@ class ConfigProcessor:
     def process_circuits(
         self, config: N2kConfiguration, n2k_devices: N2kDevices
     ) -> None:
+        """
+        Process circuit configurations and add CircuitLight, CircuitBilgePump, CircuitWaterPump, or CircuitPowerSwitch objects.
+        This method checks the circuit categories and creates the appropriate circuit thing based on the category.
+        Only create circuit if it is visible (remote visibility is LocalAndRemove or RemoteOnly).
+        Pass associated BLS into constructor for circuits that have them, and create links for child circuits.
+        Args:
+            config (N2kConfiguration): The N2k configuration object.
+            n2k_devices (N2kDevices): The N2k devices object.
+        """
         for circuit in config.circuit.values():
             links = []
             # 1 - LocalAndRemove, 2 - RemoteOnly
@@ -579,6 +721,16 @@ class ConfigProcessor:
     def build_empower_system(
         self, config: N2kConfiguration, devices: N2kDevices
     ) -> EmpowerSystem:
+        """
+        Builds and returns the EmpowerSystem from all processed things.
+        This method processes all device configurations, inverter/charger combos, DC meters, GNSS,
+        AC meters, tanks, HVAC systems, and circuits, and adds them to the EmpowerSystem.
+        Args:
+            config (N2kConfiguration): The N2k configuration object.
+            devices (N2kDevices): The N2k devices object.
+        Returns:
+            EmpowerSystem: The constructed EmpowerSystem containing all processed things, holding processed configuration.
+        """
         logger = logging.getLogger("Config Processor")
         self._things.clear()
         try:
@@ -603,6 +755,15 @@ class ConfigProcessor:
     def build_engine_list(
         self, config: EngineConfiguration, devices: N2kDevices
     ) -> EngineList:
+        """
+        Builds and returns an EngineList from engine configuration.
+        This method processes engine configurations and creates MarineEngine objects, adding them to an EngineList.
+        Args:
+            config (EngineConfiguration): The engine configuration object.
+            devices (N2kDevices): The N2k devices object.
+        Returns:
+            EngineList: The constructed EngineList containing all MarineEngine objects.
+        """
         logger = logging.getLogger("Engine Config Processor")
         engines: list[Thing] = []
         try:

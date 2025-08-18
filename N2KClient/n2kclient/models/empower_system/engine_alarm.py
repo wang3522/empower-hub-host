@@ -4,6 +4,19 @@ from ..n2k_configuration.engine import EngineDevice
 
 
 class EngineAlarm(Alarm):
+    """
+    Representation of an engine alarm, extending the base Alarm class with engine-specific properties.
+    This class encapsulates the details of an engine alarm, including its association with a specific engine device
+    and additional status information relevant to engine alarms.
+    Attributes:
+        current_discrete_status1: The current discrete status 1 of the engine alarm.
+        current_discrete_status2: The current discrete status 2 of the engine alarm.
+        prev_discrete_status1: The previous discrete status 1 of the engine alarm.
+        prev_discrete_status2: The previous discrete status 2 of the engine alarm.
+    Methods:
+        to_dict: Converts the EngineAlarm instance to a dictionary representation.
+    """
+
     current_discrete_status1: Optional[int] = None
     current_discrete_status2: Optional[int] = None
     prev_discrete_status1: Optional[int] = None
@@ -42,11 +55,11 @@ class EngineAlarm(Alarm):
             fault_action="",
         )
 
-        # Uncomment to hide from mobile app. If so, make sure to set cloud rule chain to send pns for this new key.
-
-        # self.id = f"engineAlarm.{alarm_id}"
-
     def to_dict(self):
+        """
+        Convert the EngineAlarm instance to a dictionary representation.
+        Returns:
+            A dictionary containing the properties of the EngineAlarm instance."""
         alarm_dict = super().to_dict()
         alarm_dict.update(
             {

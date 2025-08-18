@@ -14,6 +14,23 @@ class Thing(ABC):
     A Thing aggregates channels (data points), metadata, links to other Things, and alarm settings.
     It provides methods for channel registration, resource cleanup, and serialization to configuration dictionaries.
     Subclasses should implement specific device or system models (e.g., Battery, Engine).
+
+    Attributes:
+        channels: Dictionary mapping channel IDs to Channel instances.
+        id: Unique identifier for this Thing, constructed from its type and instance.
+        type: The type of the Thing, represented as a ThingType enum.
+        name: Human-readable name for this Thing.
+        metadata: Dictionary for storing additional information about the Thing (e.g., capacity).
+        links: List of Link instances representing connections to other Things.
+        _disposable_list: List of RxPy DisposableBase instances for managing subscriptions.
+        alarm_settings: List of AlarmSetting instances associated with this Thing, used for alarm management. Within mobile app, these are used to enable/disable alarms.
+    Methods:
+        __init__: Initializes the Thing with its type, id, name, categories, and optional
+        links.
+        dispose: Cleans up resources associated with this Thing, disposing of all RxPy subscriptions and
+        clearing the channels dictionary.
+        _define_channel: Registers a Channel with this Thing and assigns its full channel id.
+        to_config_dict: Converts this Thing and its properties to a configuration dictionary.
     """
 
     channels: dict[str, Channel]

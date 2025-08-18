@@ -7,6 +7,14 @@ from ..n2k_configuration.binary_logic_state import BinaryLogicState
 
 
 class CircuitLight(CircuitThing):
+    """
+    This class extends CircuitThing to handle specific properties and behaviors of light circuits,
+    including the association with a Binary Logic State (BLS) and links to other components.
+
+    Methods:
+        __init__: Initializes the CircuitLight instance with the provided circuit, links, BLS, and N2kDevices.
+        to_json: Converts the CircuitLight instance to a JSON-compatible dictionary.
+    """
 
     def __init__(
         self,

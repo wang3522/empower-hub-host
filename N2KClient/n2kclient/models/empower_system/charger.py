@@ -48,6 +48,7 @@ CHARGER_STATE_MAPPING = {
 
 
 def map_charger_state(state: str) -> str:
+    """Map the charger state string to a standardized state from ChargerStatus enum."""
     try:
         enum_state = ChargerStatus(state)
         return CHARGER_STATE_MAPPING.get(enum_state, "unknown")
@@ -61,6 +62,15 @@ class CombiCharger(Thing):
 
     Handles the creation and management of DC line channels, charger status, component status,
     and alarm settings. Integrates with N2kDevices and RxPy for real-time updates.
+    Attributes:
+        instance: The instance number for this charger, calculated from the inverter_charger configuration inverter instance and charger instance.
+        component_status: Observable for the component status of the charger.
+    Methods:
+        __init__: Initializes the CombiCharger with inverter_charger, dc1, dc2, dc3 configurations, categories, instance, N2kDevices, and an optional charger_circuit.
+        define_dc_lines: Defines all DC line channels and metadata for up to three batteries.
+        define_dc_line_channels: Defines all channels for a single DC line (component status, voltage, current) and alarm settings.
+        define_combi_channels: Defines charger enable and charger status channels for the CombiCharger.
+        define_charger_component_status_channel: Defines the component status channel for the CombiCharger.
     """
 
     instance: int
@@ -392,6 +402,14 @@ class ACMeterCharger(ACMeterThingBase):
 
     Handles the creation and management of AC line channels, charger status, and circuit enable channels.
     Integrates with N2kDevices and RxPy for real-time updates.
+
+    Methods:
+        _calc_charger_state: Calculates the overall charger state based on the connection status of all lines.
+        __init__: Initializes the ACMeterCharger with AC line configurations, N2k_devices, categories, and an optional circuit.
+        define_ac_meter_charger_channels: Defines all AC meter charger channels (status and circuit enable).
+        define_ac_meter_charger_circuit_enable_channel: Defines the circuit enable channel for the ACMeterCharger.
+        define_ac_meter_charger_status_channel: Defines the charger status channel for the ACMeterCharger and manages line connection state.
+        define_ac_meter_charger_line_state: Defines the line state for each AC line and updates the line_connected dictionary.
     """
 
     def _calc_charger_state(self) -> str:

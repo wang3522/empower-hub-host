@@ -56,6 +56,11 @@ class InverterBase(Thing):
 
     Handles the creation and management of AC line channels, component status, and inverter state.
     Integrates with N2kDevices and RxPy for real-time updates.
+
+    Attributes:
+        ac_line1: The first AC line configuration.
+        ac_line2: The second AC line configuration.
+        ac_line3: The third AC line configuration.
     """
 
     ac_line1: Optional[AC] = None
@@ -385,6 +390,13 @@ class AcMeterInverter(InverterBase):
 
     Handles the creation and management of AC line channels, inverter state, and enable channels.
     Integrates with N2kDevices and RxPy for real-time updates.
+    Inherits from InverterBase to utilize common inverter functionalities.
+    Methods:
+        _calc_inverter_state: Calculates the overall inverter state based on the connection status of all lines.
+        __init__: Initializes the AcMeterInverter with AC line configurations, N2kDevices, categories, and an optional circuit.
+        define_acmeter_inverter_channels: Defines all AC meter inverter channels (state and enable).
+        define_acmeter_inverter_state_channel: Defines the inverter state channel and manages line connection state.
+        define_inverter_enable_channel: Defines the enable channel for the inverter.
     """
 
     def _calc_inverter_state(self) -> str:

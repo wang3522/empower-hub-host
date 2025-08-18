@@ -5,6 +5,20 @@ from ...util.time_util import TimeUtil
 
 
 class LocationState:
+    """
+    Represents the state of a location with latitude, longitude, speed, and timestamp.
+    This class is used to encapsulate the location data, including the latitude, longitude,
+    speed, and the timestamp of when the location was recorded.
+    Attributes:
+        lat (float): The latitude of the location.
+        long (float): The longitude of the location.
+        sp (float): The speed at the location.
+        ts (int): The timestamp when the location was recorded, in UTC.
+    Methods:
+        __init__: Initializes the LocationState with latitude, longitude, and speed.
+        to_json: Converts the LocationState object to a JSON-compatible dictionary.
+    """
+
     lat: float
     long: float
     sp: float

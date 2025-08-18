@@ -11,6 +11,16 @@ from ...models.n2k_configuration.ac import AC
 
 
 class ComponentReference:
+    """
+    Reference to a component in the Empower system, encapsulating its type and associated object. Used for handling of alarm association to components.
+    This class allows for the association of a component type with its corresponding thing, enabling easy identification and management of components within the system.
+    Attributes:
+        component_type: The type of the component, represented as a ComponentType enum.
+        thing: The actual component instance, which can be of various types such as DC, AC, MeteringDevice, Tank, Circuit, BinaryLogicState, EngineDevice, or InverterChargerDevice.
+    Methods:
+        __init__: Initializes the ComponentReference with a specific component type and thing.
+    """
+
     component_type: ComponentType
     thing: Union[
         DC,

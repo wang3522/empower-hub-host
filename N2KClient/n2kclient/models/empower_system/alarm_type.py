@@ -2,6 +2,10 @@ from enum import IntEnum
 
 
 class AlarmType(IntEnum):
+    """
+    Enumeration of various alarm types with their corresponding codes
+    """
+
     CZ_ALARM_NONE_CODE = 0
     CZ_ALARM_AC_VOLTAGE_ERROR_ALARM_CODE = 1
     CZ_ALARM_AC_FREQUENCY_ERROR_ALARM_CODE = 2

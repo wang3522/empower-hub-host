@@ -24,7 +24,32 @@ WRITE_CONFIG_SLEEP_TIME = 1
 
 
 class ConfigService:
-    """Service for managing configuration"""
+    """
+    Service for managing N2K configuration operations.
+    This service handles reading and writing configurations.
+    Attributes:
+        dbus_proxy: DbusProxyService instance for DBus operations.
+        config_parser: ConfigParser instance for parsing config.
+        config_processor: ConfigProcessor instance for processing config.
+        lock: threading.Lock for thread safety.
+        get_latest_devices: Function to get the latest N2kDevices.
+        set_devices: Function to update devices (calls on_next on subject).
+        set_config: Function to update config (calls on_next on subject).
+        set_empower_system: Function to update EmpowerSystem (calls on_next on subject).
+        dispose_empower_system: Function to dispose EmpowerSystem instance.
+        get_engine_config: Function to get the latest EngineConfiguration.
+        get_engine_list: Function to get the latest engine list.
+        set_engine_config: Function to update EngineConfiguration.
+        set_engine_list: Function to update engine list.
+        set_factory_metadata: Function to update factory metadata.
+        request_state_snapshot: Function to trigger a state update/snapshot.
+    Methods:
+        write_configuration: Writes the configuration to the host.
+        scan_factory_metadata: Scans and updates factory metadata.
+        get_configuration: Retrieves the current configuration from the host.
+        scan_marine_engine_config: Scans the marine configuration and updates the engine configuration.
+        _scan_config_metadata: Scans and retrieves configuration metadata.
+    """
 
     _logger = logging.getLogger(Constants.N2K_CONFIG_SERVICE)
 
@@ -122,6 +147,11 @@ class ConfigService:
         )
 
     def scan_factory_metadata(self):
+        """
+        Scans and updates factory metadata.
+        This method retrieves the factory metadata from the DBus proxy and updates the factory metadata in the service.
+        It uses the ConfigParser to parse the metadata JSON and sets it using the set_factory_metadata
+        """
         try:
             self._logger.info("Loading factory metadata...")
             factory_metadata_response = self._dbus_proxy.get_setting(
@@ -136,6 +166,12 @@ class ConfigService:
             self._logger.error(f"Error reading dbus Get Factory Metadata response: {e}")
 
     def get_configuration(self):
+        """
+        Retrieves the current configuration from the host.
+        This method fetches the configuration from the DBus proxy, parses it using the ConfigParser,
+        and updates the N2kConfiguration and EmpowerSystem in the service.
+        It also disposes of the current nonengine devices and requests a state snapshot.
+        """
         # Raw Czone Config
         try:
             with self._lock:
@@ -209,6 +245,12 @@ class ConfigService:
             return False
 
     def _scan_config_metadata(self):
+        """
+        Scans and retrieves configuration metadata.
+        This method fetches the configuration metadata from the DBus proxy and returns it.
+        Returns:
+            dict: Configuration metadata dictionary.
+        """
         try:
             self._logger.info("Loading config metadata...")
             config_metadata = self._dbus_proxy.get_setting(Constants.Config)

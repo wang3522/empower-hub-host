@@ -13,6 +13,23 @@ from ..common_enums import N2kDeviceType, HubStates
 
 
 class Hub(Thing):
+    """
+    Represents a Hub device in the Empower system.
+    This class extends the Thing class to provide specific functionalities for Hub devices,
+    including defining channels for internet connectivity, WiFi, cellular, and Ethernet connections.
+    Methods:
+        __init__: Initializes the Hub with a Device configuration and N2kDevices.
+        define_ethernet_internet_connectivity_channel: Defines the Ethernet internet connectivity channel.
+        define_wifi_internet_connectivity_channel: Defines the WiFi internet connectivity channel.
+        define_wifi_ssid_channel: Defines the WiFi SSID channel.
+        define_wifi_type_channel: Defines the WiFi type channel.
+        define_wifi_signal_strength_channel: Defines the WiFi signal strength channel.
+        define_cellular_internet_connectivity_channel: Defines the cellular internet connectivity channel.
+        define_cellular_signal_strength_channel: Defines the cellular signal strength channel.
+        define_cellular_iccid_channel: Defines the cellular ICCID channel.
+        define_cellular_eid_channel: Defines the cellular EID channel.
+        define_active_connection_channel: Defines the active connection channel based on internet connectivity.
+    """
 
     def __init__(self, device: Device, n2k_devices: N2kDevices):
 

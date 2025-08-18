@@ -2,7 +2,15 @@ from .common_enums import ConnectionStatus
 
 
 class DBUSConnectionStatus:
-    """Enum for DBUS connection status."""
+    """
+    Represents the status of a DBUS connection.
+    Attributes:
+        connection_state (ConnectionStatus): The current state of the connection.
+        reason (str): Reason for the current connection state.
+        timestamp (int): Timestamp of the status update.
+    Methods:
+        to_json: Converts the DBUSConnectionStatus object to a JSON-serializable dictionary.
+    """
 
     connection_state: ConnectionStatus
     reason: str

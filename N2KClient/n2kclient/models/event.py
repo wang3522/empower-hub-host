@@ -8,6 +8,15 @@ class Event:
     Represents an event in the N2K system.
     This class is used to handle events that are emitted by the DBUS service.
     Can be related to alarms or config change events.
+
+    Attributes:
+        type (eEventType): The type of the event.
+        content (str): The content of the event.
+        alarm_item (Dbus_Alarm): Associated alarm item if applicable.
+        timestamp (str): Timestamp of the event.
+    Methods:
+        to_dict: Converts the Event object to a dictionary.
+        to_json_string: Converts the Event object to a JSON string.
     """
 
     type: eEventType

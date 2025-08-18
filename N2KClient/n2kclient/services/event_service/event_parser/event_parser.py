@@ -15,9 +15,11 @@ class EventParser:
 
     def parse_event(self, event_json: str) -> Optional[Event]:
         """
-        Parses a JSON event into an Event object.
-        :param event_json: JSON representation of the event.
-        :return: Event object.
+        Parse event JSON string into an Event object.
+        Args:
+            event_json: JSON string representing the event.
+        Returns:
+            Event object if parsing is successful, None otherwise.
         """
         try:
             event = Event()

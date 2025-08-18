@@ -19,6 +19,12 @@ class GNSS(Thing):
 
     Handles the creation and management of GNSS-related channels (component status, fix type, location),
     and integrates with N2kDevices and RxPy for real-time updates.
+
+    Methods:
+        define_gnss_channels: Defines all GNSS-related channels for the GNSS device.
+        define_component_status: Defines the component status channel for the GNSS device.
+        define_fix_type_channel: Defines the fix type channel for the GNSS device.
+        define_location_channel: Defines the location channel for the GNSS device.
     """
 
     def __init__(

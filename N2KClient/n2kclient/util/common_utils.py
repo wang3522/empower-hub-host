@@ -9,6 +9,14 @@ import json
 
 
 def is_in_category(categories: list[CategoryItem], category_name: str) -> bool:
+    """
+    Check if a category with the given name exists in the provided list of categories and is enabled.
+    Args:
+        categories: List of CategoryItem objects to search in.
+        category_name: The name of the category to check for.
+    Returns:
+        bool: True if the category is found and enabled, False otherwise.
+    """
     return (
         next(
             (
@@ -24,8 +32,13 @@ def is_in_category(categories: list[CategoryItem], category_name: str) -> bool:
 
 def calculate_inverter_charger_instance(inverter_charger: InverterChargerDevice):
     """
-    Given an inveter/charger, calculate its instance number from the instances
+    Given an inverter/charger, calculate its instance number from the instances
     of the inverter and charger separately.
+
+    Args:
+        inverter_charger (InverterChargerDevice): The inverter/charger device.
+    Returns:
+        int: The calculated instance number.
     """
 
     return (
@@ -39,6 +52,16 @@ def get_associated_circuit(
     primary_id: int,
     config: N2kConfiguration,
 ):
+    """
+    Get the associated circuit for a given item type and primary ID.
+    Args:
+        item_type: The type of the primary item (e.g., DcMeter, AcMeter, etc.)
+        primary_id: The ID of the primary item
+        config: The N2kConfiguration containing relationships and circuits
+
+    Returns:
+        Circuit: The associated circuit, or None if not found.
+    """
     association_relationship = next(
         (
             rel
@@ -76,6 +99,14 @@ def get_associated_circuit(
 def map_fields(source: dict[str, Any], target: object, field_map: dict) -> None:
     """
     Map fields from source dictionary to target object.
+
+    Args:
+        source (dict[str, Any]): The source dictionary containing the field data.
+        target (object): The target object to map the field data to.
+        field_map (dict): A mapping of target attribute names to source keys.
+
+    Returns:
+        None
     """
     for attr, key in field_map.items():
         value = source.get(key)
@@ -90,6 +121,15 @@ def map_enum_fields(
     """
     Map enum fields from source dictionary to target object.
     Skips None, empty string, and invalid enum values to avoid ValueError.
+
+    Args:
+        logger (logging.Logger): The logger instance for logging warnings.
+        source (dict[str, Any]): The source dictionary containing the enum field data.
+        target (object): The target object to map the data to.
+        field_map (dict): A mapping of target attribute names to source keys.
+
+    Return:
+        None
     """
     for attr, (key, enum_cls) in field_map.items():
         value = source.get(key)
@@ -111,6 +151,14 @@ def map_list_fields(source: dict[str, Any], target: object, field_map: dict) -> 
     """
     Map list fields from source dictionary to target object, using a parsing function for each item.
     field_map: {attr_name: (json_key, parse_func)}
+
+    Args:
+        source (dict[str, Any]): The source dictionary containing fields.
+        target (object): The target object to map the data to.
+        field_map (dict): A mapping of target attribute names to source keys.
+
+    Returns:
+        None
     """
     for attr, (key, parse_func) in field_map.items():
         value = source.get(key)

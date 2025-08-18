@@ -26,6 +26,15 @@ class MarineEngine(Thing):
 
     Handles the creation and management of engine-related channels (component status, speed, engine hours, coolant temperature, pressures, status, serial number),
     and integrates with N2kDevices and RxPy for real-time updates.
+    Methods:
+        define_engine_channels: Defines all engine-related channels for the marine engine.
+        define_component_status_channel: Defines the component status channel for the marine engine.
+        define_speed_channel: Defines the speed channel for the marine engine.
+        define_engine_hours_channel: Defines the engine hours channel for the marine engine.
+        define_coolant_temperature_channel: Defines the coolant temperature channel for the marine engine.
+        define_pressure_channels: Defines the coolant and oil pressure channels for the marine engine.
+        define_status_channel: Defines the status channel for the marine engine.
+        define_serial_number_channel: Defines the serial number channel for the marine engine.
     """
 
     def __init__(

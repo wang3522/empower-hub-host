@@ -9,6 +9,21 @@ from reactivex.disposable import Disposable
 
 
 class N2kDevice:
+    """
+    Represents a single N2K device with its type and channels.
+    Each channel has a BehaviorSubject to allow reactive updates.
+    Attributes:
+        type (N2kDeviceType): The type of the N2K device.
+        channels (Dict[str, Any]): Dictionary of channel keys to their current values.
+        _channel_subjects (Dict[str, BehaviorSubject]): Internal map of channel keys to their BehaviorSubjects.
+    Methods:
+        update_channel: Update the value of a channel and notify observers.
+        get_channel_subject: Get the BehaviorSubject for a channel.
+        dispose: Dispose of all channel subjects and clear channel values.
+        to_dict: Return a dictionary representation of the device.
+        to_json_string: Return a JSON string representation of the device.
+    """
+
     type: N2kDeviceType
     channels: Dict[str, Any]
     _channel_subjects: Dict[str, BehaviorSubject]
@@ -45,6 +60,7 @@ class N2kDevice:
         return self._channel_subjects[channel_key]
 
     def __del__(self):
+        """Destructor to ensure resources are cleaned up."""
         self.dispose()
 
     def dispose(self):
@@ -69,6 +85,26 @@ class N2kDevice:
 
 
 class N2kDevices:
+    """
+    Collection of N2K devices, separated into engine and non-engine devices.
+    Also manages mobile channel values and subscriptions for reactive updates.
+    Attributes:
+        devices (Dict[str, N2kDevice]): Non-engine N2K devices.
+        engine_devices (Dict[str, N2kDevice]): Engine N2K devices.
+        mobile_channels (Dict[str, Any]): Current values of non-engine mobile channels.
+        engine_mobile_channels (Dict[str, Any]): Current values of engine mobile channels.
+        _pipe_subscriptions (Dict[str, Disposable]): Subscriptions for non-engine device observables.
+        _engine_pipe_subscriptions (Dict[str, Disposable]): Subscriptions for engine device observables.
+    Methods:
+        dispose_devices: Dispose and remove all devices, subscriptions, and mobile channels.
+        add: Add a device to the appropriate collection (engine or non-engine).
+        get_channel_subject: Get the BehaviorSubject for a device's channel.
+        set_subscription: Subscribe to an observable and update mobile-ready channel on new values.
+        _update_mobile_channel: Update the value of a mobile-ready channel.
+        to_mobile_dict: Return a dictionary containing all mobile-ready channel values.
+        dispose: Dispose and remove all non-engine devices, subscriptions, and mobile channels.
+    """
+
     devices: Dict[str, N2kDevice]
     engine_devices: Dict[str, N2kDevice]
     mobile_channels: Dict[str, Any]
@@ -227,4 +263,5 @@ class N2kDevices:
         self.devices.clear()
 
     def __del__(self):
+        """Destructor to ensure resources are cleaned up."""
         self.dispose()

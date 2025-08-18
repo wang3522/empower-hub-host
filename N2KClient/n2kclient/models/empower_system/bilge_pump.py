@@ -7,6 +7,13 @@ from ..n2k_configuration.binary_logic_state import BinaryLogicState
 
 
 class CircuitBilgePump(CircuitThing):
+    """
+    Representation of a bilge pump circuit in the Empower system.
+    Inherits from CircuitThing to utilize common circuit functionalities.
+
+    Methods:
+        __init__: Initializes the CircuitBilgePump with a Circuit configuration, links, N2kDevices, and an optional BinaryLogicState.
+    """
 
     def __init__(
         self,

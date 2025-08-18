@@ -5,6 +5,13 @@ import reactivex as rx
 
 
 def create_filter(min_change):
+    """
+    Create a distinct until changed filter for reactivex observables.
+    Args:
+        min_change (float): The minimum change threshold.
+    Returns:
+        A reactivex operator that filters out changes smaller than min_change.
+    """
     return ops.distinct_until_changed(
         lambda state: state,
         lambda current, previous: abs(current - previous) < min_change,
@@ -12,6 +19,19 @@ def create_filter(min_change):
 
 
 def create_filter_for_engine_speed(min_change):
+    """
+    Create a distinct-until-changed filter for engine speed observables.
+
+    This filter suppresses changes smaller than min_change, except when the current value is below min_change
+    (e.g., when the engine is idling, all changes are allowed).
+
+    Args:
+        min_change (float): The minimum change threshold.
+
+    Returns:
+        A reactivex operator that filters out changes smaller than min_change,
+        unless the current value is below min_change (in which case all changes are allowed).
+    """
     return ops.distinct_until_changed(
         lambda state: state,
         lambda current, previous: (
@@ -21,10 +41,18 @@ def create_filter_for_engine_speed(min_change):
 
 
 def create_sampling_timer(min_time):
+    """
+    Create a sampling timer operator for reactivex observables.
+    Args:
+        min_time (int): Minimum time interval in seconds between samples.
+    Returns:
+        A reactivex operator that samples the observable at the specified interval."""
     return ops.sample(rx.interval(min_time))
 
 
 class Engine:
+    """Settings and filters for engine-related parameters."""
+
     SPEED_MIN_CHANGE = SettingsUtil.get_setting(
         Constants.N2K_SETTINGS_KEY,
         Constants.ENGINE,
@@ -52,6 +80,8 @@ class Engine:
 
 
 class HubFilter:
+    """Settings and filters for hub-related parameters."""
+
     SIGNAL_STRENGTH_MIN_CHANGE = SettingsUtil.get_setting(
         Constants.HUB, Constants.SIGNAL_STRENGTH, Constants.MIN_CHANGE, default_value=5
     )
@@ -59,6 +89,8 @@ class HubFilter:
 
 
 class Voltage:
+    """Settings and filters for voltage-related parameters."""
+
     MIN_CHANGE = SettingsUtil.get_setting(
         Constants.N2K_SETTINGS_KEY,
         Constants.VOLTAGE,
@@ -72,6 +104,8 @@ class Voltage:
 
 
 class Current:
+    """Settings and filters for current-related parameters."""
+
     MIN_CHANGE = SettingsUtil.get_setting(
         Constants.N2K_SETTINGS_KEY,
         Constants.CURRENT,
@@ -85,6 +119,8 @@ class Current:
 
 
 class Temperature:
+    """Settings and filters for temperature-related parameters."""
+
     MIN_CHANGE = SettingsUtil.get_setting(
         Constants.N2K_SETTINGS_KEY,
         Constants.TEMPERATURE,
@@ -101,6 +137,8 @@ class Temperature:
 
 
 class Pressure:
+    """Settings and filters for pressure-related parameters."""
+
     MIN_CHANGE = SettingsUtil.get_setting(
         Constants.N2K_SETTINGS_KEY,
         Constants.PRESSURE,
@@ -114,6 +152,8 @@ class Pressure:
 
 
 class Frequency:
+    """Settings and filters for frequency-related parameters."""
+
     MIN_CHANGE = SettingsUtil.get_setting(
         Constants.N2K_SETTINGS_KEY,
         Constants.FREQUENCY,
@@ -130,6 +170,8 @@ class Frequency:
 
 
 class Power:
+    """Settings and filters for power-related parameters."""
+
     MIN_CHANGE = SettingsUtil.get_setting(
         Constants.N2K_SETTINGS_KEY,
         Constants.POWER,
@@ -143,6 +185,8 @@ class Power:
 
 
 class Volume:
+    """Settings and filters for volume-related parameters."""
+
     MIN_CHANGE = SettingsUtil.get_setting(
         Constants.N2K_SETTINGS_KEY,
         Constants.VOLUME,
@@ -170,6 +214,8 @@ class Volume:
 
 
 class Location:
+    """Settings and filters for location-related parameters."""
+
     # GNSS update sample in seconds
     LOCATION_GNSS_UPDATE_SAMPLE = SettingsUtil.get_setting(
         Constants.THINGSBOARD_SETTINGS_KEY,
@@ -181,6 +227,8 @@ class Location:
 
 
 class CapacityRemaining:
+    """Settings and filters for capacity remaining-related parameters."""
+
     ROUND_VALUE = SettingsUtil.get_setting(
         Constants.N2K_SETTINGS_KEY,
         Constants.CAPACITY_REMAINING,

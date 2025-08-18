@@ -7,6 +7,15 @@ from ..n2k_configuration.binary_logic_state import BinaryLogicState
 
 
 class CircuitWaterPump(CircuitThing):
+    """
+    Representation of a water pump circuit in the Empower system.
+    Inherits from CircuitThing to utilize common circuit functionalities.
+    Attributes:
+        circuit: The Circuit configuration for this water pump.
+        links: List of links associated with this water pump circuit (e.g. Tanks)
+    Methods:
+        __init__: Initializes the CircuitWaterPump with a Circuit configuration, links, N2k_devices, and an optional BinaryLogicState.
+    """
 
     def __init__(
         self,

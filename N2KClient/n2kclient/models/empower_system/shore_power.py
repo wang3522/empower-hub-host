@@ -30,6 +30,14 @@ class ShorePower(ACMeterThingBase):
 
     Connected state is determined based on the voltage of the AC lines or the component status of an associated inverter/charger, (if present).
     BLS or Signal input can be used to determine the connected state as well. The values from BLS are inverted to match the expected state, and merged with previously defined connected state.
+
+    Methods:
+        _calc_shorepower_connected: Calculates whether any shore power line is connected using external utility.
+        __init__: Initializes the ShorePower with AC line configurations, N2kDevices, categories, circuit, ic_associated_line, component_status, and an optional BinaryLogicState.
+        define_shorepower_connected_pipe_inverter_charger: Defines the logic for determining shore power connection when associated with an inverter/charger.
+        define_shorepower_connected_pipe_non_inverter_charger: Defines the logic for determining shore power connection when not associated with an inverter/charger.
+        define_shorepower_connected_channel: Defines the connected channel for the shore power device.
+        define_shorepower_enabled_channel: Defines the enabled channel for the shore power device.
     """
 
     def _calc_shorepower_connected(self):

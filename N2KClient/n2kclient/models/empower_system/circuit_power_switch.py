@@ -7,6 +7,12 @@ from ..n2k_configuration.binary_logic_state import BinaryLogicState
 
 
 class CircuitPowerSwitch(CircuitThing):
+    """
+    Representation of a generic power switch circuit in the Empower system.
+    Inherits from CircuitThing to utilize common circuit functionalities.
+    Methods:
+        __init__: Initializes the CircuitPowerSwitch with the provided circuit, links, N2k
+    """
 
     def __init__(
         self,

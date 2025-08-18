@@ -50,6 +50,13 @@ class SnapshotService:
         self._set_periodic_snapshot_timer()
 
     def snapshot_handler(self, snapshot_json: str):
+        """
+        Handle a received snapshot JSON string.
+        Parse the JSON and update device states accordingly. Also processes engine alarms from the snapshot.
+        Also restarts the periodic snapshot timer.
+        Args:
+            snapshot_json: JSON string representing the snapshot.
+        """
         try:
             self._logger.info("Received snapshot")
             self._start_snapshot_timer()
@@ -66,6 +73,15 @@ class SnapshotService:
             return
 
     def _process_state_from_snapshot(self, snapshot_dict: dict[str, dict[str, Any]]):
+        """
+        Process state information from the snapshot dictionary.
+        Extracts state updates for various device types from the snapshot dictionary.
+        Args:
+            snapshot_dict: The snapshot dictionary containing state information.
+
+        Returns:
+            A dictionary mapping device IDs to their state updates.
+        """
         state_update = {}
         # Circuits
         if JsonKeys.CIRCUITS in snapshot_dict:
@@ -117,6 +133,12 @@ class SnapshotService:
         return state_update
 
     def _merge_state_update(self, state_updates: dict[str, dict[str, Any]]):
+        """
+        Merge state updates into the current device list. State updates for engine devices and non-engine devices update separate lists.
+        ACLines within AC devices are handled specially to keep line data together.
+        Args:
+            state_updates: A dictionary mapping device IDs to their state updates.
+        """
         with self.lock:
             device_list_copy = self._get_latest_devices()
             for id, state_update in state_updates.items():
@@ -172,6 +194,9 @@ class SnapshotService:
             self._logger.error(f"Error starting snapshot timer: {e}")
 
     def _single_snapshot(self):
+        """
+        Request a single snapshot from the host.
+        """
         try:
             snapshot = self._dbus_proxy.single_snapshot()
             self.snapshot_handler(snapshot)

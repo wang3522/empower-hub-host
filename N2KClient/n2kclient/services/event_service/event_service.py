@@ -7,7 +7,16 @@ from .event_parser.event_parser import EventParser
 
 
 class EventService:
-    """Service for handling events in the N2K client."""
+    """
+    Service for handling events in the N2K client.
+    Attributes:
+        _alarm_service: Instance of AlarmService for managing alarms.
+        _config_service: Instance of ConfigService for managing configuration.
+        _logger: Logger instance for logging events.
+        _event_parser: Instance of EventParser for parsing event JSON data.
+    Methods:
+        event_handler: Handles incoming event JSON strings, parses them, and triggers appropriate actions
+    """
 
     def __init__(self, alarm_service: AlarmService, config_service: ConfigService):
         self._alarm_service = alarm_service

@@ -21,6 +21,14 @@ from ..n2k_configuration.alarm_limit import AlarmLimit
 
 
 class TankBase(Thing):
+    """
+    Base class for representing a tank in the Empower system.
+    Inherits from Thing to utilize common functionalities.
+    Methods:
+        __init__: Initializes the TankBase with a type, tank configuration, N2kDevices, categories, and links.
+        define_component_status_channel: Defines the component status channel for the tank.
+        define_level_channels: Defines the level channels (absolute and percent) for the tank.
+    """
 
     def __init__(
         self,
@@ -60,6 +68,9 @@ class TankBase(Thing):
                     self.alarm_settings.extend([limit_on, limit_off])
 
     def define_component_status_channel(self, n2k_devices: N2kDevices):
+        """
+        Define the component status channel for the tank.
+        """
         ###################################
         # Component Status
         ###################################
@@ -92,6 +103,9 @@ class TankBase(Thing):
         )
 
     def define_level_channels(self, n2k_devices: N2kDevices):
+        """
+        Define the level channels (absolute and percent) for the tank.
+        """
         ###################################
         # Level Absolute
         ###################################
@@ -151,12 +165,24 @@ class TankBase(Thing):
 
 
 class FuelTank(TankBase):
+    """
+    Class representing a fuel tank in the Empower system.
+    Inherits from TankBase to utilize common tank functionalities.
+    Methods:
+        __init__: Initializes the FuelTank with a Tank configuration and N2kDevices.
+    """
 
     def __init__(self, tank: Tank, n2k_devices: N2kDevices):
         TankBase.__init__(self, ThingType.FUEL_TANK, tank, n2k_devices=n2k_devices)
 
 
 class WaterTank(TankBase):
+    """
+    Class representing a water tank in the Empower system.
+    Inherits from TankBase to utilize common tank functionalities.
+    Methods:
+        __init__: Initializes the WaterTank with a Tank configuration, links, and N2kDevices.
+    """
 
     def __init__(self, tank: Tank, links: list[Link], n2k_devices: N2kDevices):
         TankBase.__init__(
@@ -165,6 +191,13 @@ class WaterTank(TankBase):
 
 
 class BlackWaterTank(WaterTank):
+    """
+    Class representing a black water tank in the Empower system.
+    Inherits from WaterTank to utilize common tank functionalities.
+    Methods:
+        __init__: Initializes the BlackWaterTank with a Tank configuration, links, and N2kDevices.
+    """
+
     def __init__(self, tank: Tank, links: list[Link], n2k_devices: N2kDevices):
         WaterTank.__init__(self, tank, links, n2k_devices=n2k_devices)
 
@@ -174,6 +207,13 @@ class BlackWaterTank(WaterTank):
 
 
 class WasteWaterTank(WaterTank):
+    """
+    Class representing a wastewater tank in the Empower system.
+    Inherits from WaterTank to utilize common tank functionalities.
+    Methods:
+        __init__: Initializes the WasteWaterTank with a Tank configuration, links, and N2kDevices.
+    """
+
     def __init__(
         self,
         tank: Tank,
@@ -188,6 +228,13 @@ class WasteWaterTank(WaterTank):
 
 
 class FreshWaterTank(WaterTank):
+    """
+    Class representing a fresh water tank in the Empower system.
+    Inherits from WaterTank to utilize common tank functionalities.
+    Methods:
+        __init__: Initializes the FreshWaterTank with a Tank configuration, links, and N2kDevices.
+    """
+
     def __init__(
         self,
         tank: Tank,

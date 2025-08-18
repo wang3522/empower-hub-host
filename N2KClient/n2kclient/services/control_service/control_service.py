@@ -17,7 +17,18 @@ from ...services.control_service.control_service_helpers import (
 
 
 class ControlService:
-    """Service for controlling N2K devices"""
+    """
+    Service handling control methods for N2KClient, such as controlling circuits.
+    Attributes:
+        _control_max_attempts: Maximum number of attempts for control operations.
+        _logger: Logger instance for logging control service activities.
+        get_config: Callable that returns the latest N2kConfiguration.
+        get_devices: Callable that returns the latest N2kDevices.
+        send_control: Callable that sends a control request and returns a JSON string response.
+    Methods:
+        set_circuit_power_state: Set the power state (on/off) of a circuit by runtime ID.
+        set_circuit_level: Set the dimming level of a circuit by runtime ID
+    """
 
     _control_max_attempts = SettingsUtil.get_setting(
         Constants.N2K_SETTINGS_KEY,
@@ -48,6 +59,7 @@ class ControlService:
     #####################################
 
     def set_circuit_power_state(self, runtime_id: int, target_on: bool) -> bool:
+        """Set the power state of a circuit (on/off) by ID."""
         try:
             config = self.get_config()
             devices = self.get_devices()

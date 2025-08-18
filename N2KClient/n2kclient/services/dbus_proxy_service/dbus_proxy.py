@@ -18,6 +18,32 @@ class DbusProxyService:
     """
     Proxy service for interacting with the N2K DBus interface.
     Handles connection, method registration, signal handling, and retry logic for DBus calls.
+    Attributes:
+        status_callback: Optional callback function to report connection status changes.
+        event_handler: Optional handler function for DBus events.
+        snapshot_handler: Optional handler function for DBus snapshots.
+        control_max_attempts: Maximum number of retry attempts for control operations.
+        lock: Threading lock to ensure thread-safe DBus access.
+        _logger: Logger instance for logging messages.
+        _dbus_retry_delay: Delay in seconds between DBus retry attempts, read from settings
+    Methods:
+        __init__: Initializes the DBus proxy service with optional callbacks and settings.
+        connect: Establishes the DBus connection with retry logic.
+        _connect_dbus: Internal method to set up the DBus connection and register handlers.
+        _register_signal_handlers: Registers signal handlers (Event + Snapshot) for DBus events and snapshots.
+        _register_methods: Maps DBus service methods to instance attributes.
+        _report_status: Helper to report connection status via callback.
+        _call_with_retry: Calls a DBus method with retry logic and status reporting.
+        get_config: Retrieves specific component type N2K configuration via DBus.
+        get_config_all: Retrieves full N2K configurations via DBus.
+        get_categories: Retrieves categories via DBus.
+        get_setting: Retrieves setting via DBus.
+        control: Sends control command via DBus with retry.
+        alarm_acknowledge: Acknowledges alarm via DBus with retry.
+        alarm_list: Retrieves full alarm list via DBus.
+        single_snapshot: Retrieves full single snapshot via DBus.
+        put_file: Sends a file to the host via DBus.
+        operation: Performs an operation on the host via DBus.
     """
 
     _logger = logging.getLogger("DBUS Proxy Helper")

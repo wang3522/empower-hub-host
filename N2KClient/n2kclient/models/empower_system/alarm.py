@@ -7,6 +7,10 @@ from ..common_enums import eSeverityType
 
 
 class AlarmSeverity(str, Enum):
+    """
+    Enumeration of alarm severities.
+    """
+
     IMPORTANT = "important"
     STANDARD = "standard"
     CRITICAL = "critical"
@@ -16,6 +20,10 @@ class AlarmSeverity(str, Enum):
 
 
 class AlarmState(str, Enum):
+    """
+    Enumeration of alarm states.
+    """
+
     ACKNOWLEDGED = "acknowledged"
     ENABLED = "enabled"
     DISABLED = "disabled"
@@ -32,6 +40,29 @@ severity_map = {
 
 
 class Alarm:
+    """
+    This class encapsulates the details of an alarm, including its ID, title, name, description,
+    severity, current state, unique ID, fault action, date active, context, and associated
+    things (components).
+
+    It provides methods to convert the alarm instance to a dictionary representation for serialization.
+    Attributes:
+        id: The unique identifier of the alarm.
+        title: The title of the alarm.
+        name: The name of the alarm.
+        description: A description of the alarm.
+        fault_action: The action to take when a fault occurs (Engine Alarm).
+        severity: The severity level of the alarm, represented as an AlarmSeverity enum.
+        current_state: The current state of the alarm, represented as an AlarmState enum.
+        unique_id: A unique identifier for the alarm instance.
+        date_active: The date when the alarm was activated.
+        context: Additional context information related to the alarm.
+        things: A list of things (components) associated with the alarm.
+    Methods:
+        to_dict: Converts the Alarm instance to a dictionary representation.
+        __init__: Initializes the Alarm instance with the provided parameters or from a Dbus_Alarm instance.
+    """
+
     id: str
     title: str
     name: str
@@ -87,34 +118,8 @@ class Alarm:
             self.things = things or []
             self.severity = severity
 
-    @classmethod
-    def from_manual_settings(
-        cls,
-        title: str,
-        name: str,
-        description: str,
-        unique_id: int,
-        date_active: int,
-        fault_action: str,
-        state: AlarmState,
-        severity: AlarmSeverity,
-        things: Optional[List[str]] = None,
-        context: Optional[dict[str, Union[str, int, float, bool]]] = None,
-    ):
-        return cls(
-            title=title,
-            name=name,
-            description=description,
-            unique_id=unique_id,
-            date_active=date_active,
-            fault_action=fault_action,
-            state=state,
-            severity=severity,
-            things=things,
-            context=context,
-        )
-
     def to_dict(self) -> dict[str, Any]:
+        """Convert the Alarm instance to a dictionary representation."""
         return {
             "title": self.title,
             "name": self.name,

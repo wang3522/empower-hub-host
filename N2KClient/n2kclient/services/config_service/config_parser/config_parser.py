@@ -726,6 +726,9 @@ class ConfigParser:
     def parse_engine_configuration(
         self, config_string: str, engine_configuration: EngineConfiguration
     ) -> EngineConfiguration:
+        """
+        Parse the engine configuration string and return an EngineConfiguration object.
+        """
         try:
             # Parse the configuration string
             config_json: dict[str, list[Any]] = json.loads(config_string)

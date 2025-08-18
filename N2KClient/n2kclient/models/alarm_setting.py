@@ -23,6 +23,18 @@ class AlarmSettingLimit(str, Enum):
 
 @dataclass
 class AlarmSetting:
+    """Represents a generic alarm setting with common attributes.
+    Attributes:
+        name (str): Name of the alarm setting.
+        type (ChannelType): Type of the channel.
+        unit (Unit): Unit of measurement for the alarm setting.
+        metadata (Dict[str, Any]): Metadata associated with the alarm setting.
+        read_only (bool): Indicates if the alarm setting is read-only.
+        tags (List[str]): Tags associated with the alarm setting.
+        value (float): Value of the alarm setting.
+    Methods:
+        to_json: Converts the AlarmSetting object to a JSON-serializable dictionary."""
+
     name: str = ""
     type: ChannelType = ChannelType.NUMBER
     unit: Unit = Unit.PERCENT
@@ -52,6 +64,7 @@ class AlarmSetting:
         self.value = value
 
     def to_json(self):
+        """Converts the AlarmSetting object to a JSON-serializable dictionary."""
         return {
             "name": self.name,
             "type": self.type.value,
@@ -64,6 +77,14 @@ class AlarmSetting:
 
 
 class TankAlarmSetting(AlarmSetting):
+    """
+    Alarm setting specific to tank parameters.
+    Attributes:
+        limit_mappings (dict): Mappings for tank alarm limits to names and tags.
+    Methods:
+        __init__: Initializes a TankAlarmSetting instance.
+    """
+
     limit_mappings = {
         AlarmSettingLimit.VeryLowLimit: [
             "Very Low Level",
@@ -87,6 +108,14 @@ class TankAlarmSetting(AlarmSetting):
 
 
 class BatteryAlarmSetting(AlarmSetting):
+    """
+    Alarm setting specific to battery parameters.
+    Attributes:
+        limit_mappings (dict): Mappings for battery alarm limits to names and tags.
+    Methods:
+        __init__: Initializes a BatteryAlarmSetting instance.
+    """
+
     limit_mappings = {
         AlarmSettingLimit.VeryLowLimit: [
             "Very Low Capacity",
@@ -125,6 +154,7 @@ class BatteryAlarmSetting(AlarmSetting):
         is_on: bool,
         name: Optional[str] = None,
     ):
+        """Initializes a BatteryAlarmSetting instance."""
         super().__init__(limit, alarm_id, value, is_on, self.limit_mappings)
         if name:
             self.metadata[
@@ -148,6 +178,7 @@ class AlarmSettingFactory:
         is_on: bool,
         name: Optional[str] = None,
     ):
+        """Factory method to create appropriate AlarmSetting instance."""
         value = round(value, 1)
         if type == AlarmSettingType.TANK:
             return TankAlarmSetting(limit, alarm_id, value, is_on)

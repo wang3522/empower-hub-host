@@ -17,6 +17,15 @@ def get_category_list(
     primary_id: int,
     config: N2kConfiguration,
 ) -> list[CategoryItem]:
+    """
+    Get the list of categories associated with a component given it's item type and primary ID.
+    Args:
+        item_type: The type of the primary item (e.g., DcMeter, AcMeter, etc.)
+        primary_id: The ID of the primary item
+        config: The N2kConfiguration containing relationships and categories
+    Returns:
+        A list of CategoryItem objects associated with the primary item.
+    """
     category_relationships = filter(
         lambda rel: rel.secondary_type == ItemType.Category,
         config.ui_relationships,
@@ -46,6 +55,15 @@ def get_category_list(
 
 
 def get_primary_dc_meter(id: int, config: N2kConfiguration):
+    """
+    Get the primary DC meter associated with a given ID. Case where the given dc ID is a fallback battery.
+    This function checks for a relationship where the primary type is DcMeter and the secondary type is also DcMeter,
+    indicating that the primary is a fallback for the secondary.
+    Args:
+        id: The ID of the secondary DC meter to find the primary for.
+        config: The N2kConfiguration containing relationships and DC meters.
+    Returns:
+        The primary DC meter if found, None otherwise."""
     rel = next(
         (
             rel
@@ -69,6 +87,16 @@ def get_primary_dc_meter(id: int, config: N2kConfiguration):
 
 
 def get_fallback_dc_meter(id: int, config: N2kConfiguration):
+    """
+    Get the fallback DC meter for a given ID. Case where the given dc ID is a primary battery.
+    This function checks for a relationship where the primary type is DcMeter and the secondary type is also DcMeter,
+    indicating that the primary is a fallback for the secondary.
+    Args:
+        id: The ID of the primary DC meter to find a fallback for.
+        config: The N2kConfiguration containing relationships and DC meters.
+    Returns:
+        The fallback DC meter if found, None otherwise.
+    """
     rel = next(
         (
             rel
@@ -92,6 +120,14 @@ def get_fallback_dc_meter(id: int, config: N2kConfiguration):
 
 
 def get_ac_meter_associated_bls(ac_meter: ACMeter, config: N2kConfiguration):
+    """
+    Get the BinaryLogicState associated with an AC meter.
+    Args:
+        ac_meter: The ACMeter configuration to find the associated BinaryLogicState for.
+        config: The N2kConfiguration containing relationships and BinaryLogicStates.
+    Returns:
+        The associated BinaryLogicState if found, None otherwise.
+    """
     for ac_line in ac_meter.line.values():
         for relationship in config.ui_relationships:
             if (
@@ -113,6 +149,14 @@ def get_ac_meter_associated_bls(ac_meter: ACMeter, config: N2kConfiguration):
 
 
 def get_circuit_associated_bls(circuit: Circuit, config: N2kConfiguration):
+    """
+    Get the BinaryLogicState associated with a circuit configuration.
+    Args:
+        circuit: The Circuit configuration to find the associated BinaryLogicState for.
+        config: The N2kConfiguration containing relationships and BinaryLogicStates.
+    Returns:
+        The associated BinaryLogicState if found, None otherwise.
+    """
     relationship = next(
         (
             relationship
@@ -143,6 +187,14 @@ def create_link(
     primary_type: ThingType,
     linked_id: int,
 ):
+    """Create a Link object for the specified primary type and linked ID.
+    Args:
+        link_thing_type: The type of the link being created.
+        primary_type: The primary type of the item being linked.
+        linked_id: The ID of the item being linked.
+    Returns:
+        A Link object with the specified type and ID.
+    """
     link = Link(
         id=f"{link_thing_type.value}.{linked_id}",
         tags=[
@@ -153,6 +205,14 @@ def create_link(
 
 
 def get_child_circuits(id: int, config: N2kConfiguration) -> list[Circuit]:
+    """
+    Get the child circuits associated with a given circuit ID.
+    Args:
+        id: The ID of the parent circuit
+        config: The N2kConfiguration containing relationships and circuits
+    Returns:
+        A list of child circuits associated with the parent circuit ID.
+    """
 
     child_circuits = []
 
@@ -187,6 +247,14 @@ def get_child_circuits(id: int, config: N2kConfiguration) -> list[Circuit]:
 
 
 def get_associated_tank(id: int, config: N2kConfiguration):
+    """
+    Get the tank associated with a circuit (pump) by its ID.
+    Args:
+        id: The ID of the circuit
+        config: The N2kConfiguration containing relationships and tanks
+    Returns:
+        The associated tank if found, None otherwise
+    """
     hidden_circuit = next(
         (
             circuit
