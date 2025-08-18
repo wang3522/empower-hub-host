@@ -8,7 +8,7 @@ import os
 import zipfile
 import shutil
 
-from utility.cmd_interface import CMD_INTERFACE
+from utility.cmd_interface import CMD_INTERFACE, CMD_INTERFACE_INSTANCE
 from .uart_message_processor import load_key, decrypt_data
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ class BLE_UART:
                     raise Exception(f"config file not found, at {config_file_path}")
 
                 cls._instance.timeout = 1
-
+                CMD_INTERFACE_INSTANCE.set_uart_authenticated_callback(cls._instance.set_is_authenticated)
             except Exception as error:
                 logger.error(f"Error creating BLE uart instance: {error}")
                 raise Exception("BLE uart not created.")
@@ -157,20 +157,18 @@ class BLE_UART:
                         cleaned_data = ""
                         if cmd in CMD_INTERFACE:
                             if len(split_data) > 1:
-                                data_payload = split_data[1].lower()
-                                if (self.is_authenticated):
-                                    encrypted_bytes = bytes.fromhex(data_payload)
-                                    cleaned_data = decrypt_data(encrypted_bytes).decode("utf-8", errors="ignore")
+                                data_payload_hex = split_data[1].lower()
+                                data_payload = bytes.fromhex(data_payload_hex)
+                                if (self.is_authenticated and not data_cmd == "reset_grant_level"):
+                                    cleaned_data = decrypt_data(data_payload).decode("utf-8", "ignore")
                                 else:
-                                    cleaned_data = data_payload
+                                    cleaned_data = data_payload.decode("utf-8", "ignore")
                             res = CMD_INTERFACE[cmd](data_cmd + "/" + cleaned_data)
                         else:
                             logger.error(f"Unknown cmd, {cmd}")
-                            res = json.dumps({"error": "unknown cmd", "data": None})
                     else:
                         logger.error(f"Invalid data: {line}")
-                        res = json.dumps({"error": "invalid data", "data": None})
-                    if (res == "OTA_CONSENTED\n"):
+                    if res.startswith("OTA_CONSENTED"):
                         try:
                             with open("/data/ota_consent.txt", "w") as f:
                                 f.write("")
@@ -198,8 +196,10 @@ class BLE_UART:
                         if dbus_obj:
                             dbus_obj.bl654_object.notify_version(res.split("/")[1].strip())
                         continue
-                    self._send_data(res)
-                    
+                    if res.startswith("MX93/NOT_IMPLEMENTED"):
+                        continue
+                    if res.strip():
+                        self._send_data(res)
             except Serial.SerialException:
                 logger.error(f"Error reading BLE UART - serial exception: {Serial.SerialException}")
             except Exception as error:
@@ -233,3 +233,6 @@ class BLE_UART:
     def request_application_version(self):
         self._send_data("MX93/VERSION\n")
         logger.debug("Requested application version from BL654")
+
+    def get_cmd_interface(self):
+        return CMD_INTERFACE_INSTANCE
