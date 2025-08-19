@@ -429,7 +429,7 @@ class ConfigProcessor:
                 dc_meter.id,
                 config,
             )
-            if dc_meter.dc_type == DCType.Battery and len(categories) == 0:
+            if dc_meter.dc_type == DCType.Battery and len(categories) != 0:
                 circuit = get_associated_circuit(
                     ItemType.DcMeter,
                     dc_meter.id,
