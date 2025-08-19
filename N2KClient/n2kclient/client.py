@@ -359,12 +359,15 @@ class N2KClient(dbus.service.Object):
         )
         return self._alarm_service.acknowledge_alarm(alarm_id)
 
-    def refresh_active_alarms(self) -> bool:
+    def refresh_active_alarms(self) -> tuple[bool, str]:
         """
         Refresh the active alarms by requesting them from the DBus service.
         """
         self._logger.info("Refresh Alarm Command received. Scanning active alarms")
-        return self._alarm_service.load_active_alarms(True)
+        success, message = self._alarm_service.load_active_alarms(True)
+        if success:
+            return True, message
+        return False, message
 
     def scan_marine_engines(self, should_clear: bool = True) -> bool:
         """

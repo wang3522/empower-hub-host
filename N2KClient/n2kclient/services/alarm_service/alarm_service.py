@@ -120,7 +120,7 @@ class AlarmService:
             self._logger.error("Failed to acknowledge alarm %s: %s", alarm_id, e)
             return False
 
-    def load_active_alarms(self, force: bool = False) -> None:
+    def load_active_alarms(self, force: bool = False) -> tuple[bool, str]:
         """
         Load active alarms from the alarm list dbus method and update the latest alarms.
         """
@@ -176,9 +176,10 @@ class AlarmService:
             ):
                 merged_alarm_list = self._verify_alarm_things(merged_alarm_list)
                 self.set_alarm_list(merged_alarm_list)
+                return True, "Active alarms loaded successfully."
         except Exception as e:
             self._logger.error("Failed to load active alarms: %s", e)
-            return False
+            return False, str(e)
 
     ######################
     # Alarm Processors
