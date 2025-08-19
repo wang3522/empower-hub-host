@@ -117,6 +117,7 @@ class BLE_UART:
         ota_checksum = session_hash.hexdigest()
         total_files = len(sorted_files)
 
+        # After metadata update is sent, uart polling frequency is increased on BL654. Polling frequency must be reset after completion of transfer
         self._send_data(f"BL/OTA_UPDATE_METADATA/{total_files},{ota_checksum}\n")
         time.sleep(3)
 
@@ -126,7 +127,8 @@ class BLE_UART:
                     content = f.read()
             except Exception as e:
                 logger.error("Failed to read file {}: {}".format(rel_path, e))
-                continue
+                self._send_data(f"BL/OTA_TRANSFER_STATUS/error\n")
+                return
 
             chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
             checksum = hashlib.sha256(content).hexdigest()
@@ -139,6 +141,8 @@ class BLE_UART:
                 data_cmd = "BL/OTA_DATA/{}/{}".format(idx, hex_chunk)
                 self._send_data(data_cmd + "\n")
                 time.sleep(0.2)
+
+        self._send_data(f"BL/OTA_TRANSFER_STATUS/success\n")
         return
 
     def _read_thread(self):
