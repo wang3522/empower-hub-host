@@ -124,10 +124,16 @@ class EmpowerService:
                     "Publishing updated active alarm list:\n%s", alarm_dict
                 )
                 self._reconcile_active_alarms(alarm_list)
+                new_active_alarms = {Constants.ACTIVE_ALARMS_KEY: alarm_dict}
                 self.thingsboard_client.update_attributes(
-                    {Constants.ACTIVE_ALARMS_KEY: alarm_dict},
+                    new_active_alarms
                 )
-
+                # Since this is a client attribute, we need to update the sync service
+                # manually as tb client does not allow subscriptions to client attributes.
+                # pylint: disable=protected-access
+                self.sync_service._update_value(
+                    new_active_alarms
+                )
     def __del__(self):
         if len(self._service_init_disposables) > 0:
             for disposable in self._service_init_disposables:
