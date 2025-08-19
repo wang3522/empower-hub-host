@@ -106,7 +106,7 @@ class RpcHandlerService:
     def _refresh_alarms(self):
         try:
             reason = None
-            successful  = self.n2k_client.refresh_active_alarms()
+            successful, reason = self.n2k_client.refresh_active_alarms()
             return ControlResult(successful, reason)
         except Exception as error:
             self._logger.error("Failed to refresh alarms")
