@@ -787,38 +787,34 @@ void CzoneDatabase::UpdateMonitoringACMainContactors(N2KMonitoring::SnapshotInst
 
 void CzoneDatabase::UpdateMonitoringEngines(N2KMonitoring::SnapshotInstanceIdMap &snapshot,
                                             N2KMonitoring::SnapshotInstanceIdMap &lastSnapshot) {
-  // [x] smartcraft
-  // #ifdef EUROPA_SMARTCRAFT_SUPPORT
-  //   auto engines = m_canService.EngineList();
-  //   for (auto &e : engines) {
-  //     m_canService.UpdateMonitoringData(e.first, snapshot.mutable_engines(), lastSnapshot.mutable_engines());
-  //   }
+  // auto engines = m_canService.EngineList();
+  // for (auto &e : engines) {
+  //   m_canService.UpdateMonitoringData(e.first, snapshot.mutable_engines(), lastSnapshot.mutable_engines());
+  // }
 
-  //   auto nmea2kEngines = m_canService.Interface()->displayListNoLock(eCZoneStructDisplayEngines);
-  //   for (auto &e : nmea2kEngines) {
-  //     uint8_t instance = e.DynamicDevice.Instance;
+  auto nmea2kEngines = m_canService.Interface()->displayListNoLock(eCZoneStructDisplayEngines);
+  for (auto &e : nmea2kEngines) {
+    uint8_t instance = e.DynamicDevice.Instance;
 
-  //     std::vector<Field> fields = {{eCZone_Generic_Instance, false, 0.0f, "Instance", instance},
-  //                                  {eCZone_Engine_Speed, false, 0.0f, "Speed", instance},
-  //                                  {eCZone_Engine_BoostPressure, false, 0.0f, "BoostPressure", instance},
-  //                                  {eCZone_Engine_Trim, false, 0.0f, "Trim", instance},
-  //                                  {eCZone_Engine_OilPressure, false, 0.0f, "OilPressure", instance},
-  //                                  {eCZone_Engine_OilTemperature, false, 0.0f, "OilTemperature", instance},
-  //                                  {eCZone_Engine_Temperature, false, 0.0f, "CoolantTemperature", instance},
-  //                                  {eCZone_Engine_AlternatorPotential, false, 0.0f, "AlternatorPotential",
-  //                                  instance}, {eCZone_Engine_FuelRate, false, 0.0f, "FuelRate", instance},
-  //                                  {eCZone_Engine_TotalEngineHours, false, 0.0f, "TotalEngineHours", instance},
-  //                                  {eCZone_Engine_EngineCoolantPressure, false, 0.0f, "CoolantPressure", instance},
-  //                                  {eCZone_Engine_FuelPressure, false, 0.0f, "FuelPressure", instance},
-  //                                  {eCZone_Engine_DiscreteStatus1, false, 0.0f, "DiscreteStatus1", instance},
-  //                                  {eCZone_Engine_DiscreteStatus2, false, 0.0f, "DiscreteStatus2", instance},
-  //                                  {eCZone_Engine_EngineLoad, false, 0.0f, "PercentEngineLoad", instance},
-  //                                  {eCZone_Engine_EngineTorque, false, 0.0f, "PercentEngineTorque", instance}};
+    std::vector<Field> fields = {{eCZone_Generic_Instance, false, 0.0f, "Instance", instance},
+                                 {eCZone_Engine_Speed, false, 0.0f, "Speed", instance},
+                                 {eCZone_Engine_BoostPressure, false, 0.0f, "BoostPressure", instance},
+                                 {eCZone_Engine_Trim, false, 0.0f, "Trim", instance},
+                                 {eCZone_Engine_OilPressure, false, 0.0f, "OilPressure", instance},
+                                 {eCZone_Engine_OilTemperature, false, 0.0f, "OilTemperature", instance},
+                                 {eCZone_Engine_Temperature, false, 0.0f, "CoolantTemperature", instance},
+                                 {eCZone_Engine_AlternatorPotential, false, 0.0f, "AlternatorPotential", instance},
+                                 {eCZone_Engine_FuelRate, false, 0.0f, "FuelRate", instance},
+                                 {eCZone_Engine_TotalEngineHours, false, 0.0f, "TotalEngineHours", instance},
+                                 {eCZone_Engine_EngineCoolantPressure, false, 0.0f, "CoolantPressure", instance},
+                                 {eCZone_Engine_FuelPressure, false, 0.0f, "FuelPressure", instance},
+                                 {eCZone_Engine_DiscreteStatus1, false, 0.0f, "DiscreteStatus1", instance},
+                                 {eCZone_Engine_DiscreteStatus2, false, 0.0f, "DiscreteStatus2", instance},
+                                 {eCZone_Engine_EngineLoad, false, 0.0f, "PercentEngineLoad", instance},
+                                 {eCZone_Engine_EngineTorque, false, 0.0f, "PercentEngineTorque", instance}};
 
-  //     ProcessFields(fields, instance, snapshot.mutable_engines(), lastSnapshot.mutable_engines(), m_UnitConversion,
-  //                   m_DataTypeIndex);
-  //   }
-  // #endif
+    ProcessFields(fields, instance, snapshot.m_engines, lastSnapshot.m_engines, m_UnitConversion, m_DataTypeIndex);
+  }
 }
 
 void CzoneDatabase::UpdateMonitoringACs(N2KMonitoring::SnapshotInstanceIdMap &snapshot,

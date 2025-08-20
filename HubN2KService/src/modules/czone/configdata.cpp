@@ -2564,7 +2564,7 @@ SwitchPositiveNegtive &SwitchPositiveNegtive::operator=(SwitchPositiveNegtive &&
   return *this;
 }
 
-RTCoreMapEntry::RTCoreMapEntry()
+AnalogMapEntry::AnalogMapEntry()
     : m_displaytype(ConfigRequest::eConfigType::eNone),
       m_circuitLoads(),
       m_dcMeters(),
@@ -2573,7 +2573,7 @@ RTCoreMapEntry::RTCoreMapEntry()
       m_alarms(),
       m_circuits() {}
 
-RTCoreMapEntry::RTCoreMapEntry(const RTCoreMapEntry &rhs)
+AnalogMapEntry::AnalogMapEntry(const AnalogMapEntry &rhs)
     : m_displaytype(rhs.m_displaytype),
       m_circuitLoads(rhs.m_circuitLoads),
       m_dcMeters(rhs.m_dcMeters),
@@ -2582,7 +2582,7 @@ RTCoreMapEntry::RTCoreMapEntry(const RTCoreMapEntry &rhs)
       m_alarms(rhs.m_alarms),
       m_circuits(rhs.m_circuits) {}
 
-RTCoreMapEntry::RTCoreMapEntry(RTCoreMapEntry &&rhs)
+AnalogMapEntry::AnalogMapEntry(AnalogMapEntry &&rhs)
     : m_displaytype(rhs.m_displaytype),
       m_circuitLoads(std::move(rhs.m_circuitLoads)),
       m_dcMeters(std::move(rhs.m_dcMeters)),
@@ -2591,7 +2591,7 @@ RTCoreMapEntry::RTCoreMapEntry(RTCoreMapEntry &&rhs)
       m_alarms(std::move(rhs.m_alarms)),
       m_circuits(std::move(rhs.m_circuits)) {}
 
-RTCoreMapEntry &RTCoreMapEntry::operator=(const RTCoreMapEntry &rhs) {
+AnalogMapEntry &AnalogMapEntry::operator=(const AnalogMapEntry &rhs) {
   if (this != &rhs) {
     m_displaytype = rhs.m_displaytype;
     m_circuitLoads = rhs.m_circuitLoads;
@@ -2604,7 +2604,7 @@ RTCoreMapEntry &RTCoreMapEntry::operator=(const RTCoreMapEntry &rhs) {
   return *this;
 }
 
-RTCoreMapEntry &RTCoreMapEntry::operator=(RTCoreMapEntry &&rhs) {
+AnalogMapEntry &AnalogMapEntry::operator=(AnalogMapEntry &&rhs) {
   if (this != &rhs) {
     m_displaytype = rhs.m_displaytype;
     m_circuitLoads = std::move(rhs.m_circuitLoads);
@@ -2617,22 +2617,22 @@ RTCoreMapEntry &RTCoreMapEntry::operator=(RTCoreMapEntry &&rhs) {
   return *this;
 }
 
-RTCoreLogicalIdToDeviceConfig::RTCoreLogicalIdToDeviceConfig()
+AnalogLogicalIdToDeviceConfig::AnalogLogicalIdToDeviceConfig()
     : m_circuitLoads(), m_dcMeters(), m_monitoringDevice(), m_switchPositiveNegtive() {}
 
-RTCoreLogicalIdToDeviceConfig::RTCoreLogicalIdToDeviceConfig(const RTCoreLogicalIdToDeviceConfig &rhs)
+AnalogLogicalIdToDeviceConfig::AnalogLogicalIdToDeviceConfig(const AnalogLogicalIdToDeviceConfig &rhs)
     : m_circuitLoads(rhs.m_circuitLoads),
       m_dcMeters(rhs.m_dcMeters),
       m_monitoringDevice(rhs.m_monitoringDevice),
       m_switchPositiveNegtive(rhs.m_switchPositiveNegtive) {}
 
-RTCoreLogicalIdToDeviceConfig::RTCoreLogicalIdToDeviceConfig(RTCoreLogicalIdToDeviceConfig &&rhs)
+AnalogLogicalIdToDeviceConfig::AnalogLogicalIdToDeviceConfig(AnalogLogicalIdToDeviceConfig &&rhs)
     : m_circuitLoads(std::move(rhs.m_circuitLoads)),
       m_dcMeters(std::move(rhs.m_dcMeters)),
       m_monitoringDevice(std::move(rhs.m_monitoringDevice)),
       m_switchPositiveNegtive(std::move(rhs.m_switchPositiveNegtive)) {}
 
-RTCoreLogicalIdToDeviceConfig &RTCoreLogicalIdToDeviceConfig::operator=(const RTCoreLogicalIdToDeviceConfig &rhs) {
+AnalogLogicalIdToDeviceConfig &AnalogLogicalIdToDeviceConfig::operator=(const AnalogLogicalIdToDeviceConfig &rhs) {
   if (this != &rhs) {
     m_circuitLoads = rhs.m_circuitLoads;
     m_dcMeters = rhs.m_dcMeters;
@@ -2642,7 +2642,7 @@ RTCoreLogicalIdToDeviceConfig &RTCoreLogicalIdToDeviceConfig::operator=(const RT
   return *this;
 }
 
-RTCoreLogicalIdToDeviceConfig &RTCoreLogicalIdToDeviceConfig::operator=(RTCoreLogicalIdToDeviceConfig &&rhs) {
+AnalogLogicalIdToDeviceConfig &AnalogLogicalIdToDeviceConfig::operator=(AnalogLogicalIdToDeviceConfig &&rhs) {
   if (this != &rhs) {
     m_circuitLoads = std::move(rhs.m_circuitLoads);
     m_dcMeters = std::move(rhs.m_dcMeters);
@@ -2739,6 +2739,9 @@ void to_json(nlohmann::json &j, const EngineDevice &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const UiRelationshipMsg &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const BinaryLogicStateMsg &c) { j = c.tojson(); }
 void to_json(nlohmann::json &j, const Event &c) { j = c.tojson(); }
+void to_json(nlohmann::json &j, const AnalogLogicalIdToDeviceConfig &c) { j = c.tojson(); }
+void to_json(nlohmann::json &j, const AnalogMapEntry &c) { j = c.tojson(); }
+void to_json(nlohmann::json &j, const SwitchPositiveNegtive &c) { j = c.tojson(); }
 
 json Categories::tojson() const {
   json result;
@@ -2865,7 +2868,9 @@ json ConfigResult::tojson() const {
   if (m_binaryLogicStates.size() > 0) {
     result["BinaryLogicStates"] = m_binaryLogicStates;
   }
-
+  if (m_AnalogLogicalIdToDeviceConfig.is_available()) {
+    result["ADC"] = m_AnalogLogicalIdToDeviceConfig;
+  }
   return result;
 }
 
@@ -3472,6 +3477,66 @@ json Event::tojson() const {
   result["CZoneEvent"]["DeviceItem"] = toHexString(m_czoneEvent.get_deviceItem());
 
   result["TimeStamp"] = m_timeStamp;
+
+  return result;
+}
+
+json SwitchPositiveNegtive::tojson() const {
+  json result;
+
+  result["ChannelAddress"] = m_channelAddress;
+  result["Channel"] = m_channel;
+  result["Mode"] = m_mode;
+  result["BinaryStatusIndex"] = m_binaryStatusIndex;
+
+  return result;
+}
+
+json AnalogMapEntry::tojson() const {
+  json result;
+
+  result["MeteringDevice"] = m_dcMeters;
+  result["MonitoringDevice"] = m_monitoringDevice;
+  result["SwitchPositiveNegtive"] = m_switchPositiveNegtive;
+  result["Alarm"] = m_alarms;
+  result["CircuitLoad"] = m_circuitLoads;
+  result["CircuitDevice"] = m_circuits;
+
+  return result;
+}
+
+json AnalogLogicalIdToDeviceConfig::tojson() const {
+  json result;
+
+  if (m_dcMeters.size() > 0) {
+    for (auto &r : m_dcMeters) {
+      result[std::to_string(r.first)] = json::object();
+      result[std::to_string(r.first)]["Alarm"] = r.second.get_alarms();
+      result[std::to_string(r.first)]["MeteringDevice"] = r.second.get_dcMeters();
+    }
+  }
+  if (m_monitoringDevice.size() > 0) {
+    for (auto &r : m_monitoringDevice) {
+      result[std::to_string(r.first)] = json::object();
+      result[std::to_string(r.first)]["Alarm"] = r.second.get_alarms();
+      result[std::to_string(r.first)]["MonitoringDevice"] = r.second.get_monitoringDevice();
+    }
+  }
+  if (m_circuitLoads.size() > 0) {
+    for (auto &r : m_circuitLoads) {
+      result[std::to_string(r.first)] = json::object();
+      result[std::to_string(r.first)]["Alarm"] = r.second.get_alarms();
+      result[std::to_string(r.first)]["CircuitLoad"] = r.second.get_circuitLoads();
+      result[std::to_string(r.first)]["CircuitDevice"] = r.second.get_circuits();
+    }
+  }
+  if (m_switchPositiveNegtive.size() > 0) {
+    for (auto &r : m_switchPositiveNegtive) {
+      result[std::to_string(r.first)] = json::object();
+      result[std::to_string(r.first)]["Alarm"] = r.second.get_alarms();
+      result[std::to_string(r.first)]["SwitchPositiveNegtive"] = r.second.get_switchPositiveNegtive();
+    }
+  }
 
   return result;
 }

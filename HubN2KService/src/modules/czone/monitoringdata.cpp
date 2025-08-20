@@ -1501,24 +1501,42 @@ json N2KMonitoring::NetworkStatus::tojson() const {
 json N2KMonitoring::SnapshotInstanceIdMap::tojson() const {
   json result;
 
-  JsonHelpers::idMapToJson(result, "Circuits", m_circuits);
-  JsonHelpers::idMapToJson(result, "Modes", m_modes);
-  JsonHelpers::idMapToJson(result, "Tanks", m_tanks);
-  JsonHelpers::idMapToJson(result, "Engines", m_engines);
-  JsonHelpers::idMapToJson(result, "AC", m_ac);
-  JsonHelpers::idMapToJson(result, "DC", m_dc);
-  JsonHelpers::idMapToJson(result, "Temperatures", m_temperatures);
-  JsonHelpers::idMapToJson(result, "Pressures", m_pressures);
-  JsonHelpers::idMapToJson(result, "Hvacs", m_hvacs);
-  JsonHelpers::idMapToJson(result, "Awnings", m_awnings);
-  JsonHelpers::idMapToJson(result, "ThirdPartyGenerators", m_thirdPartyGenerators);
-  JsonHelpers::idMapToJson(result, "InverterChargers", m_inverterChargers);
-  JsonHelpers::idMapToJson(result, "Tyrepressures", m_tyrepressures);
-  JsonHelpers::idMapToJson(result, "AudioStereos", m_audioStereos);
-  JsonHelpers::idMapToJson(result, "ACMainContactors", m_acMainContactors);
-  JsonHelpers::idMapToJson(result, "GNSS", m_gnss);
-  JsonHelpers::idMapToJson(result, "MonitoringKeyValue", m_monitoringKeyValue);
-  JsonHelpers::idMapToJson(result, "BinaryLogicState", m_binaryLogicState);
+  if (m_circuits.size() > 0)
+    JsonHelpers::idMapToJson(result, "Circuits", m_circuits);
+  if (m_modes.size() > 0)
+    JsonHelpers::idMapToJson(result, "Modes", m_modes);
+  if (m_tanks.size() > 0)
+    JsonHelpers::idMapToJson(result, "Tanks", m_tanks);
+  if (m_engines.size() > 0)
+    JsonHelpers::idMapToJson(result, "Engines", m_engines);
+  if (m_ac.size() > 0)
+    JsonHelpers::idMapToJson(result, "AC", m_ac);
+  if (m_dc.size() > 0)
+    JsonHelpers::idMapToJson(result, "DC", m_dc);
+  if (m_temperatures.size() > 0)
+    JsonHelpers::idMapToJson(result, "Temperatures", m_temperatures);
+  if (m_pressures.size() > 0)
+    JsonHelpers::idMapToJson(result, "Pressures", m_pressures);
+  if (m_hvacs.size() > 0)
+    JsonHelpers::idMapToJson(result, "Hvacs", m_hvacs);
+  if (m_awnings.size() > 0)
+    JsonHelpers::idMapToJson(result, "Awnings", m_awnings);
+  if (m_thirdPartyGenerators.size() > 0)
+    JsonHelpers::idMapToJson(result, "ThirdPartyGenerators", m_thirdPartyGenerators);
+  if (m_inverterChargers.size() > 0)
+    JsonHelpers::idMapToJson(result, "InverterChargers", m_inverterChargers);
+  if (m_tyrepressures.size() > 0)
+    JsonHelpers::idMapToJson(result, "Tyrepressures", m_tyrepressures);
+  if (m_audioStereos.size() > 0)
+    JsonHelpers::idMapToJson(result, "AudioStereos", m_audioStereos);
+  if (m_acMainContactors.size() > 0)
+    JsonHelpers::idMapToJson(result, "ACMainContactors", m_acMainContactors);
+  if (m_gnss.size() > 0)
+    JsonHelpers::idMapToJson(result, "GNSS", m_gnss);
+  if (m_monitoringKeyValue.size() > 0)
+    JsonHelpers::idMapToJson(result, "MonitoringKeyValue", m_monitoringKeyValue);
+  if (m_binaryLogicState.size() > 0)
+    JsonHelpers::idMapToJson(result, "BinaryLogicState", m_binaryLogicState);
 
   // if (m_networkStatus) {
   //   result["NetworkStatus"] = m_networkStatus->tojson();
