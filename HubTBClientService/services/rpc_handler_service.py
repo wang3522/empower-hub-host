@@ -9,6 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 #pylint: disable=import-error, wrong-import-position, no-name-in-module
 from mqtt_client import ThingsBoardClient
 from tb_utils.constants import Constants
+from .models.tb_remote_shell import RemoteShell
 from n2kclient.client import N2KClient
 from n2kclient.models.empower_system.thing import Thing
 from n2kclient.models.empower_system.channel import Channel
@@ -52,6 +53,7 @@ class RpcHandlerService:
 
     thingsboard_client: ThingsBoardClient
     n2k_client: N2KClient
+    remote_shell: RemoteShell
 
     _stdout = ""
     _stdin = ""
@@ -61,6 +63,7 @@ class RpcHandlerService:
         self.thingsboard_client = ThingsBoardClient()
         self.n2k_client = n2k_client
         self.register_rpc_callbacks()
+        self.remote_shell = RemoteShell(self.thingsboard_client)
 
     def __getCommandStatus_rpc_handler(self, body: dict[str, any]):
         self._logger.info("Received getCommandStatus command: %s", body)
@@ -124,11 +127,9 @@ class RpcHandlerService:
         self._logger.info("Scanning Marine Engine Config")
         try:
             reason = None
-            # TODO: Replace with actual scan logic
-            # successful, reason = self.n2k_client.scan_marine_engines(
-            #     should_clear=should_clear
-            # )
-            successful = True
+            successful, reason = self.n2k_client.scan_marine_engines(
+                should_clear=should_clear
+            )
             return ControlResult(successful, reason)
         except Exception as error:
             self._logger.error("Failed to scan engine config")

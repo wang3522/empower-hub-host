@@ -176,7 +176,7 @@ class AlarmService:
             ):
                 merged_alarm_list = self._verify_alarm_things(merged_alarm_list)
                 self.set_alarm_list(merged_alarm_list)
-                return True, "Active alarms loaded successfully."
+            return True, "Active alarms loaded successfully."
         except Exception as e:
             self._logger.error("Failed to load active alarms: %s", e)
             return False, str(e)
