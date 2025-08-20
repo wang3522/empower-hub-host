@@ -46,20 +46,13 @@ class EmpowerService:
     thingsboard_client: ThingsBoardClient
     n2k_client: N2KClient = N2KClient()
     location_service: LocationService
-    rpc_handler_service: RpcHandlerService = None  # Placeholder for RPC handler service
-    # active_alarms: rx.Observable[AlarmList]
-    # engine_alerts: rx.Observable[EngineAlertList]
-    discovered_engines: rx.Observable[EngineList]
+    rpc_handler_service: RpcHandlerService = None
     telemetry_consent: bool = True
-    _prev_system_subscription: rx.abc.DisposableBase = None
-    _prev_engine_list_subscription: rx.abc.DisposableBase = None
 
     _service_init_disposables: list[rx.abc.DisposableBase]
 
-    last_telemetry = {}
-    last_state_attrs = {}
-
-    _active_alarms = None
+    _engine_list:dict[str, Any] = None
+    _active_alarms:dict = None
 
     def __init__(self):
         self._logger = logging.getLogger("EmpowerService")
@@ -67,12 +60,7 @@ class EmpowerService:
         self.n2k_client = N2KClient()
         self.rpc_handler_service = RpcHandlerService(self.n2k_client)
         self._service_init_disposables = []
-        self._prev_empower_system = None
-        self._prev_engine_list = None
-        self._prev_system_subscription = None
-        self._prev_engine_list_subscription = None
-        self.last_telemetry = {}
-        self.last_state_attrs = {}
+        self._engine_list = {}
         self._active_alarms = {}
         self.sync_service = SyncService()
         self.location_service = LocationService(self.n2k_client)
@@ -132,10 +120,6 @@ class EmpowerService:
         if len(self._service_init_disposables) > 0:
             for disposable in self._service_init_disposables:
                 disposable.dispose()
-        if self._prev_system_subscription:
-            self._prev_system_subscription.dispose()
-        if self._prev_engine_list_subscription:
-            self._prev_engine_list_subscription.dispose()
         if self.thingsboard_client is not None:
             self.thingsboard_client.__del__()
 
@@ -186,6 +170,15 @@ class EmpowerService:
             self._active_alarms = alarms
             self._logger.info("Active alarms updated: %s", alarms)
 
+    def _set_engine_list(self, engine_list: dict[str, Any]):
+        """
+        Set the engine list with the provided engine_list.
+        This method will send the engine list to ThingsBoard if it has changed.
+        """
+        if engine_list is not None:
+            self._engine_list = engine_list
+            self._logger.info("Engine list updated: %s", engine_list)
+
     def __setup_subscriptions(self):
         """
         Set up subscriptions for the EmpowerService.
@@ -205,9 +198,16 @@ class EmpowerService:
         if behavior_subject is not None:
             dispose = behavior_subject.subscribe(self.update_active_alarms)
             self._service_init_disposables.append(dispose)
+        self.sync_service.subscribe_to_attribute(Constants.ENGINE_CONFIG_KEY, AttributeType.CLIENT)
+        behavior_subject = self.sync_service.get_attribute_subject(
+            key=Constants.ENGINE_CONFIG_KEY
+        )
+        if behavior_subject is not None:
+            dispose = behavior_subject.subscribe(self._set_engine_list)
+            self._service_init_disposables.append(dispose)
         # ======= N2K Client Subscriptions =======
         # Subscribe to mobile friendly engine configuration
-        disposable = (self.n2k_client.engine_list
+        disposable = (self.n2k_client.get_engine_list_observable()
                       .subscribe(self._update_engine_configuration))
         self._service_init_disposables.append(disposable)
         # Subscribe to mobile friendly configuration
@@ -314,14 +314,35 @@ class EmpowerService:
             self._logger.error("Configuration is None, unable to update cloud configuration")
             return
 
-        config_dict = config.to_config_dict()
-        self._logger.debug(
-            "Publishing engine configuration to cloud: %s", json.dumps(config_dict)
-        )
-        self.thingsboard_client.update_attributes(
-            {Constants.ENGINE_CONFIG_KEY: config_dict}
-        )
-        self.__print_engine_cloud_config(config_dict)
+        try:
+            config_dict = config.to_config_dict()
+            # Get a copy of the current engine list so we can compare it later
+            config_copy = self._engine_list.copy() if self._engine_list else {}
+            # If should reset is True, clear the existing engine list
+            # Otherwise, only update the existing engine list
+            if config.should_reset is True:
+                self._engine_list = {}
+
+            # Append any new engines to the engine list
+            for engine_id, engine in config_dict.items():
+                self._engine_list[engine_id] = engine
+
+            # If the engine list has changed, update the ThingsBoard client
+            if config_copy != self._engine_list:
+                new_engine_config = {Constants.ENGINE_CONFIG_KEY: self._engine_list}
+                self.thingsboard_client.update_attributes(
+                    new_engine_config
+                )
+                # Because engine config is a client attribute, the thingsboard subscribe does not
+                # give us the latest value, so we need to manually update the sync service so its
+                # available and can be used on startup when offline. If thingsboard didn't get the
+                # change, then the sync service will update to the cloud copy when it connects.
+                self.sync_service._update_value(new_engine_config)
+            else:
+                self._logger.debug("Engine configuration is up to date, no changes detected.")
+            self.__print_engine_cloud_config(self._engine_list)
+        except Exception as e:
+            self._logger.error("Failed to update engine configuration: %s", e)
 
     def __print_cloud_config(self, system: dict):
         if system is None:

@@ -8,6 +8,7 @@ import sys
 import threading
 from typing import Dict, Optional, Any
 import enum
+import hashlib
 import reactivex as rx
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -209,6 +210,17 @@ class SyncService:
             return result.value
         return None
 
+    def get_dictionary_hash(self, dictionary: dict[str, Any]) -> str:
+        """
+        Get the SHA256 hash of a dictionary.
+        This is used to compare the current value with the new value.
+        """
+        if not isinstance(dictionary, dict):
+            raise ValueError("Input must be a dictionary.")
+        hashed_string = hashlib.new("sha256")
+        hashed_string.update(json.dumps(dictionary).encode())
+        return hashed_string.hexdigest()
+
     def _update_value(self, value: Optional[dict[str, Any]]):
         """
         Update the value of the attributes in the sync service and notify subscribers.
@@ -221,7 +233,12 @@ class SyncService:
 
         for key, val in value.items():
             if key in self._attributes and val is not None:
-                if val != self._attributes[key].subject.value:
+                if isinstance(val, dict) and isinstance(self._attributes[key].get_value(), dict):
+                    is_different = self.get_dictionary_hash(val) != self.get_dictionary_hash(
+                        self._attributes[key].get_value())
+                else:
+                    is_different = val != self._attributes[key].get_value()
+                if is_different:
                     self._logger.info(
                         "Attribute '%s' changed from '%s' to '%s'.",
                         key,
@@ -287,7 +304,7 @@ class SyncService:
         client_keys = []
         shared_keys = []
         for key in keys:
-            self.subscribe_to_attribute(key)
+            self.subscribe_to_attribute(key, self._attributes[key].type)
             if self._attributes[key].type == AttributeType.CLIENT:
                 client_keys.append(key)
             else:

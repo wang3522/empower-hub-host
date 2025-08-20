@@ -6,6 +6,7 @@ It also handles offline state and stores telemetry and attributes in a queue whe
 It uses the reactivex library to handle observables and subscriptions.
 """
 from multiprocessing import Queue
+import hashlib
 import queue
 import threading
 import time
@@ -443,7 +444,6 @@ class ThingsBoardClient:
                     "Requesting attributes from cloud to check for changes %s",
                     json.dumps(not_cached)
                 )
-                #TODO: Check to see if the requested value is config, grab checksum instead to compare
                 # Request the attributes from Thingsboard and update
                 # the attributes with the new values.
                 self.request_then_update_attributes(
@@ -475,9 +475,28 @@ class ThingsBoardClient:
         Request the attributes from Thingsboard and update the attributes with the new values.
         """
         request_subject = rx.Subject()
+        config: dict = None
+        if Constants.CONFIG_KEY in not_cached:
+            # If the config is not cached, then we request the checksum instead
+            # so we don't have to download the entire config
+            not_cached.remove(Constants.CONFIG_KEY)
+            not_cached.append(Constants.CONFIG_CHECKSUM_KEY)
+            config = not_cached_dict.pop(Constants.CONFIG_KEY, None)
         def request_attributes_callback(value):
             # If the value is different from the last known state
             # Update the last known state
+            if config is not None:
+                if Constants.CONFIG_CHECKSUM_KEY in value:
+                    hashed_string = hashlib.new("sha256")
+                    hashed_string.update(json.dumps(config).encode())
+                    checksum_value = hashed_string.hexdigest()
+                    if value[Constants.CONFIG_CHECKSUM_KEY] != checksum_value:
+                        self._logger.info("Config checksum is different from cloud")
+                        not_cached_dict[Constants.CONFIG_KEY] = config
+                else:
+                    self._logger.info("Config checksum not found in cloud")
+                    not_cached_dict[Constants.CONFIG_KEY] = config
+
             self._logger.info(
                 "Updating last known state with new attributes %s",
                 json.dumps(value)
@@ -561,9 +580,16 @@ class ThingsBoardClient:
             # Divide attributes into chunks of 100
             attributes_chunks = chunk_attributes(attributes.items(), 100)
             for chunk in attributes_chunks:
+                # Since the configs are so large, we should send them separately
+                # so we don't run into issues with the message size.
                 if Constants.CONFIG_KEY in chunk:
                     config = chunk.pop(Constants.CONFIG_KEY, None)
-                    _ = self._client.send_attributes({Constants.CONFIG_KEY: config}, wait_for_publish=True)
+                    _ = self._client.send_attributes(
+                        {
+                            Constants.CONFIG_KEY: config
+                        },
+                        wait_for_publish=True
+                    )
                 time.sleep(0.010)  # Sleep to allow Thingsboard to process the message
                 _ = self._client.send_attributes(chunk, wait_for_publish=True)
         except Exception as error:
