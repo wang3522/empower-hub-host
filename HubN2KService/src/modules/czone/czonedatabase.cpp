@@ -828,7 +828,7 @@ void CzoneDatabase::UpdateMonitoringEngines(N2KMonitoring::SnapshotInstanceIdMap
     BOOST_LOG_TRIVIAL(debug) << "Max: " << std::to_string(_key->m_max);
     BOOST_LOG_TRIVIAL(debug) << "WarnLow: " << std::to_string(_key->m_warnLow);
     BOOST_LOG_TRIVIAL(debug) << "WarnHigh: " << std::to_string(_key->m_warnHigh);
-    BOOST_LOG_TRIVIAL(debug) << "FieldName: " << std::to_string(fields[10].FieldName);
+    BOOST_LOG_TRIVIAL(debug) << "FieldName: " << fields[10].FieldName;
     BOOST_LOG_TRIVIAL(debug) << "Type: " << std::to_string(fields[10].Type);
     BOOST_LOG_TRIVIAL(debug) << "Valid: " << std::to_string(fields[10].Valid);
     BOOST_LOG_TRIVIAL(debug) << "Value: " << std::to_string(fields[10].Value);
