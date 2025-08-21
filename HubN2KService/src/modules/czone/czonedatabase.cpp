@@ -121,12 +121,12 @@ bool CzoneDatabase::GetValuesForInstanceOrId(std::vector<Field> &fields, tUnitCo
       f.Valid = true;
     } else {
       // Retrieve actual monitored data value
-      f.Value = Value(f.Type, f.Instance, f.Valid, dataTypeIndex, valueMap);
+      auto val = Value(f.Type, f.Instance, f.Valid, dataTypeIndex, valueMap);
       if (f.Valid) {
         validValue = true;
         // Apply unit conversion to present data in user-preferred units
         auto units = Utils::Units::UnitsFromDataType(f.Type);
-        f.Value = unitConversion.SystemValueToUserValue(units, f.Value);
+        f.Value = unitConversion.SystemValueToUserValue(units, val);
       }
     }
   }
@@ -814,6 +814,26 @@ void CzoneDatabase::UpdateMonitoringEngines(N2KMonitoring::SnapshotInstanceIdMap
                                  {eCZone_Engine_EngineTorque, false, 0.0f, "PercentEngineTorque", instance}};
 
     ProcessFields(fields, instance, snapshot.m_engines, lastSnapshot.m_engines, m_UnitConversion, m_DataTypeIndex);
+
+    // [x] Coolent Pressure
+    auto key = CreateKey(eCZone_Engine_EngineCoolantPressure, instance);
+    BOOST_LOG_TRIVIAL(debug) << "-- CzoneDatabase::UpdateMonitoringEngines --";
+    BOOST_LOG_TRIVIAL(debug) << "key: " << std::to_string(key);
+    BOOST_LOG_TRIVIAL(debug) << "index: " << std::to_string(m_DataTypeIndex[key]);
+    auto _key = m_SnapshotKeyValue.m_keyValueMap[m_DataTypeIndex[key]];
+    BOOST_LOG_TRIVIAL(debug) << "Valid: " << std::to_string(_key->m_valid);
+    BOOST_LOG_TRIVIAL(debug) << "Value: " << std::to_string(_key->m_value);
+    BOOST_LOG_TRIVIAL(debug) << "LimitValid: " << std::to_string(_key->m_limitValid);
+    BOOST_LOG_TRIVIAL(debug) << "Min: " << std::to_string(_key->m_min);
+    BOOST_LOG_TRIVIAL(debug) << "Max: " << std::to_string(_key->m_max);
+    BOOST_LOG_TRIVIAL(debug) << "WarnLow: " << std::to_string(_key->m_warnLow);
+    BOOST_LOG_TRIVIAL(debug) << "WarnHigh: " << std::to_string(_key->m_warnHigh);
+    BOOST_LOG_TRIVIAL(debug) << "FieldName: " << std::to_string(fields[10].FieldName);
+    BOOST_LOG_TRIVIAL(debug) << "Type: " << std::to_string(fields[10].Type);
+    BOOST_LOG_TRIVIAL(debug) << "Valid: " << std::to_string(fields[10].Valid);
+    BOOST_LOG_TRIVIAL(debug) << "Value: " << std::to_string(fields[10].Value);
+    BOOST_LOG_TRIVIAL(debug) << "Instance: " << std::to_string(fields[10].Instance);
+    BOOST_LOG_TRIVIAL(debug) << "--------------------------------------------";
   }
 }
 
