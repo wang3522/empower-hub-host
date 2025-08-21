@@ -1282,6 +1282,7 @@ json N2KMonitoring::Engine::tojson() const {
   JsonHelpers::valueToJson(result, "AlternatorPotential", m_alternatorPotential);
   JsonHelpers::valueToJson(result, "FuelRate", m_fuelRate);
   JsonHelpers::valueToJson(result, "TotalEngineHours", m_totalEngineHours);
+  JsonHelpers::valueToJson(result, "EngineHours", m_totalEngineHours);
   JsonHelpers::valueToJson(result, "CoolantPressure", m_coolantPressure);
   JsonHelpers::valueToJson(result, "CoolantTemperature", m_coolantTemperature);
   JsonHelpers::valueToJson(result, "FuelPressure", m_fuelPressure);
