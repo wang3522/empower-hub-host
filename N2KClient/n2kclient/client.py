@@ -498,6 +498,12 @@ class N2KClient(dbus.service.Object):
         """
         return self._latest_engine_config
 
+    def get_engine_alarms_observable(self) -> rx.subject.BehaviorSubject:
+        """
+        Get the observable for EngineAlarmList updates.
+        """
+        return self._engine_alarms
+
     # === Setters ===
     def set_devices(self, devices: N2kDevices):
         """
