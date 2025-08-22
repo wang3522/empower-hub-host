@@ -1,13 +1,12 @@
 """
 RPC Handler Service for ThingsBoard Client
 """
-import base64
 import logging
 import os
 import sys
 from typing import Any, Dict, Optional, Union
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-#pylint: disable=import-error, wrong-import-position
+#pylint: disable=import-error, wrong-import-position, no-name-in-module
 from mqtt_client import ThingsBoardClient
 from tb_utils.constants import Constants
 from .models.tb_remote_shell import RemoteShell
@@ -110,9 +109,7 @@ class RpcHandlerService:
     def _refresh_alarms(self):
         try:
             reason = None
-            # TODO: Replace with actual refresh logic
-            # successful, reason = self.n2k_client.refresh_active_alarms()
-            successful = True
+            successful, reason = self.n2k_client.refresh_active_alarms()
             return ControlResult(successful, reason)
         except Exception as error:
             self._logger.error("Failed to refresh alarms")
@@ -159,12 +156,11 @@ class RpcHandlerService:
                     "Invalid acknowledge command: alarmId is not of the format alarm.###"
                 )
 
-            alarm_id = int(alarm_id_segments[1])
-            # TODO: Get last state attributes from the n2k_client or similar
-            # if alarm_id not in self.last_state_attrs[Constants.ActiveAlarms]:
-            #     raise Exception(f"Active alarms with ID {alarm_id} not found")
+            alarm_id = alarm_id_segments[1]
+            if alarm_id not in self.thingsboard_client.last_attributes[Constants.ACTIVE_ALARMS_KEY]:
+                raise Exception(f"Active alarms with ID {alarm_id} not found")
 
-            result = self._acknowledge_alarm(alarm_id)
+            result = self._acknowledge_alarm(int(alarm_id))
             return result.to_json()
 
         except Exception as error:
@@ -177,9 +173,7 @@ class RpcHandlerService:
         self._logger.info("Acknowledging alarm with id - (%d})", alarm_id)
 
         try:
-            # TODO: Replace with actual acknowledge logic
-            # successful = self.n2k_client.acknowledge_alarm(alarm_id)
-            successful = True
+            successful = self.n2k_client.acknowledge_alarm(alarm_id)
             return ControlResult(successful, None)
 
         except Exception as error:
@@ -318,10 +312,7 @@ class RpcHandlerService:
                 raise Exception("Data is missing")
 
             data_as_base64 = body["data"]
-            file_data = base64.b64decode(data_as_base64)
-
-            # TODO: Write config file to the device
-            # self.n2k_client.write_config(file_data)
+            self.n2k_client.write_configuration(data_as_base64)
 
             return {"successful": True}
         except Exception as error:
