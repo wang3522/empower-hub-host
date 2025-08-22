@@ -142,7 +142,6 @@ class EmpowerService:
             if self._engine_alarms != engine_alert_list_dict:
                 self._engine_alarms = engine_alert_list_dict
 
-
     def __del__(self):
         if len(self._service_init_disposables) > 0:
             for disposable in self._service_init_disposables:
