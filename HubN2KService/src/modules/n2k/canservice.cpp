@@ -61,8 +61,11 @@ void CanService::initialise(CzoneSettings *settings, CzoneInterface *interface, 
   Nmea2kStackSetHardwareVersion(m_settings->getHardwareVersions().c_str());
   SetAdditionalSoftwareVersions(m_settings->getAdditionalSoftwareVersions().c_str());
 
+  BOOST_LOG_TRIVIAL(info) << "CanService::initialise: CzoneLib version: " << CZ_FIRMWARE_VERSION_WIFI_BRIDGE_STR;
+  BOOST_LOG_TRIVIAL(info) << "CanService::initialise: App FW version: " << m_settings->getAPPFirmwareVersion();
+
   auto handle = Nmea2kStackInit(dipswitch, id, CzoneSystemConstants::CZ_BEP_PROPRIETARY_CODE, lastSourceAddress,
-                                nmeaChannel, productId, CZ_FIRMWARE_VERSION_WIFI_BRIDGE_STR);
+                                nmeaChannel, productId, m_settings->getAPPFirmwareVersion().c_str());
 
   std::vector<PGNInfo> txPgnList = {PGNInfo(59392, true, 0),
                                     PGNInfo(65280, true, CzoneSystemConstants::CZ_BEP_PROPRIETARY_CODE),

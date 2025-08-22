@@ -57,10 +57,10 @@ CzoneSettings::CzoneSettings() : m_settingsversion(3) {
   }
 
   m_serialnumber = GetJsonValueString("SerialNumber");
-  m_factoryICCID =  GetJsonValueString("FactoryICCID");
+  m_factoryICCID = GetJsonValueString("FactoryICCID");
   m_factoryIMEI = GetJsonValueString("FactoryIMEI");
-  m_RTFirmwareVersion = getRTFirmwareVersion();
-  m_hardwareVersions = GetJsonValueString("EuropaHardwareVersions");
+  m_appFirmwareVersion = getAPPFirmwareVersion();
+  m_hardwareVersions = GetJsonValueString("HardwareVersions");
   m_enable_batterycharger = GetJsonValueBoolen("EnableBatteryCharger");
 
   BOOST_LOG_TRIVIAL(debug) << "CzoneSettings::CzoneSettings::m_serialnumber " << m_serialnumber; // [x] debug
@@ -147,7 +147,7 @@ void CzoneSettings::setMagneticVariation(const float val) {
 std::string CzoneSettings::getHardwareVersions() { return m_hardwareVersions; }
 
 std::string CzoneSettings::getAdditionalSoftwareVersions() {
-  return "RT Core: " + m_RTFirmwareVersion + ", Host: " + m_hostArtifactInfo;
+  return "Core: " + m_appFirmwareVersion + ", Host: " + m_hostArtifactInfo;
 }
 
 void CzoneSettings::setEnableBatteryCharger(const bool val) {
@@ -170,7 +170,7 @@ uint8_t CzoneSettings::getSourceAddress() { return m_sourceaddress; }
 std::string CzoneSettings::getSerialNumber() { return m_serialnumber; }
 std::string CzoneSettings::getFactoryICCID() { return m_factoryICCID; }
 std::string CzoneSettings::getFactoryIMEI() { return m_factoryIMEI; }
-std::string CzoneSettings::getRTFirmwareVersion() { return m_RTFirmwareVersion; }
+std::string CzoneSettings::getAPPFirmwareVersion() { return m_appFirmwareVersion; }
 std::string CzoneSettings::getHostArtifactInfo() { return m_hostArtifactInfo; }
 bool CzoneSettings::getEnableBatteryCharger() { return m_enable_batterycharger; }
 int32_t CzoneSettings::getTimeOffset() {
@@ -188,15 +188,9 @@ int32_t CzoneSettings::getUnits(const tUnitTypes unitType) {
 std::string CzoneSettings::getConfigurationPath() {
   return getCzoneConfigPath() + GetJsonValueString("ConfigurationPath");
 }
-std::string CzoneSettings::getCircuitsLogPath() {
-  return getLogPath() + GetJsonValueString("CircuitsLog");
-}
-std::string CzoneSettings::getMonitoringLogPath() {
-  return getLogPath() + GetJsonValueString("MonitoringLog");
-}
-std::string CzoneSettings::getAlarmsLogPath() {
-  return getLogPath() + GetJsonValueString("AlarmsLog");
-}
+std::string CzoneSettings::getCircuitsLogPath() { return getLogPath() + GetJsonValueString("CircuitsLog"); }
+std::string CzoneSettings::getMonitoringLogPath() { return getLogPath() + GetJsonValueString("MonitoringLog"); }
+std::string CzoneSettings::getAlarmsLogPath() { return getLogPath() + GetJsonValueString("AlarmsLog"); }
 std::string CzoneSettings::getAlarmCustomizedDescriptionPath() {
   return getCzoneConfigPath() + GetJsonValueString("AlarmCustomizedDescription");
 }
@@ -220,23 +214,111 @@ std::string CzoneSettings::_getSerialNumber() {
 }
 
 std::string CzoneSettings::_getFactoryICCID() {
-  std::string output = "89FFFFFFFF1234567890";
-  return (output);
+  std::string output = "unknown";
+  const std::string versionFilePath = "/data/factory/hub-telit.iccid";
+  std::ifstream versionFile;
+
+  // Check if file exists before opening
+  if (std::ifstream(versionFilePath)) {
+    try {
+      versionFile.open(versionFilePath);
+      if (versionFile.is_open()) {
+        std::getline(versionFile, output);
+        versionFile.close();
+        if (output.empty()) {
+          output = "unknown";
+        }
+      }
+    } catch (const std::exception &e) {
+      if (versionFile.is_open()) {
+        versionFile.close();
+      }
+      BOOST_LOG_TRIVIAL(error) << "CzoneSettings: failed to read ICCID info: " << e.what();
+      output = "unknown";
+    }
+  }
+  return output;
 }
 
 std::string CzoneSettings::_getFactoryIMEI() {
-  std::string output = "89FFFFFFFF1234567890";
-  return (output);
+  std::string output = "unknown";
+  const std::string versionFilePath = "/data/factory/hub-telit.imei";
+  std::ifstream versionFile;
+
+  // Check if file exists before opening
+  if (std::ifstream(versionFilePath)) {
+    try {
+      versionFile.open(versionFilePath);
+      if (versionFile.is_open()) {
+        std::getline(versionFile, output);
+        versionFile.close();
+        if (output.empty()) {
+          output = "unknown";
+        }
+      }
+    } catch (const std::exception &e) {
+      if (versionFile.is_open()) {
+        versionFile.close();
+      }
+      BOOST_LOG_TRIVIAL(error) << "CzoneSettings: failed to read IMEI info: " << e.what();
+      output = "unknown";
+    }
+  }
+  return output;
 }
 
-std::string CzoneSettings::_getRTFirmwareVersion() {
-  std::string output = "89FFFFFFFF1234567890";
-  return (output);
+std::string CzoneSettings::_getAPPFirmwareVersion() {
+  std::string output = "unknown";
+  const std::string versionFilePath = "/data/factory/hub-n2k.version";
+  std::ifstream versionFile;
+
+  // Check if file exists before opening
+  if (std::ifstream(versionFilePath)) {
+    try {
+      versionFile.open(versionFilePath);
+      if (versionFile.is_open()) {
+        std::getline(versionFile, output);
+        versionFile.close();
+        if (output.empty()) {
+          output = "unknown";
+        }
+      }
+    } catch (const std::exception &e) {
+      if (versionFile.is_open()) {
+        versionFile.close();
+      }
+      BOOST_LOG_TRIVIAL(error) << "CzoneSettings: failed to read application info: " << e.what();
+      output = "unknown";
+    }
+  }
+  return output;
 }
 
 std::string CzoneSettings::_getHostArtifactInfo() {
-  std::string output = "89FFFFFFFF1234567890";
-  return (output);
+  std::string output = "unknown";
+  const std::string versionFilePath = "/data/factory/hub.version";
+  std::ifstream versionFile;
+
+  // Check if file exists before opening
+  if (std::ifstream(versionFilePath)) {
+    try {
+      versionFile.open(versionFilePath);
+      if (versionFile.is_open()) {
+        std::getline(versionFile, output);
+        versionFile.close();
+        if (output.empty()) {
+          output = "unknown";
+        }
+      }
+    } catch (const std::exception &e) {
+      if (versionFile.is_open()) {
+        versionFile.close();
+      }
+      BOOST_LOG_TRIVIAL(error) << "CzoneSettings: failed to read host artifact info: " << e.what();
+      output = "unknown";
+    }
+  }
+  return output;
 }
 
 std::string CzoneSettings::_getHardwareVersions() { return "unknown"; }
@@ -273,7 +355,7 @@ void CzoneSettings::factoryReset() {
   m_settings["SerialNumber"] = _getSerialNumber();
   m_settings["FactoryICCID"] = _getFactoryICCID();
   m_settings["FactoryIMEI"] = _getFactoryIMEI();
-  m_settings["RTFirmwareVersion"] = _getRTFirmwareVersion();
+  m_settings["APPFirmwareVersion"] = _getAPPFirmwareVersion();
   m_settings["HostArtifactInfo"] = _getHostArtifactInfo();
   m_settings["HardwareVersions"] = _getHardwareVersions();
   m_settings["EnableBatteryCharger"] = false;

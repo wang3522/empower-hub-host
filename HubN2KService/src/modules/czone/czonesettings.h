@@ -39,7 +39,7 @@ public:
   std::string getSerialNumber();
   std::string getFactoryICCID();
   std::string getFactoryIMEI();
-  std::string getRTFirmwareVersion();
+  std::string getAPPFirmwareVersion();
   std::string getHardwareVersions();
   std::string getAdditionalSoftwareVersions();
   std::string getHostArtifactInfo();
@@ -76,7 +76,7 @@ private:
   std::string m_serialnumber;
   std::string m_factoryICCID;
   std::string m_factoryIMEI;
-  std::string m_RTFirmwareVersion;
+  std::string m_appFirmwareVersion;
   std::string m_hardwareVersions;
   std::string m_hostArtifactInfo;
 
@@ -88,7 +88,7 @@ private:
   std::string _getSerialNumber();
   std::string _getFactoryICCID();
   std::string _getFactoryIMEI();
-  std::string _getRTFirmwareVersion();
+  std::string _getAPPFirmwareVersion();
   std::string _getHostArtifactInfo();
   std::string _getHardwareVersions();
 
