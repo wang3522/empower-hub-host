@@ -59,11 +59,9 @@ CzoneSettings::CzoneSettings() : m_settingsversion(3) {
   m_serialnumber = GetJsonValueString("SerialNumber");
   m_factoryICCID = GetJsonValueString("FactoryICCID");
   m_factoryIMEI = GetJsonValueString("FactoryIMEI");
-  m_appFirmwareVersion = getAPPFirmwareVersion();
+  m_appFirmwareVersion = GetJsonValueString("APPFirmwareVersion");
   m_hardwareVersions = GetJsonValueString("HardwareVersions");
   m_enable_batterycharger = GetJsonValueBoolen("EnableBatteryCharger");
-
-  BOOST_LOG_TRIVIAL(debug) << "CzoneSettings::CzoneSettings::m_serialnumber " << m_serialnumber; // [x] debug
 }
 
 CzoneSettings::~CzoneSettings() {}
@@ -321,7 +319,7 @@ std::string CzoneSettings::_getHostArtifactInfo() {
   return output;
 }
 
-std::string CzoneSettings::_getHardwareVersions() { return "unknown"; }
+std::string CzoneSettings::_getHardwareVersions() { return "hub+evt"; }
 
 void CzoneSettings::factoryReset() {
   std::lock_guard<std::mutex> lock(m_settingsmutex);
