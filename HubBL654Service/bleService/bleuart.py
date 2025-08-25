@@ -23,6 +23,7 @@ class BLE_UART:
     thread = None
     is_authenticated = False
     stop_event = None
+    _dbus_server = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -180,12 +181,10 @@ class BLE_UART:
                             logger.error(f"Failed to write OTA consent file: {e}")
                         continue
                     if res.startswith("OTA_STATUS/"):
-                        from ..dbusService.server import get_dbus_server_instance
-                        dbus_obj = get_dbus_server_instance()
                         status = res.split("/")[1].strip()
                         if status == "success":
-                            if dbus_obj:
-                                dbus_obj.bl654_object.ota_complete("success")
+                            if self._dbus_server:
+                                self._dbus_server.bl654_object.ota_complete("success")
                             else:
                                 logger.warning("Dbus not set, could not signal ota_complete")
                         elif status == "error":
@@ -195,10 +194,10 @@ class BLE_UART:
                                 logger.warning("DBus not set; could not signal ota_error")
                         continue
                     if res.startswith("NOTIFY_VERSION/"):
-                        from ..dbusService.server import get_dbus_server_instance
-                        dbus_obj = get_dbus_server_instance()
-                        if dbus_obj:
-                            dbus_obj.bl654_object.notify_version(res.split("/")[1].strip())
+                        if self._dbus_server:
+                            self._dbus_server.bl654_object.notify_version(res.split("/")[1].strip())
+                        else:
+                            logger.warning("Dbus not set, could not signal notify_version")
                         continue
                     if res.startswith("MX93/NOT_IMPLEMENTED"):
                         continue
@@ -240,3 +239,6 @@ class BLE_UART:
 
     def get_cmd_interface(self):
         return CMD_INTERFACE_INSTANCE
+
+    def set_dbus_server(self, dbus_server):
+        self._dbus_server = dbus_server
