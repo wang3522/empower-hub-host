@@ -438,9 +438,15 @@ class LocationService:
                     last_update_location_state,
                     new_location,
                 ):
+                    # Don't include the things into location updates
+                    if Constants.THINGS in change:
+                        change.pop(Constants.THINGS)
                     self._location_updates[channel_id].append(change)
 
             else:
+                # Don't include the things into location updates
+                if Constants.THINGS in change:
+                    change.pop(Constants.THINGS)
                 if self.last_known_trip_location is None:
                     # We had no last location, add the coord to the list
                     self._location_updates[channel_id] = [change]
