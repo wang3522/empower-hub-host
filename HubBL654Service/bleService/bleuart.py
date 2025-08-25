@@ -191,7 +191,7 @@ class BLE_UART:
                             if dbus_obj:
                                 dbus_obj.bl654_object.ota_error("error")
                             else:
-                                logger.warning("DBus not set; could not signal ota_error")
+                                logger.warning("Dbus not set; could not signal ota_error")
                         continue
                     if res.startswith("NOTIFY_VERSION/"):
                         if self._dbus_server:
