@@ -50,8 +50,9 @@ def main():
     try:
         ble = initialize_ble()
         dbus_server = initialize_dbus_server()
+        ble.set_dbus_server(dbus_server)
         dbus_server.start()
-
+        
         main_loop()
     finally:
         if ble:
