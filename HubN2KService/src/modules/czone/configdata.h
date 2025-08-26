@@ -434,7 +434,7 @@ public:
     eUiRelationships = 71,
     eBinaryLogicStates = 72,
     eCZoneRaw = 90,
-    eRTCoreMap = 91,
+    eAnalog = 91,
     eSwitchPositiveNegtive = 92,
     eNonVisibleCircuit = 93
   };
@@ -480,7 +480,7 @@ public:
     case eUiRelationships: return "UiRelationships";
     case eBinaryLogicStates: return "BinaryLogicStates";
     case eCZoneRaw: return "CZoneRaw";
-    case eRTCoreMap: return "RTCoreMap";
+    case eAnalog: return "Analog";
     case eSwitchPositiveNegtive: return "SwitchPositiveNegtive";
     case eNonVisibleCircuit: return "NonVisibleCircuit";
     default: return "Unknown";
@@ -565,8 +565,8 @@ public:
       return eBinaryLogicStates;
     if (type == "CZoneRaw")
       return eCZoneRaw;
-    if (type == "RTCoreMap")
-      return eRTCoreMap;
+    if (type == "Analog")
+      return eAnalog;
     if (type == "SwitchPositiveNegtive")
       return eSwitchPositiveNegtive;
     if (type == "NonVisibleCircuit")
@@ -3074,6 +3074,7 @@ public:
   SwitchPositiveNegtive(SwitchPositiveNegtive &&rhs);
   SwitchPositiveNegtive &operator=(const SwitchPositiveNegtive &rhs);
   SwitchPositiveNegtive &operator=(SwitchPositiveNegtive &&rhs);
+  json tojson() const;
 
   void set_channelAddress(uint32_t address) { m_channelAddress = address; }
   uint32_t get_channelAddress() const { return m_channelAddress; }
@@ -3088,7 +3089,7 @@ public:
   uint32_t get_binaryStatusIndex() const { return m_binaryStatusIndex; }
 };
 
-class RTCoreMapEntry {
+class AnalogMapEntry {
 private:
   ConfigRequest::eConfigType m_displaytype;
   CircuitLoad m_circuitLoads;
@@ -3099,15 +3100,16 @@ private:
   std::list<CircuitDevice> m_circuits;
 
 public:
-  RTCoreMapEntry();
-  ~RTCoreMapEntry() {
+  AnalogMapEntry();
+  ~AnalogMapEntry() {
     m_alarms.clear();
     m_circuits.clear();
   }
-  RTCoreMapEntry(const RTCoreMapEntry &rhs);
-  RTCoreMapEntry(RTCoreMapEntry &&rhs);
-  RTCoreMapEntry &operator=(const RTCoreMapEntry &rhs);
-  RTCoreMapEntry &operator=(RTCoreMapEntry &&rhs);
+  AnalogMapEntry(const AnalogMapEntry &rhs);
+  AnalogMapEntry(AnalogMapEntry &&rhs);
+  AnalogMapEntry &operator=(const AnalogMapEntry &rhs);
+  AnalogMapEntry &operator=(AnalogMapEntry &&rhs);
+  json tojson() const;
 
   void set_displaytype(ConfigRequest::eConfigType type) { m_displaytype = type; }
   ConfigRequest::eConfigType get_displaytype() const { return m_displaytype; }
@@ -3145,48 +3147,54 @@ public:
   }
 };
 
-class RTCoreLogicalIdToDeviceConfig {
+class AnalogLogicalIdToDeviceConfig {
 private:
-  std::map<int, RTCoreMapEntry> m_circuitLoads;
-  std::map<int, RTCoreMapEntry> m_dcMeters;
-  std::map<int, RTCoreMapEntry> m_monitoringDevice;
-  std::map<int, RTCoreMapEntry> m_switchPositiveNegtive;
+  std::map<int, AnalogMapEntry> m_circuitLoads;
+  std::map<int, AnalogMapEntry> m_dcMeters;
+  std::map<int, AnalogMapEntry> m_monitoringDevice;
+  std::map<int, AnalogMapEntry> m_switchPositiveNegtive;
 
 public:
-  RTCoreLogicalIdToDeviceConfig();
-  ~RTCoreLogicalIdToDeviceConfig() { clear(); }
-  RTCoreLogicalIdToDeviceConfig(const RTCoreLogicalIdToDeviceConfig &rhs);
-  RTCoreLogicalIdToDeviceConfig(RTCoreLogicalIdToDeviceConfig &&rhs);
-  RTCoreLogicalIdToDeviceConfig &operator=(const RTCoreLogicalIdToDeviceConfig &rhs);
-  RTCoreLogicalIdToDeviceConfig &operator=(RTCoreLogicalIdToDeviceConfig &&rhs);
+  AnalogLogicalIdToDeviceConfig();
+  ~AnalogLogicalIdToDeviceConfig() { clear(); }
+  AnalogLogicalIdToDeviceConfig(const AnalogLogicalIdToDeviceConfig &rhs);
+  AnalogLogicalIdToDeviceConfig(AnalogLogicalIdToDeviceConfig &&rhs);
+  AnalogLogicalIdToDeviceConfig &operator=(const AnalogLogicalIdToDeviceConfig &rhs);
+  AnalogLogicalIdToDeviceConfig &operator=(AnalogLogicalIdToDeviceConfig &&rhs);
+  json tojson() const;
 
-  void set_circuitLoads(const std::map<int, RTCoreMapEntry> &&circuitLoads) {
+  void set_circuitLoads(const std::map<int, AnalogMapEntry> &&circuitLoads) {
     m_circuitLoads = std::move(circuitLoads);
   }
-  const std::map<int, RTCoreMapEntry> &get_circuitLoads() const { return m_circuitLoads; }
-  std::map<int, RTCoreMapEntry> &mutable_circuitLoads() { return m_circuitLoads; }
+  const std::map<int, AnalogMapEntry> &get_circuitLoads() const { return m_circuitLoads; }
+  std::map<int, AnalogMapEntry> &mutable_circuitLoads() { return m_circuitLoads; }
 
-  void set_dcMeters(const std::map<int, RTCoreMapEntry> &&dcMeters) { m_dcMeters = std::move(dcMeters); }
-  const std::map<int, RTCoreMapEntry> &get_dcMeters() const { return m_dcMeters; }
-  std::map<int, RTCoreMapEntry> &mutable_dcMeters() { return m_dcMeters; }
+  void set_dcMeters(const std::map<int, AnalogMapEntry> &&dcMeters) { m_dcMeters = std::move(dcMeters); }
+  const std::map<int, AnalogMapEntry> &get_dcMeters() const { return m_dcMeters; }
+  std::map<int, AnalogMapEntry> &mutable_dcMeters() { return m_dcMeters; }
 
-  void set_monitoringDevice(const std::map<int, RTCoreMapEntry> &&monitoringDevice) {
+  void set_monitoringDevice(const std::map<int, AnalogMapEntry> &&monitoringDevice) {
     m_monitoringDevice = std::move(monitoringDevice);
   }
-  const std::map<int, RTCoreMapEntry> &get_monitoringDevice() const { return m_monitoringDevice; }
-  std::map<int, RTCoreMapEntry> &mutable_monitoringDevice() { return m_monitoringDevice; }
+  const std::map<int, AnalogMapEntry> &get_monitoringDevice() const { return m_monitoringDevice; }
+  std::map<int, AnalogMapEntry> &mutable_monitoringDevice() { return m_monitoringDevice; }
 
-  void set_switchPositiveNegtive(const std::map<int, RTCoreMapEntry> &&switchPositiveNegtive) {
+  void set_switchPositiveNegtive(const std::map<int, AnalogMapEntry> &&switchPositiveNegtive) {
     m_switchPositiveNegtive = std::move(switchPositiveNegtive);
   }
-  const std::map<int, RTCoreMapEntry> &get_switchPositiveNegtive() const { return m_switchPositiveNegtive; }
-  std::map<int, RTCoreMapEntry> &mutable_switchPositiveNegtive() { return m_switchPositiveNegtive; }
+  const std::map<int, AnalogMapEntry> &get_switchPositiveNegtive() const { return m_switchPositiveNegtive; }
+  std::map<int, AnalogMapEntry> &mutable_switchPositiveNegtive() { return m_switchPositiveNegtive; }
 
   void clear() {
     m_circuitLoads.clear();
     m_dcMeters.clear();
     m_monitoringDevice.clear();
     m_switchPositiveNegtive.clear();
+  }
+
+  bool is_available() const {
+    return m_circuitLoads.size() > 0 || m_dcMeters.size() > 0 || m_monitoringDevice.size() > 0 ||
+           m_switchPositiveNegtive.size() > 0;
   }
 };
 
@@ -3269,7 +3277,7 @@ private:
   std::list<UiRelationshipMsg> m_uiRelationships;
   std::list<BinaryLogicStateMsg> m_binaryLogicStates;
   CZoneRawConfig m_displayList;
-  RTCoreLogicalIdToDeviceConfig m_rtCoreLogicalIdToDeviceConfig;
+  AnalogLogicalIdToDeviceConfig m_AnalogLogicalIdToDeviceConfig;
   eConfigResultStatus m_status;
 
 public:
@@ -3310,7 +3318,7 @@ public:
     m_uiRelationships.clear();
     m_binaryLogicStates.clear();
     m_displayList.clear();
-    m_rtCoreLogicalIdToDeviceConfig.clear();
+    m_AnalogLogicalIdToDeviceConfig.clear();
   }
   void set_status(eConfigResultStatus s) { m_status = s; };
   eConfigResultStatus get_status() const { return m_status; }
@@ -3319,13 +3327,13 @@ public:
   const CZoneRawConfig &get_displayList() const { return m_displayList; }
   CZoneRawConfig &mutable_displayList() { return m_displayList; }
 
-  void set_rtCoreLogicalIdToDeviceConfig(const RTCoreLogicalIdToDeviceConfig &config) {
-    m_rtCoreLogicalIdToDeviceConfig = config;
+  void set_AnalogLogicalIdToDeviceConfig(const AnalogLogicalIdToDeviceConfig &config) {
+    m_AnalogLogicalIdToDeviceConfig = config;
   }
-  const RTCoreLogicalIdToDeviceConfig &get_rtCoreLogicalIdToDeviceConfig() const {
-    return m_rtCoreLogicalIdToDeviceConfig;
+  const AnalogLogicalIdToDeviceConfig &get_AnalogLogicalIdToDeviceConfig() const {
+    return m_AnalogLogicalIdToDeviceConfig;
   }
-  RTCoreLogicalIdToDeviceConfig &mutable_rtCoreLogicalIdToDeviceConfig() { return m_rtCoreLogicalIdToDeviceConfig; }
+  AnalogLogicalIdToDeviceConfig &mutable_AnalogLogicalIdToDeviceConfig() { return m_AnalogLogicalIdToDeviceConfig; }
 
   auto &add_mutable_alarms() {
     m_alarms.emplace_back();
@@ -3542,3 +3550,6 @@ void to_json(nlohmann::json &j, const EngineDevice &c);
 void to_json(nlohmann::json &j, const UiRelationshipMsg &c);
 void to_json(nlohmann::json &j, const BinaryLogicStateMsg &c);
 void to_json(nlohmann::json &j, const Event &c);
+void to_json(nlohmann::json &j, const AnalogLogicalIdToDeviceConfig &c);
+void to_json(nlohmann::json &j, const AnalogMapEntry &c);
+void to_json(nlohmann::json &j, const SwitchPositiveNegtive &c);

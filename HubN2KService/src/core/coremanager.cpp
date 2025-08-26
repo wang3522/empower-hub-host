@@ -168,7 +168,8 @@ json CoreManager::getSettings(const SettingRequest &request, CzoneSettings &czon
     factoryData["SerialNumber"] = czoneSettings.getSerialNumber();
     factoryData["FactoryICCID"] = czoneSettings.getFactoryICCID();
     factoryData["FactoryIMEI"] = czoneSettings.getFactoryIMEI();
-    factoryData["RTFirmwareVersion"] = czoneSettings.getRTFirmwareVersion();
+    factoryData["RTFirmwareVersion"] = czoneSettings.getAPPFirmwareVersion(); //[x] remove after its change in N2K Client
+    factoryData["APPFirmwareVersion"] = czoneSettings.getAPPFirmwareVersion();
     factoryData["ArtifactInfo"] = czoneSettings.getHostArtifactInfo();
     factoryData["ApplicationVersion"] = std::string(N2KCoreApp::VERSION_STRING);
   } break;

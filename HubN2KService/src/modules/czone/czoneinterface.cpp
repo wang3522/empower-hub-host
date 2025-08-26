@@ -143,7 +143,7 @@ void CzoneInterface::event(const tCZoneEventType czoneEvent, void *data, const u
     event->set_content("Valid Configuration");
     publishEventAsync(event);
     // ValidSystem.fire();
-    processRTCoreConfig();
+    processAnalogConfig();
   } break;
 
   case eCZoneBatteryFullSuccess: {
@@ -177,7 +177,7 @@ void CzoneInterface::event(const tCZoneEventType czoneEvent, void *data, const u
         m_configReady = true;
         event->set_content("Valid Configuration");
         publishEventAsync(event);
-        processRTCoreConfig();
+        processAnalogConfig();
       }
     }
   } break;
@@ -1807,9 +1807,9 @@ ConfigResult CzoneInterface::genConfig(const ConfigRequest &request) {
       bls.set_nameutf8(bLogicState.BinaryLogicState.NameUTF8);
     }
   } break;
-  case ConfigRequest::eConfigType::eRTCoreMap: {
-    BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eRTCoreMap";
-    m_config.set_rtCoreLogicalIdToDeviceConfig(m_RTCoreConfig);
+  case ConfigRequest::eConfigType::eAnalog: {
+    BOOST_LOG_TRIVIAL(debug) << "CzoneInterface::GetConfig::eAnalog";
+    m_config.set_AnalogLogicalIdToDeviceConfig(m_AnalogConfig);
   } break;
   default:
     BOOST_LOG_TRIVIAL(error) << "CzoneInterface::GetConfig ConfigType[" << ConfigRequest::to_string(request.get_type())
@@ -2445,7 +2445,7 @@ void CzoneInterface::displayAlarmToEvent(const tCZoneDisplayAlarm *const Display
   }
 }
 
-void CzoneInterface::processRTCoreConfig() {
+void CzoneInterface::processAnalogConfig() {
   auto addLimit = [](bool enabled, float on, float off, const uint32_t id) {
     auto limit = AlarmLimit();
     limit.enabled = enabled;
@@ -2471,7 +2471,7 @@ void CzoneInterface::processRTCoreConfig() {
     return;
   };
 
-  m_RTCoreConfig.clear();
+  m_AnalogConfig.clear();
 
   auto dcms = displayListNoLock(eCZoneStructDisplayMeteringDC);
   auto europaDcms = displayListNoLock(eCZoneStructEuropaCZoneDCDevices);
@@ -2479,13 +2479,13 @@ void CzoneInterface::processRTCoreConfig() {
   for (auto &dcm : dcms) {
     for (const auto &europaDcm : europaDcms) {
       if (europaDcm.DCConfigure.ChannelAddress == dcm.MeteringDevice.Address) {
-        RTCoreMapEntry dcEntry;
+        AnalogMapEntry dcEntry;
         dcEntry.set_displaytype(ConfigRequest::eConfigType::eDC);
 
         uint32_t index = (europaDcm.DCConfigure.ChannelAddress & 0xFF) - 48;
 
         if (index >= 5) {
-          BOOST_LOG_TRIVIAL(error) << "ProcessRTCoreConfig invalid dc index " << index << ", skip";
+          BOOST_LOG_TRIVIAL(error) << "ProcessAnalogConfig invalid dc index " << index << ", skip";
           continue;
         }
         if (index == 0) {
@@ -2566,7 +2566,7 @@ void CzoneInterface::processRTCoreConfig() {
         dc.set_showStateOfCharge((dcm.MeteringDevice.Capabilities & CZONE_SHOW_STATE_OF_CHARGE));
         dc.set_showTemperature((dcm.MeteringDevice.Capabilities & CZONE_SHOW_TEMPERATURE));
         dc.set_showTimeOfRemaining((dcm.MeteringDevice.Capabilities & CZONE_SHOW_TIME_REMAINING));
-        m_RTCoreConfig.mutable_dcMeters()[index] = dcEntry;
+        m_AnalogConfig.mutable_dcMeters()[index] = dcEntry;
       }
     }
   }
@@ -2584,13 +2584,13 @@ void CzoneInterface::processRTCoreConfig() {
     auto items = displayListNoLock(type);
     for (const auto &item : items) {
       if (ad.ADConfigure.ChannelAddress == item.MonitoringDevice.Address) {
-        RTCoreMapEntry adEntry;
+        AnalogMapEntry adEntry;
         auto &md = adEntry.mutable_monitoringDevice();
         auto &alarmMap = adEntry.mutable_alarms();
 
         uint32_t index = (ad.ADConfigure.ChannelAddress & 0xFF) - 49;
         if (index >= 4) {
-          BOOST_LOG_TRIVIAL(error) << "ProcessRTCoreConfig invalid ad index " << index << ", skip";
+          BOOST_LOG_TRIVIAL(error) << "ProcessAnalogConfig invalid ad index " << index << ", skip";
           continue;
         }
 
@@ -2657,7 +2657,7 @@ void CzoneInterface::processRTCoreConfig() {
 
         md.set_address(item.MonitoringDevice.Address);
 
-        m_RTCoreConfig.mutable_monitoringDevice()[index] = adEntry;
+        m_AnalogConfig.mutable_monitoringDevice()[index] = adEntry;
       }
     }
 
@@ -2666,12 +2666,12 @@ void CzoneInterface::processRTCoreConfig() {
       tZoneAdChannelConfig adConfig;
       if (!tCZoneEuropaAnalogueControl::GetAdChannelConfigurationByChannelAddress(ad.ADConfigure.ChannelAddress,
                                                                                   &adConfig)) {
-        BOOST_LOG_TRIVIAL(error) << "ProcessRTCoreConfig GetAdChannelConfigurationByIndex error, "
+        BOOST_LOG_TRIVIAL(error) << "ProcessAnalogConfig GetAdChannelConfigurationByIndex error, "
                                     "skip";
         continue;
       }
 
-      RTCoreMapEntry adEntry;
+      AnalogMapEntry adEntry;
       auto &alarmMap = adEntry.mutable_alarms();
       auto &spg = adEntry.mutable_switchPositiveNegtive();
       uint32_t index = (ad.ADConfigure.ChannelAddress & 0xFF) - 49;
@@ -2687,7 +2687,7 @@ void CzoneInterface::processRTCoreConfig() {
       }
 
       if (index >= 4) {
-        BOOST_LOG_TRIVIAL(error) << "ProcessRTCoreConfig invalid ad index " << index << ", skip";
+        BOOST_LOG_TRIVIAL(error) << "ProcessAnalogConfig invalid ad index " << index << ", skip";
         continue;
       }
       spg.set_binaryStatusIndex(binaryStatusIndex);
@@ -2731,7 +2731,7 @@ void CzoneInterface::processRTCoreConfig() {
       }
 
       adEntry.set_displaytype(ConfigRequest::eConfigType::eSwitchPositiveNegtive);
-      m_RTCoreConfig.mutable_switchPositiveNegtive()[index] = adEntry;
+      m_AnalogConfig.mutable_switchPositiveNegtive()[index] = adEntry;
     }
   }
 
@@ -2749,12 +2749,12 @@ void CzoneInterface::processRTCoreConfig() {
 
         if (dipSwitch == getDipswitch()) {
           if (index >= 5) {
-            BOOST_LOG_TRIVIAL(error) << "ProcessRTCoreConfig invalid CircuitLoad index " << index << ", skip";
+            BOOST_LOG_TRIVIAL(error) << "ProcessAnalogConfig invalid CircuitLoad index " << index << ", skip";
             continue;
           }
 
-          if (m_RTCoreConfig.get_circuitLoads().find(index) == m_RTCoreConfig.get_circuitLoads().end()) {
-            RTCoreMapEntry clEntry;
+          if (m_AnalogConfig.get_circuitLoads().find(index) == m_AnalogConfig.get_circuitLoads().end()) {
+            AnalogMapEntry clEntry;
             clEntry.set_displaytype(ConfigRequest::eConfigType::eCircuitLoads);
             auto &circuitLoad = clEntry.mutable_circuitLoads();
 
@@ -2770,11 +2770,11 @@ void CzoneInterface::processRTCoreConfig() {
             circuitLoad.set_controlType(static_cast<CircuitLoad::eControlType>(l.CircuitLoads.ControlType));
             circuitLoad.set_isSwitchedModule(l.CircuitLoads.IsSwitchedModule);
 
-            m_RTCoreConfig.mutable_circuitLoads()[index] = clEntry;
+            m_AnalogConfig.mutable_circuitLoads()[index] = clEntry;
           }
 
           const uint32_t doubleThrowMask = 0x8000;
-          auto &circuit = m_RTCoreConfig.mutable_circuitLoads()[index].mutable_circuit();
+          auto &circuit = m_AnalogConfig.mutable_circuitLoads()[index].mutable_circuit();
 
           circuit.set_displayType(static_cast<ConfigRequest::eConfigType>(c.Circuit.DisplayType));
           circuit.set_id(std::make_pair(c.Circuit.Id, (c.Circuit.Id != CZONE_INVALID_CIRCUIT_INDEX)));
@@ -2900,7 +2900,7 @@ ConfigResult CzoneInterface::getAllConfig() {
   genConfig(ConfigRequest(ConfigRequest::eUiRelationships));
   genConfig(ConfigRequest(ConfigRequest::eBinaryLogicStates));
   genConfig(ConfigRequest(ConfigRequest::eCZoneRaw));
-  genConfig(ConfigRequest(ConfigRequest::eRTCoreMap));
+  genConfig(ConfigRequest(ConfigRequest::eAnalog));
   genConfig(ConfigRequest(ConfigRequest::eSwitchPositiveNegtive));
   genConfig(ConfigRequest(ConfigRequest::eNonVisibleCircuit));
   return m_config;
@@ -3123,6 +3123,7 @@ void CzoneInterface::registerDbus(std::shared_ptr<DbusService> dbusService) {
                                    } break;
                                    default: break;
                                    }
+                                   return response.dump();
 
                                  } catch (const std::exception &e) {
                                    BOOST_LOG_TRIVIAL(error) << "Operation:Error " << e.what();

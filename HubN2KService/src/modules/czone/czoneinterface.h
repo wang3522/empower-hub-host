@@ -114,7 +114,7 @@ public:
   };
   void getConfigGlobalInformation(ConfigGlobalInformation &info) const;
   void setEngineList(std::map<uint8_t, EngineDevice> engines) { m_engineList = engines; }
-  void processRTCoreConfig();
+  void processAnalogConfig();
   bool isCZoneSleep() const { return m_czoneSleepFlag; }
   void disableCZoneSleepFlag() { m_czoneSleepFlag = false; }
 
@@ -122,7 +122,7 @@ public:
   void setConfigReady() { m_configReady = true; }
 
   void setWakeUp() { m_wakeUp = true; }
-  const RTCoreLogicalIdToDeviceConfig &RTCoreConfig() const { return m_RTCoreConfig; }
+  const AnalogLogicalIdToDeviceConfig &AnalogConfig() const { return m_AnalogConfig; }
   void setWakeUpAlarmList(const AlarmsList &list) {
     m_wakeUp = true;
     m_wakeUpAlarmList = list;
@@ -211,7 +211,7 @@ private:
   std::map<uint8_t, EngineDevice> m_engineList;
   uint32_t m_highestEnabledSeverity = eCZoneAlarmSeverityWarning;
   uint32_t m_highestAcknowledgedSeverity = eCZoneAlarmSeverityWarning;
-  RTCoreLogicalIdToDeviceConfig m_RTCoreConfig;
+  AnalogLogicalIdToDeviceConfig m_AnalogConfig;
 
   const int m_maxBrightness = 255;
   uint32_t m_lastShunt;
