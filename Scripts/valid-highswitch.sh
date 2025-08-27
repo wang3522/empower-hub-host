@@ -222,7 +222,11 @@ test_sel_pins() {
     
     read -p "Did the switch behavior change as expected for SEL1=HIGH? (y/n): " -n 1 -r
     echo
-    sel1_result=$?
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        sel1_result=0
+    else
+        sel1_result=1
+    fi
     set_gpio ${sel1_pin} 0
     
     # Test SEL2
