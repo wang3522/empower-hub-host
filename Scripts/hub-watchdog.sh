@@ -1,8 +1,4 @@
-#!/bin/sh
-# filepath: /Users/krushitpatel/Documents/source/empower-hub/meta-empower-hub/recipes-empower-hub/hub-setup/files/hub-watchdog.sh
-
-# Hub Watchdog Script
-# Manages and monitors hub services with auto-restart functionality
+#!/usr/bin/bash
 
 # Service configuration
 REGULAR_SERVICES="hub-bl654.service hub-n2k.service hub-network-switch.service hub-provisioning.service hub-tbclient.service hub-telit.service"
