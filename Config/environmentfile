@@ -1,0 +1,5 @@
+HUB_LOG_LEVEL=DEBUG
+HUB_CONFIGDIR=/data/hub/config
+HUB_LOGDIR=/data/hub/log
+PYTHONPATH=/data/hub/hub-n2kclient
+HUB_MODE=normal
