@@ -235,7 +235,11 @@ test_sel_pins() {
     
     read -p "Did the switch behavior change as expected for SEL2=HIGH? (y/n): " -n 1 -r
     echo
-    sel2_result=$?
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        sel2_result=0
+    else
+        sel2_result=1
+    fi
     set_gpio ${sel2_pin} 0
     
     # Test both SEL1 and SEL2
@@ -245,7 +249,11 @@ test_sel_pins() {
     
     read -p "Did the switch behavior change as expected for SEL1=HIGH, SEL2=HIGH? (y/n): " -n 1 -r
     echo
-    both_sel_result=$?
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        both_sel_result=0
+    else
+        both_sel_result=1
+    fi
     set_gpio ${sel1_pin} 0
     set_gpio ${sel2_pin} 0
     
@@ -277,7 +285,11 @@ test_latch() {
     
     read -p "Did the switch latch as expected? (y/n): " -n 1 -r
     echo
-    latch_high_result=$?
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        latch_high_result=0
+    else
+        latch_high_result=1
+    fi
     
     # Clear LATCH
     set_gpio ${latch_pin} 0
@@ -285,7 +297,11 @@ test_latch() {
     
     read -p "Did the switch unlatch as expected? (y/n): " -n 1 -r
     echo
-    latch_low_result=$?
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        latch_low_result=0
+    else
+        latch_low_result=1
+    fi
     
     if [[ ${latch_high_result} -eq 0 && ${latch_low_result} -eq 0 ]]; then
         echo -e "${GREEN}LATCH test passed!${NC}"
