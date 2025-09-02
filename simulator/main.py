@@ -22,7 +22,6 @@ class N2KDBusSimulator(dbus.service.Object):
     device_list: list
 
     def __init__(self):
-
         self.get_devices_count = 0
         self.get_state_count = 0
         self.initial = True
@@ -387,6 +386,9 @@ class Main:
     logger = logging.getLogger("DBUS N2k Simulator")
 
     def __init__(self):
+        self.logger = logging.getLogger("DBUS N2k Simulator")
+        self.fluctuating_rpm = 0.0
+        self.fluctuating_temperature = 50.0
         self.logger.setLevel(logging.DEBUG)
         log_handler = logging.StreamHandler()
         formatter = logging.Formatter(
@@ -406,6 +408,8 @@ class Main:
 
         def emit_snapshot():
             self.logger.debug("Emitting snapshot")
+            self.fluctuating_temperature = (self.fluctuating_temperature + 10) % 20000
+            self.fluctuating_rpm = (self.fluctuating_rpm + 100) % 20000
             snapshot = {
                 "DC": {
                     "DC.6": {
@@ -420,7 +424,7 @@ class Main:
                     },
                     "DC.7": {
                         "ComponentStatus": "Connected",
-                        "Voltage": 11.0,
+                        "Voltage": 12.0,
                         "Current": 12.0,
                         "StateOfCharge": 13,
                         "Temperature": 14.11,
@@ -493,9 +497,9 @@ class Main:
                     "Engines.0": {
                         "ComponentStatus": "Connected",
                         "EngineState": 1,
-                        "Speed": 0,
-                        "CoolantPressure": 50,
-                        "CoolantTemperature": 80.0,
+                        "Speed": self.fluctuating_rpm,
+                        "CoolantPressure": 20000,
+                        "CoolantTemperature": self.fluctuating_temperature,
                         "FuelLevel": 50,
                         "EngineHours": 1000,
                         "DiscreteStatus1": 1,
