@@ -35,6 +35,7 @@ from n2kclient.models.devices import N2kDevices
 from n2kclient.models.dbus_connection_status import DBUSConnectionStatus
 from n2kclient.models.empower_system.alarm import AlarmState, Alarm
 from n2kclient.models.empower_system.alarm_list import AlarmList
+from n2kclient.models.empower_system.engine_alarm_list import EngineAlarmList
 from .location_service import LocationService
 
 class EmpowerService:
@@ -53,6 +54,7 @@ class EmpowerService:
 
     _engine_list:dict[str, Any] = None
     _active_alarms:dict = None
+    _engine_alarms:dict = None
 
     def __init__(self):
         self._logger = logging.getLogger("EmpowerService")
@@ -62,6 +64,7 @@ class EmpowerService:
         self._service_init_disposables = []
         self._engine_list = {}
         self._active_alarms = {}
+        self._engine_alarms = {}
         self.sync_service = SyncService()
         self.location_service = LocationService(self.n2k_client)
 
@@ -122,6 +125,23 @@ class EmpowerService:
                 self.sync_service._update_value(
                     new_active_alarms
                 )
+
+    def _reconcile_engine_alerts(self, engine_alerts: EngineAlarmList):
+        if self.telemetry_consent is not None and self.telemetry_consent:
+            engine_alert_list_dict = engine_alerts.to_alarm_dict()
+            latest_cloud_engine_alerts = self._engine_alarms.copy() if self._engine_alarms else {}
+            engine_alert_timeseries = []
+            for [id, alarm] in engine_alerts.engine_alarms.items():
+                if id in latest_cloud_engine_alerts:
+                    alarm.date_active = latest_cloud_engine_alerts[id][
+                        Constants.dateActive
+                    ]
+                else:
+                    engine_alert_timeseries.append(alarm)
+            self._publish_alarm_timeseries(engine_alert_timeseries)
+            if self._engine_alarms != engine_alert_list_dict:
+                self._engine_alarms = engine_alert_list_dict
+
     def __del__(self):
         if len(self._service_init_disposables) > 0:
             for disposable in self._service_init_disposables:
@@ -229,6 +249,9 @@ class EmpowerService:
         self._service_init_disposables.append(disposable)
         # Subscribe to the alarm list updates
         disposable = self.n2k_client.get_alarms_observable().subscribe(self._publish_active_alarms)
+        self._service_init_disposables.append(disposable)
+        # Subscribe to the engine alarm list updates
+        disposable = self.n2k_client.get_engine_alarms_observable().subscribe(self._reconcile_engine_alerts)
         self._service_init_disposables.append(disposable)
         # ======= N2K Client Connection Subscription =======
         # Need to get the value of the protected method since it is a behavior subject
