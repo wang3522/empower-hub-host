@@ -44,4 +44,4 @@ RUN python3 -m venv /app/venv \
     && /app/venv/bin/pip install -r /app/HubTBClientService/requirements_docker.txt
 
 # Use the virtual environment's Python to run main.py (entrypoint)
-CMD ["/bin/bash", "-c", "dbus-daemon --system --fork && PYTHONPATH=/app/simulator /app/venv/bin/python -m simulator.main & /app/venv/bin/python HubTBClientService/main.py"]
+CMD ["/bin/bash", "-c", "rm -f /run/dbus/pid && dbus-daemon --system --fork && sleep 2 && PYTHONPATH=/app/simulator /app/venv/bin/python -m simulator.main & /app/venv/bin/python HubTBClientService/main.py"]
