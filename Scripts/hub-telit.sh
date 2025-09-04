@@ -512,6 +512,7 @@ monitor_uart() {
         return 1
     fi
 
+    send_at_command 'AT#TRACE=1'
     flush_uart "$MODEM_PORT_DEBUG"
     
     while true; do
