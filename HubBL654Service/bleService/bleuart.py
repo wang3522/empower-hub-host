@@ -7,6 +7,7 @@ import time
 import os
 import zipfile
 import shutil
+import subprocess
 
 from utility.cmd_interface import CMD_INTERFACE, CMD_INTERFACE_INSTANCE
 from .uart_message_processor import load_key, decrypt_data
@@ -82,68 +83,87 @@ class BLE_UART:
         self.stop_event = threading.Event()
         self.thread = threading.Thread(target=self._read_thread)
         self.thread.start()
+
+        self.handle_on_wake_up()
         return True
 
-    def handle_ota_transfer(self, zip_path: str):
-        logger.debug("Starting OTA zip transfer: {}".format(zip_path))
+    def handle_on_wake_up(self):
+        self._send_data("MX93/HELLO\n")
+        logger.debug("Sent HELLO to BL654")
+
+    def handle_ota_transfer(self, file_path: str):
+        error_message = "MX93/OTA_TRANSFER_STATUS/error\n"
+        success_message = "MX93/OTA_TRANSFER_STATUS/success\n"
+        logger.debug("Starting OTA transfer: {}".format(file_path))
         chunk_size = 1024
 
-        extract_dir = "/tmp/ota_unpacked"
-        if os.path.exists(extract_dir):
-            shutil.rmtree(extract_dir)
-        os.makedirs(extract_dir)
-
-        try:
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(extract_dir)
-        except Exception as e:
-            logger.error("Failed to unzip OTA package: {}".format(e))
-            return
-
-        sorted_files = sorted(
-            (os.path.join(root, f), os.path.relpath(os.path.join(root, f), extract_dir).replace("\\", "/"))
-            for root, _, files in os.walk(extract_dir)
-            for f in sorted(files)
-        )
-
-        session_hash = hashlib.sha256()
-        for full_path, _ in sorted_files:
+        if file_path.endswith(".bin"):
+            ota_type = "fw"
+            packaged_name = os.path.basename(file_path)
             try:
-                with open(full_path, "rb") as f:
-                    session_hash.update(f.read())
-            except Exception as e:
-                logger.error(f"Failed to read for checksum: {full_path}: {e}")
-                return
-
-        ota_checksum = session_hash.hexdigest()
-        total_files = len(sorted_files)
-
-        # After metadata update is sent, uart polling frequency is increased on BL654. Polling frequency must be reset after completion of transfer
-        self._send_data(f"BL/OTA_UPDATE_METADATA/{total_files},{ota_checksum}\n")
-        time.sleep(3)
-
-        for full_path, rel_path in sorted_files:
-            try:
-                with open(full_path, "rb") as f:
+                with open(file_path, "rb") as f:
                     content = f.read()
             except Exception as e:
-                logger.error("Failed to read file {}: {}".format(rel_path, e))
-                self._send_data(f"BL/OTA_TRANSFER_STATUS/error\n")
+                logger.error("Failed to read OTA file {}: {}".format(file_path, e))
+                self._send_data(error_message)
+                return
+        else:
+            ota_type = "app"
+            try:
+                packaged_name = f"{os.path.basename(file_path)}_update.zip"
+                packaged_path = os.path.join("/data", packaged_name)
+
+                if os.path.exists(packaged_path):
+                    logger.debug(f"Deleting old package at {packaged_path}")
+                    os.remove(packaged_path)
+
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                packager = os.path.join(script_dir, "canvas_packager.py")
+                subprocess.run([
+                    "python3", packager,
+                    "--version", "update",
+                    file_path
+                ], cwd="/data")
+
+                input_files = sum(len(files) for _, _, files in os.walk(file_path))
+                with zipfile.ZipFile(packaged_path, "r") as zf:
+                    zipped_files = len(zf.namelist())
+
+                if zipped_files != input_files:
+                    logger.error(f"Sanity check failed: expected {input_files} files, got {zipped_files} in zip")
+                    self._send_data(error_message)
+                    return
+
+                with open(packaged_path, "rb") as f:
+                    content = f.read()
+            except Exception as e:
+                logger.error("Failed to read OTA file {}: {}".format(file_path, e))
+                self._send_data(error_message)
                 return
 
-            chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
-            checksum = hashlib.sha256(content).hexdigest()
-            header_cmd = "BL/OTA_HEADER/{},{},{},{}".format(rel_path, len(chunks), len(content), checksum)
-            self._send_data(header_cmd + "\n")
-            time.sleep(0.25)
+        ota_checksum = hashlib.sha256(content).hexdigest()
+        total_size = len(content)
+        chunks = [content[i:i+chunk_size] for i in range(0, total_size, chunk_size)]
 
-            for idx, chunk in enumerate(chunks):
-                hex_chunk = chunk.hex()
-                data_cmd = "BL/OTA_DATA/{}/{}".format(idx, hex_chunk)
-                self._send_data(data_cmd + "\n")
-                time.sleep(0.2)
+        self._send_data(f"MX93/OTA_UPDATE_METADATA/{ota_type},{ota_checksum}\n")
+        time.sleep(1)
 
-        self._send_data(f"BL/OTA_TRANSFER_STATUS/success\n")
+        header_cmd = "MX93/OTA_HEADER/{},{},{}".format(
+            packaged_name,
+            len(chunks),
+            total_size
+        )
+        
+        self._send_data(header_cmd + "\n")
+        time.sleep(0.25)
+
+        for idx, chunk in enumerate(chunks):
+            hex_chunk = chunk.hex()
+            data_cmd = "MX93/OTA_DATA/{}/{}".format(idx, hex_chunk)
+            self._send_data(data_cmd + "\n")
+            time.sleep(0.2)
+
+        self._send_data(success_message)
         return
 
     def _read_thread(self):
@@ -188,8 +208,8 @@ class BLE_UART:
                             else:
                                 logger.warning("Dbus not set, could not signal ota_complete")
                         elif status == "error":
-                            if dbus_obj:
-                                dbus_obj.bl654_object.ota_error("error")
+                            if self._dbus_server:
+                                self._dbus_server.bl654_object.ota_error("error")
                             else:
                                 logger.warning("Dbus not set; could not signal ota_error")
                         continue

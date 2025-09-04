@@ -6,7 +6,7 @@ import hashlib
 import string
 import logging
 import secrets 
-
+import time
 from bleService.uart_message_processor import get_key
 
 logger = logging.getLogger(__name__)
@@ -158,6 +158,13 @@ class CmdInterface:
             self._empower_ble_service.reset_attribute_sub_set()
         return f""
 
+    def handle_get_time(self, data: str):
+        now = time.gmtime()
+        rtc_tuple = (now[0], now[1], now[2], now[6], now[3], now[4], now[5], 0)
+        payload = ",".join(str(x) for x in rtc_tuple)
+        logger.debug(f"handle_get_time: Set time {payload}")
+        return f"MX93/SET_TIME/{payload.encode().hex()}"
+
     def _bl_cmd_interface(self, data: str):
         try:
             response = None
@@ -186,6 +193,7 @@ class CmdInterface:
                 "GET_RANGE": self.handle_get_range,
                 "SET_ALARM_RULE": self.handle_set_alarm_rule,
                 "RESET_GRANT_LEVEL": self.handle_reset_grant_level,
+                "GET_TIME": self.handle_get_time,
             }
 
             split_data = data.split("/", 1)
