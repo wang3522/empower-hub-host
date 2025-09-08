@@ -29,6 +29,7 @@ from tb_utils.utility import (
     get_access_token
 )
 from dict_diff import dict_diff
+import os
 
 class ThingsBoardClient:
     """
@@ -360,6 +361,31 @@ class ThingsBoardClient:
     def __on_connect(self, client, userdata, flags, result_code, *extra_params):
         self._is_connected_internal.on_next(True)
         self._create_attributes_thread()
+        try:
+            if not os.path.exists(Constants.OTA_CLIENT_ACCESS_TOKEN_PATH):
+                self._logger.info("OTA Access Token not found, requesting from cloud attribute")
+                ota_token_subject = rx.Subject()
+                def save_ota_access_token(value):
+                    if value is not None and Constants.OTA_CLIENT_ACCESS_TOKEN_KEY in value:
+                        try:
+                            with open(
+                                Constants.OTA_CLIENT_ACCESS_TOKEN_PATH, "w", encoding="utf-8"
+                            ) as file:
+                                file.write(value[Constants.OTA_CLIENT_ACCESS_TOKEN_KEY])
+                            self._logger.info("Saved OTA client access token to file")
+                        except Exception as e:
+                            self._logger.error(
+                                "Error writing OTA client access token to file: %s", e
+                            )
+                    else:
+                        self._logger.info("OTA Access Token not found in response")
+                ota_token_subject.subscribe(save_ota_access_token)
+                self.request_attributes_state(
+                    client_attributes=[Constants.OTA_CLIENT_ACCESS_TOKEN_KEY],
+                    subject=ota_token_subject
+                )
+        except Exception as e:
+            self._logger.error("Error requesting OTA client access token: %s", e)
 
     def __on_disconnect(self, client, userdata, result_code, properties=None):
         try:

@@ -133,6 +133,13 @@ def get_access_token():
                         ):
                             if credentials["credentialsType"] == "ACCESS_TOKEN":
                                 tb_access_token = credentials["credentialsValue"]
+                                try:
+                                    with open(
+                                        Constants.TB_ACCESS_TOKEN_PATH, "w", encoding="utf-8"
+                                    ) as file:
+                                        file.write(tb_access_token)
+                                except Exception as e:
+                                    logger.error("Error writing access token to file: %s", e)
                                 return tb_access_token
                             else:
                                 logger.error("credentials type doesn't match")
