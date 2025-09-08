@@ -42,7 +42,7 @@ class EmpowerBleService:
     def _handle_notify_client(self, key: str, value: str, timestamp: str):
         plaintext = f"attribute/{key}/{value}/{timestamp}"
         encrypted = encrypt_data(plaintext.encode('utf-8'))
-        self.ble_uart._send_data(f"BL/SUB_UPDATE_NOTIFY/{encrypted.hex()}\n")
+        self.ble_uart._send_data(f"MX93/SUB_UPDATE_NOTIFY/{encrypted.hex()}\n")
         self._logger.debug(f"Sent notify to client: {plaintext}")
 
     def _device_state_changes(self, devices: N2kDevices):
