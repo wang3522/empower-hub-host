@@ -530,7 +530,7 @@ class Constants:
 
     starboardEngine = "Starboard Engine"
     portEngine = "Port Engine"
-    startboardInnerEngine = "Starboard Inner Engine"
+    starboardInnerEngine = "Starboard Inner Engine"
     portInnerEngine = "Port Inner Engine"
     On = "On"
     Off = "Off"

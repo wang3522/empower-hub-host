@@ -18,6 +18,24 @@ class EngineDevice(ConfigItem):
     ecu_serial_number: str
     engine_type: EngineType
 
+    def __init__(
+        self,
+        instance=None,
+        software_id="",
+        calibration_id="",
+        serial_number="",
+        ecu_serial_number="",
+        engine_type=EngineType.SmartCraft,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.instance = instance if instance is not None else Instance()
+        self.software_id = software_id
+        self.calibration_id = calibration_id
+        self.serial_number = serial_number
+        self.ecu_serial_number = ecu_serial_number
+        self.engine_type = engine_type
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

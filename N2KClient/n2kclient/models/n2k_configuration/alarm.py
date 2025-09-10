@@ -25,6 +25,50 @@ class Alarm:
     fault_type: int
     fault_number: int
 
+    def __init__(
+        self,
+        id=0,
+        alarm_type=None,
+        severity=None,
+        current_state=None,
+        channel_id=0,
+        external_alarm_id=0,
+        unique_id=0,
+        valid=False,
+        activated_time=0,
+        acknowledged_time=0,
+        cleared_time=0,
+        name="",
+        channel="",
+        device="",
+        title="",
+        description="",
+        czone_raw_alarm=b"",
+        fault_action="",
+        fault_type=0,
+        fault_number=0,
+    ):
+        self.id = id
+        self.alarm_type = alarm_type
+        self.severity = severity
+        self.current_state = current_state
+        self.channel_id = channel_id
+        self.external_alarm_id = external_alarm_id
+        self.unique_id = unique_id
+        self.valid = valid
+        self.activated_time = activated_time
+        self.acknowledged_time = acknowledged_time
+        self.cleared_time = cleared_time
+        self.name = name
+        self.channel = channel
+        self.device = device
+        self.title = title
+        self.description = description
+        self.czone_raw_alarm = czone_raw_alarm
+        self.fault_action = fault_action
+        self.fault_type = fault_type
+        self.fault_number = fault_number
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

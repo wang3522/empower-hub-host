@@ -16,6 +16,16 @@ class Pressure(MonitoringDevice):
     pressure_type: PressureType
     atmospheric_pressure: bool
 
+    def __init__(
+        self,
+        pressure_type=PressureType.Atmospheric,
+        atmospheric_pressure=False,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.pressure_type = pressure_type
+        self.atmospheric_pressure = atmospheric_pressure
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

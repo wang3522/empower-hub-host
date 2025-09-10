@@ -6,6 +6,10 @@ class DataId:
     enabled: bool
     id: int
 
+    def __init__(self, enabled=False, id=0):
+        self.enabled = enabled
+        self.id = id
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

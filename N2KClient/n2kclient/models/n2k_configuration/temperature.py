@@ -23,8 +23,12 @@ class TemperatureType(Enum):
 
 
 class Temperature(MonitoringDevice):
-    high_temperature: bool
-    temperature_type: TemperatureType
+    def __init__(
+        self, high_temperature=False, temperature_type=TemperatureType.Sea, **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.high_temperature = high_temperature
+        self.temperature_type = temperature_type
 
     def to_dict(self) -> dict[str, str]:
         try:

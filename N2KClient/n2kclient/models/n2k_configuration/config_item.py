@@ -6,6 +6,10 @@ class ConfigItem:
     id: int
     name_utf8: str
 
+    def __init__(self, id=0, name_utf8=""):
+        self.id = id
+        self.name_utf8 = name_utf8
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

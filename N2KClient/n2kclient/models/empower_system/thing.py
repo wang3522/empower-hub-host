@@ -111,3 +111,8 @@ class Thing(ABC):
                 alarm_setting.to_json() for alarm_setting in self.alarm_settings
             ],
         }
+
+    def __eq__(self, other):
+        if not isinstance(other, Thing):
+            return False
+        return self.to_config_dict() == other.to_config_dict()

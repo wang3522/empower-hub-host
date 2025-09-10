@@ -17,6 +17,11 @@ class Tank(MonitoringDevice):
     tank_type: TankType
     tank_capacity: float
 
+    def __init__(self, tank_type=TankType.Fuel, tank_capacity=0.0, **kwargs):
+        super().__init__(**kwargs)
+        self.tank_type = tank_type
+        self.tank_capacity = tank_capacity
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

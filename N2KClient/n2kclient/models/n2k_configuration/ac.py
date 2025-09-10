@@ -28,6 +28,20 @@ class AC(MeteringDevice):
 
     ac_type: ACType
 
+    def __init__(
+        self,
+        line=ACLine.Line1,
+        output=False,
+        nominal_frequency=0,
+        ac_type=ACType.Unknown,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.line = line
+        self.output = output
+        self.nominal_frequency = nominal_frequency
+        self.ac_type = ac_type
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

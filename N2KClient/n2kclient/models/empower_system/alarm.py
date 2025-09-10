@@ -131,3 +131,8 @@ class Alarm:
             "faultAction": self.fault_action,
             "context": self.context,
         }
+
+    def __eq__(self, other):
+        if not isinstance(other, Alarm):
+            return False
+        return self.to_dict() == other.to_dict()

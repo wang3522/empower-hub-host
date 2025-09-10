@@ -1,5 +1,6 @@
 from enum import Enum
 import json
+from typing import Any
 from ..constants import AttrNames
 
 
@@ -27,14 +28,34 @@ class UiRelationShipMsg:
     primary_id: int
     secondary_id: int
     relationship_type: RelationshipType
-
     primary_config_address: int
     secondary_config_address: int
-
     primary_channel_index: int
     secondary_channel_index: int
 
-    def to_dict(self) -> dict[str, str]:
+    def __init__(
+        self,
+        primary_type=ItemType.NotSet,
+        secondary_type=ItemType.NotSet,
+        primary_id=0,
+        secondary_id=0,
+        relationship_type=RelationshipType.Normal,
+        primary_config_address=0,
+        secondary_config_address=0,
+        primary_channel_index=0,
+        secondary_channel_index=0,
+    ):
+        self.primary_type = primary_type
+        self.secondary_type = secondary_type
+        self.primary_id = primary_id
+        self.secondary_id = secondary_id
+        self.relationship_type = relationship_type
+        self.primary_config_address = primary_config_address
+        self.secondary_config_address = secondary_config_address
+        self.primary_channel_index = primary_channel_index
+        self.secondary_channel_index = secondary_channel_index
+
+    def to_dict(self) -> dict[str, Any]:
         try:
             return {
                 AttrNames.PRIMARY_TYPE: self.primary_type.value,

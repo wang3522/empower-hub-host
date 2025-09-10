@@ -1,12 +1,14 @@
 from typing import Optional
 
+from ...models.common_enums import ThingType
+
 from ...models.n2k_configuration.engine import EngineDevice
 
 from ...util.time_util import TimeUtil
 from ...models.n2k_configuration.n2k_configuation import N2kConfiguration
-from ...models.n2k_configuration.engine_configuration import EngineConfiguration
 from ...models.empower_system.engine_alarm_list import EngineAlarmList
 from ...models.empower_system.engine_alarm import EngineAlarm
+from ...util.common_utils import calculate_inverter_charger_instance
 
 
 def get_inverter_charger_alarm_title(config: N2kConfiguration, ac_id: int):
@@ -29,12 +31,12 @@ def get_inverter_charger_alarm_title(config: N2kConfiguration, ac_id: int):
 def generate_alarms_from_discrete_status(
     status_alarms: list,
     discrete_status: int,
-    merged_engine_alert_list: EngineAlarmList,
+    merged_engine_alarm_list: EngineAlarmList,
     prev_discrete_status1: Optional[int],
     prev_discrete_status2: Optional[int],
     current_discrete_status1: Optional[int],
     current_discrete_status2: Optional[int],
-    prev_engine_alert_list: EngineAlarmList,
+    prev_engine_alarm_list: EngineAlarmList,
     engine_id: int,
     engine_config: EngineDevice,
     discrete_status_word: int,
@@ -68,7 +70,7 @@ def generate_alarms_from_discrete_status(
             f"engine.{engine_id}.discrete_status{discrete_status_word}.{bit_shift}"
         )
         if (discrete_status >> bit_shift) & 1:
-            if alarm_id not in prev_engine_alert_list.engine_alarms:
+            if alarm_id not in prev_engine_alarm_list.engine_alarms:
                 date_active = TimeUtil.current_time()
                 engine_alert = EngineAlarm(
                     date_active=date_active,
@@ -80,6 +82,60 @@ def generate_alarms_from_discrete_status(
                     current_discrete_status2=current_discrete_status2,
                     alarm_id=alarm_id,
                 )
-                merged_engine_alert_list.engine_alarms[alarm_id] = engine_alert
-        elif alarm_id in merged_engine_alert_list.engine_alarms:
-            merged_engine_alert_list.engine_alarms.pop(alarm_id)
+                merged_engine_alarm_list.engine_alarms[alarm_id] = engine_alert
+        elif alarm_id in merged_engine_alarm_list.engine_alarms:
+            merged_engine_alarm_list.engine_alarms.pop(alarm_id)
+
+
+def get_combi_charger(
+    config: N2kConfiguration, dc_id: int, things: list[str]
+) -> list[str]:
+    """
+    Given a config and dc meter charger, append id for charger to list of things
+    """
+    inverter_charger = next(
+        (
+            inverter_charger
+            for inverter_charger in config.inverter_charger.values()
+            if any(
+                battery_bank is not None
+                and battery_bank.enabled
+                and battery_bank.id == dc_id
+                for battery_bank in [
+                    inverter_charger.battery_bank_1_id,
+                    inverter_charger.battery_bank_2_id,
+                    inverter_charger.battery_bank_3_id,
+                ]
+            )
+        ),
+        None,
+    )
+
+    if inverter_charger is not None:
+        charger_id = f"{ThingType.CHARGER.value}.{calculate_inverter_charger_instance(inverter_charger)}"
+        if charger_id not in things:
+            things.append(charger_id)
+    return things
+
+
+def get_combi_inverter(
+    config: N2kConfiguration, ac_id: int, things: list[str]
+) -> list[str]:
+    """
+    Given a config and ac meter inverter, append id for inverter to list of things
+    """
+    inverter_charger = next(
+        (
+            inverter_charger
+            for inverter_charger in config.inverter_charger.values()
+            if inverter_charger.inverter_ac_id.id == ac_id
+            and inverter_charger.inverter_ac_id.enabled
+        ),
+        None,
+    )
+
+    if inverter_charger is not None:
+        inverter_id = f"{ThingType.INVERTER.value}.{calculate_inverter_charger_instance(inverter_charger)}"
+        if inverter_id not in things:
+            things.append(inverter_id)
+    return things

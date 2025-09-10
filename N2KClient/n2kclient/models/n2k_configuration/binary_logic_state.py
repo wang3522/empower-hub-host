@@ -6,6 +6,9 @@ from ..constants import AttrNames
 class BinaryLogicState(ConfigItem):
     address: int
 
+    def __init__(self, address=0):
+        self.address = address
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

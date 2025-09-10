@@ -7,10 +7,10 @@ class CategoryItem:
     enabled: bool
     index: int
 
-    def __init__(self):
-        self.name_utf8 = ""
-        self.enabled = False
-        self.index = 0
+    def __init__(self, name_utf8="", enabled=False, index=0):
+        self.name_utf8 = name_utf8
+        self.enabled = enabled
+        self.index = index
 
     def to_dict(self) -> dict[str, str]:
         try:

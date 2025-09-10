@@ -1,0 +1,8 @@
+[run]
+source = N2KClient
+
+[report]
+omit =
+    */site-packages/*
+    */dist-packages/*
+    */test/*

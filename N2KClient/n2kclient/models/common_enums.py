@@ -6,7 +6,7 @@ class ComponentType(str, Enum):
     DCMETER = "dcMeter"
     ACMAINS = "acMains"
     CIRCUIT = "CIRCUIT"
-    AUDI = "audio"
+    AUDIO = "audio"
     MARINE_ENGINE = "marineEngine"
     GENERATOR = "generator"
     HVAC = "hvac"
@@ -316,7 +316,7 @@ class ControlRequest(str, Enum):
 
 
 class eAlarmType(Enum):
-    Externel = 0
+    External = 0
     DipswitchConflict = 1
     TypeDeviceConflict = 2
     TypeDeviceMissing = 3

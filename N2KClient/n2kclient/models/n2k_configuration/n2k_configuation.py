@@ -5,7 +5,6 @@ from ..n2k_configuration.bls_alarm_mapping import (
     BLSAlarmMapping,
 )
 from .dc import DC
-from .ac import AC
 from .pressure import Pressure
 from .tank import Tank
 from .inverter_charger import InverterChargerDevice
@@ -132,3 +131,8 @@ class N2kConfiguration:
         except Exception as e:
             print(f"Error serializing HostConfiguration: to JSON: {e}")
             return "{}"
+
+    def __eq__(self, other):
+        if not isinstance(other, N2kConfiguration):
+            return False
+        return self.to_dict() == other.to_dict()

@@ -745,7 +745,6 @@ class ConfigProcessor:
 
             system = EmpowerSystem(config.config_metadata)
             [system.add_thing(thing) for thing in self._things]
-
             return system
 
         except Exception as error:

@@ -5,6 +5,9 @@ from ..constants import AttrNames
 class SequentialName:
     name: str
 
+    def __init__(self, name=""):
+        self.name = name
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

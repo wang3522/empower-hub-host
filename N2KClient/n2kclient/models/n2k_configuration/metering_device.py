@@ -25,6 +25,40 @@ class MeteringDevice(ConfigItem):
     very_low_voltage: Optional[AlarmLimit]
     high_voltage: Optional[AlarmLimit]
 
+    def __init__(
+        self,
+        instance=None,
+        output=False,
+        nominal_voltage=0,
+        address=0,
+        show_voltage=False,
+        show_current=False,
+        low_limit=None,
+        very_low_limit=None,
+        high_limit=None,
+        very_high_limit=None,
+        frequency=None,
+        low_voltage=None,
+        very_low_voltage=None,
+        high_voltage=None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.instance = instance if instance is not None else Instance()
+        self.output = output
+        self.nominal_voltage = nominal_voltage
+        self.address = address
+        self.show_voltage = show_voltage
+        self.show_current = show_current
+        self.low_limit = low_limit
+        self.very_low_limit = very_low_limit
+        self.high_limit = high_limit
+        self.very_high_limit = very_high_limit
+        self.frequency = frequency
+        self.low_voltage = low_voltage
+        self.very_low_voltage = very_low_voltage
+        self.high_voltage = high_voltage
+
     def to_dict(self):
         try:
             fields = {

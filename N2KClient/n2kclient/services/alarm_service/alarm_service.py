@@ -40,8 +40,21 @@ from ...models.n2k_configuration.ac import ACType
 from ...models.n2k_configuration.tank import TankType
 from ...models.n2k_configuration.bls_alarm_mapping import BLSAlarmMapping
 from .field_maps import ALARM_FIELD_MAP, ALARM_ENUM_FIELD_MAP
-from .alarm_helpers import generate_alarms_from_discrete_status
+from .alarm_helpers import (
+    generate_alarms_from_discrete_status,
+    get_combi_charger,
+    get_combi_inverter,
+)
 from ...util.common_utils import send_and_validate_response
+from .alarm_processors import (
+    process_device_alarms,
+    process_dc_meter_alarms,
+    process_ac_meter_alarms,
+    process_tank_alarms,
+    process_circuit_load_alarms,
+    process_bls_alarms,
+    process_smartcraft_alarms,
+)
 
 
 class AlarmService:
@@ -68,7 +81,7 @@ class AlarmService:
 
     def __init__(
         self,
-        alarm_list_func: Callable[[], AlarmList],
+        alarm_list_func: Callable[[], str],
         get_latest_alarms_func: Callable[[], AlarmList],
         get_config_func: Callable[[], N2kConfiguration],
         get_engine_config_func: Callable[[], EngineConfiguration],
@@ -97,6 +110,9 @@ class AlarmService:
     # Public Methods
     ###############################
     def acknowledge_alarm(self, alarm_id: int) -> bool:
+        """
+        Acknowledge an active alarm. Calls to DBUS to acknowledge alarm after validating alarm exists and is not acknowledged
+        """
         try:
             alarm = self.get_latest_alarms().alarm.get(alarm_id)
             if alarm is None:
@@ -126,60 +142,71 @@ class AlarmService:
         """
         try:
             latest_alarms = self.get_latest_alarms()
-            merged_alarm_list = AlarmList()
             alarm_list_str = self.alarm_list()
             if alarm_list_str:
-                alarm_list = self.parse_alarm_list(alarm_list_str)
-                for alarm in alarm_list:
-                    alarm_id = alarm.unique_id
-                    processed_alarm = None
-                    date_active = TimeUtil.current_time()
-                    # ACKNOWLEDGED
-                    if alarm.current_state == eStateType.StateAcknowledged:
-                        if alarm_id in latest_alarms.alarm:
-                            processed_alarm = copy.deepcopy(
-                                latest_alarms.alarm[alarm_id]
-                            )
-                            processed_alarm.current_state = AlarmState.ACKNOWLEDGED
-                        else:
-                            processed_alarm = self.build_reportable_alarm(
-                                alarm,
-                                AlarmState.ACKNOWLEDGED,
-                                date_active,
-                                self.get_config(),
-                                self.get_engine_config(),
-                            )
-                    # ENABLED
-                    elif alarm.current_state == eStateType.StateEnabled:
-                        if alarm_id in latest_alarms.alarm:
-                            processed_alarm = copy.deepcopy(
-                                latest_alarms.alarm[alarm_id]
-                            )
-                            if processed_alarm.current_state != AlarmState.ENABLED:
-                                processed_alarm.current_state = AlarmState.ENABLED
-                                processed_alarm.date_active = date_active
-                        else:
-                            processed_alarm = self.build_reportable_alarm(
-                                alarm,
-                                AlarmState.ENABLED,
-                                date_active,
-                                self.get_config(),
-                                self.get_engine_config(),
-                            )
-                    # FINALLY
-                    if processed_alarm is not None:
-                        merged_alarm_list.alarm[alarm_id] = processed_alarm
-
-            if (
-                merged_alarm_list.to_alarm_dict() != latest_alarms.to_alarm_dict()
-                or force
-            ):
-                merged_alarm_list = self._verify_alarm_things(merged_alarm_list)
-                self.set_alarm_list(merged_alarm_list)
-            return True, "Active alarms loaded successfully."
+                parsed_alarms = self.parse_alarm_list(alarm_list_str)
+                merged_alarm_list = self._merge_alarm_lists(
+                    parsed_alarms,
+                    latest_alarms,
+                    self.get_config(),
+                    self.get_engine_config(),
+                )
+                if (
+                    merged_alarm_list.to_alarm_dict() != latest_alarms.to_alarm_dict()
+                    or force
+                ):
+                    merged_alarm_list = self._verify_alarm_things(merged_alarm_list)
+                    self.set_alarm_list(merged_alarm_list)
+            return True, ""
         except Exception as e:
             self._logger.error("Failed to load active alarms: %s", e)
             return False, str(e)
+
+    def _merge_alarm_lists(
+        self,
+        parsed_alarms: list[Alarm],
+        latest_alarms: AlarmList,
+        config: N2kConfiguration,
+        engine_config: EngineConfiguration,
+    ):
+        merged_alarm_list = AlarmList()
+        for alarm in parsed_alarms:
+            alarm_id, processed_alarm = self._process_and_merge_alarm(
+                alarm, latest_alarms, config, engine_config
+            )
+            if processed_alarm is not None:
+                merged_alarm_list.alarm[alarm_id] = processed_alarm
+        return merged_alarm_list
+
+    def _process_and_merge_alarm(
+        self,
+        alarm: Alarm,
+        latest_alarms: AlarmList,
+        config: N2kConfiguration,
+        engine_config: EngineConfiguration,
+    ):
+        alarm_id = alarm.unique_id
+        processed_alarm = None
+        date_active = TimeUtil.current_time()
+        if alarm.current_state == eStateType.StateAcknowledged:
+            if alarm_id in latest_alarms.alarm:
+                processed_alarm = copy.deepcopy(latest_alarms.alarm[alarm_id])
+                processed_alarm.current_state = AlarmState.ACKNOWLEDGED
+            else:
+                processed_alarm = self.build_reportable_alarm(
+                    alarm, AlarmState.ACKNOWLEDGED, date_active, config, engine_config
+                )
+        elif alarm.current_state == eStateType.StateEnabled:
+            if alarm_id in latest_alarms.alarm:
+                processed_alarm = copy.deepcopy(latest_alarms.alarm[alarm_id])
+                if processed_alarm.current_state != AlarmState.ENABLED:
+                    processed_alarm.current_state = AlarmState.ENABLED
+                    processed_alarm.date_active = date_active
+            else:
+                processed_alarm = self.build_reportable_alarm(
+                    alarm, AlarmState.ENABLED, date_active, config, engine_config
+                )
+        return alarm_id, processed_alarm
 
     ######################
     # Alarm Processors
@@ -191,14 +218,14 @@ class AlarmService:
         state: AlarmState,
         date_active: int,
         config: N2kConfiguration,
-        engine_config: Optional[N2kConfiguration] = None,
+        engine_config: Optional[EngineConfiguration] = None,
     ):
         """
         Build a reportable alarm object from raw alarm data and state.
         """
         if (
-            alarm.channel_id is not None
-            and alarm is not None
+            alarm is not None
+            and alarm.channel_id is not None
             and alarm.alarm_type is not eAlarmType.TypeDeviceMissing
         ):
             references = self.get_alarm_related_components(
@@ -228,15 +255,6 @@ class AlarmService:
         Given an alarm, configuration and previously processed bls_alarm id map build a list of
         Component References for any give alarm, to associate alarm to things.
         """
-        from .alarm_processors import (
-            process_device_alarms,
-            process_dc_meter_alarms,
-            process_ac_meter_alarms,
-            process_tank_alarms,
-            process_circuit_load_alarms,
-            process_bls_alarms,
-            process_smartcraft_alarms,
-        )
 
         affected_components: list[ComponentReference] = []
         is_dc_alarm = self._is_dc_meter_alarm(alarm)
@@ -344,7 +362,7 @@ class AlarmService:
                     )
         elif ref_type == ComponentType.DCMETER and thing.dc_type == DCType.Battery:
             things.append(f"{ThingType.BATTERY.value}.{thing.instance.instance}")
-            # things = self.get_combi_charger(dc=thing, things=things, config=config)
+            things = get_combi_charger(dc_id=thing.id, things=things, config=config)
         elif ref_type == ComponentType.ACMETER:
             if thing.ac_type == ACType.ShorePower:
                 things.append(
@@ -354,20 +372,20 @@ class AlarmService:
                 things.append(f"{ThingType.INVERTER.value}.{thing.instance.instance}")
             elif thing.ac_type == ACType.Charger:
                 things.append(f"{ThingType.CHARGER.value}.{thing.instance.instance}")
-            # things = self.get_combi_inverter(ac=thing, things=things, config=config)
+            things = get_combi_inverter(ac_id=thing.id, things=things, config=config)
         elif ref_type == ComponentType.TANK:
             if thing.tank_type in (TankType.Fuel, TankType.Oil):
                 things.append(f"{ThingType.FUEL_TANK.value}.{thing.id}")
             else:
                 things.append(f"{ThingType.WATER_TANK.value}.{thing.id}")
         elif ref_type == ComponentType.MARINE_ENGINE:
-            things.append(
-                f"{ThingType.MARINE_ENGINE.value}.{calculate_inverter_charger_instance(inverter_charger=thing)}"
-            )
+            things.append(f"{ThingType.MARINE_ENGINE.value}.{thing.instance.instance}")
         elif ref_type == ComponentType.INVERTERCHARGER:
-            things.append(
-                f"{ThingType.INVERTER.value}.{calculate_inverter_charger_instance(inverter_charger=thing)}"
+            inverter_charger_instance = calculate_inverter_charger_instance(
+                inverter_charger=thing
             )
+            things.append(f"{ThingType.INVERTER.value}.{inverter_charger_instance}")
+            things.append(f"{ThingType.CHARGER.value}.{inverter_charger_instance}")
         return things
 
     def get_switch_thing(self, config: N2kConfiguration, switch: Circuit):
@@ -416,14 +434,15 @@ class AlarmService:
         Verify each alarm contain thing that is part of reported system and remove any alarm that do not.
         """
         alarm_list_copy = copy.deepcopy(alarm_list)
-        for id, alarm in list(alarm_list.alarm.items()):
+        latest_system_things = self.get_latest_empower_system().things
+        for id, alarm in list(alarm_list_copy.alarm.items()):
             valid_things = []
             for thing in alarm.things:
-                if thing in self.get_latest_empower_system().things:
+                if thing in latest_system_things:
                     valid_things.append(thing)
-            alarm_list.alarm[id].things = valid_things
+            alarm_list_copy.alarm[id].things = valid_things
             if len(valid_things) == 0:
-                del alarm_list.alarm[id]
+                del alarm_list_copy.alarm[id]
         return alarm_list_copy
 
     def _verify_engine_alarm_things(self, engine_alarm_list: EngineAlarmList):
@@ -431,14 +450,15 @@ class AlarmService:
         Verify each engine alarm contains things that are part of the latest engine list and remove any alarm that do not.
         """
         engine_alarm_list_copy = copy.deepcopy(engine_alarm_list)
-        for id, engine_alarm in list(engine_alarm_list.engine_alarms.items()):
+        latest_engine_things = self.get_latest_engine_list().engines
+        for id, engine_alarm in list(engine_alarm_list_copy.engine_alarms.items()):
             valid_things = []
             for thing in engine_alarm.things:
-                if thing in self.get_latest_engine_list().engines:
+                if thing in latest_engine_things:
                     valid_things.append(thing)
-            engine_alarm_list.engine_alarms[id].things = valid_things
+            engine_alarm_list_copy.engine_alarms[id].things = valid_things
             if len(valid_things) == 0:
-                del engine_alarm_list.engine_alarms[id]
+                del engine_alarm_list_copy.engine_alarms[id]
         return engine_alarm_list_copy
 
     def post_process_alarm_configuration(
@@ -460,7 +480,7 @@ class AlarmService:
             return None
         return alarm
 
-    def parse_alarm_list(self, alarm_list_str: str) -> list[Alarm]:
+    def parse_alarm_list(self, alarm_list_str: str) -> list[N2KAlarm]:
         """
         Parse the alarm list JSON string into a list of Alarm objects.
         Args:
@@ -480,7 +500,7 @@ class AlarmService:
             self._logger.error(f"Failed to parse alarm list: {e}")
             raise
 
-    def parse_alarm(self, alarm_json: dict[str, Any]) -> Alarm:
+    def parse_alarm(self, alarm_json: dict[str, Any]) -> N2KAlarm:
         """
         Parse a single alarm JSON object into an Alarm instance.
         Args:
@@ -560,12 +580,12 @@ class AlarmService:
                         generate_alarms_from_discrete_status(
                             status_alarms=status_alarms,
                             discrete_status=current_discrete_status1,
-                            merged_engine_alert_list=merged_engine_alarm_list,
+                            merged_engine_alarm_list=merged_engine_alarm_list,
                             prev_discrete_status1=prev_discrete_status1,
                             prev_discrete_status2=prev_discrete_status2,
                             current_discrete_status1=current_discrete_status1,
                             current_discrete_status2=current_discrete_status2,
-                            prev_engine_alert_list=latest_engine_alarm_list,
+                            prev_engine_alarm_list=latest_engine_alarm_list,
                             engine_id=engine_id,
                             engine_config=latest_engine_config.devices[engine_id],
                             discrete_status_word=1,
@@ -586,12 +606,12 @@ class AlarmService:
                         generate_alarms_from_discrete_status(
                             status_alarms=status_alarms,
                             discrete_status=current_discrete_status2,
-                            merged_engine_alert_list=merged_engine_alarm_list,
+                            merged_engine_alarm_list=merged_engine_alarm_list,
                             prev_discrete_status1=prev_discrete_status1,
                             prev_discrete_status2=prev_discrete_status2,
                             current_discrete_status1=current_discrete_status1,
                             current_discrete_status2=current_discrete_status2,
-                            prev_engine_alert_list=latest_engine_alarm_list,
+                            prev_engine_alarm_list=latest_engine_alarm_list,
                             engine_id=engine_id,
                             engine_config=latest_engine_config.devices[engine_id],
                             discrete_status_word=2,

@@ -19,9 +19,24 @@ class DC(MeteringDevice):
     show_state_of_charge: bool
     show_temperature: bool
     show_time_of_remaining: bool
-    instance: Instance
 
     dc_type: DCType
+
+    def __init__(
+        self,
+        capacity=0,
+        show_state_of_charge=False,
+        show_temperature=False,
+        show_time_of_remaining=False,
+        dc_type=None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.capacity = capacity
+        self.show_state_of_charge = show_state_of_charge
+        self.show_temperature = show_temperature
+        self.show_time_of_remaining = show_time_of_remaining
+        self.dc_type = dc_type
 
     def to_dict(self) -> dict[str, str]:
         try:

@@ -7,6 +7,10 @@ from ..constants import AttrNames
 
 
 class InverterChargerDevice(ConfigItem):
+    """
+    Represents an unprocessed inverter charger device configuration item.
+    """
+
     model: int
     type: int
     sub_type: int
@@ -29,6 +33,58 @@ class InverterChargerDevice(ConfigItem):
     device_instance: int
     dipswitch: Optional[int]
     channel_index: Optional[int]
+
+    def __init__(
+        self,
+        model=0,
+        type=0,
+        sub_type=0,
+        inverter_instance=None,
+        inverter_ac_id=None,
+        inverter_circuit_id=None,
+        inverter_toggle_circuit_id=None,
+        charger_instance=None,
+        charger_ac_id=None,
+        charger_circuit_id=None,
+        charger_toggle_circuit_id=None,
+        battery_bank_1_id=None,
+        battery_bank_2_id=None,
+        battery_bank_3_id=None,
+        position_column=0,
+        position_row=0,
+        clustered=False,
+        primary=False,
+        primary_phase=0,
+        device_instance=0,
+        dipswitch=None,
+        channel_index=None,
+    ):
+        self.model = model
+        self.type = type
+        self.sub_type = sub_type
+        self.inverter_instance = (
+            inverter_instance if inverter_instance is not None else Instance()
+        )
+        self.inverter_ac_id = inverter_ac_id
+        self.inverter_circuit_id = inverter_circuit_id
+        self.inverter_toggle_circuit_id = inverter_toggle_circuit_id
+        self.charger_instance = (
+            charger_instance if charger_instance is not None else Instance()
+        )
+        self.charger_ac_id = charger_ac_id
+        self.charger_circuit_id = charger_circuit_id
+        self.charger_toggle_circuit_id = charger_toggle_circuit_id
+        self.battery_bank_1_id = battery_bank_1_id
+        self.battery_bank_2_id = battery_bank_2_id
+        self.battery_bank_3_id = battery_bank_3_id
+        self.position_column = position_column
+        self.position_row = position_row
+        self.clustered = clustered
+        self.primary = primary
+        self.primary_phase = primary_phase
+        self.device_instance = device_instance
+        self.dipswitch = dipswitch
+        self.channel_index = channel_index
 
     def to_dict(self) -> dict[str, str]:
         try:

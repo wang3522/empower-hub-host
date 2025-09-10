@@ -86,3 +86,8 @@ class EmpowerSystem:
         for disposable in self.things.values():
             disposable.dispose()
         self.things.clear()
+
+    def __eq__(self, other):
+        if not isinstance(other, EmpowerSystem):
+            return False
+        return self.to_config_dict() == other.to_config_dict()

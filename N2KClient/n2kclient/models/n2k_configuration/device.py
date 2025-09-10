@@ -44,8 +44,25 @@ class Device:
     version: Optional[str]
     dipswitch: str
 
-    def __init__(self):
-        self.version = None
+    def __init__(
+        self,
+        name_utf8: str = "",
+        source_address: int = 0,
+        conflict: bool = False,
+        device_type: DeviceType = DeviceType.NotSet,
+        valid: bool = False,
+        transient: bool = False,
+        version: Optional[str] = None,
+        dipswitch: str = "",
+    ):
+        self.name_utf8 = name_utf8
+        self.source_address = source_address
+        self.conflict = conflict
+        self.device_type = device_type
+        self.valid = valid
+        self.transient = transient
+        self.version = version
+        self.dipswitch = dipswitch
 
     def to_dict(self) -> dict[str, str]:
         try:

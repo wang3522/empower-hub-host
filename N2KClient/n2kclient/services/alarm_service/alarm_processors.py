@@ -3,9 +3,8 @@ from ...models.common_enums import (
     ComponentType,
 )
 
-from typing import Any, List, Optional, Union
+from typing import List, Optional
 from ...models.empower_system.component_reference import ComponentReference
-from ...models.empower_system.alarm_type import AlarmType
 from ...models.n2k_configuration.device import DeviceType
 from ...models.n2k_configuration.ui_relationship_msg import (
     ItemType,
@@ -16,6 +15,7 @@ from ...models.n2k_configuration.n2k_configuation import N2kConfiguration
 from ...models.n2k_configuration.engine_configuration import EngineConfiguration
 from ...models.n2k_configuration.alarm import Alarm
 from .alarm_helpers import get_inverter_charger_alarm_title
+from ...models.constants import Constants
 from logging import Logger
 
 
@@ -44,20 +44,20 @@ def process_device_alarms(
     alarm_device_dipswitch = None
     if alarm is not None and alarm.alarm_type == eAlarmType.TypeSleepWarning:
         alarm_device_dipswitch = resolved_alarm_channel_id
-    elif not alarm.alarm_type == eAlarmType.Externel:
+    elif not alarm.alarm_type == eAlarmType.External:
         logger.warning("Invalid Alarm")
         return affected_components
 
     if alarm_device_dipswitch is not None:
         # Circuit and circuit loads
-        for [key, circuit] in config.circuit.items():
+        for [_, circuit] in config.circuit.items():
             if circuit.circuit_loads is not None:
                 for load in circuit.circuit_loads:
                     if load.channel_address is None:
                         continue
                     if not any(
                         c.component_type == ComponentType.CIRCUIT
-                        and c.thing.id.value == key
+                        and c.thing.id.value == circuit.id.value
                         for c in affected_components
                     ):
                         load_channel = load.channel_address >> 8
@@ -211,6 +211,7 @@ def process_dc_meter_alarms(
                 dc.low_voltage,
                 dc.very_low_voltage,
                 dc.high_limit,
+                dc.very_high_limit,
                 dc.low_limit,
                 dc.very_low_limit,
             ]
@@ -506,10 +507,10 @@ def map_sc_engine_instance_to_engine_name(engine_instance: int) -> Optional[str]
         The engine name string if found, otherwise None.
     """
     smartcraft_options = {
-        0: "StarboardEngine",
-        1: "PortEngine",
-        2: "StartboardInnerEngine",
-        3: "PortInnerEngine",
+        0: Constants.starboardEngine,
+        1: Constants.portEngine,
+        2: Constants.starboardInnerEngine,
+        3: Constants.portInnerEngine,
     }
     if engine_instance in smartcraft_options:
         return smartcraft_options[engine_instance]

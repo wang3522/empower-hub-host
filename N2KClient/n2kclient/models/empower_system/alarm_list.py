@@ -19,3 +19,8 @@ class AlarmList:
     def to_alarm_dict(self) -> dict[str, Any]:
         """Convert the AlarmList to a dictionary representation."""
         return {alarm_id: alarm.to_dict() for [alarm_id, alarm] in self.alarm.items()}
+
+    def __eq__(self, other):
+        if not isinstance(other, AlarmList):
+            return False
+        return self.to_alarm_dict() == other.to_alarm_dict()

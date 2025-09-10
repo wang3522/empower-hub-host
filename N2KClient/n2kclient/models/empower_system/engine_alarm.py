@@ -31,7 +31,7 @@ class EngineAlarm(Alarm):
         current_discrete_status2: int,
         prev_discrete_status1: int,
         prev_discrete_status2: int,
-        alarm_id=str,
+        alarm_id: str,
     ):
         engine_name = engine.name_utf8
 
@@ -39,6 +39,7 @@ class EngineAlarm(Alarm):
         self.current_discrete_status2 = current_discrete_status2
         self.prev_discrete_status1 = prev_discrete_status1
         self.prev_discrete_status2 = prev_discrete_status2
+        self.alarm_id = alarm_id
 
         # use constant below
         thing_id = f"marineEngine.{engine.id}"
@@ -70,3 +71,8 @@ class EngineAlarm(Alarm):
             }
         )
         return alarm_dict
+
+    def __eq__(self, other):
+        if not isinstance(other, EngineAlarm):
+            return False
+        return self.to_dict() == other.to_dict()

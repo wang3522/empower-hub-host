@@ -6,6 +6,10 @@ class ValueU32:
     valid: bool
     value: int
 
+    def __init__(self, valid=False, value=0):
+        self.valid = valid
+        self.value = value
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

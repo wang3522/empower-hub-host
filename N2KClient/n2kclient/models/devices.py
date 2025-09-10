@@ -83,6 +83,11 @@ class N2kDevice:
         """
         return json.dumps(self.to_dict())
 
+    def __eq__(self, other):
+        if not isinstance(other, N2kDevice):
+            return False
+        return self.to_dict() == other.to_dict()
+
 
 class N2kDevices:
     """
@@ -265,3 +270,13 @@ class N2kDevices:
     def __del__(self):
         """Destructor to ensure resources are cleaned up."""
         self.dispose()
+
+    def __eq__(self, other):
+        if not isinstance(other, N2kDevices):
+            return False
+        return (
+            self.devices == other.devices
+            and self.engine_devices == other.engine_devices
+            and self.mobile_channels == other.mobile_channels
+            and self.engine_mobile_channels == other.engine_mobile_channels
+        )

@@ -1,14 +1,11 @@
 import logging
 import threading
-from typing import Any, List
+from typing import List
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 import dbus.service
 import reactivex as rx
-import json
-
 from .models.empower_system.engine_alarm_list import EngineAlarmList
-
 from .models.devices import N2kDevices
 from .models.constants import Constants
 from reactivex import operators as ops
@@ -234,77 +231,70 @@ class N2KClient(dbus.service.Object):
         Set the latest engine alarms.
         This updates the internal state and notifies observers.
         """
-        self._latest_engine_alarms = alarms
-        self._logger.debug(
-            f"Latest engine alarms: {json.dumps(alarms.to_alarm_dict(), indent=None)}\n\n"
-        )
+        if isinstance(alarms, EngineAlarmList):
+            self._latest_engine_alarms = alarms
 
     def _update_latest_alarms(self, alarms: AlarmList):
         """
         Set the latest active alarms.
         This updates the internal state and notifies observers.
         """
-        self._latest_alarms = alarms
-        self._logger.debug(
-            f"Latest alarms: {json.dumps(alarms.to_alarm_dict(), indent=None)}\n\n"
-        )
+        if isinstance(alarms, AlarmList):
+            self._latest_alarms = alarms
 
     def _update_latest_devices(self, devices: N2kDevices):
         """
         Set the latest N2kDevices object.
         This updates the internal state and notifies observers."""
-        self._latest_devices = devices
-        self._logger.info(
-            f"Latest devices: {json.dumps(devices.to_mobile_dict(), indent=None)}\n\n"
-        )
+        if isinstance(devices, N2kDevices):
+            self._latest_devices = devices
 
     def _update_latest_config(self, config: N2kConfiguration):
         """
         Set the latest N2kConfiguration object.
         This updates the internal state and notifies observers.
         """
-        self._latest_config = config
-        self._log_config_item("config", config)
+        if isinstance(config, N2kConfiguration):
+            self._latest_config = config
 
     def _update_latest_empower_system(self, empower_system: EmpowerSystem):
         """
         Set the latest EmpowerSystem object.
         This updates the internal state and notifies observers.
         """
-        self._latest_empower_system = empower_system
-        self._log_config_item("empower system", empower_system)
+        if isinstance(empower_system, EmpowerSystem):
+            self._latest_empower_system = empower_system
 
     def _update_latest_engine_config(self, config: EngineConfiguration):
         """
         Set the latest EngineConfiguration object.
         This updates the internal state and notifies observers.
         """
-        self._latest_engine_config = config
-        self._log_config_item("engine config", config)
+        if isinstance(config, EngineConfiguration):
+            self._latest_engine_config = config
 
     def _update_latest_engine_list(self, engine_list: EngineList):
         """
         Set the latest EngineList object.
         This updates the internal state and notifies observers.
         """
-        self._latest_engine_list = engine_list
-        self._log_config_item("engine list", engine_list)
+        if isinstance(engine_list, EngineList):
+            self._latest_engine_list = engine_list
 
     def _update_latest_factory_metadata(self, factory_metadata: FactoryMetadata):
         """
         Set the latest FactoryMetadata object.
         This updates the internal state and notifies observers.
         """
-        self._latest_factory_metadata = factory_metadata
-        self._log_config_item("factory metadata", factory_metadata)
+        if isinstance(factory_metadata, FactoryMetadata):
+            self._latest_factory_metadata = factory_metadata
 
     def _handle_dbus_connection_status_updated(self, status: DBUSConnectionStatus):
         """
         Refresh the active alarms and scan the marine engine config if the DBus status changes from "DISCONNECTED" to "CONNECTED".
         """
-        self._logger.debug(
-            f"DBus connection status updated: {status.connection_state}, reason: {status.reason}, timestamp: {status.timestamp}"
-        )
+        if isinstance(status, DBUSConnectionStatus) is False:
+            return
         if (
             self.previous_n2k_dbus_connection_status is not None
             and self.previous_n2k_dbus_connection_status.connection_state
@@ -317,19 +307,6 @@ class N2KClient(dbus.service.Object):
             self._config_service.scan_marine_engine_config()
             self._alarm_service.load_active_alarms()
         self.previous_n2k_dbus_connection_status = status
-
-    def _log_config_item(self, config_type: str, config_obj: Any):
-        if config_obj is not None:
-            # Prefer to_config_dict if available, else to_dict, else as-is
-            if hasattr(config_obj, "to_config_dict"):
-                config_dict = config_obj.to_config_dict()
-            elif hasattr(config_obj, "to_dict"):
-                config_dict = config_obj.to_dict()
-            else:
-                config_dict = config_obj
-            self._logger.info(
-                f"Latest {config_type}: { json.dumps(config_dict, indent=2) }\n\n"
-            )
 
     # === Public API Methods ===
     def write_configuration(self, config_hex: str) -> None:

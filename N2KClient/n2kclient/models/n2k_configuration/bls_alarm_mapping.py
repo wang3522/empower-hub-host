@@ -5,6 +5,6 @@ class BLSAlarmMapping:
     alarm_channel: int
     bls: BinaryLogicState
 
-    def __init__(self, alarm_channel: int, bls: BinaryLogicState):
+    def __init__(self, alarm_channel: int = 0, bls: BinaryLogicState = None):
         self.alarm_channel = alarm_channel
         self.bls = bls

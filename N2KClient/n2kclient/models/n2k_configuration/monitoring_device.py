@@ -10,22 +10,41 @@ from .alarm_limit import AlarmLimit
 
 
 class MonitoringDevice(ConfigItem):
+    id: int
     instance: Instance
     switch_type: SwitchType
     address: int
-
     circuit_id: Optional[DataId]
     circuit_name_utf8: Optional[str]
-
     very_low_limit: Optional[AlarmLimit]
     low_limit: Optional[AlarmLimit]
     high_limit: Optional[AlarmLimit]
     very_high_limit: Optional[AlarmLimit]
 
-    def __init__(self):
+    def __init__(
+        self,
+        id=0,
+        instance=None,
+        switch_type=None,
+        address=0,
+        circuit_id=None,
+        circuit_name_utf8=None,
+        very_low_limit=None,
+        low_limit=None,
+        high_limit=None,
+        very_high_limit=None,
+    ):
         super().__init__()
-        self.circuit_id = None
-        self.circuit_name_utf8 = None
+        self.id = id
+        self.instance = instance if instance is not None else Instance()
+        self.switch_type = switch_type
+        self.address = address
+        self.circuit_id = circuit_id
+        self.circuit_name_utf8 = circuit_name_utf8
+        self.very_low_limit = very_low_limit
+        self.low_limit = low_limit
+        self.high_limit = high_limit
+        self.very_high_limit = very_high_limit
 
     def to_dict(self):
         try:

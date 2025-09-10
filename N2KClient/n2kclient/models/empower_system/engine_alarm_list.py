@@ -27,3 +27,8 @@ class EngineAlarmList:
             alarm_id: engine_alarm.to_dict()
             for alarm_id, engine_alarm in self.engine_alarms.items()
         }
+
+    def __eq__(self, other):
+        if not isinstance(other, EngineAlarmList):
+            return False
+        return self.to_alarm_dict() == other.to_alarm_dict()

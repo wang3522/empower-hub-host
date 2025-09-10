@@ -58,3 +58,8 @@ class EngineList:
         for disposable in self.engines.values():
             disposable.dispose()
         self.engines.clear()
+
+    def __eq__(self, other):
+        if not isinstance(other, EngineList):
+            return False
+        return self.to_config_dict() == other.to_config_dict()

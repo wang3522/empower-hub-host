@@ -8,7 +8,12 @@ from ..constants import AttrNames
 class AudioStereoDevice(ConfigItem):
     instance: Instance
     mute_enabled: bool
-    circuit_ids: list[DataId]
+    circuit_ids: list
+
+    def __init__(self, instance=None, mute_enabled=False, circuit_ids=None):
+        self.instance = instance if instance is not None else Instance()
+        self.mute_enabled = mute_enabled
+        self.circuit_ids = circuit_ids if circuit_ids is not None else []
 
     def to_dict(self) -> dict[str, str]:
         try:

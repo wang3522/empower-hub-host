@@ -37,6 +37,26 @@ class CircuitLoad(ConfigItem):
     control_type: ControlType
     is_switched_module: bool
 
+    def __init__(
+        self,
+        channel_address=0,
+        fuse_level=0.0,
+        running_current=0.0,
+        system_on_current=0.0,
+        force_acknowledge_on=False,
+        level=0,
+        control_type=None,
+        is_switched_module=False,
+    ):
+        self.channel_address = channel_address
+        self.fuse_level = fuse_level
+        self.running_current = running_current
+        self.system_on_current = system_on_current
+        self.force_acknowledge_on = force_acknowledge_on
+        self.level = level
+        self.control_type = control_type
+        self.is_switched_module = is_switched_module
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {
@@ -94,15 +114,63 @@ class Circuit:
     switch_string: Optional[str]
     systems_on_and: Optional[bool]
 
-    def __init__(self):
-        self.non_visible_circuit = None
-        self.voltage_source = None
-        self.dc_circuit = None
-        self.ac_circuit = None
-        self.primary_circuit_id = None
-        self.remote_visibility = None
-        self.switch_string = None
-        self.systems_on_and = None
+    def __init__(
+        self,
+        name_utf8: str = "",
+        control_id: int = 0,
+        dimmable: bool = False,
+        categories: list = None,
+        circuit_loads: list = None,
+        id=None,
+        single_throw_id=None,
+        sequential_names_utf8=None,
+        has_complement=False,
+        display_categories=0,
+        circuit_type=None,
+        switch_type=None,
+        min_level=0,
+        max_level=0,
+        dimstep=0,
+        step=0,
+        load_smooth_start=0,
+        sequential_states=0,
+        non_visible_circuit=None,
+        voltage_source=None,
+        dc_circuit=None,
+        ac_circuit=None,
+        primary_circuit_id=None,
+        remote_visibility=None,
+        switch_string=None,
+        systems_on_and=None,
+    ):
+        self.name_utf8 = name_utf8
+        self.control_id = control_id
+        self.dimmable = dimmable
+        self.categories = categories if categories is not None else []
+        self.circuit_loads = circuit_loads if circuit_loads is not None else []
+        self.id = id
+        self.single_throw_id = single_throw_id
+        self.sequential_names_utf8 = (
+            sequential_names_utf8 if sequential_names_utf8 is not None else []
+        )
+        self.has_complement = has_complement
+        self.display_categories = display_categories
+        self.circuit_type = circuit_type
+        self.switch_type = switch_type
+        self.min_level = min_level
+        self.max_level = max_level
+        self.dimstep = dimstep
+        self.step = step
+        self.load_smooth_start = load_smooth_start
+        self.sequential_states = sequential_states
+        self.non_visible_circuit = non_visible_circuit
+        self.voltage_source = voltage_source
+        self.dc_circuit = dc_circuit
+        self.ac_circuit = ac_circuit
+        self.primary_circuit_id = primary_circuit_id
+        self.remote_visibility = remote_visibility
+        self.switch_string = switch_string
+        self.systems_on_and = systems_on_and
 
     def to_dict(self) -> dict[str, str]:
         try:

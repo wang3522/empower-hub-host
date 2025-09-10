@@ -94,25 +94,13 @@ class DbusProxyService:
         while True:
             try:
                 self._connect_dbus()
-                if self.status_callback:
-                    self.status_callback(
-                        DBUSConnectionStatus(
-                            connection_state=ConnectionStatus.CONNECTED,
-                            reason="",
-                            timestamp=TimeUtil.current_time(),
-                        )
-                    )
+                self._report_status(
+                    True,
+                )
                 break
             except Exception as e:
                 self._logger.error(f"DBus initial connect failed: {e}")
-                if self.status_callback:
-                    self.status_callback(
-                        DBUSConnectionStatus(
-                            connection_state=ConnectionStatus.DISCONNECTED,
-                            reason=str(e),
-                            timestamp=TimeUtil.current_time(),
-                        )
-                    )
+                self._report_status(False, str(e))
                 sleep(self._dbus_retry_delay)
 
     def _connect_dbus(self):

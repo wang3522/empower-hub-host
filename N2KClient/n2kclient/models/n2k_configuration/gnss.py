@@ -8,6 +8,10 @@ class GNSSDevice(ConfigItem):
     instance: Instance
     is_external: bool
 
+    def __init__(self, instance=None, is_external=False):
+        self.instance = instance if instance is not None else Instance()
+        self.is_external = is_external
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

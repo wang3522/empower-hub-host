@@ -8,6 +8,12 @@ class AlarmLimit:
     on: float
     off: float
 
+    def __init__(self, id=0, enabled=False, on=0.0, off=0.0):
+        self.id = id
+        self.enabled = enabled
+        self.on = on
+        self.off = off
+
     def to_dict(self) -> dict[str, str]:
         try:
             return {

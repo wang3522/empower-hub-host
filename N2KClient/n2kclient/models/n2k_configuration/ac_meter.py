@@ -5,8 +5,8 @@ from .ac import AC
 class ACMeter:
     line: dict[int, AC]
 
-    def __init__(self):
-        self.line = {}
+    def __init__(self, line: dict[int, AC] = None):
+        self.line = line if line is not None else {}
 
     def to_dict(self) -> dict[str, dict[int, dict]]:
         try:
