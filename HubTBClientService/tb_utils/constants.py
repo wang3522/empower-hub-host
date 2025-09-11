@@ -32,6 +32,7 @@ class Constants:
     sp = "sp"
     LOCATION = "LOCATION"
     SERIAL_PORT = "SERIAL_PORT"
+    MIN_SATS_NUM = "MIN_SATS_NUM"
     POSITION = "position"
     LAT = "lat"
     LONG = "long"

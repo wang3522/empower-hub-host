@@ -86,6 +86,14 @@ MOVING_ERR = SettingsUtil.get_setting(
     Constants.GPSD_MOVING_ERR_MARGIN,
     default_value=20,
 )
+# Accept amount of satellites for it to be considered a valid fix
+SATS_NUM_THRESHOLD = SettingsUtil.get_setting(
+    Constants.THINGSBOARD_SETTINGS_KEY,
+    Constants.GNSS,
+    Constants.LOCATION,
+    Constants.MIN_SATS_NUM,
+    default_value=8,
+)
 # How many times in a row we need to be out of the geofence before sending the push notification
 OUT_OF_GEOFENCE_COUNT = SettingsUtil.get_setting(
     Constants.THINGSBOARD_SETTINGS_KEY,
@@ -758,7 +766,9 @@ class LocationService:
                 # Initialize default data
                 data = LocationState(0, 0, 0)
                 # Check if we have a valid 3d fix
-                if packet["mode"] >= 3 or (packet[Constants.LAT] != 0.0) or (packet[Constants.LONG] != 0.0):
+                if ((packet["mode"] >= 3 or (packet[Constants.LAT] != 0.0) or (packet[Constants.LONG] != 0.0))
+                    and packet["sats_valid"] >= SATS_NUM_THRESHOLD
+                ):
                     data.lat = round(packet[Constants.LAT], 5)
                     data.long = round(packet[Constants.LONG], 5)
                     data.ts = packet[Constants.ts]
@@ -774,39 +784,17 @@ class LocationService:
                     }
                     location_dict["sats_valid"] = packet["sats_valid"]
                     location_dict[Constants.THINGS] = "gnss.gpsd"
-                    # We had a previous value that was None, wait to get multiple coordinates
-                    # before testing the thresholding
-                    if (
-                        # Case when we have no previous coordinate, set the value and poll again
-                        self._previous_coordinate is None
-                        or
-                        # Case where we have alternating between zero
-                        # and non zero speed (potential noise)
-                        (
-                            self._previous_coordinate[Constants.sp] == 0
-                            and location_dict[Constants.sp] != 0
-                        )
-                        or (
-                            self._previous_coordinate[Constants.sp] != 0
-                            and location_dict[Constants.sp] == 0
-                        )
-                    ):
-                        self._previous_coordinate = location_dict
-                        sleep_time = LOCATION_GPSD_UPDATE_INTERVAL
-                        continue
-
                     # Last remaining cases are both are non zero speed, or both speed values.
-                    x_err = self._previous_coordinate["err"]["x"]
-                    y_err = self._previous_coordinate["err"]["y"]
+                    x_err = location_dict["err"]["x"]
+                    y_err = location_dict["err"]["y"]
                     # It has been shown when the errors were 0 that the gps
                     # coordinate could've been off from where antenna is located
                     if x_err == 0 or y_err == 0:
                         sleep_time = LOCATION_GPSD_UPDATE_INTERVAL / 2
-                        self._previous_coordinate = location_dict
                         continue
                     # If the speed is 0 and we are not within the stricter margin of error.
                     # Don't queue this into trip data and try at a faster rate.
-                    if self._previous_coordinate[Constants.sp] == 0.0 and (
+                    if location_dict[Constants.sp] == 0.0 and (
                         x_err > STATIONARY_ERR or y_err > STATIONARY_ERR
                     ):
                         # Set the interval time to half if we had high margin
@@ -814,41 +802,25 @@ class LocationService:
                         sleep_time = LOCATION_GPSD_UPDATE_INTERVAL / 2
                         # If we are stationary and we are within margin of error for the speed
                         if x_err < MOVING_ERR and y_err < MOVING_ERR:
-                            # Set the current location to the previous, the accepted value
-                            data = LocationState(
-                                self._previous_coordinate[Constants.LAT],
-                                self._previous_coordinate[Constants.LONG],
-                                self._previous_coordinate[Constants.sp],
-                            )
-                            data.ts = self._previous_coordinate[Constants.ts]
                             # We can update the current location
                             self.__set_last_attribute_location(data)
-                        self._previous_coordinate = location_dict
                         continue
-                    elif self._previous_coordinate[Constants.sp] != 0.0 and (
+                    elif location_dict[Constants.sp] != 0.0 and (
                         x_err > MOVING_ERR or y_err > MOVING_ERR
                     ):
                         # Set the interval time to half if we had high margin
                         # of err while moving
                         sleep_time = LOCATION_GPSD_UPDATE_INTERVAL / 2
-                        self._previous_coordinate = location_dict
                         continue
                     # Log the previous coordinate to queue and see if it is a good to
                     # add to the trips data
                     self._logger.info(
-                        "Previous GPS Data: %s", self._previous_coordinate
+                        "GPS Data: %s", location_dict
                     )
                     self.queue_location_update(
-                        self._previous_coordinate,
+                        location_dict,
                         "gnss.gpsd.loc"
                     )
-                    if (
-                        self._previous_coordinate[Constants.sp] != 0
-                        and location_dict[Constants.sp] != 0
-                    ):
-                        self._previous_coordinate = location_dict
-                    else:
-                        self._previous_coordinate = None
                 elif packet["mode"] >= 2:
                     # Increment the counter, then mod it by 10
                     _log_counter = (_log_counter + 1) % 10
