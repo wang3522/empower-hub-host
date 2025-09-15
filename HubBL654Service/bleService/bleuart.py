@@ -167,7 +167,7 @@ class BLE_UART:
         return
 
     def handle_ble_connection_timeout(self):
-        if (self.is_authenticated):
+        if self.is_authenticated:
             logger.debug("BLE connection authenticated within 10 seconds, ignoring disconnect")
         else:
             logger.debug("BLE connection not authenticated within 10 seconds, disconnecting client")
