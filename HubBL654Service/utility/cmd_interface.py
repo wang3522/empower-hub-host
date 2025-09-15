@@ -165,6 +165,10 @@ class CmdInterface:
         logger.debug(f"handle_get_time: Set time {payload}")
         return f"MX93/SET_TIME/{payload.encode().hex()}"
 
+    def handle_client_connected(self, data: str):
+        logger.debug(f"handle_client_connected {data}")
+        return f"CLIENT_CONNECTED"
+
     def _bl_cmd_interface(self, data: str):
         try:
             response = None
@@ -172,6 +176,7 @@ class CmdInterface:
             handlers = {
                 "HELLO": self.handle_hello,
                 "GET_DEVICE_INFORMATION": self.handle_get_device_information,
+                "CLIENT_CONNECTED": self.handle_client_connected,
                 "NOTIFY_VERSION": self.handle_notify_version,
                 "AUTH_CHAL": self.handle_auth_chal,
                 "AUTH_RESP_CLIENT": self.handle_auth_resp_client,
