@@ -197,8 +197,8 @@ class EmpowerService:
     def __handle_state_dependent_telemetry(self, attrs: dict):
         """
         Handle state-dependent telemetry updates, which means state that lives in telemetry,
-        but since device sdk cannot retreive telemetry attributes through mqtt, we need to also
-        keep  copy of it in attributes so we can get the last known state when connected to thingsboard.
+        but since device sdk cannot retrieve telemetry attributes through mqtt, we need to also
+        keep a copy of it in attributes so we can get the last known state when connected to thingsboard.
         """
         telemetry_to_send = {}
         timestamp = None
