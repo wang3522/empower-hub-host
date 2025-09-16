@@ -192,7 +192,6 @@ class EmpowerService:
             self.thingsboard_client.update_attributes(state_attrs)
 
         if telemetry_state_attrs:
-            print("Sending state attr telemetry:", telemetry_state_attrs)
             self.__handle_state_dependent_telemetry(telemetry_state_attrs)
 
     def __handle_state_dependent_telemetry(self, attrs: dict):
