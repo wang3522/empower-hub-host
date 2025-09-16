@@ -166,6 +166,13 @@ class BLE_UART:
         self._send_data(success_message)
         return
 
+    def handle_ble_connection_timeout(self):
+        if self.is_authenticated:
+            logger.debug("BLE connection authenticated within 10 seconds, ignoring disconnect")
+        else:
+            logger.debug("BLE connection not authenticated within 10 seconds, disconnecting client")
+            self._send_data("MX93/BLE_DISCONNECT\n")
+
     def _read_thread(self):
         while not self.stop_event.is_set():
             try:
@@ -218,6 +225,9 @@ class BLE_UART:
                             self._dbus_server.bl654_object.notify_version(res.split("/")[1].strip())
                         else:
                             logger.warning("Dbus not set, could not signal notify_version")
+                        continue
+                    if res.startswith("CLIENT_CONNECTED"):
+                        threading.Timer(10.0, self.handle_ble_connection_timeout).start()
                         continue
                     if res.startswith("MX93/NOT_IMPLEMENTED"):
                         continue
