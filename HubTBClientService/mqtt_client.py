@@ -475,7 +475,7 @@ class ThingsBoardClient:
                 self.request_then_update_attributes(
                     not_cached=not_cached,
                     not_cached_dict=not_cached_dict,
-                    new_attributes=new_attributes
+                    attributes_to_send=new_attributes
                 )
             else:
                 # The value is different from the last known state
@@ -495,7 +495,7 @@ class ThingsBoardClient:
     def request_then_update_attributes(self,
             not_cached: list[str],
             not_cached_dict: dict[str, Any],
-            new_attributes: dict[str, Any]
+            attributes_to_send: dict[str, Any]
         ):
         """
         Request the attributes from Thingsboard and update the attributes with the new values.
@@ -527,21 +527,21 @@ class ThingsBoardClient:
                 "Updating last known state with new attributes %s",
                 json.dumps(value)
             )
-            attribtues_to_send = self.process_changes(
+            diff_result = self.process_changes(
                     new_changes=not_cached_dict,
                     last_known_state=value,
                     log_message="Adding attributes to state from cloud sync"
                 ) or {}
-            new_attributes.update(attribtues_to_send)
+            attributes_to_send.update(diff_result)
             # Update the last known state first with the not cached values in the event
             # that the values are not in the last known state and are the same as the cloud.
             # Then update the last known state with the new attributes.
             with self.last_attributes_lock:
                 self.last_attributes.update(not_cached_dict)
-                self.last_attributes.update(new_attributes)
+                self.last_attributes.update(attributes_to_send)
             # Check to see if the value is the same from cloud
             # Only publish the changes.
-            self._add_attributes_to_dictionary(new_attributes)
+            self._add_attributes_to_dictionary(attributes_to_send)
 
         request_subject.subscribe(request_attributes_callback)
         self.request_attributes_state(
