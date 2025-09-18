@@ -126,12 +126,8 @@ class EmpowerService:
             engine_alert_list_dict = engine_alerts.to_alarm_dict()
             latest_cloud_engine_alerts = self._engine_alarms.copy() if self._engine_alarms else {}
             engine_alert_timeseries = []
-            for [id, alarm] in engine_alerts.engine_alarms.items():
-                if id in latest_cloud_engine_alerts:
-                    alarm.date_active = latest_cloud_engine_alerts[id][
-                        Constants.dateActive
-                    ]
-                else:
+            for [alarm_id, alarm] in engine_alerts.engine_alarms.items():
+                if alarm_id not in latest_cloud_engine_alerts:
                     engine_alert_timeseries.append(alarm)
             self._publish_alarm_timeseries(engine_alert_timeseries)
             if self._engine_alarms != engine_alert_list_dict:
