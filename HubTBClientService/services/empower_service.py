@@ -8,26 +8,21 @@ import re
 import json
 import hashlib
 from typing import Any, Dict, Optional, Union
-import base64
 import logging
 import sys
-import threading
-import time
 
 import reactivex as rx
-from reactivex import operators as ops
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 # pylint: disable=wrong-import-position,import-error,no-name-in-module
 from mqtt_client import ThingsBoardClient
-from dict_diff import dict_diff
 from services.sync_service import SyncService, AttributeType
 from services.rpc_handler_service import RpcHandlerService
-from tb_utils.constants import Constants
 from services.config import (
     telemetry_filter_patterns,
     location_filter_pattern,
     bilge_pump_power_filter_pattern,
 )
+from tb_utils.constants import Constants
 from n2kclient.models.empower_system.engine_list import EngineList
 from n2kclient.models.empower_system.empower_system import EmpowerSystem
 from n2kclient.client import N2KClient
@@ -170,9 +165,19 @@ class EmpowerService:
             for key, value in mobile_dict.items()
             if not any(re.match(pattern, key) for pattern in telemetry_filter_patterns)
                and not re.match(location_filter_pattern, key)
+               and not re.match(bilge_pump_power_filter_pattern, key)
         }
 
-        # TODO: Handle state dependent telemetry
+        # Telemetry values that have state associated with them so
+        # we can keep track and sync with cloud on startup and avoid
+        # sending push notifications each time.
+        telemetry_state_attrs = {
+            key: value
+            for key, value in mobile_dict.items()
+            if re.match(bilge_pump_power_filter_pattern, key)
+        }
+
+        # TODO: Handle location attributes
         # elif re.match(location_filter_pattern, key):
         #     # Location-specific logic can be added here in the future.
 
@@ -185,6 +190,41 @@ class EmpowerService:
         if state_attrs:
             print("Sending state updates:", state_attrs)
             self.thingsboard_client.update_attributes(state_attrs)
+
+        if telemetry_state_attrs:
+            self.__handle_state_dependent_telemetry(telemetry_state_attrs)
+
+    def __handle_state_dependent_telemetry(self, attrs: dict):
+        """
+        Handle state-dependent telemetry updates, which means state that lives in telemetry,
+        but since device sdk cannot retrieve telemetry attributes through mqtt, we need to also
+        keep a copy of it in attributes so we can get the last known state when connected to thingsboard.
+        """
+        telemetry_to_send = {}
+        timestamp = None
+        for key, value in attrs.items():
+            # We haven't seen this attribute before, or the sync service
+            # file was cleared
+            synced_value = self.sync_service.get_attribute_value(key)
+            if synced_value is None:
+                telemetry_to_send[key] = value
+                timestamp = value.get(Constants.ts)
+                # Start the sync service for the value
+                self.sync_service.subscribe_to_attribute(key, AttributeType.CLIENT)
+                # Since this is a client side update, we need to update the sync service
+                self.sync_service._update_value({key: value})
+            else:
+                timestamp = synced_value[Constants.ts]
+                synced_value[Constants.ts] = timestamp
+                if synced_value[Constants.state] != value[Constants.state]:
+                    telemetry_to_send[key] = value
+                    # Since this is a client side update, we need to update the sync service
+                    self.sync_service._update_value({key: value})
+
+        if len(telemetry_to_send.keys()) > 0:
+            print("Sending state dependent telemetry:", telemetry_to_send)
+            self.thingsboard_client.send_telemetry(telemetry=telemetry_to_send, timestamp=timestamp)
+            self.thingsboard_client.update_attributes(telemetry_to_send)
 
     def set_telemetry_consent(self, value: bool):
         if value is not None:
