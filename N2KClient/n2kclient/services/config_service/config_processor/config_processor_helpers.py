@@ -110,7 +110,7 @@ def get_fallback_dc_meter(id: int, config: N2kConfiguration):
     )
     if rel is not None:
         dc = next(
-            (dc for dc in config.dc.values() if dc.Id == rel.SecondaryId),
+            (dc for dc in config.dc.values() if dc.id == rel.secondary_id),
             None,
         )
 
@@ -227,7 +227,7 @@ def get_child_circuits(id: int, config: N2kConfiguration) -> list[Circuit]:
                 (
                     circuit
                     for circuit in config.hidden_circuit.values()
-                    if circuit.id == rel.secondary_id
+                    if circuit.id.value == rel.secondary_id
                 ),
                 None,
             )

@@ -13,11 +13,12 @@ def get_device_instance_value(
     """
     Get the device instance value from the JSON object.
     """
-    device_instace = instance_json.get(JsonKeys.INSTANCE, {})
-    device_instance_enabled = device_instace.get(JsonKeys.ENABLED, False)
-    device_instance_value = device_instace.get(JsonKeys.INSTANCE, None)
-    if device_instance_enabled and device_instance_value is not None:
-        return device_instance_value
+    device_instance = instance_json.get(JsonKeys.INSTANCE, {})
+    if device_instance is not None and device_instance is not {}:
+        device_instance_enabled = device_instance.get(JsonKeys.ENABLED, False)
+        device_instance_value = device_instance.get(JsonKeys.INSTANCE, None)
+        if device_instance_enabled and device_instance_value is not None:
+            return device_instance_value
     return None
 
 

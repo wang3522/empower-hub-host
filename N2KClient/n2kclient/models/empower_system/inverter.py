@@ -88,7 +88,7 @@ class InverterBase(Thing):
         ac_line2: AC,
         ac_line3: AC,
         categories: list[str],
-        status_ac_line: int,
+        status_ac_line: int = None,
         inverter_component_status: Optional[rx.Observable] = None,
         n2k_devices: Optional[N2kDevices] = None,
     ):
@@ -444,6 +444,7 @@ class AcMeterInverter(InverterBase):
             ac_line2=ac_line2,
             ac_line3=ac_line3,
             categories=categories,
+            n2k_devices=n2k_devices,
         )
 
         self.define_acmeter_inverter_channels(

@@ -2,7 +2,6 @@ from enum import Enum
 import json
 from .metering_device import MeteringDevice
 from ..constants import AttrNames
-from .instance import Instance
 
 
 class DCType(Enum):

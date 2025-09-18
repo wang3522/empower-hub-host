@@ -65,9 +65,19 @@ class ControlService:
             devices = self.get_devices()
             circuit_config = get_circuit_config(config, runtime_id, logger=self._logger)
             if not circuit_config:
+                self._logger.debug(
+                    "Circuit %s not found in configuration",
+                    runtime_id,
+                )
                 return False
 
             _, circuit_device = get_circuit_device(devices, circuit_config)
+            if not circuit_device:
+                self._logger.debug(
+                    "Circuit %s not found in N2Kdevices",
+                    runtime_id,
+                )
+                return False
             current_is_on = is_circuit_on(circuit_device)
             self._logger.debug(
                 "Circuit %s current state: %s", runtime_id, current_is_on

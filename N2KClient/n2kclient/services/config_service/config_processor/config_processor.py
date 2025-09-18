@@ -290,8 +290,8 @@ class ConfigProcessor:
 
     def process_chargers(
         self,
-        inverter_charger: InverterChargerDevice,
         config: N2kConfiguration,
+        inverter_charger: InverterChargerDevice,
         categories: list[CategoryItem],
         n2k_devices: N2kDevices,
         instance: int,
@@ -404,7 +404,7 @@ class ConfigProcessor:
                 config, inverter_charger, categories, n2k_devices, instance
             )
             self.process_chargers(
-                inverter_charger, config, categories, n2k_devices, instance
+                config, inverter_charger, categories, n2k_devices, instance
             )
 
     # ###################################################

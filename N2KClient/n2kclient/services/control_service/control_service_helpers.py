@@ -71,8 +71,6 @@ def is_circuit_on(circuit_device: Optional[N2kDevice]) -> bool:
     Returns:
         True if circuit is on (level > 0), False otherwise
     """
-    if not circuit_device:
-        return False
     return circuit_device.channels.get(CircuitStates.Level, 0) > 0
 
 
