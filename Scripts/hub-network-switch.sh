@@ -21,7 +21,7 @@ declare -A LAST_LED_VALUE
 
 # Function to log messages
 log_message() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1"
+    echo "$(date '+%Y-%m-%d %H:%M:%S'), $1" >> /data/hub/log/hub-network-switch.log
 }
 
 cleanup() {
@@ -29,7 +29,7 @@ cleanup() {
     # Iterate through all pins with active processes
     for pin in "${!PIN_PIDS[@]}"; do
         pid=${PIN_PIDS[$pin]}
-        echo "Killing PID $pid for GPIO pin $pin"
+        log_message "Killing PID $pid for GPIO pin $pin"
         if kill -0 $pid 2>/dev/null; then
             kill -9 $pid 2>/dev/null
             wait $pid 2>/dev/null || true
@@ -247,10 +247,10 @@ get_interface_stats_with_delta() {
         prev_rx_bytes[$device]=$rx_bytes
         prev_tx_bytes[$device]=$tx_bytes
         
-        echo "RX: ${rx_bytes} bytes (${rx_packets} packets), TX: ${tx_bytes} bytes (${tx_packets} packets) | Delta: +${delta_rx}RX/+${delta_tx}TX (+${delta_total} total)"
+        log_message "RX: ${rx_bytes} bytes (${rx_packets} packets), TX: ${tx_bytes} bytes (${tx_packets} packets) | Delta: +${delta_rx}RX/+${delta_tx}TX (+${delta_total} total)"
         return $delta_total
     else
-        echo "Interface $device not found"
+        log_message "Interface $device not found"
         return 0
     fi
 }
@@ -265,9 +265,9 @@ get_interface_stats() {
         local rx_packets=$(cat "$stats_file/rx_packets" 2>/dev/null || echo 0)
         local tx_packets=$(cat "$stats_file/tx_packets" 2>/dev/null || echo 0)
         
-        echo "RX: ${rx_bytes} bytes (${rx_packets} packets), TX: ${tx_bytes} bytes (${tx_packets} packets)"
+        log_message "RX: ${rx_bytes} bytes (${rx_packets} packets), TX: ${tx_bytes} bytes (${tx_packets} packets)"
     else
-        echo "Interface $device not found"
+        log_message "Interface $device not found"
     fi
 }
 
