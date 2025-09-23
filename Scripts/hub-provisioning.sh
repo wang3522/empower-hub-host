@@ -38,11 +38,22 @@ start_ap() {
 
     # Create AP connection if not exists
     if ! nmcli connection show "$CON_NAME" &>/dev/null; then
-        nmcli connection add type wifi ifname "$INTERFACE" con-name "$CON_NAME" autoconnect no ssid "$SSID"
-        nmcli connection modify "$CON_NAME" 802-11-wireless.mode ap 802-11-wireless.band bg
-        nmcli connection modify "$CON_NAME" ipv4.method shared ipv4.addresses "$STATIC_IP" ipv4.gateway "$GATEWAY"
-        nmcli connection modify "$CON_NAME" wifi-sec.key-mgmt wpa-psk
-        nmcli connection modify "$CON_NAME" wifi-sec.psk "$PASSWORD"
+        nmcli con add type wifi ifname "$INTERFACE" mode ap con-name "$CON_NAME" ssid "$SSID"
+        nmcli con modify "$CON_NAME" 802-11-wireless.band a \
+                   802-11-wireless.channel 44 \
+                   802-11-wireless-security.key-mgmt wpa-psk \
+                   802-11-wireless-security.proto rsn \
+                   802-11-wireless-security.pairwise ccmp \
+                   802-11-wireless-security.psk "$PASSWORD" \
+                   ipv4.method shared \
+                   ipv4.addresses "$STATIC_IP" \
+                   ipv4.gateway "$GATEWAY"
+
+        # nmcli connection add type wifi ifname "$INTERFACE" con-name "$CON_NAME" autoconnect no ssid "$SSID"
+        # nmcli connection modify "$CON_NAME" 802-11-wireless.mode ap 802-11-wireless.band bg
+        # nmcli connection modify "$CON_NAME" ipv4.method shared ipv4.addresses "$STATIC_IP" ipv4.gateway "$GATEWAY"
+        # nmcli connection modify "$CON_NAME" wifi-sec.key-mgmt wpa-psk
+        # nmcli connection modify "$CON_NAME" wifi-sec.psk "$PASSWORD"
     else
         nmcli connection modify "$CON_NAME" ssid "$SSID"
         nmcli connection modify "$CON_NAME" wifi-sec.psk "$PASSWORD"
