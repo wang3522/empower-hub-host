@@ -9,9 +9,72 @@ CHECK_INTERVAL=5            # Seconds between checks
 DHCP_TIMEOUT=30             # DHCP timeout in seconds for cellular
 ACTIVE_DEVICE=""            # Current active device
 
+WIFI_LED=22    # Status LED/Wifi - GPIO_IO22 - gpio2.IO[22]
+WWAN_LED=2       # wwan/LTE - GPIO_IO02 - gpio2.IO[2]
+ETH_LED=3        # Ethernet - GPIO_IO03 - gpio2.IO[3]
+
+CHIP_ID=0
+CHIP_NAME="gpiochip${CHIP_ID}"
+
+declare -A PIN_PIDS
+declare -A LAST_LED_VALUE
+
 # Function to log messages
 log_message() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1"
+}
+
+cleanup() {
+    log_message "Running cleanup..."
+    # Iterate through all pins with active processes
+    for pin in "${!PIN_PIDS[@]}"; do
+        pid=${PIN_PIDS[$pin]}
+        echo "Killing PID $pid for GPIO pin $pin"
+        if kill -0 $pid 2>/dev/null; then
+            kill -9 $pid 2>/dev/null
+            wait $pid 2>/dev/null || true
+        fi
+    done
+    # Clear the array
+    PIN_PIDS=()
+}
+
+set_led() {
+    local gpio_pin=$1
+    local value=$2
+    
+    if [[ "${LAST_LED_VALUE[$gpio_pin]}" == "$value" ]]; then
+        log_message "GPIO $gpio_pin already set to $value, skipping update"
+        return 0
+    fi
+
+    if [[ -n "${PIN_PIDS[$gpio_pin]}" ]]; then
+        pid=${PIN_PIDS[$gpio_pin]}
+        log_message "Killing previous process (PID: $pid) for GPIO pin $gpio_pin"
+        if kill -0 $pid 2>/dev/null; then
+            kill -9 $pid 2>/dev/null
+            wait $pid 2>/dev/null || true
+        fi
+        unset PIN_PIDS[$gpio_pin]
+    fi
+    
+    if [ "$value" -eq 1 ]; then
+        log_message "Setting GPIO $gpio_pin to ON"
+        gpioset -c ${CHIP_ID} ${gpio_pin}=0 &
+        local pid=$!
+        PIN_PIDS[$gpio_pin]=$pid
+        log_message "Started process PID $pid for GPIO pin $gpio_pin (ON)"
+    else
+        log_message "Setting GPIO $gpio_pin to OFF"
+        gpioset -c ${CHIP_ID} ${gpio_pin}=1 &
+        local pid=$!
+        PIN_PIDS[$gpio_pin]=$pid
+        log_message "Started process PID $pid for GPIO pin $gpio_pin (OFF)"
+    fi
+
+    LAST_LED_VALUE[$gpio_pin]=$value
+    sleep 0.1
+    return 0
 }
 
 # Function to configure DHCP for cellular device using udhcpc
@@ -243,6 +306,7 @@ cleanup_and_exit() {
             log_message "Final stats for $device: $stats (Changed: $diff_bytes bytes since last check)"
         fi
     done
+    cleanup
     
     log_message "Network monitoring stopped"
     exit 0
@@ -270,6 +334,9 @@ while true; do
     bring_interface_up "$ETH_DEVICE"
     if is_connection_active "$ETH_DEVICE" && check_internet "$ETH_DEVICE"; then
         log_message "Ethernet ($ETH_DEVICE) is active and has internet"
+        set_led $ETH_LED 1
+        set_led $WIFI_LED 0
+        set_led $WWAN_LED 0
         if set_default_route "$ETH_DEVICE" 100; then
             monitor_inactive_interfaces "$ETH_DEVICE"
             sleep "$CHECK_INTERVAL"
@@ -283,6 +350,9 @@ while true; do
     bring_interface_up "$WIFI_DEVICE"
     if is_connection_active "$WIFI_DEVICE" && check_internet "$WIFI_DEVICE"; then
         log_message "Wi-Fi ($WIFI_DEVICE) is active and has internet"
+        set_led $ETH_LED 0
+        set_led $WIFI_LED 1
+        set_led $WWAN_LED 0
         if set_default_route "$WIFI_DEVICE" 200; then
             monitor_inactive_interfaces "$WIFI_DEVICE"
             sleep "$CHECK_INTERVAL"
@@ -297,6 +367,9 @@ while true; do
         if setup_cellular "$CELL_DEVICE"; then
             if is_connection_active "$CELL_DEVICE" && check_internet "$CELL_DEVICE"; then
                 log_message "Cellular ($CELL_DEVICE) is active and has internet"
+                set_led $ETH_LED 0
+                set_led $WIFI_LED 0
+                set_led $WWAN_LED 1
                 if set_default_route "$CELL_DEVICE" 300; then
                     monitor_inactive_interfaces "$CELL_DEVICE"
                     sleep "$CHECK_INTERVAL"
@@ -312,6 +385,9 @@ while true; do
         # Cellular is already active, just check if it still has internet
         if is_connection_active "$CELL_DEVICE" && check_internet "$CELL_DEVICE"; then
             log_message "Cellular ($CELL_DEVICE) remains active with internet"
+            set_led $ETH_LED 0
+            set_led $WIFI_LED 0
+            set_led $WWAN_LED 1
             monitor_inactive_interfaces "$CELL_DEVICE"
             sleep "$CHECK_INTERVAL"
             continue
@@ -321,6 +397,9 @@ while true; do
     fi
 
     log_message "No connections with internet available"
+    set_led $ETH_LED 0
+    set_led $WIFI_LED 0
+    set_led $WWAN_LED 0
     # Monitor all interfaces when no connection is active
     # for device in "$ETH_DEVICE" "$WIFI_DEVICE" "$CELL_DEVICE"; do
     #     if ip link show "$device" &>/dev/null; then
