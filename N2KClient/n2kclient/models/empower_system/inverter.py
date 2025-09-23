@@ -545,7 +545,7 @@ class AcMeterInverter(InverterBase):
                 self.connection_status_subject.on_next(self._calc_inverter_state())
 
             ac_line3_status_subject = n2k_devices.get_channel_subject(
-                ac_id, ACMeterStates.Voltage.value, N2kDeviceType.AC
+                ac_id, f"{ACMeterStates.Voltage.value}.{3}", N2kDeviceType.AC
             )
 
             ac_line3_state = ac_line3_status_subject.pipe(

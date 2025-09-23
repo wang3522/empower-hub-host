@@ -17,7 +17,7 @@ def _map_engine_type(type: EngineType) -> str:
     return {
         EngineType.NMEA2000: Constants.nmea2000,
         EngineType.SmartCraft: Constants.smartcraft,
-    }[type] or Constants.unknown
+    }.get(type, Constants.unknown)
 
 
 class MarineEngine(Thing):
@@ -73,8 +73,8 @@ class MarineEngine(Thing):
         """
         self.define_component_status_channel(n2k_devices)
         self.define_speed_channel(n2k_devices)
-        self.define_engine_hours_channel(n2k_devices, engine)
-        self.define_coolant_temperature_channel(n2k_devices, engine)
+        self.define_engine_hours_channel(n2k_devices)
+        self.define_coolant_temperature_channel(n2k_devices)
         self.define_pressure_channels(n2k_devices, engine)
         self.define_status_channel(n2k_devices)
         self.define_serial_number_channel(n2k_devices, engine)
@@ -154,9 +154,7 @@ class MarineEngine(Thing):
             True,
         )
 
-    def define_engine_hours_channel(
-        self, n2k_devices: N2kDevices, engine: EngineDevice
-    ):
+    def define_engine_hours_channel(self, n2k_devices: N2kDevices):
         """
         Define the engine hours channel for the marine engine.
 
@@ -194,9 +192,7 @@ class MarineEngine(Thing):
             True,
         )
 
-    def define_coolant_temperature_channel(
-        self, n2k_devices: N2kDevices, engine: EngineDevice
-    ):
+    def define_coolant_temperature_channel(self, n2k_devices: N2kDevices):
         """
         Define the coolant temperature channel for the marine engine.
 

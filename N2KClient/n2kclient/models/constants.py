@@ -476,7 +476,6 @@ class Constants:
     nmea2000 = "nmea2000"
     smartcraft = "smartcraft"
     unknown = "unknown"
-    marineEngine = "marineEngine"
     speed = "speed"
     engineHours = "engineHours"
     coolantTemperature = "coolantTemperature"
@@ -567,6 +566,8 @@ class Constants:
     neutralStartProtectAlarm = (6, "Neutral Start Protect")
     engineShuttingDownAlarm = (7, "Engine Shutting Down")
     sensorMalfunctionAlarm = (8, "Sensor Malfunction")
+
+    timeUnitFixed = "timeUnitFixed"
 
 
 LINE_CONST_MAP = {

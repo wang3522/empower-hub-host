@@ -44,6 +44,34 @@ from N2KClient.n2kclient.models.n2k_configuration.ac import ACLine
 
 
 class TestConfigParser(unittest.TestCase):
+
+    def test_parse_factory_metadata_exception(self):
+        config_parser = ConfigParser()
+        with patch(
+            "N2KClient.n2kclient.services.config_service.config_parser.config_parser.map_fields"
+        ) as mock_map_fields:
+            mock_map_fields.side_effect = Exception("Test exception")
+            with self.assertRaises(Exception):
+                config_parser.parse_factory_metadata({})
+
+    def test_parse_gnss_exception(self):
+        config_parser = ConfigParser()
+        with patch(
+            "N2KClient.n2kclient.services.config_service.config_parser.config_parser.map_fields"
+        ) as mock_map_fields:
+            mock_map_fields.side_effect = Exception("Test exception")
+            with self.assertRaises(Exception):
+                config_parser.parse_gnss({})
+
+    def test_parse_tank_exception(self):
+        config_parser = ConfigParser()
+        with patch(
+            "N2KClient.n2kclient.services.config_service.config_parser.config_parser.map_fields"
+        ) as mock_map_fields:
+            mock_map_fields.side_effect = Exception("Test exception")
+            with self.assertRaises(Exception):
+                config_parser.parse_tank({})
+
     """
     Unit tests for ConfigParser
     """
@@ -1319,6 +1347,30 @@ class TestConfigParser(unittest.TestCase):
             self.assertIn(0, res.mode)
             self.assertEqual(res.mode[0], mock_mode)
 
+    def test_parse_config_dc(self):
+        config_parser = ConfigParser()
+        with patch.object(config_parser, "parse_dc") as mock_parse_dc:
+            mock_dc = MagicMock(instance=MagicMock(instance=0, enabled=True))
+            mock_parse_dc.return_value = mock_dc
+            res = config_parser.parse_config('{"DCs": [{}]}', "{}", "{}")
+            mock_parse_dc.assert_called_once()
+            self.assertEqual(len(res.dc), 1)
+            self.assertIn(0, res.dc)
+            self.assertEqual(res.dc[0], mock_dc)
+
+    def test_parse_config_audio_stereos(self):
+        config_parser = ConfigParser()
+        with patch.object(
+            config_parser, "parse_audio_stereo"
+        ) as mock_parse_audio_stereo:
+            mock_audio_stereo = MagicMock(instance=MagicMock(instance=0, enabled=True))
+            mock_parse_audio_stereo.return_value = mock_audio_stereo
+            res = config_parser.parse_config('{"AudioStereos": [{}]}', "{}", "{}")
+            mock_parse_audio_stereo.assert_called_once()
+            self.assertEqual(len(res.audio_stereo), 1)
+            self.assertIn(0, res.audio_stereo)
+            self.assertEqual(res.audio_stereo[0], mock_audio_stereo)
+
     def test_parse_config_mode_no_id(self):
         config_parser = ConfigParser()
         with patch.object(config_parser, "parse_circuit") as mock_parse_circuit:
@@ -1432,3 +1484,30 @@ class TestConfigParser(unittest.TestCase):
                 config_parser.parse_engine_configuration(
                     '{"Engines": [{}]}', engine_configuration
                 )
+
+    def test_parse_factory_metadata_exception(self):
+        config_parser = ConfigParser()
+        with patch(
+            "N2KClient.n2kclient.services.config_service.config_parser.config_parser.map_fields"
+        ) as mock_map_fields:
+            mock_map_fields.side_effect = Exception("Test exception")
+            with self.assertRaises(Exception):
+                config_parser.parse_factory_metadata({"FactoryDataSettings": {}})
+
+    def test_parse_gnss_exception(self):
+        config_parser = ConfigParser()
+        with patch(
+            "N2KClient.n2kclient.services.config_service.config_parser.config_parser.map_fields"
+        ) as mock_map_fields:
+            mock_map_fields.side_effect = Exception("Test exception")
+            with self.assertRaises(Exception):
+                config_parser.parse_gnss(MagicMock())
+
+    def test_parse_tank_exception(self):
+        config_parser = ConfigParser()
+        with patch(
+            "N2KClient.n2kclient.services.config_service.config_parser.config_parser.map_fields"
+        ) as mock_map_fields:
+            mock_map_fields.side_effect = Exception("Test exception")
+            with self.assertRaises(Exception):
+                config_parser.parse_tank(MagicMock())

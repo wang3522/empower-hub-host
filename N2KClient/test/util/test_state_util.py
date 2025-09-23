@@ -3,6 +3,7 @@ test_state_util.py
 """
 
 import unittest
+from unittest.mock import MagicMock
 from N2KClient.n2kclient.util.state_util import StateUtil
 from N2KClient.n2kclient.models.empower_system.connection_status import ConnectionStatus
 
@@ -96,6 +97,70 @@ class StateUtilTest(unittest.TestCase):
         """
         self.assertEqual(
             StateUtil.any_non_empty(TestValid(True), ["Valid"]),
+            ConnectionStatus.CONNECTED,
+        )
+
+    def test_any_true(self):
+        """
+        Test case where any_true has a true value
+        """
+        self.assertTrue(StateUtil.any_true({"one": False, "two": True, "three": False}))
+
+    def test_any_false(self):
+        """
+        Test case where any_true has a false value
+        """
+        self.assertFalse(
+            StateUtil.any_true({"one": False, "two": False, "three": False})
+        )
+
+    def test_any_valid_bool(self):
+        """
+        Test case where any_valid_bool has a true value in an object with Valid property
+        """
+
+        class BoolAttr:
+            def __init__(self, valid):
+                self.Valid = valid
+
+        class BoolAttrs:
+            one = BoolAttr(False)
+            two = BoolAttr(False)
+            three = BoolAttr(False)
+
+        self.assertFalse(StateUtil.any_valid_bool(BoolAttrs(), ["one", "two", "three"]))
+
+    def test_any_valid_bool(self):
+        """
+        Test case where any_valid_bool has a true value in an object with Valid property
+        """
+
+        class BoolAttr:
+            def __init__(self, valid):
+                self.Valid = valid
+
+        class BoolAttrs:
+            one = BoolAttr(False)
+            two = BoolAttr(True)
+            three = BoolAttr(False)
+
+        self.assertTrue(StateUtil.any_valid_bool(BoolAttrs(), ["one", "two", "three"]))
+
+    def test_is_circuit_connected(self):
+        """
+        Test case where is_circuit_connected has a true value
+        """
+        self.assertEqual(
+            StateUtil.is_circuit_connected(True),
+            ConnectionStatus.DISCONNECTED,
+        )
+
+    def test_is_circuit_connected_false(self):
+        """
+        Test case where is_circuit_connected has a false value
+        """
+        self.assertEqual(
+            StateUtil.is_circuit_connected(False),
             ConnectionStatus.CONNECTED,
         )
 

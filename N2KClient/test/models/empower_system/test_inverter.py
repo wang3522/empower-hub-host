@@ -5,8 +5,13 @@ from N2KClient.n2kclient.models.empower_system.inverter import (
     map_inverter_state,
     InverterBase,
     AcMeterInverter,
+    CombiInverter,
 )
-from N2KClient.n2kclient.models.common_enums import ChannelType, InverterStatus, Unit
+from N2KClient.n2kclient.models.common_enums import (
+    ChannelType,
+    SwitchType,
+    Unit,
+)
 
 
 class TestInverter(unittest.TestCase):
@@ -520,3 +525,375 @@ class TestInverter(unittest.TestCase):
 
             res = ac_inverter._calc_inverter_state()
             self.assertEqual(res, "inverting")
+
+    def test_acmeter_inverter_init(self):
+        with patch.object(
+            AcMeterInverter, "define_acmeter_inverter_channels"
+        ) as mock_define_acmeter_inverter_channels:
+            ac_inverter = AcMeterInverter(
+                ac_line1=MagicMock(),
+                ac_line2=MagicMock(),
+                ac_line3=MagicMock(),
+                n2k_devices=MagicMock(),
+                categories=["test"],
+                circuit=MagicMock(id=MagicMock(value=1), control_id=11),
+            )
+            self.assertEqual(ac_inverter.inverter_circuit_id, 1)
+            self.assertEqual(ac_inverter.inverter_circuit_control_id, 11)
+            mock_define_acmeter_inverter_channels.assert_called_once()
+
+    def test_acmeter_inverter_define_inverter_enable_channel(self):
+        with patch.object(
+            AcMeterInverter, "define_inverter_enable_channel"
+        ) as mock_define_inverter_enable_channel:
+            ac_line1 = MagicMock()
+            ac_line1.instance.instance = 1
+            ac_line2 = MagicMock()
+            ac_line2.instance.instance = 2
+            ac_line3 = MagicMock()
+            ac_line3.instance.instance = 3
+            circuit = MagicMock()
+            circuit.id = MagicMock()
+            circuit.id.value = 1
+            circuit.control_id = 11
+            mock_n2k_devices = MagicMock()
+            ac_inverter = AcMeterInverter(
+                ac_line1=ac_line1,
+                ac_line2=ac_line2,
+                ac_line3=ac_line3,
+                n2k_devices=mock_n2k_devices,
+                categories=["test"],
+                circuit=circuit,
+            )
+            mock_define_inverter_enable_channel.assert_called()
+
+    def test_define_acmeter_inverter_channels(self):
+        ac_line1 = MagicMock()
+        ac_line1.instance.instance = 1
+        ac_line2 = MagicMock()
+        ac_line2.instance.instance = 2
+        ac_line3 = MagicMock()
+        ac_line3.instance.instance = 3
+        circuit = MagicMock()
+        circuit.id = MagicMock()
+        circuit.id.value = 1
+        circuit.control_id = 11
+        mock_n2k_devices = MagicMock()
+
+        with patch.object(
+            AcMeterInverter, "define_acmeter_inverter_state_channel"
+        ) as mock_define_acmeter_inverter_state_channel, patch.object(
+            AcMeterInverter, "define_inverter_enable_channel"
+        ) as mock_inverter_enable_channel:
+            ac_inverter = AcMeterInverter(
+                ac_line1=ac_line1,
+                ac_line2=ac_line2,
+                ac_line3=ac_line3,
+                n2k_devices=mock_n2k_devices,
+                categories=["test"],
+                circuit=circuit,
+            )
+            mock_define_acmeter_inverter_state_channel.reset_mock()
+            mock_inverter_enable_channel.reset_mock()
+            ac_inverter.define_acmeter_inverter_channels(
+                ac_line1, ac_line2, ac_line3, mock_n2k_devices, circuit
+            )
+            mock_define_acmeter_inverter_state_channel.assert_called_once()
+            mock_inverter_enable_channel.assert_called_once()
+
+    def test_acmeter_inveter_state_channel(self):
+        ac_line1 = MagicMock()
+        ac_line1.instance.instance = 1
+        ac_line2 = MagicMock()
+        ac_line2.instance.instance = 2
+        ac_line3 = MagicMock()
+        ac_line3.instance.instance = 3
+        circuit = MagicMock()
+        circuit.id = MagicMock()
+        circuit.id.value = 1
+        circuit.control_id = 11
+        mock_n2k_devices = MagicMock()
+
+        with patch(
+            "N2KClient.n2kclient.models.empower_system.inverter.Channel"
+        ) as mock_channel:
+
+            ac_inverter = AcMeterInverter(
+                ac_line1=ac_line1,
+                ac_line2=ac_line2,
+                ac_line3=ac_line3,
+                n2k_devices=mock_n2k_devices,
+                categories=["test"],
+                circuit=circuit,
+            )
+            mock_n2k_devices.set_subscription.reset_mock()
+            mock_n2k_devices.get_channel_subject.reset_mock()
+            ac_inverter._disposable_list = []
+            ac_inverter.define_acmeter_inverter_state_channel(
+                ac_line1=ac_line1,
+                ac_line2=ac_line2,
+                ac_line3=ac_line3,
+                n2k_devices=mock_n2k_devices,
+            )
+            mock_channel.assert_any_call(
+                id="is",
+                name="Inverter State",
+                type=ChannelType.STRING,
+                unit=Unit.NONE,
+                read_only=True,
+                tags=["empower:inverter.s"],
+            )
+            self.assertEqual(mock_n2k_devices.set_subscription.call_count, 1)
+            self.assertEqual(mock_n2k_devices.get_channel_subject.call_count, 3)
+            self.assertEqual(len(ac_inverter._disposable_list), 3)
+
+    def test_acmeter_inverter_define_inverter_enable_channel(self):
+        ac_line1 = MagicMock()
+        ac_line1.instance.instance = 1
+        ac_line2 = MagicMock()
+        ac_line2.instance.instance = 2
+        ac_line3 = MagicMock()
+        ac_line3.instance.instance = 3
+        circuit = MagicMock()
+        circuit.id = MagicMock()
+        circuit.id.value = 1
+        circuit.control_id = 11
+        mock_n2k_devices = MagicMock()
+
+        with patch(
+            "N2KClient.n2kclient.models.empower_system.inverter.Channel"
+        ) as mock_channel:
+
+            ac_inverter = AcMeterInverter(
+                ac_line1=ac_line1,
+                ac_line2=ac_line2,
+                ac_line3=ac_line3,
+                n2k_devices=mock_n2k_devices,
+                categories=["test"],
+                circuit=circuit,
+            )
+            mock_n2k_devices.set_subscription.reset_mock()
+            mock_n2k_devices.get_channel_subject.reset_mock()
+            ac_inverter.define_inverter_enable_channel(circuit, mock_n2k_devices)
+            mock_channel.assert_any_call(
+                id="ie",
+                name="Inverter Enable",
+                type=ChannelType.NUMBER,
+                unit=Unit.NONE,
+                read_only=False,
+                tags=["empower:inverter.enabled"],
+            )
+            self.assertEqual(mock_n2k_devices.set_subscription.call_count, 1)
+            self.assertEqual(mock_n2k_devices.get_channel_subject.call_count, 1)
+
+    def test_combi_inverter_init(self):
+        ac_line1 = MagicMock()
+        ac_line1.instance.instance = 1
+        ac_line2 = MagicMock()
+        ac_line2.instance.instance = 2
+        ac_line3 = MagicMock()
+        ac_line3.instance.instance = 3
+        circuit = MagicMock()
+        circuit.id = MagicMock()
+        circuit.id.value = 1
+        circuit.control_id = 11
+        mock_n2k_devices = MagicMock()
+        mock_inverter_charger = MagicMock()
+        with patch.object(
+            CombiInverter, "define_inverter_channels"
+        ) as mock_define_inverter_channels:
+            combi_inverter = CombiInverter(
+                inverter_charger=mock_inverter_charger,
+                ac_line1=ac_line1,
+                ac_line2=ac_line2,
+                ac_line3=ac_line3,
+                categories=["test"],
+                instance=1,
+                status_ac_line=1,
+                n2k_devices=mock_n2k_devices,
+                inverter_circuit=circuit,
+            )
+            self.assertEqual(combi_inverter.n2k_device_id, "InverterChargers.1")
+            mock_define_inverter_channels.assert_called_once()
+            self.assertEqual(combi_inverter.inverter_circuit_id, 1)
+            self.assertEqual(combi_inverter.inverter_circuit_control_id, 11)
+
+    def test_combi_inverter_define_inverter_channels(self):
+        ac_line1 = MagicMock()
+        ac_line1.instance.instance = 1
+        ac_line2 = MagicMock()
+        ac_line2.instance.instance = 2
+        ac_line3 = MagicMock()
+        ac_line3.instance.instance = 3
+        circuit = MagicMock()
+        circuit.id = MagicMock()
+        circuit.id.value = 1
+        circuit.control_id = 11
+        mock_n2k_devices = MagicMock()
+        mock_inverter_charger = MagicMock()
+
+        with patch.object(
+            CombiInverter, "define_inverter_enable_channel"
+        ) as mock_define_inverter_enable_channel, patch.object(
+            CombiInverter, "define_inverter_state_channel"
+        ) as mock_define_inverter_state_channel, patch.object(
+            CombiInverter, "define_inverter_component_status_channel"
+        ) as mock_define_inverter_component_status_channel:
+            combi_inverter = CombiInverter(
+                inverter_charger=mock_inverter_charger,
+                ac_line1=ac_line1,
+                ac_line2=ac_line2,
+                ac_line3=ac_line3,
+                categories=["test"],
+                instance=1,
+                status_ac_line=1,
+                n2k_devices=mock_n2k_devices,
+                inverter_circuit=circuit,
+            )
+            mock_define_inverter_component_status_channel.reset_mock()
+            mock_define_inverter_enable_channel.reset_mock()
+            mock_define_inverter_state_channel.reset_mock()
+            combi_inverter.define_inverter_channels(mock_n2k_devices, circuit)
+            mock_define_inverter_component_status_channel.assert_called_once()
+            mock_define_inverter_enable_channel.assert_called_once()
+            mock_define_inverter_state_channel.assert_called_once()
+
+    def test_combi_inverter_define_inverter_state_channel(self):
+        ac_line1 = MagicMock()
+        ac_line1.instance.instance = 1
+        ac_line2 = MagicMock()
+        ac_line2.instance.instance = 2
+        ac_line3 = MagicMock()
+        ac_line3.instance.instance = 3
+        circuit = MagicMock()
+        circuit.id = MagicMock()
+        circuit.id.value = 1
+        circuit.control_id = 11
+        mock_n2k_devices = MagicMock()
+        mock_inverter_charger = MagicMock()
+
+        with patch(
+            "N2KClient.n2kclient.models.empower_system.inverter.Channel"
+        ) as mock_channel:
+
+            combi_inverter = CombiInverter(
+                inverter_charger=mock_inverter_charger,
+                ac_line1=ac_line1,
+                ac_line2=ac_line2,
+                ac_line3=ac_line3,
+                categories=["test"],
+                instance=1,
+                status_ac_line=1,
+                n2k_devices=mock_n2k_devices,
+                inverter_circuit=circuit,
+            )
+            mock_n2k_devices.set_subscription.reset_mock()
+            mock_n2k_devices.get_channel_subject.reset_mock()
+            combi_inverter.define_inverter_state_channel(mock_n2k_devices)
+            mock_channel.assert_any_call(
+                id="is",
+                name="Inverter State",
+                type=ChannelType.STRING,
+                unit=Unit.NONE,
+                read_only=True,
+                tags=["empower:inverter.s"],
+            )
+            self.assertEqual(mock_n2k_devices.set_subscription.call_count, 1)
+            self.assertEqual(mock_n2k_devices.get_channel_subject.call_count, 1)
+
+    def test_combi_inverter_define_inverter_component_status_channel(self):
+        ac_line1 = MagicMock()
+        ac_line1.instance.instance = 1
+        ac_line2 = MagicMock()
+        ac_line2.instance.instance = 2
+        ac_line3 = MagicMock()
+        ac_line3.instance.instance = 3
+        circuit = MagicMock()
+        circuit.id = MagicMock()
+        circuit.id.value = 1
+        circuit.control_id = 11
+        mock_n2k_devices = MagicMock()
+        mock_inverter_charger = MagicMock()
+
+        with patch(
+            "N2KClient.n2kclient.models.empower_system.inverter.Channel"
+        ) as mock_channel:
+
+            combi_inverter = CombiInverter(
+                inverter_charger=mock_inverter_charger,
+                ac_line1=ac_line1,
+                ac_line2=ac_line2,
+                ac_line3=ac_line3,
+                categories=["test"],
+                instance=1,
+                status_ac_line=1,
+                n2k_devices=mock_n2k_devices,
+                inverter_circuit=circuit,
+            )
+            mock_n2k_devices.set_subscription.reset_mock()
+            mock_n2k_devices.get_channel_subject.reset_mock()
+            combi_inverter.define_inverter_state_channel(mock_n2k_devices)
+            mock_channel.assert_any_call(
+                id="cs",
+                name="Component Status",
+                type=ChannelType.STRING,
+                unit=Unit.NONE,
+                read_only=False,
+                tags=["empower:inverter.componentStatus"],
+            )
+            self.assertEqual(mock_n2k_devices.set_subscription.call_count, 1)
+            self.assertEqual(mock_n2k_devices.get_channel_subject.call_count, 1)
+
+    def test_combi_inverter_define_enable_channel_not_set(self):
+        ac_line1 = MagicMock()
+        ac_line1.instance.instance = 1
+        ac_line2 = MagicMock()
+        ac_line2.instance.instance = 2
+        ac_line3 = MagicMock()
+        ac_line3.instance.instance = 3
+        circuit = MagicMock()
+        circuit.id = MagicMock()
+        circuit.id.value = 1
+        circuit.control_id = 11
+        circuit.switch_type = SwitchType.Not_Set
+        mock_n2k_devices = MagicMock()
+        mock_inverter_charger = MagicMock()
+        with patch(
+            "N2KClient.n2kclient.models.empower_system.inverter.Channel"
+        ) as mock_channel, patch(
+            "N2KClient.n2kclient.models.empower_system.inverter.rx.merge",
+            return_value=MagicMock(),
+        ):
+            # Ensure get_channel_subject returns a mock with .pipe()
+            mock_subject = MagicMock()
+            mock_subject.pipe.return_value = MagicMock()
+            mock_n2k_devices.get_channel_subject.return_value = mock_subject
+
+            with patch.object(
+                CombiInverter, "_define_channel", return_value=MagicMock()
+            ) as mock_define_channel:
+                combi_inverter = CombiInverter(
+                    inverter_charger=mock_inverter_charger,
+                    ac_line1=ac_line1,
+                    ac_line2=ac_line2,
+                    ac_line3=ac_line3,
+                    categories=["test"],
+                    instance=1,
+                    status_ac_line=1,
+                    n2k_devices=mock_n2k_devices,
+                    inverter_circuit=circuit,
+                )
+                mock_n2k_devices.set_subscription.reset_mock()
+                mock_n2k_devices.get_channel_subject.reset_mock()
+                combi_inverter.define_inverter_enable_channel(circuit, mock_n2k_devices)
+                mock_channel.assert_any_call(
+                    id="ie",
+                    name="Inverter Enable",
+                    type=ChannelType.NUMBER,
+                    unit=Unit.NONE,
+                    read_only=True,
+                    tags=["empower:inverter.enabled"],
+                )
+                self.assertEqual(mock_n2k_devices.set_subscription.call_count, 1)
+                self.assertEqual(mock_n2k_devices.get_channel_subject.call_count, 2)
+                mock_define_channel.assert_called()  # Called for read_only channel

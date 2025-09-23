@@ -46,7 +46,7 @@ class ACMeterThingBase(Thing):
         ac_line3: AC,
         n2k_devices: N2kDevices,
         categories: list[str],
-        ic_associated_line: Optional[int],
+        ic_associated_line: Optional[int] = None,
         ic_component_status: Optional[rx.Observable[dict[str, any]]] = None,
     ):
         """
@@ -127,13 +127,13 @@ class ACMeterThingBase(Thing):
             tags=[f"{Constants.empower}:{self.type.value}.{Constants.componentStatus}"],
         )
 
-        componenet_status = self.connection_status_subject.pipe(
+        component_status = self.connection_status_subject.pipe(
             ops.filter(lambda state: state is not None),
             ops.map(lambda status: StateWithTS(status).to_json()),
             ops.distinct_until_changed(lambda state: state[Constants.state]),
         )
 
-        n2k_devices.set_subscription(self._define_channel(channel), componenet_status)
+        n2k_devices.set_subscription(self._define_channel(channel), component_status)
 
     def define_ac_line_channels(
         self,
@@ -297,7 +297,7 @@ class ACMeterThingBase(Thing):
         )
 
         line_power_subject = n2k_devices.get_channel_subject(
-            self.ac_id, f"{ACMeterStates.Power.value}.{line_const}", N2kDeviceType.AC
+            self.ac_id, f"{ACMeterStates.Power.value}.{line_number}", N2kDeviceType.AC
         )
         n2k_devices.set_subscription(
             self._define_channel(channel),

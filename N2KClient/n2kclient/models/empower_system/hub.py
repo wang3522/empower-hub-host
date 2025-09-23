@@ -244,7 +244,7 @@ class Hub(Thing):
         ##########################
         channel = Channel(
             id="iccid",
-            name="Cellulr ICCID",
+            name="Cellular ICCID",
             read_only=True,
             type=ChannelType.STRING,
             unit=Unit.NONE,

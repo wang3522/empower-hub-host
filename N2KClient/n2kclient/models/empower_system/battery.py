@@ -70,6 +70,10 @@ class Battery(Thing):
 
         self.define_battery_channels(n2k_devices, battery, battery_circuit)
 
+        self.metadata[
+            f"{Constants.empower}:{Constants.battery}.{Constants.timeUnitFixed}"
+        ] = True
+
         for limit in AlarmSettingLimit:
             if hasattr(battery, limit.value):
                 attr: AlarmLimit = getattr(battery, limit.value)
@@ -105,14 +109,14 @@ class Battery(Thing):
             primary_battery (DC): Reference to the primary battery, if any.
         """
         if fallback_battery is not None:
-            self.metadata[f"{Constants.empower}:{Constants.fallbackBattery}"] = (
-                f"{ThingType.BATTERY.value}.{fallback_battery.instance.instance}"
-            )
+            self.metadata[
+                f"{Constants.empower}:{Constants.battery}.{Constants.fallbackBattery}"
+            ] = f"{ThingType.BATTERY.value}.{fallback_battery.instance.instance}"
 
         if primary_battery is not None:
-            self.metadata[f"{Constants.empower}:{Constants.primaryBattery}"] = (
-                f"{ThingType.BATTERY.value}.{primary_battery.instance.instance}"
-            )
+            self.metadata[
+                f"{Constants.empower}:{Constants.battery}.{Constants.primaryBattery}"
+            ] = f"{ThingType.BATTERY.value}.{primary_battery.instance.instance}"
 
         if battery.capacity is not None:
             self.metadata[
@@ -145,7 +149,7 @@ class Battery(Thing):
             self.define_temperature_channel(n2k_devices)
 
         if battery.show_state_of_charge:
-            self.define_show_state_of_charge(n2k_devices)
+            self.define_state_of_charge(n2k_devices)
             self.define_capacity_remaining_channel(n2k_devices)
 
         if battery.show_time_of_remaining:
@@ -297,7 +301,7 @@ class Battery(Thing):
         )
 
     def define_temperature_channel(self, n2k_devices: N2kDevices):
-        """ "
+        """
         Define the channel for battery temperature.
         This channel will provide real-time updates on the battery's temperature level.
         """
@@ -326,7 +330,7 @@ class Battery(Thing):
             ),
         )
 
-    def define_show_state_of_charge(self, n2k_devices: N2kDevices):
+    def define_state_of_charge(self, n2k_devices: N2kDevices):
         """
         Define the channel that shows the state of charge of the battery.
         This channel will provide real-time updates on the battery's state of charge."""
@@ -361,7 +365,7 @@ class Battery(Thing):
         # Capacity Remaining Channel
         ##############################
         channel = Channel(
-            id="capactiyRemaining",
+            id="capacityRemaining",
             name="Capacity Remaining",
             read_only=True,
             type=ChannelType.NUMBER,
@@ -397,7 +401,7 @@ class Battery(Thing):
             name="Time Remaining",
             read_only=True,
             type=ChannelType.NUMBER,
-            unit=Unit.TIME_SECOND,
+            unit=Unit.TIME_MINUTE,
             tags=[f"{Constants.empower}:{Constants.battery}.{Constants.timeRemaining}"],
         )
         dc_time_remaining_subject = n2k_devices.get_channel_subject(
@@ -424,7 +428,7 @@ class Battery(Thing):
             name="Time to Charge",
             read_only=True,
             type=ChannelType.NUMBER,
-            unit=Unit.TIME_SECOND,
+            unit=Unit.TIME_MINUTE,
             tags=[f"{Constants.empower}:{Constants.battery}.{Constants.timeToCharge}"],
         )
         dc_time_to_charge_subject = n2k_devices.get_channel_subject(

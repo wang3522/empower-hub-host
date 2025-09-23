@@ -442,7 +442,13 @@ class ACMeterCharger(ACMeterThingBase):
             circuit (Optional[Circuit]): Associated circuit for this charger, if any.
         """
         ACMeterThingBase.__init__(
-            self, ThingType.CHARGER, ac_line1, ac_line2, ac_line3, categories
+            self,
+            ThingType.CHARGER,
+            ac_line1,
+            ac_line2,
+            ac_line3,
+            n2k_devices,
+            categories,
         )
 
         self.line_connected = {}

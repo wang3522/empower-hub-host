@@ -81,7 +81,7 @@ class Climate(Thing):
             ),
         )
 
-    def def_mode_channels(self, n2k_devices: N2kDevices):
+    def def_mode_channel(self, n2k_devices: N2kDevices):
         """
         Define the mode channel for the climate device.
 
@@ -242,7 +242,7 @@ class Climate(Thing):
             n2k_devices (N2kDevices): The N2K device manager for channel subjects and subscriptions.
         """
         self.define_climate_component_status_channel(n2k_devices)
-        self.def_mode_channels(n2k_devices)
+        self.def_mode_channel(n2k_devices)
         self.define_set_point_channel(n2k_devices)
         self.define_ambient_temperature_channel(n2k_devices)
         self.define_fan_speed_channel(n2k_devices)
