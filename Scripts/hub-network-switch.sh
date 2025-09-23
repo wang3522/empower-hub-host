@@ -4,7 +4,7 @@
 ETH_DEVICE="eth0"           # Ethernet interface
 WIFI_DEVICE="wlan0"         # Wi-Fi interface
 CELL_DEVICE="wwan0"         # Cellular interface
-PING_TARGET="8.8.8.8"       # Reliable external server to test connectivity
+PING_TARGET="google.com"       # Reliable external server to test connectivity
 CHECK_INTERVAL=5            # Seconds between checks
 DHCP_TIMEOUT=30             # DHCP timeout in seconds for cellular
 ACTIVE_DEVICE=""            # Current active device
