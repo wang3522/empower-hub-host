@@ -23,13 +23,6 @@ from .sync_service import SyncService
 
 from .config import location_priority_sources, location_filter_pattern
 
-# Port for GNSS connection
-SERIAL_PORT = SettingsUtil.get_setting(
-    Constants.THINGSBOARD_SETTINGS_KEY,
-    Constants.GNSS,
-    Constants.SERIAL_PORT,
-    default_value="/dev/ttyUSB1"
-)
 # # Cloud publish interval in seconds
 LOCATION_CLOUD_PUBLISH_INTERVAL = SettingsUtil.get_setting(
     Constants.THINGSBOARD_SETTINGS_KEY,
@@ -114,7 +107,7 @@ class LocationService:
     thingsboard_client: ThingsBoardClient = ThingsBoardClient()
     sync_service: SyncService = SyncService()
     n2k_client: N2KClient
-    gnss_connection: GPSParser = GPSParser(SERIAL_PORT)
+    gnss_connection: GPSParser = GPSParser()
 
     gpsd_data_thread: threading.Thread
     gpsd_thread_event: threading.Event
