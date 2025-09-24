@@ -49,7 +49,7 @@ class SerialServiceSingleton:
         with self._command_lock:
             try:
                 self.serial_connection.flush()
-                self.serial_connection.write(b'AT+CGPS=1\r')
+                self.serial_connection.write("AT$GPSP=1\r\n".encode())
                 _ = self.serial_connection.read_until(b'OK\r\n')
             except Exception as e:
                 print(f"Error turning on GPS: {e}")

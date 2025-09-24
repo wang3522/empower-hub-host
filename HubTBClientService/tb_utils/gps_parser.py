@@ -103,7 +103,7 @@ class GPSParser:
         :return: A dictionary with latitude, longitude, speed, and timestamp.
         """
         try:
-            response_raw =self.gnss_connection.write("AT$GPSACP\r\n".encode())
+            response_raw = self.gnss_connection.write("AT$GPSACP\r\n")
             response_raw = response_raw.replace(b'OK', b'').replace(b'AT$GPSACP', b''
                 ).replace(b'\r\n', b'')
             return self.parse_gpsacp(response_raw)
