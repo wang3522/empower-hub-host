@@ -684,31 +684,12 @@ main() {
         log "[info] PDP context is already active"
     fi
 
+    read_and_save_iccid
+    read_and_save_imei
+    
     log "[info] Telit modem initialization completed successfully"
-
-    case "${HUB_MODE:-}" in
-        "factory")
-            log "[info] Starting Hub Telit in factory mode (from HUB_MODE env var)..."
-            read_and_save_iccid
-            read_and_save_imei
-            exit 0
-            ;;
-        "validation")
-            log "[info] Starting Hub Telit in validation mode (from HUB_MODE env var)..."
-            read_gps_data
-            exit 0
-            ;;
-        "normal"|"")
-            # Normal mode or no environment variable set
-            log "[info] Starting Hub Telit in normal mode..."
-            monitor_uart
-            ;;
-        *)
-            log "[error] Unknown HUB_MODE environment variable value '$HUB_MODE'"
-            log "[info] Valid values: factory, validation, normal"
-            exit 1
-            ;;
-    esac
+    
+    monitor_uart
 }
 
 touch "$LOG_FILE"
