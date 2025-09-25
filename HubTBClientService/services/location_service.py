@@ -735,15 +735,15 @@ class LocationService:
 
         # Try to connect to gpsd
         self._logger.info("Trying to connect to gpsd")
-        # successfully_connected = False
-        # while not successfully_connected:
-        #     try:
-        #         self.gnss_connection.connect_serial_and_start_gnss()
-        #         successfully_connected = True
-        #     except Exception as e:
-        #         successfully_connected = False
-        #         self._logger.error("Error connecting to gpsd: %s", e)
-        #         time.sleep(10)
+        successfully_connected = False
+        while not successfully_connected:
+            try:
+                self.gnss_connection.gnss_connection.try_to_connect()
+                successfully_connected = self.gnss_connection.gnss_connection.is_connected()
+            except Exception as e:
+                successfully_connected = False
+                self._logger.error("Error connecting to gpsd: %s", e)
+                time.sleep(10)
 
         sleep_time = 0
         while not self.gpsd_thread_event.wait(sleep_time):
