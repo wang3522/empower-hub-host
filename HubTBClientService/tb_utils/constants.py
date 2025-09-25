@@ -21,7 +21,7 @@ class Constants:
     OTA_CLIENT_ACCESS_TOKEN_KEY = "otaUpdateToken"
     TB_ACCESS_TOKEN_PATH = "/data/hub/config/tb_access_token"
     OTA_CLIENT_ACCESS_TOKEN_PATH = "/data/hub/config/ota_client_access_token"
-    SN_PATH = "/data/hub/config/factory/serial_number"
+    SN_PATH = "/data/factory/serialnumber"
     TB_CONSENTS_PATH = "/data/hub/config/tb_consents/"
     BLE_SECRET_AUTH_KEY_PATH = "/data/hub/config/ble_secret.json"
     CURRENT_LOCATION_FILE = "/data/hub/config/current_location.json"
