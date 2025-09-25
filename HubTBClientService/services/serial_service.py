@@ -21,7 +21,6 @@ class SerialServiceSingleton:
     """
     _instance = None
     _lock = threading.Lock()
-    _command_lock: threading.Lock
 
     def __new__(cls):
         if not cls._instance:
@@ -45,7 +44,17 @@ class SerialServiceSingleton:
             print(f"Error initializing serial connection: {e}")
         self._initialized = True
 
+    def try_to_connect(self):
+        if not self.is_connected():
+            try:
+                self.serial_connection = serial.Serial(SERIAL_PORT, baudrate=115200, timeout=1)
+                self.turn_on_gps()
+            except Exception as e:
+                print(f"Error reconnecting serial connection: {e}")
+
     def turn_on_gps(self):
+        if not self.is_connected():
+            return None
         with self._command_lock:
             try:
                 self.serial_connection.flush()
@@ -55,6 +64,8 @@ class SerialServiceSingleton:
                 print(f"Error turning on GPS: {e}")
 
     def write(self, at_command: str):
+        if not self.is_connected():
+            return b""
         with self._command_lock:
             try:
                 self.serial_connection.write(at_command.encode())
@@ -62,3 +73,11 @@ class SerialServiceSingleton:
             except Exception as e:
                 print(f"Error writing AT command: {e}")
                 return b""
+
+    def is_connected(self):
+        return self.serial_connection is not None and self.serial_connection.is_open
+
+    def close(self):
+        with self._command_lock:
+            if self.serial_connection and self.serial_connection.is_open:
+                self.serial_connection.close()
