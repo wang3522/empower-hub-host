@@ -7,7 +7,7 @@ CELL_DEVICE="wwan0"                                 # Cellular interface
 PING_TARGET="dns.google"                            # Prefer a hostname to check name resolution first
 FALLBACK_PING_TARGETS=("8.8.8.8" "1.1.1.1")         # Fallback IPs/hosts if name resolve fails
 CHECK_INTERVAL=30                                   # Seconds between checks
-DEACTIVE_CHECK_INTERVAL=5                           # if no connection, wait bw check
+INACTIVE_CHECK_INTERVAL=5                           # if no connection, wait bw check
 DHCP_TIMEOUT=30                                     # DHCP timeout in seconds for cellular
 ACTIVE_DEVICE=""                                    # Current active device
 
@@ -441,5 +441,5 @@ while true; do
     #     fi
     # done
     
-    sleep "$DEACTIVE_CHECK_INTERVAL"
+    sleep "$INACTIVE_CHECK_INTERVAL"
 done
