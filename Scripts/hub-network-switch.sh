@@ -1,13 +1,15 @@
 #!/usr/bin/bash
 
 # Configuration
-ETH_DEVICE="eth0"           # Ethernet interface
-WIFI_DEVICE="wlan0"         # Wi-Fi interface
-CELL_DEVICE="wwan0"         # Cellular interface
-PING_TARGET="google.com"       # Reliable external server to test connectivity
-CHECK_INTERVAL=5            # Seconds between checks
-DHCP_TIMEOUT=30             # DHCP timeout in seconds for cellular
-ACTIVE_DEVICE=""            # Current active device
+ETH_DEVICE="eth0"                                   # Ethernet interface
+WIFI_DEVICE="wlan0"                                 # Wi-Fi interface
+CELL_DEVICE="wwan0"                                 # Cellular interface
+PING_TARGET="dns.google"                            # Prefer a hostname to check name resolution first
+FALLBACK_PING_TARGETS=("8.8.8.8" "1.1.1.1")         # Fallback IPs/hosts if name resolve fails
+CHECK_INTERVAL=30                                   # Seconds between checks
+DEACTIVE_CHECK_INTERVAL=5                           # if no connection, wait bw check
+DHCP_TIMEOUT=30                                     # DHCP timeout in seconds for cellular
+ACTIVE_DEVICE=""                                    # Current active device
 
 WIFI_LED=22    # Status LED/Wifi - GPIO_IO22 - gpio2.IO[22]
 WWAN_LED=2       # wwan/LTE - GPIO_IO02 - gpio2.IO[2]
@@ -22,6 +24,10 @@ declare -A LAST_LED_VALUE
 # Function to log messages
 log_message() {
     echo "$(date '+%Y-%m-%d %H:%M:%S'), $1" >> /data/hub/log/hub-network-switch.log
+}
+
+internet_depend_service() {
+    # start thingsboard gateway, if needed.
 }
 
 cleanup() {
@@ -130,8 +136,35 @@ is_connection_active() {
 # Function to check internet connectivity
 check_internet() {
     local device=$1
-    ping -c 2 -W 2 -I "$device" "$PING_TARGET" &>/dev/null
-    return $?
+    
+    # First try the primary ping target (dns.google)
+    if ping -c 2 -W 2 -I "$device" "$PING_TARGET" &>/dev/null; then
+        log_message "Primary ping target ($PING_TARGET) reachable via $device"
+        internet_depend_service
+        return 0
+    fi
+    
+    log_message "Primary ping target ($PING_TARGET) failed via $device, trying fallback targets"
+    
+    # Try each fallback target
+    for fallback_target in "${FALLBACK_PING_TARGETS[@]}"; do
+        if ping -c 2 -W 2 -I "$device" "$fallback_target" &>/dev/null; then
+            log_message "Fallback ping target ($fallback_target) reachable via $device"
+            
+            # Add Google DNS to resolv.conf if not already present
+            if ! grep -q "nameserver 8.8.8.8" /etc/resolv.conf 2>/dev/null; then
+                log_message "Adding nameserver 8.8.8.8 to /etc/resolv.conf"
+                echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+            else
+                log_message "nameserver 8.8.8.8 already present in /etc/resolv.conf"
+            fi
+            internet_depend_service
+            return 0
+        fi
+    done
+    
+    log_message "All ping targets failed via $device - no internet connectivity"
+    return 1
 }
 
 # Function to get interface metric from routing table
@@ -408,5 +441,5 @@ while true; do
     #     fi
     # done
     
-    sleep "$CHECK_INTERVAL"
+    sleep "$DEACTIVE_CHECK_INTERVAL"
 done
