@@ -28,6 +28,7 @@ log_message() {
 
 internet_depend_service() {
     # start thingsboard gateway, if needed.
+    echo ""
 }
 
 cleanup() {
