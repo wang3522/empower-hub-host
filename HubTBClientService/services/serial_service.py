@@ -1,3 +1,7 @@
+"""
+File that contains the SerialServiceSingleton class to manage serial communication
+with the telit modem.
+"""
 import threading
 import serial
 # pylint: disable= import-error, no-name-in-module
@@ -45,6 +49,9 @@ class SerialServiceSingleton:
         self._initialized = True
 
     def try_to_connect(self):
+        """
+        Try to connect to the serial port if not already connected.
+        """
         if not self.is_connected():
             try:
                 self.serial_connection = serial.Serial(SERIAL_PORT, baudrate=115200, timeout=1)
@@ -53,6 +60,9 @@ class SerialServiceSingleton:
                 print(f"Error reconnecting serial connection: {e}")
 
     def turn_on_gps(self):
+        """
+        Send AT command to turn on GPS.
+        """
         if not self.is_connected():
             return None
         with self._command_lock:
@@ -64,6 +74,11 @@ class SerialServiceSingleton:
                 print(f"Error turning on GPS: {e}")
 
     def write(self, at_command: str):
+        """
+        Write an AT command to the serial port and return the response.
+        :param at_command: The AT command to send.
+        :return: The response from the serial port.
+        """
         if not self.is_connected():
             return b""
         with self._command_lock:
@@ -75,9 +90,16 @@ class SerialServiceSingleton:
                 return b""
 
     def is_connected(self):
+        """
+        Check if the serial connection is open.
+        :return: True if connected, False otherwise.
+        """
         return self.serial_connection is not None and self.serial_connection.is_open
 
     def close(self):
+        """
+        Close the serial connection.
+        """
         with self._command_lock:
             if self.serial_connection and self.serial_connection.is_open:
                 self.serial_connection.close()
