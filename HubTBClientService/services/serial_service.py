@@ -29,7 +29,6 @@ class SerialServiceSingleton:
     def __new__(cls):
         if not cls._instance:
             with cls._lock:
-                if not cls._instance:
                     cls._instance = super(SerialServiceSingleton, cls).__new__(cls)
                     cls._instance._initialized = False
         return cls._instance
