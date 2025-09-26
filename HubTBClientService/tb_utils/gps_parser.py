@@ -1,6 +1,8 @@
 from datetime import datetime, time, timezone
-import serial
 import time
+#pylint: disable= import-error, no-name-in-module
+from services.serial_service import SerialServiceSingleton
+
 from .constants import Constants
 
 class GPSParser:
@@ -8,15 +10,12 @@ class GPSParser:
     A parser for GPS data from the GPSACP protocol.
     """
 
-    def __init__(self, serial_port: str):
-        self.serial_port = serial_port
-        self.gnss_connection = None
-
-    def connect_serial_and_start_gnss(self):
-        self.gnss_connection = serial.Serial(self.serial_port, 115200, timeout=1)
-        self.gnss_connection.flush()
-        self.gnss_connection.write("AT$GPSP=1\r\n".encode())
-        _ = self.gnss_connection.read_until(b'OK\r\n')
+    def __init__(self):
+        self.gnss_connection = SerialServiceSingleton()
+        try:
+            self.gnss_connection.turn_on_gps()
+        except Exception as e:
+            print(f"Error turning on GPS in GPSParser: {e}")
 
     def gpsacp_to_epoch(self, time_str, date_str):
         hours = int(time_str[0:2])
@@ -104,8 +103,7 @@ class GPSParser:
         :return: A dictionary with latitude, longitude, speed, and timestamp.
         """
         try:
-            self.gnss_connection.write("AT$GPSACP\r\n".encode())
-            response_raw = self.gnss_connection.read(self.gnss_connection.in_waiting)
+            response_raw = self.gnss_connection.write("AT$GPSACP\r\n")
             response_raw = response_raw.replace(b'OK', b'').replace(b'AT$GPSACP', b''
                 ).replace(b'\r\n', b'')
             return self.parse_gpsacp(response_raw)
@@ -120,15 +118,7 @@ if __name__ == "__main__":
         LONG = "long"
         sp = "sp"
 
-    SERIAL_PORT = "/dev/ttyUSB1"
-    gps_parser = GPSParser(SERIAL_PORT)
-
-    try:
-        print("Starting while loop to read GPS data...")
-        gps_parser.connect_serial_and_start_gnss()
-        print(f"Connected to GPS on {SERIAL_PORT}. Reading data...")
-    except Exception as e:
-        print(f"Error connecting to GPS: {e}")
+    gps_parser = GPSParser()
 
     while True:
         try:
