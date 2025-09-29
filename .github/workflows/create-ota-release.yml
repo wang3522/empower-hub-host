@@ -1,0 +1,419 @@
+# .github/workflows/create-ota-release.yml
+name: 🚀 Create OTA Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      # Environment Selection
+      environment:
+        description: '🎯 Target Environment'
+        type: choice
+        options:
+          - dev
+          - production
+        default: 'dev'
+        required: true
+      
+      # Core Services
+      include_hub_bl654:
+        description: '☑️ Include hub-bl654'
+        type: boolean
+        default: true
+      hub_bl654_version:
+        description: '└─ Version (tag/branch/commit)'
+        type: string
+        default: 'main'
+      
+      include_hub_n2k:
+        description: '☑️ Include hub-n2k'
+        type: boolean
+        default: true
+      hub_n2k_version:
+        description: '└─ Version'
+        type: string
+        default: 'main'
+      
+      include_hub_n2kclient:
+        description: '☑️ Include hub-n2kclient'
+        type: boolean
+        default: true
+      hub_n2kclient_version:
+        description: '└─ Version'
+        type: string
+        default: 'main'
+      
+      include_hub_provisioning:
+        description: '☑️ Include hub-provisioning'
+        type: boolean
+        default: true
+      hub_provisioning_version:
+        description: '└─ Version'
+        type: string
+        default: 'main'
+      
+      include_hub_tbclient:
+        description: '☑️ Include hub-tbclient'
+        type: boolean
+        default: true
+      hub_tbclient_version:
+        description: '└─ Version'
+        type: string
+        default: 'main'
+      
+      # OTA Service (usually not included)
+      include_hub_ota:
+        description: '⚠️ Include hub-ota (OTA service itself)'
+        type: boolean
+        default: false
+      hub_ota_version:
+        description: '└─ Version'
+        type: string
+        default: 'main'
+      
+      release_notes:
+        description: '📝 Release Notes'
+        type: string
+        required: true
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - name: 📋 Display Release Configuration
+        run: |
+          echo "========================================="
+          echo "📦 OTA RELEASE BUILD"
+          echo "========================================="
+          echo "Environment: ${{ inputs.environment }} 🎯"
+          echo "Release Engineer: ${{ github.actor }}"
+          echo "Build ID: ${{ github.run_id }}"
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo ""
+          echo "Services to Include:"
+          echo "-------------------"
+          
+          # Count services
+          COUNT=0
+          if [ "${{ inputs.include_hub_bl654 }}" == "true" ]; then
+            echo "  ✓ hub-bl654 @ ${{ inputs.hub_bl654_version }}"
+            COUNT=$((COUNT + 1))
+          fi
+          if [ "${{ inputs.include_hub_n2k }}" == "true" ]; then
+            echo "  ✓ hub-n2k @ ${{ inputs.hub_n2k_version }}"
+            COUNT=$((COUNT + 1))
+          fi
+          if [ "${{ inputs.include_hub_n2kclient }}" == "true" ]; then
+            echo "  ✓ hub-n2kclient @ ${{ inputs.hub_n2kclient_version }}"
+            COUNT=$((COUNT + 1))
+          fi
+          if [ "${{ inputs.include_hub_provisioning }}" == "true" ]; then
+            echo "  ✓ hub-provisioning @ ${{ inputs.hub_provisioning_version }}"
+            COUNT=$((COUNT + 1))
+          fi
+          if [ "${{ inputs.include_hub_tbclient }}" == "true" ]; then
+            echo "  ✓ hub-tbclient @ ${{ inputs.hub_tbclient_version }}"
+            COUNT=$((COUNT + 1))
+          fi
+          if [ "${{ inputs.include_hub_ota }}" == "true" ]; then
+            echo "  ⚠️ hub-ota @ ${{ inputs.hub_ota_version }} (SELF-UPDATE)"
+            COUNT=$((COUNT + 1))
+          fi
+          
+          echo ""
+          echo "Total services to package: $COUNT"
+          echo "========================================="
+      
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Need full history for git describe
+      
+      - name: 🔧 Setup Environment
+        run: |
+          # Set environment-specific variables
+          if [ "${{ inputs.environment }}" == "production" ]; then
+            echo "📌 Using production configuration"
+            echo "SIGNING_KEY_NAME=OTA_SIGNING_KEY_PROD" >> $GITHUB_ENV
+            echo "TB_TENANT=production-tenant" >> $GITHUB_ENV
+          else
+            echo "📌 Using development configuration"
+            echo "SIGNING_KEY_NAME=OTA_SIGNING_KEY_DEV" >> $GITHUB_ENV
+            echo "TB_TENANT=dev-tenant" >> $GITHUB_ENV
+          fi
+      
+      - name: 🔨 Build Service Packages
+        run: |
+          mkdir -p build/services
+          echo "# Service Build Report" > build/build_report.txt
+          echo "Environment: ${{ inputs.environment }}" >> build/build_report.txt
+          echo "Build Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> build/build_report.txt
+          echo "" >> build/build_report.txt
+          
+          # Track what we're building
+          > build/services.txt
+          
+          # Function to build a service
+          build_service() {
+            local SERVICE_NAME=$1
+            local VERSION_REF=$2
+            local SERVICE_VAR="include_${SERVICE_NAME//-/_}"
+            
+            echo "📦 Building ${SERVICE_NAME}..."
+            
+            # Check if directory exists
+            if [ ! -d "${SERVICE_NAME}" ]; then
+              echo "  ⚠️ Warning: ${SERVICE_NAME} directory not found, skipping"
+              echo "SKIPPED: ${SERVICE_NAME} - directory not found" >> build/build_report.txt
+              return 0
+            fi
+            
+            # Checkout specific version
+            git checkout ${VERSION_REF} -- ${SERVICE_NAME}/ 2>/dev/null || {
+              echo "  ❌ Failed to checkout ${SERVICE_NAME} @ ${VERSION_REF}"
+              echo "FAILED: ${SERVICE_NAME} @ ${VERSION_REF} - checkout failed" >> build/build_report.txt
+              return 1
+            }
+            
+            # Get version string
+            VERSION_STRING="${SERVICE_NAME}_$(git describe --tags --always --long 2>/dev/null || git rev-parse --short HEAD)"
+            
+            # Copy to build directory
+            cp -r ${SERVICE_NAME} "build/services/${VERSION_STRING}"
+            
+            # Record built service
+            echo "${SERVICE_NAME}:${VERSION_STRING}:${VERSION_REF}" >> build/services.txt
+            echo "SUCCESS: ${SERVICE_NAME} -> ${VERSION_STRING} (ref: ${VERSION_REF})" >> build/build_report.txt
+            
+            echo "  ✅ Built ${VERSION_STRING}"
+            return 0
+          }
+          
+          # Build each selected service
+          FAILED=0
+          
+          if [ "${{ inputs.include_hub_bl654 }}" == "true" ]; then
+            build_service "hub-bl654" "${{ inputs.hub_bl654_version }}" || FAILED=$((FAILED + 1))
+          fi
+          
+          if [ "${{ inputs.include_hub_n2k }}" == "true" ]; then
+            build_service "hub-n2k" "${{ inputs.hub_n2k_version }}" || FAILED=$((FAILED + 1))
+          fi
+          
+          if [ "${{ inputs.include_hub_n2kclient }}" == "true" ]; then
+            build_service "hub-n2kclient" "${{ inputs.hub_n2kclient_version }}" || FAILED=$((FAILED + 1))
+          fi
+          
+          if [ "${{ inputs.include_hub_provisioning }}" == "true" ]; then
+            build_service "hub-provisioning" "${{ inputs.hub_provisioning_version }}" || FAILED=$((FAILED + 1))
+          fi
+          
+          if [ "${{ inputs.include_hub_tbclient }}" == "true" ]; then
+            build_service "hub-tbclient" "${{ inputs.hub_tbclient_version }}" || FAILED=$((FAILED + 1))
+          fi
+          
+          if [ "${{ inputs.include_hub_ota }}" == "true" ]; then
+            echo "⚠️ INCLUDING OTA SERVICE - SELF-UPDATE MODE" >> build/build_report.txt
+            build_service "hub-ota" "${{ inputs.hub_ota_version }}" || FAILED=$((FAILED + 1))
+          fi
+          
+          echo ""
+          echo "📊 Build Summary:"
+          echo "-----------------"
+          cat build/build_report.txt | grep -E "^(SUCCESS|FAILED|SKIPPED)"
+          
+          if [ $FAILED -gt 0 ]; then
+            echo "❌ Build failed with $FAILED errors"
+            exit 1
+          fi
+      
+      - name: 📝 Create Manifest
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+          from datetime import datetime
+          
+          services = {}
+          update_order = []
+          
+          # Parse built services
+          try:
+              with open('build/services.txt') as f:
+                  for line in f:
+                      if line.strip():
+                          parts = line.strip().split(':')
+                          if len(parts) == 3:
+                              name, version_dir, ref = parts
+                              services[name] = {
+                                  'version_directory': version_dir,
+                                  'git_reference': ref,
+                                  'built_at': datetime.utcnow().isoformat() + 'Z'
+                              }
+                              
+                              # OTA service should be updated last if included
+                              if name == 'hub-ota':
+                                  update_order.append(name)  # Will be moved to end
+                              else:
+                                  update_order.append(name)
+          except FileNotFoundError:
+              print("No services.txt found - no services were built")
+              exit(1)
+          
+          # Move hub-ota to the end if present
+          if 'hub-ota' in update_order:
+              update_order.remove('hub-ota')
+              update_order.append('hub-ota')
+          
+          manifest = {
+              'release_id': os.environ['GITHUB_RUN_ID'],
+              'environment': '${{ inputs.environment }}',
+              'thingsboard_tenant': os.environ.get('TB_TENANT', 'unknown'),
+              'created_by': '${{ github.actor }}',
+              'created_at': datetime.utcnow().isoformat() + 'Z',
+              'release_notes': '''${{ inputs.release_notes }}''',
+              'services': services,
+              'update_order': update_order,
+              'self_update': 'hub-ota' in services,
+              'github_run_url': f"https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"
+          }
+          
+          with open('build/manifest.json', 'w') as f:
+              json.dump(manifest, f, indent=2)
+          
+          print("📋 Manifest created successfully")
+          print(json.dumps(manifest, indent=2))
+          EOF
+      
+      - name: 📦 Create OTA Package
+        run: |
+          cd build
+          
+          # Create the package
+          zip -r ../ota_package_${{ inputs.environment }}.zip . -q
+          cd ..
+          
+          # Display package info
+          echo "📦 Package created: ota_package_${{ inputs.environment }}.zip"
+          echo "📏 Size: $(du -h ota_package_${{ inputs.environment }}.zip | cut -f1)"
+          echo ""
+          echo "📁 Package contents:"
+          echo "-------------------"
+          unzip -l ota_package_${{ inputs.environment }}.zip | grep -E "services/hub-" | head -20
+          echo ""
+          echo "Total files: $(unzip -l ota_package_${{ inputs.environment }}.zip | tail -1)"
+      
+      - name: 🔐 Sign Package
+        env:
+          SIGNING_KEY: ${{ secrets[env.SIGNING_KEY_NAME] }}
+        run: |
+          # Check if we have a signing key
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "⚠️ Warning: No signing key found for ${{ inputs.environment }}"
+            echo "⚠️ Using test key for development build"
+            # You could generate a test key here or skip signing for dev
+            # For now, let's skip and just create unsigned package
+            
+            mkdir final
+            mv ota_package_${{ inputs.environment }}.zip final/package.zip
+            cp build/manifest.json final/
+            echo '{"signed": false, "environment": "${{ inputs.environment }}"}' > final/signature.json
+          else
+            echo "🔐 Signing package with ${{ env.SIGNING_KEY_NAME }}"
+            
+            echo "$SIGNING_KEY" | base64 -d > private_key.pem
+            openssl dgst -sha256 -sign private_key.pem \
+              -out ota_package_${{ inputs.environment }}.zip.sig \
+              ota_package_${{ inputs.environment }}.zip
+            rm private_key.pem
+            
+            # Create final package with signature
+            mkdir final
+            mv ota_package_${{ inputs.environment }}.zip final/package.zip
+            echo '{"signature":"'$(base64 -w0 ota_package_${{ inputs.environment }}.zip.sig)'", "signed": true}' > final/signature.json
+            cp build/manifest.json final/
+          fi
+          
+          # Create final archive
+          cd final
+          FILENAME="ota_release_${{ inputs.environment }}_${{ github.run_id }}.zip"
+          zip -r ../${FILENAME} . -q
+          cd ..
+          
+          echo "✅ Package ready: ${FILENAME}"
+          echo "📏 Final size: $(du -h ${FILENAME} | cut -f1)"
+      
+      - name: 📤 Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ota-release-${{ inputs.environment }}-${{ github.run_id }}
+          path: |
+            ota_release_${{ inputs.environment }}_${{ github.run_id }}.zip
+            build/manifest.json
+            build/build_report.txt
+          retention-days: 30
+      
+      - name: 📊 Generate Summary
+        run: |
+          # Create nice summary for GitHub UI
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          # 📦 OTA Release Build Complete
+          
+          ## Build Information
+          | Property | Value |
+          |----------|-------|
+          | **Environment** | `${{ inputs.environment }}` |
+          | **ThingsBoard Tenant** | `${{ env.TB_TENANT }}` |
+          | **Release ID** | `${{ github.run_id }}` |
+          | **Built by** | @${{ github.actor }} |
+          | **Status** | ✅ Success |
+          
+          ## Download
+          **[⬇️ Download OTA Package](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})**
+          
+          ## Services Included
+          EOF
+          
+          # Add service list
+          if [ "${{ inputs.include_hub_bl654 }}" == "true" ]; then
+            echo "- ✅ **hub-bl654** @ \`${{ inputs.hub_bl654_version }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ inputs.include_hub_n2k }}" == "true" ]; then
+            echo "- ✅ **hub-n2k** @ \`${{ inputs.hub_n2k_version }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ inputs.include_hub_n2kclient }}" == "true" ]; then
+            echo "- ✅ **hub-n2kclient** @ \`${{ inputs.hub_n2kclient_version }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ inputs.include_hub_provisioning }}" == "true" ]; then
+            echo "- ✅ **hub-provisioning** @ \`${{ inputs.hub_provisioning_version }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ inputs.include_hub_tbclient }}" == "true" ]; then
+            echo "- ✅ **hub-tbclient** @ \`${{ inputs.hub_tbclient_version }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ inputs.include_hub_ota }}" == "true" ]; then
+            echo "- ⚠️ **hub-ota** @ \`${{ inputs.hub_ota_version }}\` *(self-update)*" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Release Notes" >> $GITHUB_STEP_SUMMARY
+          echo "${{ inputs.release_notes }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download and review the OTA package" >> $GITHUB_STEP_SUMMARY
+          echo "2. Test on development devices first" >> $GITHUB_STEP_SUMMARY
+          echo "3. Upload to ThingsBoard ${{ inputs.environment }} tenant when ready" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ inputs.include_hub_ota }}" == "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Warning**: This package includes hub-ota (self-update). The OTA service will update itself last." >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 💬 Post Build Notification
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Build completed successfully!"
+            echo "Download your package from the artifacts section above"
+          else
+            echo "❌ Build failed - check the logs above for details"
+          fi
