@@ -60,10 +60,11 @@ jobs:
           echo "Parsing service configuration..."
           echo ""
           
-          # Parse services and versions into associative array
+          # Parse services and versions - FIXED VERSION
           cat > parse_config.py << 'EOF'
           import sys
           import json
+          import os
           
           services_input = "${{ inputs.services_to_include }}"
           versions_input = "${{ inputs.service_versions }}"
@@ -87,12 +88,13 @@ jobs:
           if "${{ inputs.include_hub_ota }}" == "true":
               config["hub-ota"] = "${{ inputs.hub_ota_version }}"
           
-          # Output for GitHub Actions
-          print(f"SERVICE_CONFIG<<EOF")
-          print(json.dumps(config, indent=2))
-          print("EOF")
+          # Write to GitHub output file properly
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"SERVICE_CONFIG<<EOF\n")
+              f.write(json.dumps(config, indent=2))
+              f.write("\nEOF\n")
           
-          # Display for logs
+          # Display for logs (to stderr to avoid interfering with output)
           print("\nServices to Include:", file=sys.stderr)
           print("-------------------", file=sys.stderr)
           for service, version in config.items():
@@ -102,7 +104,7 @@ jobs:
           print(f"\nTotal services: {len(config)}", file=sys.stderr)
           EOF
           
-          python3 parse_config.py >> $GITHUB_OUTPUT 2>&1
+          python3 parse_config.py
           echo "========================================="
       
       - uses: actions/checkout@v3
@@ -129,7 +131,7 @@ jobs:
           echo "Build Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> build/build_report.txt
           echo "" >> build/build_report.txt
           
-          # Parse service config
+          # Parse service config - FIXED VERSION
           cat > build_services.py << 'EOF'
           import json
           import subprocess
@@ -137,7 +139,8 @@ jobs:
           import sys
           
           # Get service configuration from previous step
-          config = json.loads("""${{ steps.parse.outputs.SERVICE_CONFIG }}""")
+          config_json = '''${{ steps.parse.outputs.SERVICE_CONFIG }}'''
+          config = json.loads(config_json)
           
           services_file = open("build/services.txt", "w")
           report_file = open("build/build_report.txt", "a")
@@ -292,7 +295,7 @@ jobs:
           echo "📏 Size: $(du -h ota_package_${{ inputs.environment }}.zip | cut -f1)"
           echo ""
           echo "📁 Package contents:"
-          unzip -l ota_package_${{ inputs.environment }}.zip | grep -E "services/hub-" | head -20
+          unzip -l ota_package_${{ inputs.environment }}.zip | grep -E "services/hub-" | head -20 || echo "  No hub services found"
           echo ""
           echo "Total files: $(unzip -l ota_package_${{ inputs.environment }}.zip | tail -1)"
       
@@ -330,7 +333,7 @@ jobs:
           echo "📏 Final size: $(du -h ${FILENAME} | cut -f1)"
       
       - name: 📤 Upload Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ota-release-${{ inputs.environment }}-${{ github.run_id }}
           path: |
