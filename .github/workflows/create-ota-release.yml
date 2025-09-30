@@ -14,24 +14,24 @@ on:
         required: true
       
       services_to_include:
-        description: '📦 Services (comma-separated: hub-bl654,hub-n2k,hub-tbclient)'
+        description: '📦 Services (comma-separated: HubBL654Service,HubN2KService,etc)'
         type: string
-        default: 'hub-bl654,hub-n2k,hub-n2kclient,hub-provisioning,hub-tbclient'
+        default: 'HubBL654Service,HubN2KService,HubProvisioningService,HubTBClientService,N2KClient'
         required: true
       
       service_versions:
-        description: '🏷️ Versions (service:version pairs: hub-bl654:main,hub-n2k:v1.2.3)'
+        description: '🏷️ Versions (service:version pairs: HubBL654Service:main,HubN2KService:v1.2.3)'
         type: string
-        default: 'hub-bl654:main,hub-n2k:main,hub-n2kclient:main,hub-provisioning:main,hub-tbclient:main'
+        default: 'HubBL654Service:main,HubN2KService:main,HubProvisioningService:main,HubTBClientService:main,N2KClient:main'
         required: true
       
       include_hub_ota:
-        description: '⚠️ Include hub-ota for self-update'
+        description: '⚠️ Include HubOTAService for self-update'
         type: boolean
         default: false
       
       hub_ota_version:
-        description: '└─ hub-ota version (if included)'
+        description: '└─ HubOTAService version (if included)'
         type: string
         default: 'main'
       
@@ -105,9 +105,9 @@ jobs:
           for service in services:
               config[service] = version_map.get(service, 'main')
           
-          # Add hub-ota if requested
+          # Add HubOTAService if requested
           if "${{ inputs.include_hub_ota }}" == "true":
-              config["hub-ota"] = "${{ inputs.hub_ota_version }}"
+              config["HubOTAService"] = "${{ inputs.hub_ota_version }}"
           
           # Write to GitHub output file properly
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
@@ -119,7 +119,7 @@ jobs:
           print("\nServices to Include:", file=sys.stderr)
           print("-------------------", file=sys.stderr)
           for service, version in config.items():
-              marker = "⚠️" if service == "hub-ota" else "✓"
+              marker = "⚠️" if service == "HubOTAService" else "✓"
               print(f"  {marker} {service} @ {version}", file=sys.stderr)
           
           print(f"\nTotal services: {len(config)}", file=sys.stderr)
@@ -132,22 +132,17 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: 🔍 Debug - Check Repository Structure
+      - name: 🔍 Verify Repository Structure
         run: |
-          echo "=== Current directory structure ==="
-          ls -la
-          echo ""
-          echo "=== Looking for service directories ==="
-          for service in hub-bl654 hub-n2k hub-n2kclient hub-provisioning hub-tbclient hub-ota; do
+          echo "=== Checking for expected service directories ==="
+          for service in HubBL654Service HubN2KService HubProvisioningService HubTBClientService N2KClient HubOTAService; do
             if [ -d "$service" ]; then
               echo "✅ Found: $service"
+              echo "   Files: $(ls $service | head -3 | tr '\n' ' ')"
             else
               echo "❌ Missing: $service"
             fi
           done
-          echo ""
-          echo "=== All directories starting with 'hub' ==="
-          find . -maxdepth 2 -type d -name "hub*" 2>/dev/null || echo "No hub directories found"
       
       - name: 🔧 Setup Environment
         run: |
@@ -169,7 +164,7 @@ jobs:
           echo "Build Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> build/build_report.txt
           echo "" >> build/build_report.txt
           
-          # Parse service config - FIXED to handle missing directories better
+          # Parse service config - Updated for your directory structure
           cat > build_services.py << 'EOF'
           import json
           import subprocess
@@ -187,9 +182,18 @@ jobs:
           success_count = 0
           skipped_count = 0
           
-          # First, let's see what directories actually exist
+          # Map service names to deployment names (for /data/hub/ structure)
+          SERVICE_TO_DEPLOYMENT = {
+              'HubBL654Service': 'hub-bl654',
+              'HubN2KService': 'hub-n2k',
+              'HubProvisioningService': 'hub-provisioning',
+              'HubTBClientService': 'hub-tbclient',
+              'N2KClient': 'hub-n2kclient',
+              'HubOTAService': 'hub-ota'
+          }
+          
           print("Checking for service directories...")
-          existing_dirs = [d for d in os.listdir('.') if os.path.isdir(d) and d.startswith('hub')]
+          existing_dirs = [d for d in os.listdir('.') if os.path.isdir(d) and (d.startswith('Hub') or d == 'N2KClient')]
           print(f"Found directories: {existing_dirs}")
           
           for service_name, version_ref in config.items():
@@ -202,8 +206,24 @@ jobs:
                   skipped_count += 1
                   continue
               
-              # For testing, let's just copy what exists without checkout
               try:
+                  # Checkout specific version if not main
+                  if version_ref != 'main':
+                      result = subprocess.run(
+                          ["git", "checkout", version_ref, "--", f"{service_name}/"],
+                          capture_output=True,
+                          text=True
+                      )
+                      
+                      if result.returncode != 0:
+                          # If it's a commit hash, try without the path restriction
+                          if len(version_ref) >= 7 and all(c in '0123456789abcdef' for c in version_ref[:7]):
+                              subprocess.run(
+                                  ["git", "checkout", version_ref],
+                                  check=True,
+                                  capture_output=True
+                              )
+                  
                   # Get version string  
                   version_string = subprocess.run(
                       ["git", "describe", "--tags", "--always", "--long"],
@@ -218,16 +238,18 @@ jobs:
                           text=True
                       ).stdout.strip()
                   
-                  full_version = f"{service_name}_{version_string}"
+                  # Use deployment name for the versioned directory
+                  deployment_name = SERVICE_TO_DEPLOYMENT.get(service_name, service_name.lower())
+                  full_version = f"{deployment_name}_{version_string}"
                   
-                  # Copy to build directory
+                  # Copy to build directory with deployment name structure
                   subprocess.run(
                       ["cp", "-r", service_name, f"build/services/{full_version}"],
                       check=True
                   )
                   
-                  # Record success
-                  services_file.write(f"{service_name}:{full_version}:{version_ref}\n")
+                  # Record success with deployment name mapping
+                  services_file.write(f"{deployment_name}:{full_version}:{version_ref}:{service_name}\n")
                   report_file.write(f"SUCCESS: {service_name} -> {full_version} (ref: {version_ref})\n")
                   print(f"  ✅ Built {full_version}")
                   success_count += 1
@@ -257,6 +279,10 @@ jobs:
           echo ""
           echo "📊 Detailed Build Report:"
           cat build/build_report.txt | grep -E "^(SUCCESS|FAILED|SKIPPED)" || echo "No services built"
+          
+          echo ""
+          echo "📦 Package structure:"
+          find build/services -type d -maxdepth 1 2>/dev/null | head -10
       
       - name: 📝 Create Manifest
         run: |
@@ -279,11 +305,17 @@ jobs:
                   for line in f:
                       if line.strip():
                           parts = line.strip().split(':')
-                          if len(parts) == 3:
-                              name, version_dir, ref = parts
+                          if len(parts) >= 3:
+                              # Format: deployment_name:version_dir:ref[:original_name]
+                              name = parts[0]
+                              version_dir = parts[1]
+                              ref = parts[2]
+                              original_name = parts[3] if len(parts) > 3 else name
+                              
                               services[name] = {
                                   'version_directory': version_dir,
                                   'git_reference': ref,
+                                  'original_directory': original_name,
                                   'built_at': datetime.utcnow().isoformat() + 'Z'
                               }
                               update_order.append(name)
@@ -332,14 +364,16 @@ jobs:
           echo "📏 Size: $(du -h ota_package_${{ inputs.environment }}.zip | cut -f1)"
           echo ""
           echo "📁 Package contents:"
-          unzip -l ota_package_${{ inputs.environment }}.zip | head -30
+          unzip -l ota_package_${{ inputs.environment }}.zip | grep -E "services/" | head -20
+          echo ""
+          echo "Total files: $(unzip -l ota_package_${{ inputs.environment }}.zip | tail -1)"
       
       - name: 🔐 Sign Package
         env:
           DEV_KEY: ${{ secrets.OTA_SIGNING_KEY_DEV }}
           PROD_KEY: ${{ secrets.OTA_SIGNING_KEY_PROD }}
         run: |
-          # FIXED: Proper way to handle the signing key
+          # Proper way to handle the signing key
           if [ "${{ inputs.environment }}" == "production" ]; then
             SIGNING_KEY="$PROD_KEY"
             KEY_NAME="OTA_SIGNING_KEY_PROD"
@@ -415,7 +449,6 @@ jobs:
             build/build_report.txt
           retention-days: 30
       
-      # ADDED: The missing GitHub Release creation step!
       - name: 📢 Create GitHub Release
         if: ${{ inputs.create_github_release == true }}
         uses: softprops/action-gh-release@v2
@@ -443,7 +476,7 @@ jobs:
             - **Requested:** `${{ inputs.services_to_include }}`
             - **Versions:** `${{ inputs.service_versions }}`
             
-            ${{ inputs.include_hub_ota == true && '⚠️ **Warning:** This release includes hub-ota (self-update)' || '' }}
+            ${{ inputs.include_hub_ota == true && '⚠️ **Warning:** This release includes HubOTAService (self-update)' || '' }}
             
             ### 📥 Downloads
             - **OTA Package:** `${{ env.RELEASE_FILENAME }}`
@@ -488,18 +521,8 @@ jobs:
           ## Configuration Used
           - **Services**: `${{ inputs.services_to_include }}`
           - **Versions**: `${{ inputs.service_versions }}`
-          - **Hub-OTA included**: ${{ inputs.include_hub_ota }}
+          - **HubOTAService included**: ${{ inputs.include_hub_ota }}
           
           ## Release Notes
           ${{ inputs.release_notes }}
-          
-          ## Next Steps
-          1. Download the OTA package from the GitHub Release
-          2. Test on development devices first
-          3. Upload to ThingsBoard ${{ inputs.environment }} tenant when ready
           EOF
-          
-          if [ "${{ inputs.include_hub_ota }}" == "true" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "⚠️ **Warning**: This package includes hub-ota (self-update). The OTA service will update itself last." >> $GITHUB_STEP_SUMMARY
-          fi
