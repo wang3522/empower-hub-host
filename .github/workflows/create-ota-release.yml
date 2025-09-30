@@ -322,30 +322,55 @@ jobs:
           echo "Total files: $(unzip -l ota_package_${{ inputs.environment }}.zip | tail -1)"
       
       - name: 🔐 Sign Package
-        env:
-          SIGNING_KEY: ${{ secrets[env.SIGNING_KEY_NAME] }}
         run: |
+          # Determine which key to use based on environment
+          if [ "${{ inputs.environment }}" == "production" ]; then
+            SIGNING_KEY="${{ secrets.OTA_SIGNING_KEY_PROD }}"
+            KEY_NAME="OTA_SIGNING_KEY_PROD"
+          else
+            SIGNING_KEY="${{ secrets.OTA_SIGNING_KEY_DEV }}"
+            KEY_NAME="OTA_SIGNING_KEY_DEV"
+          fi
+          
           if [ -z "$SIGNING_KEY" ]; then
-            echo "⚠️ Warning: No signing key found for ${{ inputs.environment }}"
+            echo "⚠️ Warning: No signing key found ($KEY_NAME)"
+            echo "⚠️ Creating unsigned package for ${{ inputs.environment }}"
+            
             mkdir final
             mv ota_package_${{ inputs.environment }}.zip final/package.zip
             cp build/manifest.json final/
             echo '{"signed": false, "environment": "${{ inputs.environment }}"}' > final/signature.json
           else
-            echo "🔐 Signing package with ${{ env.SIGNING_KEY_NAME }}"
+            echo "🔐 Signing package with $KEY_NAME"
             
-            echo "$SIGNING_KEY" | base64 -d > private_key.pem
+            # Write the key directly - no base64 decoding needed!
+            cat > private_key.pem << 'EOF'
+          ${{ inputs.environment == 'production' && secrets.OTA_SIGNING_KEY_PROD || secrets.OTA_SIGNING_KEY_DEV }}
+          EOF
+            
+            # Sign the package
             openssl dgst -sha256 -sign private_key.pem \
               -out ota_package_${{ inputs.environment }}.zip.sig \
               ota_package_${{ inputs.environment }}.zip
+            
+            # Clean up the key immediately
             rm private_key.pem
             
+            # Create final package with signature
             mkdir final
             mv ota_package_${{ inputs.environment }}.zip final/package.zip
-            echo '{"signature":"'$(base64 -w0 ota_package_${{ inputs.environment }}.zip.sig)'", "signed": true}' > final/signature.json
+            
+            # Include signature as base64 in JSON (for easy transport)
+            SIGNATURE_B64=$(base64 -w0 ota_package_${{ inputs.environment }}.zip.sig)
+            echo "{\"signature\":\"${SIGNATURE_B64}\", \"signed\": true, \"environment\": \"${{ inputs.environment }}\"}" > final/signature.json
+            
             cp build/manifest.json final/
+            
+            # Clean up signature file
+            rm ota_package_${{ inputs.environment }}.zip.sig
           fi
           
+          # Create final archive
           cd final
           FILENAME="ota_release_${{ inputs.environment }}_${TIMESTAMP}.zip"
           zip -r ../${FILENAME} . -q
@@ -354,103 +379,4 @@ jobs:
           echo "RELEASE_FILENAME=${FILENAME}" >> $GITHUB_ENV
           echo "✅ Package ready: ${FILENAME}"
           echo "📏 Final size: $(du -h ${FILENAME} | cut -f1)"
-      
-      - name: 📤 Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ota-release-${{ inputs.environment }}-${{ github.run_id }}
-          path: |
-            ${{ env.RELEASE_FILENAME }}
-            build/manifest.json
-            build/build_report.txt
-          retention-days: 30
-      
-      - name: 📢 Create GitHub Release
-        if: ${{ inputs.create_github_release == true }}
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: ${{ env.RELEASE_NAME }}
-          draft: false
-          prerelease: ${{ inputs.environment == 'dev' }}
-          files: |
-            ${{ env.RELEASE_FILENAME }}
-            build/manifest.json
-            build/build_report.txt
-          body: |
-            ## 📦 OTA Release for ${{ inputs.environment }}
-            
-            **Release Engineer:** @${{ github.actor }}  
-            **Build ID:** ${{ github.run_id }}  
-            **Environment:** `${{ inputs.environment }}`  
-            **ThingsBoard Tenant:** `${{ env.TB_TENANT }}`
-            
-            ### 📝 Release Notes
-            ${{ inputs.release_notes }}
-            
-            ### 🔧 Services Included
-            ${{ inputs.services_to_include }}
-
-            ### 📌 Version Configuration
-            ${{ inputs.service_versions }}
-
-            ${{ inputs.include_hub_ota == true && '⚠️ **Warning:** This release includes hub-ota (self-update)' || '' }}
-            
-            ### 📥 Downloads
-            - **OTA Package:** `${{ env.RELEASE_FILENAME }}`
-            - **Manifest:** `manifest.json`
-            - **Build Report:** `build_report.txt`
-            
-            ### 🚀 Deployment Instructions
-            1. Download the OTA package from the release assets
-            2. Verify the package signature (if signed)
-            3. Upload to ThingsBoard ${{ inputs.environment }} tenant
-            4. Deploy to target devices
-            
-            ---
-            *Generated by GitHub Actions workflow run [#${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*
-      
-      - name: 📊 Generate Summary
-        run: |
-          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
-          # 📦 OTA Release Build Complete
           
-          ## Build Information
-          | Property | Value |
-          |----------|-------|
-          | **Environment** | `${{ inputs.environment }}` |
-          | **ThingsBoard Tenant** | `${{ env.TB_TENANT }}` |
-          | **Release ID** | `${{ github.run_id }}` |
-          | **Release Tag** | `${{ env.RELEASE_TAG }}` |
-          | **Built by** | @${{ github.actor }} |
-          
-          ## Downloads
-          EOF
-          
-          if [ "${{ inputs.create_github_release }}" == "true" ]; then
-            echo "### 📢 GitHub Release Created!" >> $GITHUB_STEP_SUMMARY
-            echo "**[View Release](https://github.com/${{ github.repository }}/releases/tag/${{ env.RELEASE_TAG }})**" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "**[⬇️ Download from Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})**" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
-          
-          ## Configuration Used
-          - **Services**: `${{ inputs.services_to_include }}`
-          - **Versions**: `${{ inputs.service_versions }}`
-          - **Hub-OTA included**: ${{ inputs.include_hub_ota }}
-          
-          ## Release Notes
-          ${{ inputs.release_notes }}
-          
-          ## Next Steps
-          1. Download the OTA package from the GitHub Release
-          2. Test on development devices first
-          3. Upload to ThingsBoard ${{ inputs.environment }} tenant when ready
-          EOF
-          
-          if [ "${{ inputs.include_hub_ota }}" == "true" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "⚠️ **Warning**: This package includes hub-ota (self-update). The OTA service will update itself last." >> $GITHUB_STEP_SUMMARY
-          fi
