@@ -16,13 +16,13 @@ on:
       services_to_include:
         description: '📦 Services (comma-separated: HubBL654Service,HubN2KService,etc)'
         type: string
-        default: 'HubBL654Service,HubN2KService,HubProvisioningService,HubTBClientService,N2KClient'
+        default: 'HubBL654Service,HubN2KService,HubProvisioningService,HubTBClientService,N2KClient,Scripts'
         required: true
       
       service_versions:
         description: '🏷️ Versions (service:version pairs: HubBL654Service:main,HubN2KService:v1.2.3)'
         type: string
-        default: 'HubBL654Service:main,HubN2KService:main,HubProvisioningService:main,HubTBClientService:main,N2KClient:main'
+        default: 'HubBL654Service:main,HubN2KService:main,HubProvisioningService:main,HubTBClientService:main,N2KClient:main,Scripts:main'
         required: true
       
       include_hub_ota:
