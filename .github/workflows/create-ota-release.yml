@@ -14,26 +14,16 @@ on:
         required: true
       
       services_to_include:
-        description: '📦 Services (comma-separated: HubBL654Service,HubN2KService,etc)'
+        description: '📦 Services (comma-separated: HubBL654Service,HubN2KService,HubOTAService,etc)'
         type: string
-        default: 'HubBL654Service,HubN2KService,HubProvisioningService,HubTBClientService,N2KClient,Scripts'
+        default: 'HubBL654Service,HubProvisioningService,HubTBClientService,N2KClient,Scripts'
         required: true
       
       service_versions:
-        description: '🏷️ Versions (service:version pairs: HubBL654Service:main,HubN2KService:v1.2.3)'
+        description: '🏷️ Versions (service:version pairs: HubBL654Service:main,HubOTAService:v1.2.3)'
         type: string
-        default: 'HubBL654Service:main,HubN2KService:main,HubProvisioningService:main,HubTBClientService:main,N2KClient:main,Scripts:main'
+        default: 'HubBL654Service:main,HubProvisioningService:main,HubTBClientService:main,N2KClient:main'
         required: true
-      
-      include_hub_ota:
-        description: '⚠️ Include HubOTAService for self-update'
-        type: boolean
-        default: false
-      
-      hub_ota_version:
-        description: '└─ HubOTAService version (if included)'
-        type: string
-        default: 'main'
       
       release_notes:
         description: '📝 Release Notes'
@@ -105,22 +95,25 @@ jobs:
           for service in services:
               config[service] = version_map.get(service, 'main')
           
-          # Add HubOTAService if requested
-          if "${{ inputs.include_hub_ota }}" == "true":
-              config["HubOTAService"] = "${{ inputs.hub_ota_version }}"
+          # Check if HubOTAService is included for warning
+          has_hub_ota = "HubOTAService" in config
           
           # Write to GitHub output file properly
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write(f"SERVICE_CONFIG<<EOF\n")
               f.write(json.dumps(config, indent=2))
               f.write("\nEOF\n")
+              f.write(f"HAS_HUB_OTA={str(has_hub_ota).lower()}\n")
           
           # Display for logs (to stderr to avoid interfering with output)
           print("\nServices to Include:", file=sys.stderr)
           print("-------------------", file=sys.stderr)
           for service, version in config.items():
-              marker = "⚠️" if service == "HubOTAService" else "✓"
+              marker = "⚠️" if service == "HubOTAService" else "✔"
               print(f"  {marker} {service} @ {version}", file=sys.stderr)
+          
+          if has_hub_ota:
+              print("\n⚠️ WARNING: HubOTAService included - this enables self-update capability", file=sys.stderr)
           
           print(f"\nTotal services: {len(config)}", file=sys.stderr)
           EOF
@@ -147,11 +140,11 @@ jobs:
       - name: 🔧 Setup Environment
         run: |
           if [ "${{ inputs.environment }}" == "production" ]; then
-            echo "📌 Using production configuration"
+            echo "🔌 Using production configuration"
             echo "SIGNING_KEY_NAME=OTA_SIGNING_KEY_PROD" >> $GITHUB_ENV
             echo "TB_TENANT=production-tenant" >> $GITHUB_ENV
           else
-            echo "📌 Using development configuration"  
+            echo "🔌 Using development configuration"  
             echo "SIGNING_KEY_NAME=OTA_SIGNING_KEY_DEV" >> $GITHUB_ENV
             echo "TB_TENANT=dev-tenant" >> $GITHUB_ENV
           fi
@@ -323,7 +316,7 @@ jobs:
               print("No services.txt found - no services were built")
               services = {}
           
-          # Move hub-ota to the end if present
+          # Move hub-ota to the end if present (for safety during self-updates)
           if 'hub-ota' in update_order:
               update_order.remove('hub-ota')
               update_order.append('hub-ota')
@@ -361,14 +354,14 @@ jobs:
           cd ..
           
           echo "📦 Package created: ota_package_${{ inputs.environment }}.zip"
-          echo "📏 Size: $(du -h ota_package_${{ inputs.environment }}.zip | cut -f1)"
+          echo "📝 Size: $(du -h ota_package_${{ inputs.environment }}.zip | cut -f1)"
           echo ""
-          echo "📁 Package contents:"
+          echo "📝 Package contents:"
           unzip -l ota_package_${{ inputs.environment }}.zip | grep -E "services/" | head -20
           echo ""
           echo "Total files: $(unzip -l ota_package_${{ inputs.environment }}.zip | tail -1)"
       
-      - name: 🔐 Sign Package
+      - name: 🔏 Sign Package
         env:
           DEV_KEY: ${{ secrets.OTA_SIGNING_KEY_DEV }}
           PROD_KEY: ${{ secrets.OTA_SIGNING_KEY_PROD }}
@@ -391,7 +384,7 @@ jobs:
             cp build/manifest.json final/
             echo '{"signed": false, "environment": "${{ inputs.environment }}"}' > final/signature.json
           else
-            echo "🔐 Signing package with $KEY_NAME"
+            echo "🔏 Signing package with $KEY_NAME"
             
             # Write the key to a file
             echo "$SIGNING_KEY" > private_key.pem
@@ -437,7 +430,7 @@ jobs:
           
           echo "RELEASE_FILENAME=${FILENAME}" >> $GITHUB_ENV
           echo "✅ Package ready: ${FILENAME}"
-          echo "📏 Final size: $(du -h ${FILENAME} | cut -f1)"
+          echo "📝 Final size: $(du -h ${FILENAME} | cut -f1)"
       
       - name: 📤 Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -476,7 +469,7 @@ jobs:
             - **Requested:** `${{ inputs.services_to_include }}`
             - **Versions:** `${{ inputs.service_versions }}`
             
-            ${{ inputs.include_hub_ota == true && '⚠️ **Warning:** This release includes HubOTAService (self-update)' || '' }}
+            ${{ steps.parse.outputs.HAS_HUB_OTA == 'true' && '⚠️ **Warning:** This release includes HubOTAService (self-update capability enabled)' || '' }}
             
             ### 📥 Downloads
             - **OTA Package:** `${{ env.RELEASE_FILENAME }}`
@@ -521,7 +514,13 @@ jobs:
           ## Configuration Used
           - **Services**: `${{ inputs.services_to_include }}`
           - **Versions**: `${{ inputs.service_versions }}`
-          - **HubOTAService included**: ${{ inputs.include_hub_ota }}
+          EOF
+          
+          if [ "${{ steps.parse.outputs.HAS_HUB_OTA }}" == "true" ]; then
+            echo "- **⚠️ HubOTAService**: Included (self-update enabled)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
           
           ## Release Notes
           ${{ inputs.release_notes }}
