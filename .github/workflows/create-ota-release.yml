@@ -168,7 +168,7 @@ jobs:
           fi
       - name: 📥 Download Modem Binary from empower-hub-modem
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN_CROSS_REPO }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "🔍 Fetching latest release from empower-hub-modem..."
            # Check if token is set (without printing it)
