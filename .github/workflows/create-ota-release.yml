@@ -172,22 +172,15 @@ jobs:
         run: |
           echo "🔍 Fetching latest release from empower-hub-modem..."
            # Check if token is set (without printing it)
-          if [ -z "$GH_TOKEN" ]; then
-            echo "❌ GH_TOKEN_CROSS_REPO is NOT set or is empty"
+          if [ -z "$GITHUB_TOKEN" ]; then
+            echo "❌ GITHUB_TOKEN is NOT set or is empty"
             echo "Need to create this secret in repo settings"
             exit 1
           else
-            echo "✅ GH_TOKEN_CROSS_REPO is set"
-            echo "Token length: ${#GH_TOKEN} characters"
-            echo "First 4 chars: ${GH_TOKEN:0:4}****"
-          fi
-          
-          # Test if it's a valid GitHub token format
-          if [[ $GH_TOKEN == ghp_* ]] || [[ $GH_TOKEN == github_pat_* ]]; then
-            echo "✅ Token format looks valid (ghp_* or github_pat_*)"
-          else
-            echo "⚠️ Token doesn't match expected GitHub token format"
-          fi
+            echo "✅ GITHUB_TOKEN is set"
+            echo "Token length: ${#GITHUB_TOKEN} characters"
+            echo "First 4 chars: ${GITHUB_TOKEN:0:4}****"
+          fi                   
           
           # Get latest release info
           RELEASE_INFO=$(curl -L \
